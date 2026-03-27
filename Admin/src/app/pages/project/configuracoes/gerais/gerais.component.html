@@ -1,0 +1,1198 @@
+<div class="row">
+  <div class="">
+    <div class="d-flex align-items-center flex-wrap gap-2 mb-4">
+
+
+      <ul
+        class="nav nav-pills arrow-navtabs nav-secondary gap-2 flex-nowrap nav-scroll nav-scroll flex-grow-1 order-2 order-lg-1"
+        role="tablist">
+        <li class="nav-item flex-shrink-0" role="presentation">
+          <a class="nav-link" data-bs-toggle="tab" href="javascript:void(0);" [class.active]="currentTab === 'filial'"
+            (click)="changeTab('filial')" role="tab">
+            Filiais
+          </a>
+        </li>
+        <li class="nav-item flex-shrink-0" role="presentation">
+          <a class="nav-link" data-bs-toggle="tab" href="javascript:void(0);" [class.active]="currentTab === 'users'"
+            (click)="changeTab('users')" role="tab">
+            Usuários
+          </a>
+        </li>
+        <li class="nav-item flex-shrink-0" role="presentation">
+          <a class="nav-link" data-bs-toggle="tab" href="javascript:void(0);" [class.active]="currentTab === 'cargos'"
+            (click)="changeTab('cargos')" role="tab">
+            Cargos
+          </a>
+        </li>
+        <li class="nav-item flex-shrink-0" role="presentation">
+          <a class="nav-link" data-bs-toggle="tab" href="javascript:void(0);"
+            [class.active]="currentTab === 'categorias'" (click)="changeTab('categorias')" role="tab">
+            Categorias
+          </a>
+        </li>
+        <li class="nav-item flex-shrink-0" role="presentation">
+          <a class="nav-link" data-bs-toggle="tab" href="javascript:void(0);" [class.active]="currentTab === 'planCont'"
+            (click)="changeTab('planCont')" role="tab">
+            Plano de Contas
+          </a>
+        </li>
+        <li class="nav-item flex-shrink-0" role="presentation">
+          <a class="nav-link" data-bs-toggle="tab" href="javascript:void(0);"
+            [class.active]="currentTab === 'acessPerson'" (click)="changeTab('acessPerson')" role="tab">
+            Acessos Personalizados
+          </a>
+        </li>
+        <li class="nav-item flex-shrink-0" role="presentation">
+          <a class="nav-link" data-bs-toggle="tab" href="javascript:void(0);"
+            [class.active]="currentTab === 'centroCusto'" (click)="changeTab('centroCusto')" role="tab">
+            Centro de Custo
+          </a>
+        </li>
+        <li class="nav-item flex-shrink-0" role="presentation">
+          <a class="nav-link" data-bs-toggle="tab" href="javascript:void(0);" [class.active]="currentTab === 'opcPag'"
+            (click)="changeTab('opcPag')" role="tab">
+            Opções de Pagamento
+          </a>
+        </li>
+      </ul>
+
+
+    </div>
+
+    <div class="card">
+      <div class="tab-content">
+
+
+        <div [hidden]="currentTab !== 'filial'" class="tab-pane active" id="filial" role="tabpanel">
+          <div class="card-body">
+
+
+            <div class="mt-1 mb-4 pb-3 border-bottom">
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h5 class="card-title mb-0">Lista de Filiais</h5>
+                    <button type="button" (click)="openModalFilial('new')" class="btn btn-secondary btn-sm">+
+                      Adicionar
+                    </button>
+                  </div>
+                </div>
+                <div class="col-12 col-md-auto">
+                  <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
+                    <div class="search-box" style="min-width: 220px;">
+                      <input type="text" class="form-control form-control-sm search" name="filterFIlial2"
+                        [(ngModel)]="filterFilial.name" placeholder="Pesquisar filial...">
+                      <i class="ri-search-line search-icon"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="table-responsive">
+                  <table class="table table-borderless align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col" class="text-nowrap">ID</th>
+                        <th scope="col" class="text-nowrap">NOME DA FILIAL</th>
+                        <th scope="col" class="text-nowrap d-none d-lg-table-cell">ENDEREÇO</th>
+                        <th scope="col" class="text-nowrap text-end">AÇÕES</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let i of filiais | filterBy: filterFilial">
+                        <td class="text-nowrap">#{{ i.id }}</td>
+                        <td class="text-truncate" style="max-width: 280px;">{{ i.name }}</td>
+                        <td class="d-none d-lg-table-cell text-truncate" style="max-width: 360px;">{{ i.address }}</td>
+                        <td class="text-end">
+                          <ul class="d-inline-flex gap-2 list-unstyled mb-0">
+                            <li>
+                              <a (click)="openModalFilial('edit', i.id)"
+                                class="btn btn-subtle-secondary btn-icon btn-sm">
+                                <i class="ph-pencil"></i>
+                              </a>
+                            </li>
+                            <li>
+                              <a (click)="removeFilial(i.id)"
+                                class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i
+                                  class="ph-trash"></i></a>
+                            </li>
+                          </ul>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+
+        <div [hidden]="currentTab !== 'users'" class="tab-pane active" id="users" role="tabpanel">
+          <div class="card-body">
+
+            <div class="mt-1 mb-4 pb-3 border-bottom">
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h5 class="card-title mb-0">Lista de Usuários</h5>
+                    <button type="button" (click)="openModalUser('new')" class="btn btn-secondary btn-sm">+
+                      Adicionar</button>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-auto">
+                  <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
+                    <button (click)="exportarExcel('users')" class="btn btn-success btn-sm">
+                      <i class="ri-file-excel-2-line ms-2 me-2"></i>Exportar
+                    </button>
+                    <div>
+                      <select class="form-control form-control-sm" id="idCategory" style="min-width: 160px;"
+                        name="statusFilter" (change)="changeStatus()" [(ngModel)]="statusFilter">
+                        <option value="all">Todos</option>
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                      </select>
+                    </div>
+                    <div class="search-box" style="min-width: 220px;">
+                      <input type="text" class="form-control form-control-sm search" name="teste1223212"
+                        [(ngModel)]="filterUser.name" placeholder="Pesquisar usuário...">
+                      <i class="ri-search-line search-icon"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="table-responsive">
+                  <table class="table table-borderless align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col" class="text-nowrap">ID</th>
+                        <th scope="col" class="text-nowrap">NOME</th>
+                        <th scope="col" class="text-nowrap">TELEFONE</th>
+                        <!-- <th scope="col" class="text-nowrap">CARGO</th>-->
+                        <th scope="col" class="text-nowrap d-none d-lg-table-cell">EMAIL</th>
+                        <th scope="col" class="text-nowrap">STATUS</th>
+                        <th scope="col" class="text-nowrap text-end">AÇÕES</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let u of usuarios | filterBy: filterUser ; let i = index; trackBy: trackById">
+                        <td class="text-nowrap">{{ u.id }}</td>
+                        <td class="text-truncate" style="max-width: 220px;">{{ u.name }}</td>
+                        <td class="text-nowrap">{{ u.cellphone }}</td>
+                        <!--<td class="text-nowrap">{{ u.cargo }}</td>-->
+                        <td class="d-none d-lg-table-cell text-truncate" style="max-width: 260px;">{{ u.email }}</td>
+                        <td>
+                          <span class="badge" [ngClass]="!u.hidden ? 'bg-success' : 'bg-secondary'">
+                            {{ !u.hidden ? 'Ativo' : 'Inativo' }}
+                          </span>
+                        </td>
+                        <td class="text-end">
+                          <ul class="d-inline-flex gap-2 list-unstyled mb-0">
+                            <li><a class="btn btn-subtle-primary btn-icon btn-sm" (click)="openCriarCargoModal(u.id)">
+                                <i class="ph-key"></i>
+                              </a></li>
+                            <li><a (click)="openModalUser('edit', u.id)"
+                                class="btn btn-subtle-secondary btn-icon btn-sm"><i class="ph-pencil"></i></a></li>
+                            <li><a class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i
+                                  class="ph-trash"></i></a></li>
+                          </ul>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div [hidden]="currentTab !== 'cargos'" class="tab-pane active" id="cargos" role="tabpanel">
+          <div class="card-body">
+            <div class="mt-1 mb-4 pb-3 border-bottom">
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h5 class="card-title mb-0">Lista de Cargos</h5>
+                    <button type="button" (click)="openModalCargo('new')" class="btn btn-secondary btn-sm">+
+                      Adicionar</button>
+                  </div>
+                </div>
+                <div class="col-12 col-md-auto">
+                  <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
+                    <div class="search-box" style="min-width: 220px;">
+                      <input type="text" class="form-control form-control-sm search" placeholder="Pesquisar cargo...">
+                      <i class="ri-search-line search-icon"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="table-responsive">
+                  <table class="table table-borderless align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col" class="text-nowrap">ID</th>
+                        <th scope="col" class="text-nowrap">NOME DO CARGO</th>
+                        <th scope="col" class="text-nowrap">STATUS</th>
+                        <th scope="col" class="text-nowrap text-end">AÇÕES</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let c of cargos; trackBy: trackByIdCargo">
+                        <td class="text-nowrap">{{ c.id }}</td>
+                        <td class="text-truncate" style="max-width: 300px;">{{ c.name }}</td>
+                        <td>
+                          <span class="badge" [ngClass]="c.status ? 'bg-success' : 'bg-secondary'">
+                            {{ c.status ? 'Ativo' : 'Inativo' }}
+                          </span>
+                        </td>
+                        <td class="text-end">
+                          <ul class="d-inline-flex gap-2 list-unstyled mb-0">
+                            <li><a (click)="openModalCargo('edit', c.id)"
+                                class="btn btn-subtle-secondary btn-icon btn-sm"><i class="ph-pencil"></i></a></li>
+                            <li><a class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"
+                                (click)="removeFilial(c.id)"><i class="ph-trash"></i></a></li>
+                          </ul>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div [hidden]="currentTab !== 'categorias'" class="tab-pane active" id="categorias" role="tabpanel">
+          <div class="card-body">
+
+            <div class="mt-1 mb-4 pb-3 border-bottom">
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h5 class="card-title mb-0">Lista de Categorias</h5>
+                    <button (click)="openModalCategories('new')" type="button" class="btn btn-secondary btn-sm">+
+                      Adicionar</button>
+                  </div>
+                </div>
+                <div class="col-12 col-md-auto">
+                  <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
+                    <button (click)="exportarExcel('categories')" class="btn btn-success btn-sm">
+                      <i class="ri-file-excel-2-line ms-2 me-2"></i>Exportar
+                    </button>
+                    <div class="search-box" style="min-width: 220px;">
+                      <input type="text" class="form-control form-control-sm search" name="categorie2e"
+                        [(ngModel)]="filterCategory.description" placeholder="Pesquisar categoria...">
+                      <i class="ri-search-line search-icon"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="table-responsive">
+                  <table class="table table-borderless align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col" class="text-nowrap">ID</th>
+                        <th scope="col" class="text-nowrap">Descrição</th>
+                        <th scope="col" class="text-nowrap">STATUS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let c of categories | filterBy: filterCategory"
+                        (click)="openModalCategories('edit', c.id)" class="cursor-pointer">
+                        <td class="text-nowrap">{{ c.id }}</td>
+                        <td class="text-truncate" style="max-width: 400px;">{{ c.description }}</td>
+                        <td>
+                          <span class="badge" [ngClass]="c.status ? 'bg-success' : 'bg-secondary'">
+                            {{ c.status ? 'Ativo' : 'Inativo' }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div [hidden]="currentTab !== 'planCont'" class="tab-pane active" id="planCont" role="tabpanel">
+          <div class="card-body">
+
+            <div class="mt-1 mb-4 pb-3 border-bottom">
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h5 class="card-title mb-0">Lista de Plano de Contas</h5>
+                    <button (click)="openModalPlanAcc('new')" type="button" class="btn btn-secondary btn-sm">+
+                      Adicionar</button>
+                  </div>
+                </div>
+                <div class="col-12 col-md-auto">
+                  <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
+                    <button (click)="exportarExcel('planAcc')" class="btn btn-success btn-sm">
+                      <i class="ri-file-excel-2-line ms-2 me-2"></i>Exportar
+                    </button>
+                    <div class="search-box" style="min-width: 220px;">
+                      <input type="text" class="form-control form-control-sm search" placeholder="Pesquisar...">
+                      <i class="ri-search-line search-icon"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="table-responsive">
+                  <table class="table table-borderless align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col" class="text-nowrap">ID</th>
+                        <th scope="col" class="text-nowrap">CONTA</th>
+                        <th scope="col" class="text-nowrap">DESCRIÇÃO</th>
+                        <th scope="col" class="text-nowrap d-none d-lg-table-cell">ID CATEGORIA</th>
+                        <th scope="col" class="text-nowrap">TIPO CONTA</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let c of planAcc" (click)="openModalPlanAcc('edit', c.id)" class="cursor-pointer">
+                        <td class="text-nowrap">{{ c.id }}</td>
+                        <td class="text-nowrap">{{ c.account }}</td>
+                        <td class="text-truncate" style="max-width: 360px;">{{ c.description }}</td>
+                        <td class="d-none d-lg-table-cell text-nowrap">{{ c.idCategory }}</td>
+                        <td class="text-nowrap">{{ c.typeAccount }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div [hidden]="currentTab !== 'acessPerson'" class="tab-pane active" id="acessPerson" role="tabpanel">
+          <div class="card-body">
+
+            <div class="mt-1 mb-4 pb-3 border-bottom">
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h5 class="card-title mb-0">Lista de Acessos Personalizados</h5>
+                    <button (click)="criarCargo.show()" type="button" class="btn btn-secondary btn-sm">+
+                      Adicionar</button>
+                  </div>
+                </div>
+                <div class="col-12 col-md-auto">
+                  <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
+                    <button class="btn btn-success btn-sm">
+                      <i class="ri-file-excel-2-line ms-2 me-2"></i>Exportar
+                    </button>
+                    <div class="search-box" style="min-width: 220px;">
+                      <input type="text" class="form-control form-control-sm search" placeholder="Pesquisar...">
+                      <i class="ri-search-line search-icon"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="table-responsive">
+                  <table class="table table-borderless align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col" class="text-nowrap">ID</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="text-nowrap">{{ 1231 }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div [hidden]="currentTab !== 'centroCusto'" class="tab-pane active" id="centroCusto" role="tabpanel">
+          <div class="card-body">
+
+            <div class="mt-1 mb-4 pb-3 border-bottom">
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h5 class="card-title mb-0">Lista de Centro de Custos</h5>
+                    <button (click)="openModalCC('new')" type="button" class="btn btn-secondary btn-sm">+
+                      Adicionar</button>
+                  </div>
+                </div>
+                <div class="col-12 col-md-auto">
+                  <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
+                    <button (click)="exportarExcel('CC')" class="btn btn-success btn-sm">
+                      <i class="ri-file-excel-2-line ms-2 me-2"></i>Exportar
+                    </button>
+                    <div class="search-box" style="min-width: 220px;">
+                      <input type="text" class="form-control form-control-sm search" placeholder="Pesquisar...">
+                      <i class="ri-search-line search-icon"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="table-responsive">
+                  <table class="table table-borderless align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col" class="text-nowrap">ID</th>
+                        <th scope="col" class="text-nowrap">NOME</th>
+                        <th scope="col" class="text-nowrap">STATUS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let cc of centroCusto" (click)="openModalCC('edit', cc.id)" class="cursor-pointer">
+                        <td class="text-nowrap">{{ cc.id }}</td>
+                        <td class="text-truncate" style="max-width: 360px;">{{ cc.name }}</td>
+                        <td>
+                          <span class="badge" [ngClass]="cc.status ? 'bg-success' : 'bg-secondary'">
+                            {{ cc.status ? 'Ativo' : 'Inativo' }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div [hidden]="currentTab !== 'opcPag'" class="tab-pane active" id="opcPag" role="tabpanel">
+          <div class="card-body">
+
+            <div class="mt-1 mb-4 pb-3 border-bottom">
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md">
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h5 class="card-title mb-0">Lista de Opções de Pagamento</h5>
+                    <button (click)="openModalFF('new')" type="button" class="btn btn-secondary btn-sm">+
+                      Adicionar</button>
+                  </div>
+                </div>
+                <div class="col-12 col-md-auto">
+                  <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
+                    <div class="search-box" style="min-width: 220px;">
+                      <input type="text" class="form-control form-control-sm search" placeholder="Pesquisar...">
+                      <i class="ri-search-line search-icon"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="table-responsive">
+                  <table class="table table-borderless align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col" class="text-nowrap">ID</th>
+                        <th scope="col" class="text-nowrap">Nome</th>
+                        <th scope="col" class="text-nowrap">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let ff of formasPagamento" (click)="openModalFF('edit', ff.id)"
+                        class="cursor-pointer">
+                        <td class="text-nowrap">{{ ff.id }}</td>
+                        <td class="text-truncate" style="max-width: 360px;">{{ ff.name }}</td>
+                        <td>
+                          <span class="badge" [ngClass]="ff.canParceling ? 'bg-success' : 'bg-secondary'">
+                            {{ ff.canParceling ? 'Ativo' : 'Inativo' }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--end row-->
+
+<div bsModal #modalFilial="bs-modal" class="modal fade" id="showModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered custom-modal" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-light p-3">
+        <h5 class="modal-title" id="exampleModalLabel">{{ modeFilial === 'edit' ? 'Editar filial' : 'Nova filial' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="modalFilial.hide()"></button>
+      </div>
+      <form class="tablelist-form" novalidate autocomplete="off">
+        <div class="modal-body">
+          <div id="alert-error-msg" class="d-none alert alert-danger py-2"></div>
+          <div class="mt-1">
+            <div class="hstack mt-1">
+              <h6 class="card-title">Informações da Filial</h6>
+
+            </div>
+
+
+            <div class="my-3">
+
+              <div class="row g-3 my-3">
+                <div class="col-12 col-md-6">
+                  <label for="filial-nome" class="form-label">Nome Filial <span class="text-danger">*</span></label>
+                  <input id="filial-nome" name="name" [(ngModel)]="filialForm.name" [disabled]="disableInputs"
+                    type="text" class="form-control" placeholder="Informe o nome completo" autocomplete="organization"
+                    required />
+                </div>
+
+                <div class="col-6 col-md-3">
+                  <label for="filial-fone" class="form-label">Telefone Filial <span class="text-danger">*</span></label>
+                  <input id="filial-fone" name="phone" [(ngModel)]="filialForm.phone" [disabled]="disableInputs"
+                    type="tel" class="form-control" placeholder="(11) 98765-4321" inputmode="tel" autocomplete="tel"
+                    required />
+                </div>
+
+              </div>
+
+              <div class="row g-3 my-3">
+                <div class="col-12 col-md-6">
+                  <label for="filial-end" class="form-label">Endereço Completo <span
+                      class="text-danger">*</span></label>
+                  <input id="filial-end" name="address" [(ngModel)]="filialForm.address" [disabled]="disableInputs"
+                    type="text" class="form-control" placeholder="Digite o nome da rua" autocomplete="address-line1"
+                    required />
+                </div>
+
+
+              </div>
+
+
+
+            </div>
+
+
+
+          </div>
+
+
+        </div>
+        <div class="modal-footer">
+          <div class="hstack justify-content-end">
+            <button *ngIf="modeFilial ==='edit'" (click)="updateFilial()" type="button" class="btn btn-success"
+              id="add-btn">Salvar atualização</button>
+            <button *ngIf="modeFilial !=='edit'" (click)="addFilial()" type="button" class="btn btn-success"
+              id="add-btn">Salvar nova filial</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div bsModal #modalUsers="bs-modal" class="modal fade" id="showModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered custom-modal" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-light p-3">
+        <h5 class="modal-title" id="exampleModalLabel" *ngIf="modeUser !== 'edit'">Novo Usuário</h5>
+        <h5 class="modal-title" id="exampleModalLabel" *ngIf="modeUser === 'edit'">Editar Usuário</h5>
+        <button type="button" class="btn-close" (click)="modalUsers.hide()"></button>
+      </div>
+
+      <!-- Reactive Form -->
+      <form class="tablelist-form" novalidate autocomplete="off">
+        <div class="modal-body">
+          <div id="alert-error-msg" class="d-none alert alert-danger py-2"></div>
+
+          <div class="mt-1">
+            <div class="my-3">
+
+              <div class="row g-3 my-3">
+                <div class="col-12 col-md-5">
+                  <label for="user-cpf" class="form-label">CPF <span class="text-danger">*</span></label>
+                  <input id="user-cpf" [disabled]="disableInputs" [(ngModel)]="userForm.cpf" type="text"
+                    class="form-control" placeholder="Ex: 123.456.789-00" name="cpf" inputmode="numeric"
+                    autocomplete="off" />
+                </div>
+                <div class="col-12 col-md-7">
+                  <label for="user-nome" class="form-label">Nome Completo <span class="text-danger">*</span></label>
+                  <input id="user-nome" [disabled]="disableInputs" [(ngModel)]="userForm.name" type="text"
+                    class="form-control" placeholder="Informe o nome completo" name="nomeCompleto"
+                    autocomplete="name" />
+                </div>
+              </div>
+
+
+
+              <div class="row g-3 my-3">
+                <div class="col-12 col-md-4">
+                  <label for="user-phone" class="form-label">Telefone <span class="text-danger">*</span></label>
+                  <input id="user-phone" [disabled]="disableInputs" [(ngModel)]="userForm.cellphone" type="tel"
+                    class="form-control" placeholder="(11) 99999-9999" name="telefone" inputmode="tel"
+                    autocomplete="tel" />
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label for="user-adm" class="form-label">Data de admissão <span class="text-danger">*</span></label>
+                  <input id="user-adm" [disabled]="disableInputs" [(ngModel)]="userForm.admissionDate" type="text"
+                    class="form-control" mwlFlatpickr [altInput]="true" [convertModelValue]="true" name="dataAdmissao"
+                    placeholder="Selecione a data" autocomplete="off" />
+                </div>
+
+
+
+              </div>
+
+              <div class="row g-3 my-3">
+                <div class="col-12 col-md-12">
+                  <label for="user-end" class="form-label">Endereço completo <span class="text-danger">*</span></label>
+                  <input id="user-end" [disabled]="disableInputs" [(ngModel)]="userForm.address" type="text"
+                    class="form-control" placeholder="Digite o endereço completo" name="endereco"
+                    autocomplete="address-line1" />
+                </div>
+              </div>
+
+
+
+              <hr class="my-2 pb-1" />
+
+              <h6 class="card-title pb-2">Dados de acesso</h6>
+              <div class="row g-3 my-3">
+                <div class="col-12 col-md-6">
+                  <label for="user-email" class="form-label">E-mail <span class="text-danger">*</span></label>
+                  <input id="user-email" [disabled]="disableInputs" [(ngModel)]="userForm.email" type="email"
+                    class="form-control" placeholder="usuario@dominio.com" name="email" autocomplete="email" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label for="user-pass" class="form-label">Senha <span class="text-danger">*</span></label>
+                  <input id="user-pass" [disabled]="disableInputs" [(ngModel)]="userForm.password" type="password"
+                    class="form-control" placeholder="Mínimo de 6 caracteres" name="senha"
+                    autocomplete="new-password" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label for="user-cargo" class="form-label">Cargo <span class="text-danger">*</span></label>
+                  <select multiple id="user-cargo" class="form-control" name="cargoId"
+                    [(ngModel)]="userForm.jobpositionId">
+                    <option value="" disabled selected>Selecione...</option>
+                    <option *ngFor="let c of cargosSelect" [value]="c.id">{{ c.name }}</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label for="user-filial" class="form-label">Filial <span class="text-danger">*</span></label>
+                  <select id="user-filial" class="form-control" name="filialId" [(ngModel)]="userForm.filial">
+                    <option value="" disabled selected>Selecione...</option>
+                    <option *ngFor="let f of filiaisSelect" [value]="f.id">{{ f.name }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-check mt-2 mb-4">
+                <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" name="fidsdslialId"
+                  [(ngModel)]="userForm.hidden">
+                <label class="form-check-label" for="flexCheckDefault">
+                  Oculta usuário
+                </label>
+              </div>
+              <br>
+              <div class="row mt-3">
+                <div class="col-6">
+                  <label class="form-label">Gerente</label>
+                  <select class="form-control" name="managerId" [(ngModel)]="userForm.managerId">
+                    <option *ngFor="let c of gerentes" [value]="c.id">{{c.name}}</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label for="customername-field" class="form-label">Coordenador
+                    <span class="text-danger">*</span></label>
+                  <select class="form-control" name="venda.coordenatorId" [(ngModel)]="userForm.coordenatorId">
+                    <option *ngFor="let c of coordenatorsAll" [value]="c.id">{{c.name}}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+
+          <div class="hstack justify-content-end">
+            <button (click)="addUser()" class="btn btn-success" id="add-btn" *ngIf="modeUser !== 'edit'">
+              Salvar
+            </button>
+            <button (click)="patchUser()" class="btn btn-success" id="add-btn" *ngIf="modeUser === 'edit'">
+              Salvar Alterações
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div bsModal #modalCargo="bs-modal" class="modal fade" id="showModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered custom-modal" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-light p-3">
+        <h5 class="modal-title" id="exampleModalLabel">Novo Cargo</h5>
+        <button type="button" class="btn-close" (click)="modalCargo.hide()"></button>
+      </div>
+
+      <form class="tablelist-form" novalidate autocomplete="off">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">Nome do cargo <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" placeholder="Ex.: Atendente" name="nome"
+                [(ngModel)]="cargoForm.name" [disabled]="disableInputs" />
+
+            </div>
+
+            <div class="col-6">
+              <label class="form-label">Nível de acesso <span class="text-danger">*</span></label>
+              <select class="form-control" name="nivelAcesso" [disabled]="disableInputs">
+                <option value="" disabled>Selecione...</option>
+                <option *ngFor="let n of niveisSelect" [value]="n.label">{{ n.label }}</option>
+              </select>
+
+            </div>
+
+            <div class="row g-3 my-3">
+              <div class="col-12 col-md-4">
+                <label for="user-phone" class="form-label">Comissionado? <span class="text-danger">*</span></label>
+                <select [(ngModel)]="cargoForm.commissioned" class="form-control" name="commissioned">
+                  <option value="" disabled selected>Selecione...</option>
+                  <option value="true">SIM</option>
+                  <option value="false">NÃO</option>
+                </select>
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label for="user-adm" class="form-label">Tipo de Comissão <span class="text-danger">*</span></label>
+                <select [(ngModel)]="cargoForm.tpCommissioned" class="form-control" name="tpCommissioned">
+                  <option value="" disabled selected>Selecione...</option>
+                  <option value="VARIAVEL">VARIAVEL</option>
+                  <option value="FIXA">FIXA</option>
+                </select>
+              </div>
+
+
+
+              <div class="col-12 col-md-4">
+                <label for="cargo-valueCommissioned" class="form-label">
+                  Valor {{ cargoForm.tpCommissioned === 'FIXA' ? '(R$)' : cargoForm.tpCommissioned === 'VARIAVEL' ?
+                  '(%)' : '' }}
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text" *ngIf="cargoForm.tpCommissioned === 'FIXA'">R$</span>
+                  <input id="user-valueCommissioned" class="form-control" type="number" [step]="0.01" [min]="0"
+                    [max]="cargoForm.tpCommissioned === 'VARIAVEL' ? 100 : null"
+                    [placeholder]="cargoForm.tpCommissioned === 'FIXA' ? '0,00' : (cargoForm.tpCommissioned === 'VARIAVEL' ? '0 a 100' : 'Selecione o tipo')"
+                    [(ngModel)]="cargoForm.valueCommissioned" name="valueCommissioned"
+                    [disabled]="cargoForm.tpCommissioned !== 'VARIAVEL' && cargoForm.tpCommissioned != 'FIXA'">
+                  <span class="input-group-text" *ngIf="cargoForm.tpCommissioned === 'VARIAVEL'">%</span>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Descrição (opcional)</label>
+              <textarea rows="3" class="form-control" placeholder="Resuma as responsabilidades" name="descricao"
+                [disabled]="disableInputs"></textarea>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label d-flex align-items-center gap-2">
+                <input type="checkbox" [(ngModel)]="cargoForm.status" name="status" [disabled]="disableInputs" />
+                Ativo
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="hstack justify-content-end">
+            <button (click)="addCargo()" type="submit" class="btn btn-success" id="add-btn">
+              Salvar
+            </button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<div bsModal #modalCategories="bs-modal" class="modal fade" id="showModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered custom-modal" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-light p-3">
+        <h5 *ngIf="modeCategoria === 'new'" class="modal-title" id="exampleModalLabel">Nova Categoria</h5>
+        <h5 *ngIf="modeCategoria === 'edit'" class="modal-title" id="exampleModalLabel">Editar Categoria</h5>
+        <button type="button" class="btn-close" (click)="modalCategories.hide()"></button>
+      </div>
+
+      <form class="tablelist-form" novalidate autocomplete="off">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">Nome da categoria <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" placeholder="Ex.: " name="nome "
+                [(ngModel)]="categoriesForm.description" [disabled]="disableInputs" />
+
+            </div>
+
+            <div class="col-6">
+              <label class="form-label">Status <span class="text-danger">*</span></label>
+              <select class="form-control" name="nivelAcesso" [(ngModel)]="categoriesForm.status"
+                [disabled]="disableInputs">
+                <option [ngValue]="null" disabled>Selecione...</option>
+                <option [ngValue]="true">Ativo</option>
+                <option [ngValue]="false">Inativo</option>
+              </select>
+
+            </div>
+
+
+
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="hstack justify-content-end">
+            <button *ngIf="modeCategoria === 'new'" (click)="addCategories()" class="btn btn-success" id="add-btn">
+              Criar categoria
+            </button>
+            <button *ngIf="modeCategoria != 'new'" (click)="updateCategories()" class="btn btn-success" id="add-btn">
+              Salvar alteração
+            </button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<div bsModal #modalAccPlan="bs-modal" class="modal fade" id="showModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered custom-modal" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-light p-3">
+        <h5 class="modal-title" id="exampleModalLabel">Novo Plano de Conta</h5>
+        <button type="button" class="btn-close" (click)="modalAccPlan.hide()"></button>
+      </div>
+
+      <form class="tablelist-form" novalidate autocomplete="off">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">Conta <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" placeholder="Ex.: " name="account "
+                [(ngModel)]="planAccForm.account" [disabled]="disableInputs" />
+
+            </div>
+
+            <div class="col-6">
+              <label class="form-label">Descrição <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" placeholder="Ex.: " name="descricao"
+                [(ngModel)]="planAccForm.description" [disabled]="disableInputs" />
+
+            </div>
+
+            <div class="col-6">
+              <label class="form-label">Categoria <span class="text-danger">*</span></label>
+              <select class="form-control" name="categories" [(ngModel)]="planAccForm.idCategory"
+                [disabled]="disableInputs">
+                <option value="" disabled>Selecione...</option>
+                <option *ngFor="let c of categories" [value]="c.id">{{c.description}}</option>
+              </select>
+
+            </div>
+
+            <div class="col-6">
+              <label class="form-label">Tipo de Conta <span class="text-danger">*</span></label>
+              <select class="form-control" name="tipocinta" [(ngModel)]="planAccForm.typeAccount"
+                [disabled]="disableInputs">
+                <option value="" disabled>Selecione...</option>
+                <option [value]="'RECEITA'">Receita</option>
+                <option [value]="'DISTRIB'">Distrib</option>
+                <option [value]="'DESPESA'">Despesa</option>
+              </select>
+
+            </div>
+
+
+
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="hstack justify-content-end">
+            <button (click)="addPlanAcc()" class="btn btn-success" id="add-btn">
+              Salvar
+            </button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<div bsModal #modalCC="bs-modal" class="modal fade" id="showModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered custom-modal" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-light p-3">
+        <h5 class="modal-title" id="exampleModalLabel">Novo Centro de Custos</h5>
+        <button type="button" class="btn-close" (click)="modalCC.hide()"></button>
+      </div>
+
+      <form class="tablelist-form" novalidate autocomplete="off">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">Nome do Centro de Custos <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" placeholder="Ex.: " name="nome "
+                [(ngModel)]="centroCustoForm.name" [disabled]="disableInputs" />
+
+            </div>
+
+            <div class="col-6">
+              <label class="form-label">Status <span class="text-danger">*</span></label>
+              <select class="form-control" name="nivelAcesso" [(ngModel)]="centroCustoForm.status"
+                [disabled]="disableInputs">
+                <option value="" disabled>Selecione...</option>
+                <option [value]="true">Ativo</option>
+                <option [value]="false">Inativo</option>
+              </select>
+
+            </div>
+
+
+
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="hstack justify-content-end">
+            <button (click)="addCC()" class="btn btn-success" id="add-btn">
+              Salvar
+            </button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<div bsModal #modalFF="bs-modal" class="modal fade" id="showModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered custom-modal" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-light p-3">
+        <h5 class="modal-title" id="exampleModalLabel">{{titleFF}} Forma de Pagamento</h5>
+        <button type="button" class="btn-close" (click)="modalFF.hide()"></button>
+      </div>
+
+      <form class="tablelist-form" novalidate autocomplete="off">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">Nome da Forma de Pagamento <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" placeholder="Ex.: " name="nome "
+                [(ngModel)]="formasPagamentoForm.name" [disabled]="disableInputs" />
+
+            </div>
+
+            <div class="col-6">
+              <label class="form-label">Permite Parcelamento <span class="text-danger">*</span></label>
+              <select class="form-control" name="nivelAcesso" [(ngModel)]="formasPagamentoForm.canParceling">
+                <option value="" disabled>Selecione...</option>
+                <option [value]="true">Ativo</option>
+                <option [value]="false">Inativo</option>
+              </select>
+
+            </div>
+
+
+
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="hstack justify-content-end">
+            <button *ngIf="titleFF === 'Nova'" (click)="addFF()" class="btn btn-success" id="add-btn">
+              Adicionar
+            </button>
+            <button *ngIf="titleFF === 'Editar'" (click)="editFF()" class="btn btn-success" id="add-btn">
+              Salvar Edição
+            </button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+
+<div bsModal #criarCargo="bs-modal" class="modal fade" id="criarCargoModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content custom-modal-content">
+      <div class="modal-header bg-light p-3 sticky-top">
+        <h5 class="modal-title">Novo Acesso Personalizado</h5>
+        <button type="button" class="btn-close" (click)="criarCargo.hide()"></button>
+      </div>
+
+      <div class="modal-body modal-scroll">
+        <form>
+          <!-- Nome -->
+          <div class="mb-3">
+            <label for="nomeCargo" class="form-label fw-bold">Nome <span class="text-danger">*</span></label>
+            <input type="text" id="nomeCargo" class="form-control" name="nomeCargo" placeholder="Digite o nome do cargo"
+              required />
+          </div>
+
+          <!-- Permissões -->
+          <h5 class="fw-bold mt-4">Permissões</h5>
+
+          <!-- Usuários -->
+          <div class="mt-3">
+            <h6 class="fw-semibold">Dashboard</h6>
+            <div class="row">
+              <div class="col-md-4" *ngFor="let perm of permissoes.dashboard">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [id]="perm.key" [name]="perm.key"
+                    [(ngModel)]="perm.checked" />
+                  <label class="form-check-label" [for]="perm.key">
+                    {{ perm.label | translate  }} 
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cargos -->
+          <div class="mt-3">
+            <h6 class="fw-semibold">Vendas</h6>
+            <div class="row">
+              <div class="col-md-4" *ngFor="let perm of permissoes.vendas">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [id]="perm.key" name="{{ perm.key }}"
+                    [(ngModel)]="perm.checked" />
+                  <label class="form-check-label" [for]="perm.key">  {{ perm.label | translate  }} </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filiais -->
+          <div class="mt-3">
+            <h6 class="fw-semibold">Financeiro</h6>
+            <div class="row">
+              <div class="col-md-4" *ngFor="let perm of permissoes.financeiro">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [id]="perm.key" name="{{ perm.key }}"
+                    [(ngModel)]="perm.checked" />
+                  <label class="form-check-label" [for]="perm.key">  {{ perm.label | translate  }} </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <h6 class="fw-semibold">Empreendimentos</h6>
+            <div class="row">
+              <div class="col-md-4" *ngFor="let perm of permissoes.empreendimentos">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [id]="perm.key" name="{{ perm.key }}"
+                    [(ngModel)]="perm.checked" />
+                  <label class="form-check-label" [for]="perm.key">  {{ perm.label | translate  }} </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <h6 class="fw-semibold">Gerais</h6>
+            <div class="row">
+              <div class="col-md-4" *ngFor="let perm of permissoes.gerais">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [id]="perm.key" name="{{ perm.key }}"
+                    [(ngModel)]="perm.checked" />
+                  <label class="form-check-label" [for]="perm.key">  {{ perm.label | translate  }} </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <h6 class="fw-semibold">Outros</h6>
+            <div class="row">
+              <div class="col-md-4" *ngFor="let perm of permissoes.outros">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [id]="perm.key" name="{{ perm.key }}"
+                    [(ngModel)]="perm.checked" />
+                  <label class="form-check-label" [for]="perm.key">  {{ perm.label | translate  }} </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="modal-footer sticky-bottom">
+        <button class="btn btn-secondary" (click)="criarCargo.hide()">Cancelar</button>
+        <button class="btn btn-primary" (click)="savePermissions()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>

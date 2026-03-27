@@ -1,0 +1,100 @@
+.sale-new-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pdf-page {
+  background: #ffffff;
+  padding: 24px 28px;
+  border-radius: 10px;
+  box-shadow: 0 0 0.8rem rgba(0, 0, 0, 0.08);
+}
+
+.pdf-header {
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.logo-pdf {
+  height: 40px;
+}
+
+.section-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  color: #555;
+}
+
+.sub-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #666;
+}
+
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+input.form-control,
+select.form-select {
+  font-size: 0.85rem;
+}
+
+.commission-table thead th {
+  background: #f3f3f3;
+  border-bottom: none;
+}
+
+.resumo-card {
+  background: #3e3e3e;
+  color: #fff;
+}
+
+.resumo-table thead th {
+  background: #3e3e3e;
+  color: #f5f5f5;
+  border: none;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
+.resumo-table tbody td {
+  background: #4a4a4a;
+  color: #fff;
+  border-top: 1px solid #5c5c5c;
+  font-size: 0.85rem;
+}
+
+.assinaturas .assinatura-line {
+  border-bottom: 1px solid #000;
+  margin-bottom: 4px;
+  height: 24px;
+}
+
+.is-invalid {
+  border-color: #dc3545;
+}
+
+.invalid-feedback {
+  font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .pdf-page {
+    padding: 16px;
+  }
+}
+
+.bg-secondary{
+  background-color: #666;
+  text-align: center;
+
+}

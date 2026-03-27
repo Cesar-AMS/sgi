@@ -1,0 +1,161 @@
+<div class="container my-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h4 class="m-0">Contas Contábeis • por mês</h4>
+
+    <div class="d-flex gap-2">
+      <div class="input-group">
+        <span class="input-group-text">Mês</span>
+        <input class="form-control" type="month" [(ngModel)]="months" name="months" (change)="loadSummary()">
+      </div>
+      <select class="form-select" [(ngModel)]="type" name="type" (change)="loadSummary()" style="max-width: 180px">
+        <option value="all">Receita + Despesa</option>
+        <option value="revenue">Somente Receita</option>
+        <option value="expense">Somente Despesa</option>
+      </select>
+      <input class="form-control" placeholder="ID Centro de Custo (opcional)" type="number"
+             [(ngModel)]="costCenterId" name="cc" (keyup.enter)="loadSummary()" style="max-width: 220px">
+      <input class="form-control" placeholder="ID Categoria (opcional)" type="number"
+             [(ngModel)]="categoryId" name="cat" (keyup.enter)="loadSummary()" style="max-width: 200px">
+      <button class="btn btn-outline-primary" (click)="exportPDF()">Exportar PDF</button>
+      <button class="btn btn-outline-secondary" (click)="exportCSV()">Exportar CSV</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="alert alert-info">Carregando…</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:110px">Conta</th>
+            <th>Descrição</th>
+            <th style="width:110px">Tipo</th>
+            <th class="text-end" style="width:120px">Receita</th>
+            <th class="text-end" style="width:120px">Despesa</th>
+            <th class="text-end" style="width:120px">Líquido</th>
+            <th class="text-end" style="width:150px">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let it of items">
+            <td class="fw-semibold">{{ it.accountCode }}</td>
+            <td>{{ it.accountName }}</td>
+            <td>
+              <span class="badge" [class.bg-success]="it.section==='RECEITA'" [class.bg-danger]="it.section==='DESPESA'">
+                {{ it.section }}
+              </span>
+            </td>
+            <td class="text-end">{{ fmt(it.revenue) }}</td>
+            <td class="text-end">{{ fmt(it.expense) }}</td>
+            <td class="text-end" [class.text-success]="it.net>=0" [class.text-danger]="it.net<0">{{ fmt(it.net) }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary" (click)="openDetail(it)">Ver lançamentos</button>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-light">
+          <tr>
+            <th colspan="3" class="text-end">Totais</th>
+            <th class="text-end">{{ fmt(totalRevenue) }}</th>
+            <th class="text-end">{{ fmt(totalExpense) }}</th>
+            <th class="text-end">{{ fmt(totalNet) }}</th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Drawer/Offcanvas simplificado -->
+<div class="offcanvas offcanvas-end show" tabindex="-1" *ngIf="showDetail"
+     style="visibility: visible; width: 900px; position: fixed; background: #fff; border-left: 1px solid #eee;">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">{{ detailTitle }}</h5>
+    <button type="button" class="btn-close text-reset" (click)="closeDetail()"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div *ngIf="detailLoading" class="alert alert-info">Carregando…</div>
+
+    <div class="table-responsive" *ngIf="!detailLoading">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:110px">Data</th>
+            <th style="width:110px">Tipo</th>
+            <th>Descrição</th>
+            <th style="width:160px">Centro de Custo</th>
+            <th class="text-end" style="width:120px">Valor</th>
+            <th class="text-end" style="width:140px">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of detailItems">
+            <td>{{ e.date | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="badge" [class.bg-success]="e.kind==='RECEIVABLE'" [class.bg-danger]="e.kind==='PAYABLE'">
+                {{ e.kind === 'RECEIVABLE' ? 'Recebível' : 'Pagável' }}
+              </span>
+            </td>
+            <td>{{ e.description }}</td>
+            <td>{{ e.costCenterName || e.costCenterId }}</td>
+            <td class="text-end">{{ fmt(e.amount) }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-secondary" (click)="openReclass(e)">Reclassificar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modal reclass -->
+    <div class="modal d-block" tabindex="-1" *ngIf="reclassOpen" style="background: rgba(0,0,0,.4);">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Reclassificar lançamento</h5>
+            <button type="button" class="btn-close" (click)="closeReclass()"></button>
+          </div>
+          <div class="modal-body">
+            <div *ngIf="reclassTarget" class="mb-3 small text-muted">
+              <div><b>Conta:</b> {{ reclassTarget?.accountCode }} — {{ reclassTarget?.accountName }}</div>
+              <div><b>Centro atual:</b> {{ reclassTarget?.costCenterName || reclassTarget?.costCenterId }}</div>
+              <div><b>Valor:</b> {{ fmt(reclassTarget?.amount ?? 0) }}</div>
+              <div><b>Descrição:</b> {{ reclassTarget?.description }}</div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Novo Centro de Custo</label>
+                <select class="form-select" [(ngModel)]="reclass.costCenterId" name="cc">
+                  <option *ngFor="let c of costCenters" [ngValue]="c.id">{{ c.name }}</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Nova Conta (opcional)</label>
+                <select class="form-select" [(ngModel)]="reclass.accountId" name="acc">
+                  <option [ngValue]="null">— manter —</option>
+                  <option *ngFor="let a of planAcc" [ngValue]="a.id">{{ a.account }} — {{ a.description }}</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Motivo (opcional)</label>
+                <textarea class="form-control" rows="2" [(ngModel)]="reclass.reason" name="reason"
+                          placeholder="Ex.: lançamento classificado na conta errada"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-light" (click)="closeReclass()">Cancelar</button>
+            <button class="btn btn-primary" [disabled]="saving || !reclass.costCenterId" (click)="submitReclass()">
+              {{ saving ? 'Salvando…' : 'Salvar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /Modal -->
+  </div>
+</div>

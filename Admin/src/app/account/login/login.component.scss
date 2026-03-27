@@ -1,0 +1,239 @@
+@import url('https://fonts.googleapis.com/css?family=Arima+Madurai&display=swap');
+
+.bck-image {
+  position: relative;
+  background-image: url('https://img.freepik.com/fotos-premium/o-proprietario-desbloqueia-a-chave-da-casa-da-nova-casa-agentes-imobiliarios-agentes-de-vendas_112699-358.jpg?semt=ais_hybrid&w=740&q=80'); /* ✅ Altere o caminho */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 100vh; /* ou altura desejada */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Camada azul translúcida */
+.bck-image .overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(3, 78, 162, 0.5); /* azul com 50% opacidade */
+  z-index: 1;
+}
+
+/* Garante que o texto fique por cima do overlay */
+.bck-image .display-4 {
+  position: relative;
+  z-index: 2;
+  color: white;
+  text-align: center;
+}
+
+.tmz {
+    width: 100px;
+    height: 60px;
+}
+
+.btns {
+    background-color: #00ade2 !important;
+}
+
+
+.bem-vindo {
+  font-size: 48px;
+  font-family: 'Arial Black';
+  color: #fff;
+  max-width: 600px;
+  line-height: 1.2;
+}
+
+.bem-vindo span {
+  color: #b3e5ff;
+}
+
+.bemVi {
+    padding-top: 42vh;
+    padding-left: 14vh;
+}
+
+.bemVi2 {
+    font-family: 'Pacifico', cursive;
+    font-family: 'Roboto', sans-serif;
+    font-family: 'Rubik', sans-serif;
+}
+
+//57133
+.testet {
+    font-family: 'Roboto', sans-serif;
+    font-family: 'Rubik', sans-serif;
+    font-weight: 600;
+    color: #004C63;
+}
+
+.colOne {
+    //  background-color: #004C63; 
+    height: 100vh;
+}
+
+.colTwo {
+    width: 100%;
+    padding: 20px 50px 50px 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hireSupport {
+    cursor: pointer;
+    color: #004C63;
+    font-weight: 200;
+}
+
+.formGroup {
+    margin-top: 40px;
+}
+
+.labelOne {
+    font-size: 12px;
+}
+
+.spacingInInput {
+    padding: 10px;
+}
+
+.spacingInEmailparaSenha {
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+
+.shape {
+    width: 50px;
+    height: 50px;
+    background-color: blue;
+    position: relative;
+    transition: transform 0.5s;
+}
+
+.plus {
+    transform: rotate(45deg);
+}
+
+//mobile
+@media (max-width: 576px) {
+
+    .fundoMobile{
+        background: #0000cd !important;
+    }
+
+
+    .colOne {
+        display: none
+    }
+
+    .colTwo {
+        height: 100vh;
+        padding: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: center !important;
+        align-items: center !important;
+
+    }
+
+    .divMobile {
+        background-color: white;
+        padding: 20px;
+        border-radius: 20px;
+    }
+
+    .marginImg {
+        width: 80%;
+        height: 80%;
+    }
+}
+
+@media screen and (min-height: 1025px) {
+    .bem-vindo {
+        font-size: 80px;
+        max-width: 700px;
+    }
+
+    .testet {
+        font-size: 50px;
+    }
+
+    .tamSm {
+        font-size: 14px;
+    }
+
+    .labelOne {
+        font-size: 16px;
+    }
+
+
+}
+
+
+.alertB {
+    margin-top: 20px;
+    margin-bottom: 5vh;
+}
+
+
+
+
+/* ===== Modal custom (sem JS do Bootstrap) ===== */
+.custom-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;          /* acima do conteúdo */
+  outline: none;
+}
+
+.custom-modal-dialog {
+  width: 100%;
+  max-width: 520px;
+  margin: 1rem;
+  transform: translateY(0); /* pronto para animação se quiser */
+}
+
+.custom-modal-content {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.custom-modal-header,
+.custom-modal-footer {
+  padding: 1rem 1.25rem;
+  background: #fff;
+}
+
+.custom-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #eee;
+}
+
+.custom-modal-body {
+  padding: 1.25rem;
+}
+
+.btn-close {
+  box-shadow: none !important;
+}
+
+/* opcional: animação de entrada suave */
+@keyframes modalIn {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.custom-modal-content { animation: modalIn .18s ease-out; }

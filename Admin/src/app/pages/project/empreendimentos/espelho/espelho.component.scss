@@ -1,0 +1,156 @@
+.table-responsive {
+  overflow-x: auto;
+}
+
+.min-width-cell {
+  min-width: 160px;
+}
+
+table td {
+  height: 100%;
+  vertical-align: middle;
+  padding: 0;
+}
+
+.text-white{
+  color: white
+}
+
+
+.bg-gray {
+  background-color: #686868;
+}
+
+.pdf-print {
+  position: fixed;
+  top: -10000px; /* bem fora da tela */
+  left: -10000px;
+  display: block !important; /* importante pra sobrescrever o display:none */
+  z-index: -9999; /* bem atrás de tudo */
+}
+
+.dot { width: 12px; height: 12px; }
+
+.bg-orange { background-color: #fd7e14 !important; }
+
+.kpi { flex: 1 1 45%; }  
+@media (min-width: 576px) {
+  .kpi { flex: 1 1 30%; } 
+}
+@media (min-width: 992px) {
+  .kpi { flex: 0 0 auto; }
+}
+
+@media (max-width: 575.98px) {
+  .kpi .mt-1 { margin-top: .25rem !important; }
+}
+
+.condicoes-table thead th{
+  background: #f2f4fb;
+  color: #000;
+  font-weight: 800;
+  border-color: #e8ebf5;
+}
+.condicoes-table tbody td{ vertical-align: middle; }
+
+.mapa { width: 100%; }
+.t-bloco { margin: 8px 0 4px; font-weight: 700; }
+.t-andar { margin: 8px 0; color: #6b7280; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); /* cards se adaptam */
+  gap: 10px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 78px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f3f4f6;
+  cursor: default;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.tile .num { font-size: 18px; }
+.tile .m2  { font-size: 12px; opacity: .9; }
+
+/* cores por status – conforme sua legenda */
+.tile.disp { background: #e9fbe9; color: #0f6a0f; border-color: #c8f1c8; }      /* verde */
+.tile.res  { background: #fff3cd; color: #8a6d3b; border-color: #ffe49a; }      /* amarelo */
+.tile.vend { background: #f87171; color: #fff; border-color: #ef4444; }          /* vermelho */
+
+/* Tamanho e margens da página */
+@page {
+  size: A4 portrait;         /* use 'landscape' se quiser horizontal */
+  margin: 12mm;              /* ajuste conforme precisar */
+}
+
+/* Regras que valem só na impressão */
+@media print {
+  html, body {
+    height: 297mm;
+    width: 210mm;
+    -webkit-print-color-adjust: exact; /* manter cores */
+    print-color-adjust: exact;
+  }
+
+  /* Oculta elementos não necessários */
+  .no-print { display: none !important; }
+
+  /* Área principal ajustada pra A4 */
+  .print-area {
+    width: 100%;
+    max-width: 186mm; /* 210 - (2 * 12mm de margem) */
+    margin: 0 auto;
+  }
+
+  /* Evitar quebras no meio de blocos importantes */
+  .no-break { page-break-inside: avoid; break-inside: avoid; }
+
+  /* Forçar quebra de página onde quiser */
+  .page-break { page-break-after: always; break-after: page; }
+}
+
+
+/* A4 = 210mm x 297mm */
+#printA4Fix,
+#printA4Fix * {
+  box-sizing: border-box;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm; /* ajuste fino */
+  }
+
+  /* área imprimível (já com margem descontada) */
+  .print-area {
+    width: 190mm;       /* 210 - 2*10mm */
+    max-width: 190mm;
+    min-height: 277mm;  /* 297 - 2*10mm */
+    height: 277mm;
+    overflow: hidden;   /* NÃO deixa passar para outra página */
+  }
+
+  /* reduz espaçamentos que estouram página */
+  .print-area .mt-4 { margin-top: 8px !important; }
+  .print-area .pt-2 { padding-top: 6px !important; }
+  .print-area .my-3 { margin-top: 8px !important; margin-bottom: 8px !important; }
+  .print-area .my-2 { margin-top: 6px !important; margin-bottom: 6px !important; }
+
+  /* tira linhas extras que ocupam espaço */
+  .print-area hr { margin: 8px 0 !important; }
+
+  /* tabela mais compacta */
+  .print-area table td,
+  .print-area table th {
+    padding: 4px 6px !important;
+    font-size: 11px !important;
+  }
+}

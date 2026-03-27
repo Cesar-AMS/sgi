@@ -1,0 +1,1062 @@
+<div class="row" id="invoiceList">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center g-2">
+                    <div class="col-lg-3 me-auto">
+                        <h6 class="card-title mb-0">Vendas</h6>
+                    </div><!--end col-->
+
+                    <div class="col-md-auto">
+                        <div class="hstack gap-2">
+                            <a routerLink="/vendas/new" class="btn btn-primary btn-sm"><i
+                                    class="bi bi-plus-circle align-baseline me-1"></i> Nova Venda</a>
+                            <a (click)="exportarExcel()" class="btn btn-success btn-sm"><i
+                                    class="bi bi-plus-circle align-baseline me-1"></i> Exportar</a>
+                            <a (click)="exportarPDF()" class="btn btn-warning btn-sm"><i
+                                    class="bi bi-plus-circle align-baseline me-1"></i> Imprimir</a>
+                        </div>
+
+                    </div><!--end col-->
+                </div><!--end row-->
+                <div class="row align-items-center g-2 mt-4">
+                    <div class="col-12 col-sm-6 col-md-3 col-lg-1">
+                        <label class="form-label">Data Inicial </label>
+                        <div class="search-box">
+                            <input type="date" (change)="buscarVendas()" class="form-control  form-control-sm ps-1"
+                                name="startAt" [(ngModel)]="startAt">
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3 col-lg-1">
+                        <label class="form-label">Data Final </label>
+                        <div class="search-box">
+                            <input type="date" (change)="buscarVendas()" class="form-control  form-control-sm ps-1"
+                                name="finish" [(ngModel)]="finishAt">
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3 col-lg-2">
+                        <label class="form-label">Empreendimento </label>
+
+                        <select class="form-control form-control-sm" (change)="buscarVendas()" name="esmp"
+                            [(ngModel)]="enterpriseId">
+                            <option value=0>Todos</option>
+                            <option *ngFor="let e of empreendimentos" [value]=e.id>{{e.name}}</option>
+                        </select>
+
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3 col-lg-2">
+                        <label class="form-label">Filial </label>
+                        <select class="form-control form-control-sm" (change)="changeFilial();buscarVendas()"
+                            name="productoopCategories" [(ngModel)]="filialId">
+                            <option value=0>Todas</option>
+                            <option *ngFor="let f of filiais" [value]="f.id">{{f.name}}</option>
+
+                        </select>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3 col-lg-2">
+                        <label class="form-label">Gerente </label>
+                        <select class="form-control form-control-sm" (change)="buscarVendas()" name="esmp"
+                            [(ngModel)]="managementId">
+                            <option value=0>Todos</option>
+                            <option *ngFor="let e of gerentes" [value]=e.id>{{e.name}}</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3 col-lg-2">
+
+                        <label class="form-label">Status </label>
+                        <select class="form-control form-control-sm" (change)="buscarVendas()"
+                            name="empreenstatusdimento" [(ngModel)]="status">
+                            <option value="ABC">Todos</option>
+                            <option value="OPEN">Ativo</option>
+                            <option value="FAILED">Desistiu</option>
+                            <option value="WAITING">Pendente</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3 col-lg-2">
+                        <label class="form-label">Cliente </label>
+                        <div class="search-box">
+                            <input type="text" class="form-control  form-control-sm ps-1" name="finish"
+                                [(ngModel)]="filter.cliente" (ngModelChange)="applyFilterAndPaginateVendas()">
+                        </div>
+                    </div>
+                    <div></div>
+                </div>
+            </div>
+
+            <div class="card-body mt-3 p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>DATA VENDA</th>
+                                <th>FILIAL</th>
+                                <th>EMPREENDIMENTO</th>
+                                <th>UNIDADE</th>
+                                <th>VALOR MÓVEL</th>
+                                <th>CLIENTE</th>
+                                <th>VENDEDOR</th>
+                                <th>COORDENADOR</th>
+                                <th>GERENTE</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let venda of pagedVendas">
+                                <td>{{ venda.selledAt | date: 'dd/MM/yyyy' }}</td>
+                                <td>{{ venda.branchName }}</td>
+                                <td>{{ venda.enterpriseName }}</td>
+                                <td>{{ venda.unitName }}</td>
+                                <td>{{ venda.unitValue | currency:'BRL':'symbol':'1.2-2' }}</td>
+                                <td>{{ venda.cliente }}</td>
+                                <td>{{ venda.corretor }}</td>
+                                <td>{{ venda.coordenatorId }}</td>
+                                <td>{{ venda.gerente }}</td>
+                                <td class="acoes">
+                                    <ul class="d-flex gap-2 list-unstyled mb-0">
+                                        <li><a [routerLink]="'/vendas/edit/' + venda.id"
+                                                class="btn btn-subtle-secondary btn-icon btn-sm"><i
+                                                    class="ph-pencil"></i></a> </li>
+
+                                    </ul>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2 p-2"
+                        *ngIf="totalItemsVendas > 0">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-muted small">Itens por página:</span>
+
+                            <select class="form-select form-select-sm w-auto" [ngModel]="itemsPerPageVendas"
+                                (ngModelChange)="onItemsPerPageChangeVendas($event)">
+                                <option *ngFor="let n of perPageOptionsVendas" [value]="n">{{ n }}</option>
+                            </select>
+
+                            <span class="text-muted small">
+                                Mostrando {{ getStartIndexVendas() }} - {{ getEndIndexVendas() }} de {{ totalItemsVendas
+                                }}
+                            </span>
+                        </div>
+
+                        <pagination [totalItems]="totalItemsVendas" [(ngModel)]="pageVendas"
+                            [itemsPerPage]="itemsPerPageVendas" [boundaryLinks]="true" [directionLinks]="true"
+                            [maxSize]="5" (pageChanged)="onPageChangedVendas($event)" previousText="Anterior"
+                            nextText="Próximo" firstText="Primeira" lastText="Última" class="mb-0"></pagination>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div><!--end col-->
+</div><!--end row-->
+
+<!-- deleteRecordModal -->
+<div bsModal #deleteRecordModal="bs-modal" id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" (click)="deleteRecordModal.hide()"></button>
+            </div>
+            <div class="modal-body p-md-5">
+                <div class="text-center">
+                    <div class="text-danger">
+                        <i class="bi bi-trash display-5"></i>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="mb-2">Are you sure ?</h4>
+                        <p class="text-muted mx-3 mb-0">Are you sure you want to remove this record ?</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 justify-content-center mt-4 pt-2 mb-2">
+                    <button type="button" class="btn w-sm btn-light btn-hover"
+                        (click)="deleteRecordModal.hide()">Close</button>
+                    <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record"
+                        (click)="deleteData(deleteID)">Yes, Delete
+                        It!</button>
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /deleteRecordModal/ -->
+
+
+<div bsModal #showModal="bs-modal" #showModalEl class="modal fade" id="showModal">
+    <div class="modal-dialog modal-xl modal-dialog-centered custom-modal" role="document">
+        <div class="modal-content">
+            <div class="modal-header border border-primary bg-primary p-3">
+                <h5 class="modal-title text-white" id="exampleModalLabel">Editar Venda</h5>
+                <button type="button" class="btn-close" (click)="showModal.hide()"></button>
+            </div>
+            <div class="card-body form-steps ps-1 pe-1 pt-2 pb-3">
+                <form action="#">
+                    <ng-stepper #cdkStepper [linear]="true" class="step-arrow-nav wizard">
+                        <cdk-step [optional]="false">
+                            <ng-template cdkStepLabel class="wizard-nav" class="p-0">
+                                <button class="nav-link done" id="steparrow-gen-info-tab" data-bs-toggle="pill"
+                                    type="button">Empreendimento e relacionados</button>
+                            </ng-template>
+                            @if (cdkStepper.selectedIndex === 0) {
+                            <form class="tablelist-form" novalidate autocomplete="off">
+                                <div class="p-0">
+                                    <div id="alert-error-msg" class="d-none alert alert-danger"></div>
+
+                                    <div
+                                        class="hstack d-flex justify-content-between align-items-center bg-light p-2 pb-3 pt-3 m-0 mt-3 mb-3">
+                                        <h6 class="card-title m-0">Imóvel</h6>
+                                    </div>
+
+                                    <div class="row my-3">
+                                        <div class="col-lg-5 col-sm-6 col-12">
+                                            <label for="email-field" class="form-label">Empreendimento <span
+                                                    class="text-danger">*</span></label>
+                                            <select class="form-control" name="enterpriseId" disabled
+                                                id="empreendimetnoVendo" [(ngModel)]="objetoCriacao.enterpriseId">
+                                                <option value="">Selecione</option>
+                                                <option *ngFor="let e of empreendimentos" [value]="e.id">{{e.name}}
+                                                </option>
+                                            </select>
+
+                                        </div>
+
+                                        <div class="col-lg-3 col-sm-6 col-12">
+                                            <label for="customername-field" class="form-label">Filial <span
+                                                    class="text-danger">*</span></label>
+                                            <select class="form-control" name="fisslial" id="Filialssd"
+                                                [value]="objetoCriacao.branchId">
+                                                <option *ngFor="let f of filiais" [value]="f.id">{{f.name}}</option>
+
+
+                                            </select>
+                                        </div>
+                                        <div class="col-lg-2 col-sm-6 col-12">
+                                            <label for="contact-field" class="form-label">Unidade<span
+                                                    class="text-danger">*</span></label>
+                                            <select class="form-control" name="venda.unitId"
+                                                [(ngModel)]="objetoCriacao.unitId">
+                                                <option *ngFor="let u of unidades" [value]="u.id">{{u.number}}</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-lg-2 col-sm-6 col-12">
+                                            <label for="date-field" class="form-label">Valor da unidade<span
+                                                    class="text-danger">*</span></label>
+
+                                            <input disabled type="text" class="form-control" name="venda.vlrUnit"
+                                                [value]="objetoCriacao.unitValue | currency:'BRL':'symbol-narrow':'1.2-2'" />
+
+                                        </div>
+                                    </div>
+                                    <hr class="mt-4 text-gray">
+
+                                    <div class="mt-3">
+                                        <div
+                                            class="hstack d-flex justify-content-between align-items-center bg-light p-2 pb-3 pt-3 m-0 mt-3 mb-3">
+                                            <h6 class="card-title m-0">Informações do Cliente
+
+                                            </h6>
+                                            <!--
+                                            <button class="btn btn-sm btn-primary float-end">Editar Cliente</button>-->
+                                        </div>
+
+                                        <div class="row my-3">
+
+                                            <div class="col-lg-5 col-sm-6 col-12">
+                                                <label for="customername-field" class="form-label">Nome <span
+                                                        class="text-danger">*</span></label>
+                                                <input id="customername-field" disabled name="nameCustomer"
+                                                    class="form-control" placeholder="Email do cliente"
+                                                    [(ngModel)]="objetoCriacao.cliente" />
+                                            </div>
+                                            <div class="col-lg-3 col-sm-6 col-12">
+                                                <label for="customername-field" class="form-label">E-mail <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" id="customername-field" disabled name="emailCustomer"
+                                                    class="form-control" placeholder="Email do cliente"
+                                                    [value]="objetoCriacao.emailCustomer">
+                                            </div>
+
+                                            <div class="col-lg-2 col-sm-6 col-12">
+                                                <label for="email-field" class="form-label">Telefone <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" id="email-field"
+                                                    [value]="objetoCriacao.phoneCustomer" name="venda.phoneCustomer"
+                                                    disabled class="form-control" placeholder="(xx) xxxxx xxxx">
+                                            </div>
+
+                                            <div class="col-lg-2 col-sm-6 col-12">
+                                                <label for="email-field" class="form-label"> <span
+                                                        class="text-danger">*</span>CPF/CNPJ</label>
+                                                <input type="email" id="email-field" disabled name="emailCPF"
+                                                    class="form-control" [value]="objetoCriacao.cpfCnpj"
+                                                    placeholder="XXX.XXX.XXX-YY">
+                                            </div>
+
+
+                                        </div>
+
+
+                                    </div>
+                                    <hr class="mt-4">
+
+                                    <div class="mt-3">
+                                        <div
+                                            class="hstack d-flex justify-content-between align-items-center bg-light p-2 pb-3 pt-3 m-0 mt-3 mb-3">
+                                            <h6 class="card-title">Comissão imobiliária (%)</h6>
+                                        </div>
+
+                                        <div class="row my-3">
+
+                                            <div class="col-lg-4 col-sm-6 col-12">
+                                                <label for="customername-field" class="form-label">Comissão à
+                                                    imobiliária <span class="text-danger">*</span></label>
+                                                <input disabled type="number" name="venda.percentageToRealstate"
+                                                    [value]="objetoCriacao.percentageToRealstate" class="form-control">
+                                            </div>
+                                            <div class="col-lg-4 col-sm-6 col-12">
+                                                <label for="customername-field" class="form-label">Valor da comissão
+                                                    imobiliária <span class="text-danger">*</span></label>
+                                                <input disabled type="text" class="form-control" name="venda.vlrUnit"
+                                                    [value]="objetoCriacao.valueToRealstate | currency:'BRL':'symbol-narrow':'1.2-2'"
+                                                    style="font-size: 14px; font-weight: 600px;">
+                                            </div>
+
+
+
+                                        </div>
+
+
+                                    </div>
+                                    <hr class="mt-4">
+
+                                    <div class="mt-3">
+                                        <div class="hstack  mt-1">
+                                            <h6 class="card-title">Responsáveis da venda</h6>
+                                        </div>
+
+                                        <div class="row my-3">
+                                            <div class="col-lg-3 col-sm-6 col-12 mb-3">
+                                                <label for="customername-field" class="form-label">Corretor
+                                                    <span class="text-danger">*</span></label>
+                                                <select disabled class="form-control" name="corretorCS"
+                                                    [(ngModel)]="objetoCriacao.realtorId">
+                                                    <option *ngFor="let c of corretores" [value]="c.id">{{c.name}}
+                                                    </option>
+                                                </select>
+                                            </div>
+                                            <div class="col-lg-3 col-sm-6 col-12 mb-3">
+                                                <label for="customername-field" class="form-label">Coordenador
+                                                    <span class="text-danger">*</span></label>
+                                                <select disabled class="form-control" name="venda.managerId"
+                                                    [(ngModel)]="objetoCriacao.coordenatorId">
+                                                    <option value="">Selecione o coordenador</option>
+                                                    <option *ngFor="let c of coordenatorsAll" [value]="c.id">{{c.name}}
+                                                    </option>
+                                                </select>
+                                            </div>
+                                            <div class="col-lg-3 col-sm-6 col-12 mb-3">
+                                                <label for="customername-field" class="form-label">Gerente
+                                                    <span class="text-danger">*</span></label>
+                                                <select disabled class="form-control" name="venda.managerId"
+                                                    [(ngModel)]="objetoCriacao.managerId">
+                                                    <option value="">Selecione o gerente</option>
+                                                    <option *ngFor="let c of gerentesAll" [value]="c.id">{{c.name}}
+                                                    </option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-lg-3 col-sm-6 col-12 mb-3">
+                                                <label for="email-field" class="form-label">Contrato</label>
+                                                <input class="form-control" type="file" id="formFile">
+                                            </div>
+                                            <div class="col-lg-4 col-sm-6 col-12">
+                                                <label class="form-label">N° do contrato</label>
+                                                <input type="text" name="nContrato" class="form-control"
+                                                    [(ngModel)]="objetoCriacao.contractNumber">
+                                            </div>
+                                            <div class="col-lg-4 col-sm-6 col-12">
+                                                <label class="form-label">Status da venda <span
+                                                        class="text-danger">*</span></label>
+                                                <select class="form-control" [(ngModel)]="objetoCriacao.status"
+                                                    name="vendaSatus">
+                                                    <option value="OPEN">Paga</option>
+                                                    <option value="FAILED">Desistiu</option>
+                                                    <option value="WAITING">Pendente</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-lg-4 col-sm-6 col-12">
+                                                <label for="email-field" class="form-label">Data da venda <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="date" class="form-control" name="selledAt"
+                                                    [(ngModel)]="objetoCriacao.selledAt" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                            }
+                            <!-- wizard-tab -->
+                            <div class="d-flex align-items-start gap-3 mt-4 p-3">
+                                <button type="button" class="btn btn-light btn-label previestab"
+                                    data-previous="steparrow-gen-info-tab" cdkStepperPrevious><i
+                                        class="ri-arrow-left-line label-icon align-middle fs-16 me-2"></i>
+                                    Anteriro</button>
+                                <button type="button" class="btn btn-success btn-label right ms-auto nexttab nexttab"
+                                    data-nexttab="pills-experience-tab" cdkStepperNext><i
+                                        class="ri-arrow-right-line label-icon align-middle fs-16 ms-2"></i>Próximo</button>
+                            </div>
+                        </cdk-step>
+
+                        <cdk-step [optional]="true">
+                            <ng-template cdkStepLabel>
+                                <button class="nav-link done" id="steparrow-description-info-tab"
+                                    type="button">Pagamento</button>
+                            </ng-template>
+                            @if (cdkStepper.selectedIndex === 1) {
+                            <form class="tablelist-form" novalidate autocomplete="off">
+                                <div class="p-1 pt-0">
+                                    <div id="alert-error-msg" class="d-none alert alert-danger"></div>
+
+                                    <div
+                                        class="hstack d-flex justify-content-between row align-items-center bg-light p-1 pb-1 pt-1 m-0 mt-1 mb-3">
+
+                                        <div class="container-fluid p-0">
+                                            <div class="row gy-2 align-items-center p-1 rounded bg-atos">
+                                                <!-- título -->
+                                                <div class="col-12 col-md-3">
+                                                    <h5 class="m-0 fw-bold text-dark">Ato</h5>
+                                                </div>
+
+                                                <!-- Valor do Ato -->
+                                                <div class="col-12 col-md-3">
+                                                    <label class="form-label mb-1 fw-semibold text-dark">Valor do
+                                                        Ato:</label>
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text">R$</span>
+                                                        <input type="number" step="0.01" class="form-control text-end"
+                                                            name="objetoCriacao.startValue"
+                                                            [(ngModel)]="objetoCriacao.startValue" />
+                                                    </div>
+                                                </div>
+
+                                                <!-- Valor Pago -->
+                                                <div class="col-12 col-md-3">
+                                                    <label class="form-label mb-1 fw-semibold text-success">Valor
+                                                        Pago:</label>
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text text-success">R$</span>
+                                                        <!--  [(ngModel)]="venda"
+                                                        [ngModelOptions]="{ standalone: true }" -->
+                                                        <input type="number"
+                                                            class="form-control text-end text-success fw-semibold"
+                                                            [(ngModel)]="totalAto" name="ateds" disabled />
+                                                    </div>
+                                                </div>
+
+                                                <!-- Valor Restante (somente leitura) -->
+                                                <div class="col-12 col-md-3">
+                                                    <label class="form-label mb-1 fw-semibold text-danger">Valor
+                                                        Restante:</label>
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text text-danger">R$</span>
+                                                        <input type="number"
+                                                            class="form-control text-end text-danger fw-semibold"
+                                                            [value]="totalRestante" name="totalRestante" disabled />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+
+                                        <div class="col-12 row mb-2">
+                                            <div class="col-lg-2 col-sm-6 col-12">
+                                                <label for="customername-field" class="form-label">Data de
+                                                    ato</label>
+                                                <input type="date" class="form-control" name="act.parcelsStartDATE"
+                                                    [(ngModel)]="act.date">
+                                            </div>
+                                            <div class="col-lg-2 col-sm-6 col-12">
+                                                <label for="customername-field" class="form-label">Valor do
+                                                    ato</label>
+                                                <input type="number" name="act.valueTES" (change)="recalculate()"
+                                                    [(ngModel)]="act.value" class="form-control" required>
+                                            </div>
+                                            <div class="col-lg-2 col-sm-6 col-12">
+                                                <label for="customername-field" class="form-label">Observação</label>
+                                                <input type="text" id="customername-field" name="act.observations"
+                                                    class="form-control" [(ngModel)]="act.observations" required>
+                                            </div>
+                                            <div class="col-lg-3 col-sm-6 col-12">
+                                                <label for="email-field" class="form-label">Forma de pagamento <span
+                                                        class="text-danger">*</span></label>
+                                                <select class="form-control" name="act.paymentId"
+                                                    [(ngModel)]="act.paymentId">
+                                                    <option value="">Selecione</option>
+                                                    <option *ngFor="let ff of formasPagamento" [value]="ff.id">
+                                                        {{ff.name}}
+                                                    </option>
+                                                </select>
+                                            </div>
+                                            <div class="col-lg-2 col-sm-6 col-12">
+                                                <label for="email-field" class="form-label">Status <span
+                                                        class="text-danger">*</span></label>
+                                                <select class="form-control" (change)="recalculate()"
+                                                    [(ngModel)]="act.status" name="act.status">
+                                                    <option value="PAID">Paga</option>
+                                                    <option value="WAITING">Não Paga</option>
+                                                    <option value="DIMMED">Esmaecida</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-lg-1 col-sm-6 col-12 p-0">
+                                                <button (click)="addAto()"
+                                                    class="btn mt-4  btn-secondary">Adicionar</button>
+                                            </div>
+                                        </div>
+
+                                        @if(objetoCriacao?.acts && objetoCriacao.acts.length > 0) {
+                                        <div class="table-responsive mt-4">
+                                            <table class="table table-sm align-middle">
+                                                <thead class="table-light bg bg-primary p-2">
+                                                    <tr>
+                                                        <th style="width:5%">#</th>
+                                                        <th style="width:10%">Data do ato</th>
+                                                        <th style="width:14%">Valor do ato (R$)</th>
+                                                        <th style="width:24%">Observações</th>
+                                                        <th style="width:20%">Forma de pagamento</th>
+                                                        <th style="width:12%">Status</th>
+                                                        <th style="width:10%">Ações</th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody>
+                                                    <tr
+                                                        *ngFor="let it of objetoCriacao.acts; let i = index; trackBy: trackById">
+                                                        <td>
+                                                            #{{i+1}}
+                                                        </td>
+                                                        <td>
+                                                            <input type="date"
+                                                                class="form-control form-control-sm border-0"
+                                                                [name]="i +'it.date'" [(ngModel)]="it.date">
+                                                        </td>
+                                                        <td>
+                                                            <input type="number"
+                                                                class="form-control form-control-sm border-0"
+                                                                (change)="recalculate()" [name]="i + 'it.value'"
+                                                                [(ngModel)]="it.value">
+                                                        </td>
+                                                        <td>
+                                                            <input type="text"
+                                                                class="form-control form-control-sm border-0"
+                                                                [name]="i+ 'it.observations'"
+                                                                [(ngModel)]="it.observations">
+                                                        </td>
+                                                        <td>
+                                                            <select class="form-select form-select-sm border-0"
+                                                                [name]="i + 'it.paymentId'" [(ngModel)]="it.paymentId">
+                                                                <option *ngFor="let f of formasPagamento"
+                                                                    [value]="f.id">{{ f.name }} </option>
+                                                            </select>
+                                                        </td>
+
+                                                        <td>
+                                                            <select class="form-control form-select-sm border-0"
+                                                                (change)="recalculate()" [(ngModel)]="it.status"
+                                                                [name]="i + 'act.status'">
+                                                                <option value="PAID">Paga</option>
+                                                                <option value="WAITING">Não Paga</option>
+                                                                <option value="DIMMED">Esmaecida</option>
+                                                            </select>
+                                                        </td>
+
+                                                        <td class="text-end">
+                                                            <button class="btn btn-sm btn-outline-danger"
+                                                                (click)="remover(i)">Remover</button>
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr *ngIf="listAto.length === 0">
+                                                        <td colspan="6" class="text-center text-muted py-3">Nenhum item
+                                                            adicionado.</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        }
+
+                                        <!--<div class="col-6 mb-3" [ngClass]="{'mt-3': listAto.length > 0}">
+                                                <label for="customername-field" class="form-label">Total pago em
+                                                    ato:</label>
+                                                <input type="text" id="customername-field" [disabled]="true" name="name"
+                                                    class="form-control" required>
+                                            </div>
+                                            <div class="col-6 mb-3" [ngClass]="{'mt-3': listAto.length > 0}">
+                                                <label for="customername-field" class="form-label">Valor restante em
+                                                    ato:</label>
+                                                <input type="text" id="customername-field" [disabled]="true" name="name"
+                                                    class="form-control" required>
+                                            </div>-->
+
+
+
+                                    </div>
+
+
+                                    <hr class="mt-4">
+
+                                    <div class="mt-3">
+                                        <div
+                                            class="hstack d-flex justify-content-between align-items-center bg-light p-2 pb-3 pt-3 m-0 mt-3 mb-3">
+                                            <h6 class="card-title">Parcelas</h6>
+                                        </div>
+
+                                        <div class="row">
+
+                                            <div class="col-lg-3 col-sm-6 col-12 ">
+                                                <label for="customername-field" class="form-label">Data de inicio
+                                                </label>
+                                                <input type="date" class="form-control" name="venda.parcelaStart">
+                                            </div>
+                                            <div class="col-lg-3 col-sm-6 col-12">
+                                                <label for="customername-field" class="form-label">Valor das parcelas em
+                                                    contrato</label>
+                                                <input type="number" id="customername-field" name="nparcelsStartame"
+                                                    class="form-control">
+                                            </div>
+
+                                            <div class="col-lg-3 col-sm-6 col-12">
+                                                <label for="customername-field" class="form-label">Quantidade de
+                                                    parcelas</label>
+                                                <input type="text" id="customername-field" name="name"
+                                                    class="form-control">
+                                            </div>
+                                            <div class="col-lg-3 col-sm-6 col-12">
+                                                <button class="btn mt-4 btn-secondary">Adicionar
+                                                    parcelas</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3"
+                                        *ngIf="objetoCriacao.parcelas && objetoCriacao.parcelas.length > 0 ">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Valor (R$)</th>
+                                                    <th>Dt Vencimento</th>
+                                                    <th>Dt Pagamento</th>
+                                                    <th>Observações</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr *ngFor="let it of objetoCriacao.parcelas; trackBy: trackByNro">
+                                                    <td>{{it.id }}</td>
+                                                    <td>
+                                                        <input type="number" class="form-control form-control-sm"
+                                                            [ngModelOptions]="{standalone:true}"
+                                                            [(ngModel)]="it.vlrInstallament">
+                                                    </td>
+                                                    <td>
+                                                        <input type="date" class="form-control form-control-sm"
+                                                            [ngModelOptions]="{standalone:true}"
+                                                            [(ngModel)]="it.dueDate">
+                                                    </td>
+                                                    <td>
+                                                        <input type="date" class="form-control form-control-sm"
+                                                            [ngModelOptions]="{standalone:true}"
+                                                            [(ngModel)]="it.dtPayment">
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" class="form-control form-control-sm"
+                                                            [ngModelOptions]="{standalone:true}" [(ngModel)]="it.obs">
+                                                    </td>
+                                                    <td>
+                                                        <select class="form-control form-select-sm border-0"
+                                                            (change)="recalculate()" [(ngModel)]="it.status"
+                                                            [ngModelOptions]="{standalone:true}">
+                                                            <option value="PAID">Paga</option>
+                                                            <option value="WAITING">Não Paga</option>
+                                                            <option value="DIMMED">Esmaecida</option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <hr class="mt-4">
+
+                                    <div class="mt-3">
+                                        <div
+                                            class="hstack d-flex justify-content-between align-items-center bg-light p-2 pb-3 pt-3 m-0 mt-3 mb-3">
+                                            <h6 class="card-title">Intermediárias</h6>
+                                        </div>
+                                        <div class="row my-3">
+                                            <div class="col-lg-4 col-sm-6 col-12 mb-3">
+                                                <label for="customername-field" class="form-label">Data de
+                                                    intermediária</label>
+                                                <input type="date" class="form-control" name="sdasllmkmcdvnjfv"
+                                                    [(ngModel)]="objetoCriacao.dtIntermediaria">
+                                            </div>
+                                            <div class="col-lg-4 col-sm-6 col-12 mb-3">
+                                                <label for="customername-field" class="form-label">Valor da
+                                                    intermediária</label>
+                                                <input type="number" class="form-control" name="intermds2221209"
+                                                    [(ngModel)]="objetoCriacao.vlIntermediaria">
+                                            </div>
+                                            <div class="col-lg-4 col-sm-6 col-12 mb-3">
+                                                <button [disabled]="disableInputs" (click)="addIntermed()"
+                                                    class="btn mt-4 btn-secondary">Adicionar intermediária</button>
+                                            </div>
+
+                                            @if(objetoCriacao?.intermediarias && objetoCriacao.intermediarias.length) {
+                                            <div class="row mt-3"
+                                                *ngIf="objetoCriacao?.intermediarias && objetoCriacao.intermediarias.length > 0 ">
+                                                <table class="table table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>Valor (R$)</th>
+                                                            <th>Dt Vencimento</th>
+                                                            <th>Dt Pagamento</th>
+                                                            <th>Observações</th>
+                                                            <th>Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr
+                                                            *ngFor="let it of objetoCriacao?.intermediarias; trackBy: trackByNroIntermed">
+                                                            <td>{{it.id + 1 }}</td>
+                                                            <td>
+                                                                <input type="number"
+                                                                    class="form-control form-control-sm"
+                                                                    [ngModelOptions]="{standalone:true}"
+                                                                    [(ngModel)]="it.vlrInstallament">
+                                                            </td>
+                                                            <td>
+                                                                <input type="date" class="form-control form-control-sm"
+                                                                    [ngModelOptions]="{standalone:true}"
+                                                                    [(ngModel)]="it.dueDate">
+                                                            </td>
+                                                            <td>
+                                                                <input type="date" class="form-control form-control-sm"
+                                                                    [ngModelOptions]="{standalone:true}"
+                                                                    [(ngModel)]="it.dtPayment">
+                                                            </td>
+                                                            <td>
+                                                                <input type="text" class="form-control form-control-sm"
+                                                                    [ngModelOptions]="{standalone:true}"
+                                                                    [(ngModel)]="it.obs">
+                                                            </td>
+                                                            <td>
+                                                                <select class="form-control form-select-sm border-0"
+                                                                    (change)="recalculate()" [(ngModel)]="it.status"
+                                                                    [ngModelOptions]="{standalone:true}">
+                                                                    <option value="PAID">Paga</option>
+                                                                    <option value="WAITING">Não Paga</option>
+                                                                </select>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            }
+
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                            }
+                            <div class="d-flex align-items-start gap-3 mt-4 p-4">
+                                <button type="button" class="btn btn-light btn-label previestab"
+                                    data-previous="steparrow-gen-info-tab" cdkStepperPrevious><i
+                                        class="ri-arrow-left-line label-icon align-middle fs-16 me-2"></i>
+                                    Anteriro</button>
+                                <button type="button" class="btn btn-success btn-label right ms-auto nexttab nexttab"
+                                    data-nexttab="pills-experience-tab" cdkStepperNext><i
+                                        class="ri-arrow-right-line label-icon align-middle fs-16 ms-2"></i>Próximo</button>
+                            </div>
+                        </cdk-step>
+
+                        <cdk-step [optional]="true">
+                            <ng-template cdkStepLabel>
+                                <button class="nav-link done" id="steparrow-description-info-tab"
+                                    type="button">Comissão</button>
+                            </ng-template>
+                            @if (cdkStepper.selectedIndex === 2) {
+                            <form class="tablelist-form" novalidate autocomplete="off">
+                                <div class="modal-body">
+                                    <div id="alert-error-msg" class="d-none alert alert-danger py-2"></div>
+                                    <!-- <div class="mt-1">
+                                      <div class="hstack d-flex justify-content-between align-items-center mt-1">
+                                            <h6 class="card-title">Valores para a construtora</h6>
+                                            <button [disabled]="disableInputs" type="submit" class="btn btn-primary"
+                                                id="add-btn">Calcular tudo</button>
+                                        </div>
+
+
+                                        <div class="row my-3">
+
+                                            <div class="col-lg-5 col-sm-6 col-12 ">
+                                                <label for="customername-field" class="form-label">Valor a repassar para
+                                                    a construtora <span class="text-danger">*</span></label>
+                                                <input [disabled]="true" type="text" id="customername-field" name="name"
+                                                    class="form-control" required>
+                                            </div>
+                                            <div class="col-lg-5 col-sm-6 col-12">
+                                                <button [disabled]="disableInputs"
+                                                    class="btn mt-4 btn-secondary">Verificar se há
+                                                    valores a repassar p/
+                                                    construtora</button>
+                                                <label for="email-field" class="form-label mt-1"> <span
+                                                        class="text-danger">Esta
+                                                        ação substituirá valores
+                                                        pré-preenchidos</span></label>
+                                            </div>
+                                        </div>
+                                    </div>-->
+
+                                    <!--endereço-->
+
+                                    <div class="mt-1">
+                                        <div class="hstack  mt-1">
+                                            <h6 class="card-title">Corretor</h6>
+                                        </div>
+
+                                        <div class="row my-3">
+                                            <div class="col-6 mb-3">
+                                                <label for="customername-field" class="form-label">Porcentagem do valor
+                                                    a repassar ao corretor <span class="text-danger">*</span></label>
+                                                <input disabled type="number" class="form-control"
+                                                    [(ngModel)]="objetoCriacao.percentageToRealtor"
+                                                    name="wvenda.percentageToRealtor">
+                                            </div>
+
+                                            <div class="col-6 mb-3">
+                                                <button class="btn mt-4 btn-secondary">Plano
+                                                    de pagamento</button>
+                                            </div>
+
+                                            <div class="col-6 ">
+                                                <label for="customername-field" class="form-label">Valor da comissão do
+                                                    corretor <span class="text-danger">*</span></label>
+                                                <input disabled type="number"
+                                                    [(ngModel)]="objetoCriacao.realtorComission" id="customername-field"
+                                                    name="nddsasamte" class="form-control">
+                                            </div>
+
+                                            <div class="col-6 ">
+                                                <label for="customername-field" class="form-label">Status da comissão do
+                                                    corretor <span class="text-danger">*</span></label>
+                                                <select class="form-control"
+                                                    [(ngModel)]="objetoCriacao.realtorComissionStatus"
+                                                    name="productCadsaxastegories">
+                                                    <option value="Selecion">Selecione</option>
+                                                    <option value="PAID">Paga</option>
+                                                    <option value="WAITING">Não paga</option>
+
+                                                </select>
+                                            </div>
+
+
+                                        </div>
+
+
+                                    </div>
+
+
+                                    <hr class="mt-4">
+
+                                    <div class="mt-3">
+                                        <div class="hstack  mt-1">
+                                            <h6 class="card-title">Gerente</h6>
+
+
+                                        </div>
+
+                                        <div class="row my-3">
+
+                                            <div class="col-6 mb-3">
+                                                <label for="customername-field" class="form-label">Porcentagem do valor
+                                                    a repassar ao gerente <span class="text-danger">*</span></label>
+                                                <input disabled type="number" id="customername-field"
+                                                    [(ngModel)]="objetoCriacao.percentageToManager"
+                                                    name="percentageToManagername" class="form-control">
+                                            </div>
+
+                                            <div class="col-6 mb-3">
+                                                <button class="btn mt-4 btn-secondary">Plano
+                                                    de pagamento</button>
+                                            </div>
+
+                                            <div class="col-6 ">
+                                                <label for="customername-field" class="form-label">Valor da comissão do
+                                                    gerente <span class="text-danger">*</span></label>
+                                                <input disabled [(ngModel)]="objetoCriacao.managerComission"
+                                                    type="number" id="customername-field" name="name"
+                                                    class="form-control">
+                                            </div>
+
+                                            <div class="col-6 ">
+                                                <label for="customername-field" class="form-label">Status da comissão do
+                                                    gerente <span class="text-danger">*</span></label>
+                                                <select class="form-control"
+                                                    [(ngModel)]="objetoCriacao.managerComissionStatus"
+                                                    name="productCategories" id="productCategories">
+                                                    <option value="Selecion">Selecione</option>
+                                                    <option value="PAID">Paga</option>
+                                                    <option value="WAITING">Não paga</option>
+
+                                                </select>
+                                            </div>
+
+
+                                        </div>
+
+
+                                    </div>
+
+                                    <hr class="mt-4">
+
+                                    <div class="mt-3">
+                                        <div class="hstack  mt-1">
+                                            <h6 class="card-title">Financeiro</h6>
+
+
+                                        </div>
+
+                                        <div class="row my-3">
+
+                                            <div class="col-12 mb-3">
+                                                <div class="col-5">
+                                                    <label for="customername-field" class="form-label">Porcentagem do
+                                                        valor a repassar ao financeiro <span
+                                                            class="text-danger">*</span></label>
+                                                    <input [(ngModel)]="objetoCriacao.percentageToFinancial" disabled
+                                                        type="number" id="customername-field"
+                                                        name="namepercentageToFinancial" class="form-control">
+                                                </div>
+                                            </div>
+
+
+
+                                            <div class="col-lg-4 col-sm-6 col-12">
+                                                <label for="customername-field" class="form-label">Valor da comissão do
+                                                    financeiro <span class="text-danger">*</span></label>
+                                                <input type="text" [(ngModel)]="objetoCriacao.financialComission"
+                                                    disabled id="customername-field" name="namecomissionfin"
+                                                    class="form-control" required>
+                                            </div>
+
+                                            <div class="col-lg-4 col-sm-6 col-12">
+                                                <label for="customername-field" class="form-label">Status da comissão do
+                                                    financeiro <span class="text-danger">*</span></label>
+                                                <select [(ngModel)]="objetoCriacao.financialComissionStatus"
+                                                    class="form-control" name="financialComissionStatus"
+                                                    id="productCategories">
+                                                    <option value="Selecion">Selecione</option>
+                                                    <option value="PAID">Paga</option>
+                                                    <option value="WAITING">Não paga</option>
+                                                </select>
+                                            </div>
+
+
+                                        </div>
+
+
+                                    </div>
+                                </div>
+
+                            </form>
+                            }
+                            <div class="d-flex align-items-start gap-3 mt-4 p-4">
+                                <button type="button" class="btn btn-light btn-label previestab"
+                                    data-previous="steparrow-gen-info-tab" cdkStepperPrevious><i
+                                        class="ri-arrow-left-line label-icon align-middle fs-16 me-2"></i>
+                                    Anteriro</button>
+                                <button type="button" class="btn btn-success btn-label right ms-auto nexttab nexttab"
+                                    data-nexttab="pills-experience-tab" cdkStepperNext><i
+                                        class="ri-arrow-right-line label-icon align-middle fs-16 ms-2"></i>Próximo</button>
+                            </div>
+                        </cdk-step>
+
+                        <cdk-step [optional]="false">
+                            <ng-template cdkStepLabel>
+                                <button class="nav-link" type="button">Salvar</button>
+                            </ng-template>
+                            @if (cdkStepper.selectedIndex === 3) {
+                            <div>
+
+                                <table class="table table-sm mb-0 sales-table">
+                                    <thead>
+                                        <tr>
+                                            <th>UNIDADE</th>
+                                            <th>COMISSÃO IMOBILIÁRIA</th>
+                                            <th>COMISSÃO CORRETOR</th>
+                                            <th>COMISSÃO GERENTE</th>
+                                            <th>COMISSÃO FINANCEIRO</th>
+                                            <th>ATO (R$) EM CONTRATO</th>
+                                            <th>RECEITA LÍQUIDA</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        <tr *ngIf="objetoCriacao">
+                                            <td class="text-end">{{ objetoCriacao.unitValue |
+                                                currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</td>
+                                            <td class="text-end">{{ objetoCriacao.valueToRealstate |
+                                                currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</td>
+                                            <td class="text-end">{{ objetoCriacao.realtorComission |
+                                                currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</td>
+                                            <td class="text-end">{{ objetoCriacao.managerComission |
+                                                currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</td>
+                                            <td class="text-end">{{ objetoCriacao.financialComission |
+                                                currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</td>
+                                            <td class="text-end">{{ objetoCriacao.startValue |
+                                                currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</td>
+                                            <td class="text-end fw-semibold">{{ objetoCriacao.netEarnings |
+                                                currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <div class="text-center">
+                                    <div class="avatar-md mt-5 mb-4 mx-auto">
+                                        <div class="avatar-title bg-light text-success display-4 rounded-circle">
+                                            <i class="ri-checkbox-circle-fill"></i>
+                                        </div>
+                                    </div>
+                                    <h5>Tudo certo !</h5>
+                                    <p class="text-muted">Atualize a venda</p>
+                                </div>
+
+                            </div>
+                            }
+                            <div class="d-flex align-items-start gap-3 mt-4 p-4">
+                                <button type="button" class="btn btn-light btn-label previestab"
+                                    data-previous="steparrow-gen-info-tab" cdkStepperPrevious><i
+                                        class="ri-arrow-left-line label-icon align-middle fs-16 me-2"></i>
+                                    Anterior</button>
+                                <button type="button" class="btn btn-success btn-label right ms-auto nexttab nexttab"
+                                    data-nexttab="pills-experience-tab" cdkStepperNext><i
+                                        class="ri-arrow-right-line label-icon align-middle fs-16 ms-2"></i>Atualizar
+                                    venda</button>
+                            </div>
+                        </cdk-step>
+                    </ng-stepper>
+                    <!-- </div> -->
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<app-modal-venda #meuModal [dados]="objetoCriacao"></app-modal-venda>

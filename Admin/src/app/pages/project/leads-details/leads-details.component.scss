@@ -1,0 +1,68 @@
+.lead-details-wrapper {
+  background-color: #f7f7fb;
+  min-height: 100vh;
+}
+
+.status-badge {
+  background-color: #e5f3ff;
+  color: #0b71d9;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.btn-orange {
+  background-color: #ff7a1a;
+  border-color: #ff7a1a;
+  color: #fff;
+
+  &:hover {
+    background-color: #ff8f3d;
+    border-color: #ff8f3d;
+    color: #fff;
+  }
+}
+
+.info-grid .label {
+  font-size: 0.8rem;
+  color: #8a8aa0;
+  margin-bottom: 0.1rem;
+}
+
+.info-grid .value {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Histórico */
+
+.history-body {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.history-list {
+  position: relative;
+}
+
+.history-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.history-item .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ff7a1a;
+  margin-right: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.history-content {
+  flex: 1;
+  font-size: 0.85rem;
+}

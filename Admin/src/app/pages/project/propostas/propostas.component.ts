@@ -1,0 +1,396 @@
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { BsModalRef, ModalDirective } from 'ngx-bootstrap/modal';
+import { ApiService } from 'src/app/core/services/api.service';
+import { PropostaReserva } from 'src/app/models/proposta-reserva';
+import { Condicao } from '../empreendimentos/espelho/espelho.component';
+import * as moment from 'moment';
+import { ToastrService } from 'ngx-toastr';
+import { Apartamento } from 'src/app/core/data/empreendimento';
+import { Empreendimento } from 'src/app/models/ContaBancaria';
+import { PageChangedEvent } from 'ngx-bootstrap/pagination';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+
+@Component({
+  selector: 'app-propostas',
+  templateUrl: './propostas.component.html',
+  styleUrls: ['./propostas.component.scss']
+})
+export class PropostasComponent implements OnInit {
+
+  form!: FormGroup;
+  loading = false;
+  items: PropostaReserva[] = [];
+
+  pagedItems: PropostaReserva[] = [];
+  totalItems = 0;
+
+  page = 1;
+  itemsPerPage = 50;
+  perPageOptions = [50, 100, 150];
+
+  // bsModal via diretiva
+  @ViewChild('detailTpl', { static: false }) modalReserva!: ModalDirective;
+
+  // modal
+  modalRef?: BsModalRef; // se não for usar mais, pode remover
+  proposta: PropostaReserva = {} as PropostaReserva;
+  approving = false;
+  empreendimentos: Empreendimento[] = [];
+
+  // NOVO: listas para filtros
+  gerentes: any[] = [];
+  corretores: any[] = [];
+
+  construtorFilter: string = '';
+  apartamentos: Apartamento[] = [];
+
+  today = new Date();
+
+
+  constructor(
+    private fb: FormBuilder,
+    private toast: ToastrService,
+    private svc: ApiService
+  ) { }
+
+  ngOnInit(): void {
+    const hoje = new Date();
+    const de = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0, 10);
+    const ate = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().slice(0, 10);
+
+    this.form = this.fb.group({
+      de: [de],
+      ate: [ate],
+      status: ['ALL'],      // ALL | OPEN | APPROVED | REJECTED | CANCELLED
+      gerente: [''],        // filtro gerente
+      corretor: ['']        // filtro corretor
+    });
+
+    // Se tiver endpoints pra popular gerentes/corretores, chama aqui:
+    // this.loadGerentes();
+    // this.loadCorretores();
+
+    this.buscar();
+  }
+
+  @ViewChild('areaA4Ref', { static: false }) areaA4Ref!: ElementRef<HTMLElement>;
+
+  async downloadA4PrimeiraFolha() {
+  const el = this.areaA4Ref?.nativeElement;
+
+  if (!el) {
+    this.toast.error('Não foi possível localizar a área do PDF.');
+    return;
+  }
+
+  // A4 em mm (jsPDF) com margem
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageW = pdf.internal.pageSize.getWidth();   // 210
+  const pageH = pdf.internal.pageSize.getHeight();  // 297
+
+  const margin = 10; // mm
+  const contentW = pageW - margin * 2;
+  const contentH = pageH - margin * 2;
+
+  // Espera o modal/render terminar
+  await new Promise(r => setTimeout(r, 150));
+
+  // Captura em alta qualidade
+  const scale = 2;
+
+  // Converte mm -> px baseado na largura real do elemento capturado
+  // (mantém proporção fiel ao A4)
+  const pxPerMm = (el.scrollWidth * scale) / contentW;
+  const captureHeightPx = Math.floor(contentH * pxPerMm); // altura de 1 página A4 (útil)
+
+  // Importante: se o conteúdo for menor que 1 página, não inventa altura
+  const finalCaptureHeight = Math.min(captureHeightPx, el.scrollHeight * scale);
+
+  // Captura SOMENTE a primeira "folha" (topo do modal)
+  const canvas = await html2canvas(el, {
+    backgroundColor: '#ffffff',
+    scale,
+    useCORS: true,
+    allowTaint: true,
+    windowWidth: el.scrollWidth,
+    windowHeight: el.scrollHeight,
+    // recorta apenas o topo (1 página)
+    height: finalCaptureHeight / scale, // em CSS px
+    y: 0
+  });
+
+  const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+  // Renderiza a imagem dentro da área útil do A4
+  // Calcula a altura em mm mantendo proporção
+  const imgH = (canvas.height * contentW) / canvas.width;
+
+  pdf.addImage(imgData, 'JPEG', margin, margin, contentW, imgH);
+
+  pdf.save(`proposta_${this.proposta?.enterPriseName || 'novo'}_${this.proposta?.clienteName ?? 'novo'}.pdf`);
+}
+
+  
+  private updatePagedItems(): void {
+    this.totalItems = this.items?.length || 0;
+
+    const start = (this.page - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+
+    this.pagedItems = (this.items || []).slice(start, end);
+  }
+
+  onPageChanged(event: PageChangedEvent): void {
+    this.page = event.page;
+    this.itemsPerPage = event.itemsPerPage;
+    this.updatePagedItems();
+  }
+
+  onItemsPerPageChange(value: number): void {
+    this.itemsPerPage = Number(value);
+    this.page = 1;
+    this.updatePagedItems();
+  }
+
+  getStartIndex(): number {
+    if (this.totalItems === 0) return 0;
+    return (this.page - 1) * this.itemsPerPage + 1;
+  }
+
+  getEndIndex(): number {
+    return Math.min(this.page * this.itemsPerPage, this.totalItems);
+  }
+
+  changeEnterprise() {
+    this.svc.getEmpreendimentosBYConstrutor(this.construtorFilter).subscribe((data) => {
+      this.empreendimentos = data;
+    });
+
+    this.apartamentos = [];
+  }
+
+  buscar() {
+    this.loading = true;
+    const { de, ate, status, gerente, corretor } = this.form.value;
+
+    // Ajuste: passa também gerente e corretor para o backend filtrar
+    this.svc.listPropostas({ de, ate, status, gerente, corretor }).subscribe({
+      next: res => {
+        this.items = res || [];
+        this.page = 1;
+        this.updatePagedItems();
+      },
+      error: err => console.error(err),
+      complete: () => this.loading = false
+    });
+  }
+
+  // Agora abre APENAS o modal clicado, usando a diretiva @ViewChild
+  openModal(id: number) {
+    this.svc.getPropostasById(id).subscribe({
+      next: p => {
+
+        p.condicao.forEach(its =>{
+          its.vencimento = moment(its.vencimento).format('YYYY-MM-DD')
+        })
+        
+        this.proposta = p;
+
+        this.proposta.dateNascimento = moment(this.proposta.dateNascimento).format('YYYY-MM-DD')
+
+        if (this.proposta && !this.proposta.condicao) {
+        
+          this.proposta.condicao = [];
+        }
+       
+        this.modalReserva.show();
+      },
+      error: err => console.error(err)
+    });
+  }
+
+  approveSelected() {
+    if (!this.proposta || this.proposta.status === 'APPROVED') return;
+    this.approving = true;
+    this.svc.approveProposta(this.proposta.id).subscribe({
+      next: () => {
+        this.proposta!.status = 'APPROVED';
+        this.buscar();
+      },
+      error: err => console.error(err),
+      complete: () => this.approving = false
+    });
+  }
+
+  badgeClass(status: string) {
+    const s = (status || '').toUpperCase();
+    return {
+      'bg-secondary': s === 'OPEN',
+      'bg-success': s === 'APPROVED',
+      'bg-warning': s === 'RESERVED' || s === 'REJECTED',
+      'bg-danger': s === 'CANCELLED' || s === 'SELL'
+    };
+  }
+
+  cep() {
+    const cep = (this.proposta.cep || '').replace('-', '');
+    if (!cep) { return; }
+
+    this.svc.getVIACEP(cep).subscribe((data) => {
+      this.proposta.rua = data.logradouro;
+      this.proposta.bairro = data.bairro;
+      this.proposta.cidade = data.localidade;
+      this.proposta.estado = data.estado;
+    });
+  }
+
+  vlrTotal() {
+    return this.proposta?.condicao?.reduce(
+      (acc, c) => acc + (Number(c?.valorTotal ?? 0) || 0),
+      0
+    );
+  }
+
+  track = (_: number, item: Condicao) => item;
+
+  recalc(i: number): void {
+    const c = this.proposta.condicao[i];
+    const q = this.toNumber(c.qtde);
+    const v = this.toNumber(c.valorParcela);
+    c.valorTotal = this.round2(q * v);
+  }
+
+  private toNumber(v: any): number {
+    if (v === null || v === undefined || v === '') return 0;
+    return Number(String(v).replace(/\./g, '').replace(',', '.')) || Number(v) || 0;
+  }
+
+  private round2(n: number): number {
+    return Math.round((n + Number.EPSILON) * 100) / 100;
+  }
+
+  remover(i: number): void {
+    this.proposta.condicao.splice(i, 1);
+  }
+
+  adicionar(): void {
+    if (!this.proposta.condicao) {
+      this.proposta.condicao = [];
+    }
+    this.proposta.condicao.push({
+      qtde: 1,
+      descricao: '',
+      vencimento: moment().format(),
+      valorParcela: 0,
+      valorTotal: 0
+    });
+  }
+
+  saveUser() {
+    console.log('proposta', this.proposta);
+
+    this.svc.createProposta(this.proposta).subscribe(() => {
+      this.toast.success('Proposta criada com sucesso');
+      this.buscar();
+    });
+  }
+
+  print(elementId: string) {
+    setTimeout(() => {
+      const conteudo = document.getElementById(elementId);
+
+      if (!conteudo) {
+        console.error("Área de impressão não encontrada:", elementId);
+        this.toast.error("Erro ao localizar conteúdo para impressão.");
+        return;
+      }
+
+      const html = conteudo.innerHTML;
+
+      // cria nova janela
+      const janela = window.open('', '_blank');
+
+      if (!janela) {
+        this.toast.error("O navegador bloqueou a janela de impressão.");
+        return;
+      }
+
+      janela.document.open();
+      janela.document.write(`
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Imprimir Proposta</title>
+
+          <style>
+            @page { size: A4; margin: 12mm; }
+
+            body {
+              font-family: Arial, Helvetica, sans-serif;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+
+            .print-area {
+              width: 100%;
+            }
+
+            svg, img {
+              max-width: 100%;
+            }
+          </style>
+        </head>
+
+        <body>
+          <div class="print-area">
+            ${html}
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.focus();
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+      janela.document.close();
+    }, 200);
+  }
+
+
+  // Exportar relatório da lista (Excel/CSV simples)
+  exportar() {
+    if (!this.items?.length) {
+      this.toast.info('Nenhuma proposta para exportar.');
+      return;
+    }
+
+    const linhas = [
+      ['ID', 'Empreendimento', 'Unidade', 'Cliente', 'Valor', 'Status', 'Criada em'].join(';'),
+      ...this.items.map(p => [
+        p.id,
+        p.empreendimentoID,
+        p.unidadeID,
+        p.clienteName,
+        (p.vlrUnidade ?? 0).toString().replace('.', ','),
+        p.status,
+        new Date(p.createdAt).toLocaleString('pt-BR')
+      ].join(';'))
+    ];
+
+    const csvContent = '\uFEFF' + linhas.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `relatorio_propostas_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+  }
+}

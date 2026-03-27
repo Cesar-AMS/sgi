@@ -1,0 +1,623 @@
+<!-- Start Breadcrumbs -->
+<app-breadcrumbs title="Nova Proposta de Compra"></app-breadcrumbs>
+<!-- End Breadcrumbs -->
+
+<div class="row justify-content-center">
+  <div class="col-12 col-xxl-9">
+    <form (ngSubmit)="saveUser()" [formGroup]="InvoicesForm" class="needs-validation" novalidate id="invoice_form" autocomplete="off">
+      <div class="card overflow-hidden">
+        <!-- Efeito decorativo -->
+        <div class="invoice-effect-top position-absolute start-0">
+          <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 764 182" width="764" height="182" aria-hidden="true">
+            <g>
+              <path style="fill: var(--tb-light);" d="m-6.6 177.4c17.5 0.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
+              <path style="fill: var(--tb-secondary);" d="m-6.6 132.8c43.5 2.1 87.9 2.7 132.9 1.7 246.9-5.6 467.1-59.2 627.4-142.1h-760.3z" />
+              <path style="fill: var(--tb-primary);opacity:.5" d="m-6.6 87.2c73.2 7.4 149.3 10.6 227.3 8.8 206.2-4.7 393.8-42.8 543.5-103.6h-770.8z" />
+            </g>
+          </svg>
+        </div>
+
+        <div class="card-body z-1 position-relative">
+          <!-- Header: logo + dados empresa -->
+          <div class="row g-3 align-items-start">
+            <div class="col-12 col-lg-4">
+              <div class="mx-auto mb-2">
+                <input id="logo-img-file-input" type="file" class="logo-img-file-input d-none" (change)="fileChange($event,'0')">
+                <label for="logo-img-file-input" class="d-inline-block" tabindex="0">
+                  <span class="overflow-hidden border border-dashed d-flex align-items-center justify-content-center rounded" style="height: 40px; width: 150px;">
+                    <img src="assets/images/logo-light.png" class="card-logo card-logo-image img-fluid" id="product-img" alt="logo">
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-4 ms-lg-auto">
+              <div class="mb-2">
+                <input type="text" class="form-control form-control-sm" value="#TBS24301915" id="registrationNumber" maxlength="12" disabled>
+              </div>
+              <div class="mb-2">
+                <input type="email" class="form-control form-control-sm" id="companyEmail" placeholder="Email" disabled value="jm@imoveis.com.br">
+              </div>
+              <div class="mb-2">
+                <input type="text" value="www.jmimoveiszl.com.br" class="form-control form-control-sm" id="companyWebsite" placeholder="Website" disabled>
+              </div>
+              <div class="mb-2">
+                <input type="text" class="form-control form-control-sm" id="compnayContactno" disabled value="(11) 98765-4321">
+              </div>
+            </div>
+          </div>
+          <!--/ header -->
+
+          <!-- Empreendimento / Unidade / Bloco -->
+          <div class="mt-4">
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label" for="inp-empreendimento">Empreendimento</label>
+                <select id="inp-empreendimento" class="form-control">
+                  <option *ngFor="let e of empreendimentos" [value]="e.name">{{ e.name }}</option>
+                </select>
+              </div>
+
+              <div class="col-12 col-md-3">
+                <label class="form-label" for="inp-unidade">Unidade</label>
+                <select id="inp-unidade" class="form-control">
+                  <option *ngFor="let f of filiais" [value]="f.name">{{ f.name }}</option>
+                </select>
+              </div>
+
+              <div class="col-12 col-md-3">
+                <label class="form-label" for="inp-bloco">Bloco</label>
+                <input type="text" class="form-control" id="inp-bloco" placeholder="Bloco">
+              </div>
+            </div>
+          </div>
+
+          <!-- Dados Cadastrais 1º componente -->
+          <div class="mt-4 pt-2">
+            <form class="tablelist-form" novalidate autocomplete="off">
+              <div class="modal-body p-0">
+                <div class="mt-1 form-section">
+                  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-1">
+                    <h6 class="card-title mb-0">Dados Cadastrais do 1° Proponente</h6>
+                    <button (click)="showModal.show()" type="button" class="btn btn-primary btn-sm" id="add-btn">Novo cliente</button>
+                  </div>
+
+                  <!-- Linha 1 -->
+                  <div class="row g-3 my-3">
+                    <div class="col-12 col-md-6">
+                      <label for="c1-nome" class="form-label">Nome Cliente <span class="text-danger">*</span></label>
+                      <select id="c1-nome" class="form-control">
+                        <option value="">Lucas Parise</option>
+                        <option value="">Helder Santos</option>
+                      </select>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                      <label for="c1-nasc" class="form-label">Data de Nascimento <span class="text-danger">*</span></label>
+                      <input type="date" id="c1-nasc" name="c1nasc" class="form-control" autocomplete="bday">
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                      <label for="c1-cpfcnpj" class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
+                      <div class="position-relative">
+                        <input type="text" id="c1-cpfcnpj" name="c1cpf" class="form-control pe-5" placeholder="Informe o cpf/cnpj" inputmode="numeric" autocomplete="off">
+                        <button (click)="consultCPF()" type="button" class="verify-icon" title="Verificar se existe" aria-label="Verificar CPF/CNPJ">?</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Linha 2 -->
+                  <div class="row g-3 my-3">
+                    <div class="col-6 col-md-3">
+                      <label for="c1-rg" class="form-label">RG <span class="text-danger">*</span></label>
+                      <input type="text" id="c1-rg" name="c1rg" class="form-control" placeholder="Informe o RG" autocomplete="off">
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                      <label for="c1-email" class="form-label">E-mail <span class="text-danger">*</span></label>
+                      <input type="email" id="c1-email" name="c1email" class="form-control" placeholder="Informe o e-mail" autocomplete="email">
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                      <label for="c1-tel1" class="form-label">Telefone <span class="text-danger">*</span></label>
+                      <input type="tel" id="c1-tel1" class="form-control" placeholder="(11) 98765-4321" inputmode="tel" autocomplete="tel">
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                      <label for="c1-tel2" class="form-label">Telefone secundário</label>
+                      <input type="tel" id="c1-tel2" class="form-control" placeholder="Se existir" inputmode="tel" autocomplete="tel">
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                      <label for="c1-civil" class="form-label">Estado civil</label>
+                      <input type="text" id="c1-civil" class="form-control" placeholder="CASADO" autocomplete="off">
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                      <label for="c1-prof" class="form-label">Profissão</label>
+                      <input type="text" id="c1-prof" class="form-control" placeholder="AUX. ADMINISTRATIVO" autocomplete="organization-title">
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                      <label for="c1-renda" class="form-label">Renda</label>
+                      <input type="text" id="c1-renda" class="form-control" placeholder="R$ 2.500,00" inputmode="decimal" autocomplete="off">
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- 2º componente (se aplicável) -->
+                <hr *ngIf="true" class="mt-4">
+                <div *ngIf="true" class="mt-3 form-section">
+                  <div class="d-flex flex-wrap gap-3 mt-1">
+                    <h6 class="card-title mb-0">Dados Cadastrais do 2° Componente</h6>
+                  </div>
+
+                  <div class="row g-3 my-3">
+                    <div class="col-12 col-md-6">
+                      <label for="c2-nome" class="form-label">Nome Cliente <span class="text-danger">*</span></label>
+                      <select id="c2-nome" class="form-control">
+                        <option value="">Lucas Parise</option>
+                        <option value="">Helder Santos</option>
+                      </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <label for="c2-nasc" class="form-label">Data de Nascimento <span class="text-danger">*</span></label>
+                      <input type="date" id="c2-nasc" class="form-control" autocomplete="bday">
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <label for="c2-cpf" class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
+                      <input type="text" id="c2-cpf" class="form-control" placeholder="Informe o cpf/cnpj" inputmode="numeric" autocomplete="off">
+                    </div>
+                  </div>
+
+                  <div class="row g-3 my-3">
+                    <div class="col-6 col-md-3">
+                      <label for="c2-rg" class="form-label">RG <span class="text-danger">*</span></label>
+                      <input type="text" id="c2-rg" class="form-control" placeholder="Informe o RG" autocomplete="off">
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label for="c2-email" class="form-label">E-mail <span class="text-danger">*</span></label>
+                      <input type="email" id="c2-email" class="form-control" placeholder="Informe o e-mail" autocomplete="email">
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <label for="c2-tel1" class="form-label">Telefone <span class="text-danger">*</span></label>
+                      <input type="tel" id="c2-tel1" class="form-control" placeholder="(11) 98765-4321" inputmode="tel" autocomplete="tel">
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <label for="c2-tel2" class="form-label">Telefone secundário</label>
+                      <input type="tel" id="c2-tel2" class="form-control" placeholder="Se existir" inputmode="tel" autocomplete="tel">
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <label for="c2-civil" class="form-label">Estado civil</label>
+                      <input type="text" id="c2-civil" class="form-control" placeholder="CASADO" autocomplete="off">
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <label for="c2-prof" class="form-label">Profissão</label>
+                      <input type="text" id="c2-prof" class="form-control" placeholder="AUX. ADMINISTRATIVO" autocomplete="organization-title">
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <label for="c2-renda" class="form-label">Renda</label>
+                      <input type="text" id="c2-renda" class="form-control" placeholder="R$ 2.500,00" inputmode="decimal" autocomplete="off">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Endereço -->
+                <hr class="mt-4">
+                <div class="mt-3 form-section">
+                  <div class="mt-1"><h6 class="card-title mb-0">Dados do endereço</h6></div>
+
+                  <div class="row g-3 my-3">
+                    <div class="col-12 col-sm-6 col-md-4">
+                      <label for="end-cep" class="form-label">CEP <span class="text-danger">*</span></label>
+                      <input type="text" id="end-cep" name="cep" class="form-control" placeholder="08461-520" inputmode="numeric" autocomplete="postal-code" required>
+                    </div>
+                  </div>
+
+                  <div class="row g-3 my-3">
+                    <div class="col-12 col-md-6">
+                      <label for="end-logradouro" class="form-label">Endereço <span class="text-danger">*</span></label>
+                      <input type="text" id="end-logradouro" name="endereco" class="form-control" placeholder="Digite o nome da rua" autocomplete="address-line1" required>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <label for="end-num" class="form-label">N° do endereço <span class="text-danger">*</span></label>
+                      <input type="text" id="end-num" name="numero" class="form-control" placeholder="123 ou 18A" autocomplete="address-line2" required>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <label for="end-comp" class="form-label">Complemento</label>
+                      <input type="text" id="end-comp" name="complemento" class="form-control" placeholder="Apartamento, bloco, casa..." autocomplete="address-line2">
+                    </div>
+                  </div>
+
+                  <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                      <label for="end-bairro" class="form-label">Bairro <span class="text-danger">*</span></label>
+                      <input type="text" id="end-bairro" name="bairro" class="form-control" placeholder="Digite o nome do bairro" autocomplete="address-level3" required>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <label for="end-cidade" class="form-label">Cidade <span class="text-danger">*</span></label>
+                      <input type="text" id="end-cidade" class="form-control" placeholder="Digite o nome da cidade" autocomplete="address-level2" required>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <label for="end-uf" class="form-label">Estado</label>
+                      <input type="text" id="end-uf" name="uf" class="form-control" placeholder="UF (Ex: SP)" maxlength="2" style="text-transform: uppercase;" autocomplete="address-level1" required>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ações do formulário (1º bloco) -->
+              <div class="mt-4">
+                <div class="hstack gap-2 justify-content-end">
+                  <button type="button" class="btn btn-light">Salvar</button>
+                  <button type="submit" class="btn btn-success" id="add-btn">Salvar e vender</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <hr class="mt-4">
+
+          <!-- Condições da Proposta -->
+          <div class="mt-1"><h6 class="card-title">Condições da Proposta</h6></div>
+          <div class="table-responsive mt-3">
+            <table class="invoice-table table table-borderless table-nowrap mb-0">
+              <thead class="align-middle">
+                <tr class="table-light">
+                  <th scope="col" class="text-nowrap">QTDE</th>
+                  <th scope="col" class="text-nowrap">DESCRIÇÃO</th>
+                  <th scope="col" class="text-nowrap">VENCIMENTO</th>
+                  <th scope="col" class="text-nowrap">VALOR PARCELA</th>
+                  <th scope="col" class="text-nowrap">VALOR TOTAL</th>
+                  <th scope="col" class="text-nowrap"></th>
+                </tr>
+              </thead>
+
+              <tbody id="newlink">
+                @for (data of forms; track $index) {
+                  <tr class="product-elem">
+                    <th scope="row">
+                      <input type="text" class="form-control form-control-sm" />
+                    </th>
+                    <td>
+                      <input type="text" class="form-control form-control-sm" />
+                    </td>
+                    <td>
+                      <input type="date" class="form-control form-control-sm" />
+                    </td>
+                    <td>
+                      <input type="text" class="form-control form-control-sm" />
+                    </td>
+                    <td>
+                      <input type="text" class="form-control form-control-sm" />
+                    </td>
+                    <td>
+                      <a href="javascript:void(0)" class="btn btn-danger btn-sm" (click)="removeItem($index)">Delete</a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+
+              <tbody>
+                <tr>
+                  <td colspan="5">
+                    <a href="javascript:void(0)" id="add-item" class="btn btn-subtle-secondary fw-medium" (click)="addItem()">
+                      <i class="ri-add-fill me-1 align-bottom"></i> Adicionar condição
+                    </a>
+                  </td>
+                </tr>
+
+                <tr class="border-top border-top-dashed mt-2">
+                  <td colspan="3"></td>
+                  <td colspan="2" class="p-0">
+                    <table class="table table-borderless table-sm table-nowrap align-middle mb-0">
+                      <tbody>
+                        <tr class="border-top border-top-dashed">
+                          <th scope="row" class="text-nowrap">VALOR TOTAL DO IMÓVEL</th>
+                          <td>
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              id="cart-total"
+                              formControlName="total"
+                              mask="separator.2"
+                              thousandSeparator=","
+                              decimalMarker="."
+                              [allowNegativeNumbers]="false"
+                              [prefix]="paymentSign"
+                              placeholder="R$0.00"
+                              readonly
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Observações -->
+          <div class="mt-4 mb-4">
+            <textarea class="form-control alert alert-danger" id="exampleFormControlTextarea1" placeholder="Notes" rows="2" required>
+*ESTA PROPOSTA SOMENTE TERÁ VALIDADE APÓS APROVAÇÃO DO INCORPORADOR E ANALISE QUANTO AO VALOR DE FINANCIAMENTO, SE FOR O CASO.</textarea>
+          </div>
+
+          <!-- Engenharia + Data -->
+          <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Engenharia da Caixa paga pelo cliente? <span class="text-danger">*</span></label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="engCaixa" id="engSim">
+                  <label class="form-check-label" for="engSim">Sim</label>
+                </div>
+
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="engCaixa" id="engNao" checked>
+                  <label class="form-check-label" for="engNao">Não</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 pt-2 pt-md-0 text-start text-md-end">
+              <p class="mb-0">São Paulo, {{ '03' }} de {{ 'agosto' }} de {{ '2025' }}.</p>
+            </div>
+          </div>
+
+          <!-- Assinaturas -->
+          <div class="row text-center mt-3">
+            <div class="col-12 col-md-6">
+              <h6 class="pb-3">Vendedores</h6>
+              <div class="px-2 mt-4"><hr class="px-2"><label>CORRETOR</label></div>
+              <div class="px-2 mt-4"><hr class="px-2"><label>AGENTE</label></div>
+              <div class="px-2 mt-4"><hr class="px-2"><label>COORDENADOR</label></div>
+              <div class="px-2 mt-4"><hr class="px-2"><label>GERENTE</label></div>
+            </div>
+
+            <div class="col-12 col-md-6 mt-4 mt-md-0">
+              <h6 class="pb-3">Compradores</h6>
+              <div class="px-2 mt-4"><hr class="px-2"><label>1° COMPRADOR</label></div>
+              <div class="px-2 mt-4"><hr class="px-2"><label>2° COMPRADOR</label></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- efeito decorativo inferior -->
+        <div class="invoice-effect-top position-absolute end-0" style="transform: rotate(180deg); bottom: -80px;">
+          <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 764 182" width="764" height="182" aria-hidden="true">
+            <g>
+              <path style="fill: var(--tb-light);" d="m-6.6 177.4c17.5 0.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
+              <path style="fill: var(--tb-secondary);" d="m-6.6 132.8c43.5 2.1 87.9 2.7 132.9 1.7 246.9-5.6 467.1-59.2 627.4-142.1h-760.3z" />
+              <path style="fill: var(--tb-primary);opacity:.5" d="m-6.6 87.2c73.2 7.4 149.3 10.6 227.3 8.8 206.2-4.7 393.8-42.8 543.5-103.6h-770.8z" />
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Ações globais -->
+      <div class="hstack gap-2 flex-wrap justify-content-end d-print-none my-4">
+        <button type="submit" class="btn btn-success"><i class="ri-printer-line align-bottom me-1"></i> Salvar</button>
+        <a href="javascript:void(0);" class="btn btn-primary"><i class="ri-download-2-line align-bottom me-1"></i> Download</a>
+        <a href="javascript:void(0);" class="btn btn-danger"><i class="ri-send-plane-fill align-bottom me-1"></i> Enviar por E-mail</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div bsModal #showModal="bs-modal" class="modal fade" id="showModal">
+    <div class="modal-dialog modal-xl modal-dialog-centered custom-modal" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light p-3">
+                <h5 class="modal-title" id="exampleModalLabel">Novo cliente</h5>
+                <button type="button" class="btn-close" (click)="showModal.hide()"></button>
+            </div>
+            <form class="tablelist-form" novalidate autocomplete="off">
+                <div class="modal-body">
+                    <div id="alert-error-msg" class="d-none alert alert-danger py-2"></div>
+                    <div class="mt-1">
+                        <div class="hstack d-flex justify-content-between align-items-center mt-1">
+                            <h6 class="card-title">Dados do Cliente</h6>
+                            <button (click)="dependent = true" [disabled]="dependent" type="submit"
+                                class="btn btn-primary" id="add-btn">Adicionar dependente</button>
+                        </div>
+
+                        <div class="row g-3 my-3">
+  <div class="col-12 col-md-6">
+    <label for="cli-nome" class="form-label">Nome Cliente <span class="text-danger">*</span></label>
+    <select id="cli-nome" class="form-control">
+      <option value="">Lucas Parise</option>
+      <option value="">Helder Santos</option>
+    </select>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="cli-nasc" class="form-label">Data de Nascimento <span class="text-danger">*</span></label>
+    <input type="date" id="cli-nasc" name="cpf" class="form-control" />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="cli-cpf" class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
+    <input type="text" id="cli-cpf" name="cpf" class="form-control" placeholder="Informe o cpf/cnpj" inputmode="numeric" />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="cli-rg" class="form-label">RG <span class="text-danger">*</span></label>
+    <input type="text" id="cli-rg" name="rg" class="form-control" placeholder="Informe o RG" />
+  </div>
+
+  <div class="col-12 col-md-6">
+    <label for="cli-email" class="form-label">E-mail <span class="text-danger">*</span></label>
+    <input type="email" id="cli-email" name="email" class="form-control" placeholder="Informe o e-mail" autocomplete="email" required />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="cli-tel1" class="form-label">Telefone <span class="text-danger">*</span></label>
+    <input type="tel" id="cli-tel1" class="form-control" placeholder="(11) 98765-4321" inputmode="tel" required />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="cli-tel2" class="form-label">Telefone secundário</label>
+    <input type="tel" id="cli-tel2" name="phone2" class="form-control" placeholder="Se existir" inputmode="tel" />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="cli-civil" class="form-label">Estado civil</label>
+    <input type="text" id="cli-civil" class="form-control" placeholder="CASADO" />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="cli-prof" class="form-label">Profissão</label>
+    <input type="text" id="cli-prof" class="form-control" placeholder="AUX. ADMINISTRATIVO" />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="cli-renda" class="form-label">Renda</label>
+    <input type="text" id="cli-renda" class="form-control" placeholder="R$ 2.500,00" inputmode="decimal" />
+  </div>
+</div>
+
+
+
+                    </div>
+
+                    <!--secundario cliente-->
+                    <hr *ngIf="dependent" class="mt-4">
+
+                    <div *ngIf="dependent" class="mt-3">
+                        <div class="hstack flex gap-3 mt-1">
+                            <h6 class="card-title">Dependente</h6>
+                            <a (click)="dependent = false"
+                                class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i
+                                    class="ph-trash"></i></a>
+
+                        </div>
+
+
+                        <div class="row g-3 my-3">
+  <div class="col-12 col-md-6">
+    <label for="dep-nome" class="form-label">Nome Cliente <span class="text-danger">*</span></label>
+    <select id="dep-nome" class="form-control">
+      <option value="">Lucas Parise</option>
+      <option value="">Helder Santos</option>
+    </select>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="dep-nasc" class="form-label">Data de Nascimento <span class="text-danger">*</span></label>
+    <input type="date" id="dep-nasc" name="cpf" class="form-control" />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="dep-cpf" class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
+    <input type="text" id="dep-cpf" name="cpf" class="form-control" placeholder="Informe o cpf/cnpj" inputmode="numeric" />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="dep-rg" class="form-label">RG <span class="text-danger">*</span></label>
+    <input type="text" id="dep-rg" name="rg" class="form-control" placeholder="Informe o RG" />
+  </div>
+
+  <div class="col-12 col-md-6">
+    <label for="dep-email" class="form-label">E-mail <span class="text-danger">*</span></label>
+    <input type="email" id="dep-email" name="email" class="form-control" placeholder="Informe o e-mail" autocomplete="email" required />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="dep-tel1" class="form-label">Telefone <span class="text-danger">*</span></label>
+    <input type="tel" id="dep-tel1" class="form-control" placeholder="(11) 98765-4321" inputmode="tel" required />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="dep-tel2" class="form-label">Telefone secundário</label>
+    <input type="tel" id="dep-tel2" name="phone2" class="form-control" placeholder="Se existir" inputmode="tel" />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="dep-civil" class="form-label">Estado civil</label>
+    <input type="text" id="dep-civil" class="form-control" placeholder="CASADO" />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="dep-prof" class="form-label">Profissão</label>
+    <input type="text" id="dep-prof" class="form-control" placeholder="AUX. ADMINISTRATIVO" />
+  </div>
+
+  <div class="col-6 col-md-3">
+    <label for="dep-renda" class="form-label">Renda</label>
+    <input type="text" id="dep-renda" class="form-control" placeholder="R$ 2.500,00" inputmode="decimal" />
+  </div>
+</div>
+
+
+                    </div>
+
+                    <!--endereço-->
+                    <hr class="mt-4">
+
+                    <div class="mt-3">
+                        <div class="hstack  mt-1">
+                            <h6 class="card-title">Dados do endereço</h6>
+
+
+                        </div>
+
+                       <!-- CEP -->
+<div class="row g-3 my-3">
+  <div class="col-12 col-sm-6 col-md-4">
+    <label for="end-cep" class="form-label">CEP <span class="text-danger">*</span></label>
+    <input type="text" id="end-cep" name="cep" class="form-control" placeholder="08461-520" inputmode="numeric" autocomplete="postal-code" required />
+  </div>
+</div>
+
+<!-- Endereço / Número / Complemento -->
+<div class="row g-3 my-3">
+  <div class="col-12 col-md-6">
+    <label for="end-logradouro" class="form-label">Endereço <span class="text-danger">*</span></label>
+    <input type="text" id="end-logradouro" name="endereco" class="form-control" placeholder="Digite o nome da rua" autocomplete="address-line1" required />
+  </div>
+  <div class="col-6 col-md-3">
+    <label for="end-num" class="form-label">N° do endereço <span class="text-danger">*</span></label>
+    <input type="text" id="end-num" name="numero" class="form-control" placeholder="Ex: 123 ou 18A" autocomplete="address-line2" required />
+  </div>
+  <div class="col-6 col-md-3">
+    <label for="end-comp" class="form-label">Complemento</label>
+    <input type="text" id="end-comp" name="complemento" class="form-control" placeholder="Apartamento, bloco, casa..." autocomplete="address-line2" />
+  </div>
+</div>
+
+<!-- Bairro / Cidade / Estado -->
+<div class="row g-3">
+  <div class="col-12 col-md-4">
+    <label for="end-bairro" class="form-label">Bairro <span class="text-danger">*</span></label>
+    <input type="text" id="end-bairro" name="bairro" class="form-control" placeholder="Digite o nome do bairro" autocomplete="address-level3" required />
+  </div>
+  <div class="col-12 col-md-4">
+    <label for="end-cidade" class="form-label">Cidade <span class="text-danger">*</span></label>
+    <input type="text" id="end-cidade" class="form-control" placeholder="Digite o nome da cidade" autocomplete="address-level2" required />
+  </div>
+  <div class="col-12 col-md-4">
+    <label for="end-uf" class="form-label">Estado</label>
+    <input type="text" id="end-uf" name="uf" class="form-control" placeholder="UF (Ex: SP)" maxlength="2" style="text-transform: uppercase;" autocomplete="address-level1" required />
+  </div>
+</div>
+
+
+
+                    </div>
+
+
+                </div>
+
+                <div class="modal-footer">
+                    <div class="hstack gap-2 justify-content-end">
+                        <button type="button" class="btn btn-light">Salvar</button>
+                        <button type="submit" class="btn btn-success" id="add-btn">Salvar e vender</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

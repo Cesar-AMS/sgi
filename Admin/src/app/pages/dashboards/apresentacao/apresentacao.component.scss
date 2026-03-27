@@ -1,0 +1,125 @@
+/* src/app/components/detalhe-comissoes/detalhe-comissoes.component.scss */
+$blue: #1c54ff;
+$deep-blue: #1c3fb5;
+$accent: #2f4bd8;
+$text: #222;
+$muted: #6b7280;
+$danger: #d93025;
+
+.wrapper { padding: 16px; color: $text; }
+
+.toolbar {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  .filters {
+    display: flex; gap: 16px; align-items: center;
+    label { font-size: 14px; color: $muted;
+      input, select { margin-left: 8px; padding: 6px 8px; }
+    }
+  }
+  .btn-present {
+    padding: 8px 14px; background: $accent; color: #fff; border: none; border-radius: 8px;
+    cursor: pointer; font-weight: 600;
+    &:disabled { opacity: .5; cursor: not-allowed; }
+  }
+}
+
+.card {
+  position: relative;
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 28px 20px 28px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.06);
+  overflow: hidden;
+}
+
+.badge-left {
+  position: absolute; left: 24px; top: 24px;
+  width: 105px; height: 105px; border-radius: 999px; background: $deep-blue; color: #fff;
+  display: grid; place-items: center; text-align: center; font-weight: 700; font-size: 12px;
+  &.big { width: 140px; height: 140px; font-size: 14px; }
+}
+
+.title {
+  text-align: center; margin-top: 6px;
+  .top { font-weight: 800; font-size: 20px; letter-spacing: .2px; }
+  .sub { font-size: 12px; color: $muted; margin-top: 4px; }
+}
+
+.headline {
+  display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 24px;
+  margin: 14px 0 6px;
+  .seller {
+    text-align: center;
+    .seller-name { font-size: 24px; font-weight: 700; }
+    .seller-sub { margin-top: 6px; font-weight: 700; color: #374151; }
+    .seller-total { font-size: 44px; font-weight: 900; border-left: 6px solid $text; padding-left: 12px; display: inline-block; }
+  }
+  .media {
+    text-align: right; margin-bottom: 10px;
+    .media-label { font-weight: 800; }
+    .media-value { color: $deep-blue; font-size: 20px; font-weight: 800; margin-top: 6px; }
+  }
+}
+
+.payment-title {
+  text-align: center; font-size: 16px; font-weight: 800; margin: 8px 0 10px;
+}
+
+.grid-pagamentos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 24px;
+  .box {
+    .label { font-weight: 700; color: #374151; }
+    .value { font-weight: 800; font-size: 18px; margin-top: 6px; }
+    &.total .label { color: $accent; }
+    &.total .value.strong { color: $accent; }
+  }
+}
+
+hr { border: none; border-top: 2px solid #dfe3ea; margin: 10px 0 8px; }
+
+.devedor {
+  display: flex; gap: 10px; align-items: baseline; font-weight: 900; justify-content: center;
+  .label { color: $danger; }
+  .value { color: $danger; font-size: 22px; }
+  &.negativo .value { color: $danger; }
+}
+
+.rodape {
+  text-align: center; margin-top: 8px; font-size: 11px; color: $muted;
+}
+
+.logo {
+  position: absolute; right: 18px; top: 10px; text-align: right; font-weight: 900; line-height: .95;
+  color: #1f2937; font-size: 18px;
+  &.big { font-size: 26px; right: 24px; top: 18px; }
+}
+
+/* ==== Apresentação ==== */
+.overlay {
+  position: fixed; inset: 0; background: rgba(10, 15, 30, .88);
+  display: grid; place-items: center; z-index: 9999; cursor: pointer;
+}
+.slide { width: min(1200px, 92vw); }
+.card-presentation {
+  padding: 36px 36px 24px 36px;
+  .headline .seller .seller-total { font-size: 64px; }
+  .grid-pagamentos .box .value { font-size: 22px; }
+  .payment-title { font-size: 20px; }
+  .title .top { font-size: 24px; }
+}
+.close {
+  position: absolute; right: 24px; top: 16px; background: transparent; color: #fff;
+  font-size: 40px; line-height: 1; border: 0; cursor: pointer;
+}
+.nav-hint {
+  position: absolute; bottom: 18px; left: 0; right: 0;
+  display: flex; justify-content: space-between; color: #cbd5e1; font-size: 13px; padding: 0 28px;
+}
+
+/* responsivo */
+@media (max-width: 900px) {
+  .grid-pagamentos { grid-template-columns: repeat(2, 1fr); }
+  .badge-left { display: none; }
+}

@@ -1,0 +1,58 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Fluxo de Caixa</h2>
+      <p class="text-muted mb-0">
+        Visão consolidada das entradas, saídas e saldo operacional do período.
+      </p>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="summary-card summary-card--inflow">
+        <span class="summary-label">Entradas</span>
+        <strong>{{ totalEntradas | currency: 'BRL' }}</strong>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="summary-card summary-card--outflow">
+        <span class="summary-label">Saídas</span>
+        <strong>{{ totalSaidas | currency: 'BRL' }}</strong>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="summary-card summary-card--balance">
+        <span class="summary-label">Saldo do Período</span>
+        <strong>{{ saldoProjetado | currency: 'BRL' }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Período</th>
+              <th>Entradas</th>
+              <th>Saídas</th>
+              <th>Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of rows">
+              <td class="fw-semibold">{{ row.period }}</td>
+              <td>{{ row.entradas | currency: 'BRL' }}</td>
+              <td>{{ row.saidas | currency: 'BRL' }}</td>
+              <td [class.text-success]="row.saldo >= 0" [class.text-danger]="row.saldo < 0">
+                {{ row.saldo | currency: 'BRL' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

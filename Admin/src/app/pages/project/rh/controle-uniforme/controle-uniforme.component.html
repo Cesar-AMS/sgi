@@ -1,0 +1,33 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Controle de Uniforme</h2>
+      <p class="text-muted mb-0">Gestão de kits, entregas e pendências de uniforme.</p>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Colaborador</th>
+              <th>Kit</th>
+              <th>Data de Entrega</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of rows">
+              <td class="fw-semibold">{{ row.colaborador }}</td>
+              <td>{{ row.kit }}</td>
+              <td>{{ row.entrega }}</td>
+              <td>{{ row.status }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,31 @@
+.bg-danger{
+    background-color: red;
+}
+
+.border-end{
+    border-right-color: red;
+}
+
+.border-mobile-bottom-end {
+  border-bottom: 1px solid #9f9f9f;
+  padding-bottom: 18px ;
+  margin-bottom: 12px;
+}
+
+
+@media (min-width: 990px) {
+  .border-mobile-bottom-end {
+    border-bottom: 0;
+    border-right: 1px solid #9f9f9f; 
+  }
+}
+
+
+.valor-grande{
+  font-size: 62px;      
+  font-weight: 700;
+  color: #8a90a3;       
+  line-height: 1;
+  min-height: 72px;    
+  margin: 0 0 0.25rem 0; 
+}

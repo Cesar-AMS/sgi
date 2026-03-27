@@ -1,0 +1,146 @@
+<div class="container my-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h4 class="m-0">Centros de Custo • por mês</h4>
+
+    <div class="d-flex gap-2">
+      <div class="input-group">
+        <span class="input-group-text">Mês</span>
+        <input class="form-control" type="month" [(ngModel)]="month" (change)="loadSummary()">
+      </div>
+      <select class="form-select" style="max-width: 180px" [(ngModel)]="type" (change)="loadSummary()">
+        <option value="all">Receita + Despesa</option>
+        <option value="revenue">Somente Receita</option>
+        <option value="expense">Somente Despesa</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="alert alert-info">Carregando…</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Centro de Custo</th>
+            <th class="text-end">Receita</th>
+            <th class="text-end">Despesa</th>
+            <th class="text-end">Líquido</th>
+            <th class="text-end" style="width: 140px;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let it of items">
+            <td class="fw-semibold">{{ it.costCenterName }}</td>
+            <td class="text-end">{{ fmt(it.revenue) }}</td>
+            <td class="text-end">{{ fmt(it.expense) }}</td>
+            <td class="text-end"
+                [class.text-success]="it.net >= 0"
+                [class.text-danger]="it.net < 0">{{ fmt(it.net) }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary" (click)="openDetail(it)">Ver lançamentos</button>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-light">
+          <tr>
+            <th class="text-end">Totais</th>
+            <th class="text-end">{{ fmt(totalRevenue) }}</th>
+            <th class="text-end">{{ fmt(totalExpense) }}</th>
+            <th class="text-end">{{ fmt(totalNet) }}</th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Drawer/Offcanvas simples usando um container lateral -->
+<div class="offcanvas offcanvas-end show" tabindex="-1" *ngIf="showDetail" style="visibility: visible; width: 900px; position: fixed; background: #fff; border-left: 1px solid #eee;">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">{{ detailTitle }}</h5>
+    <button type="button" class="btn-close text-reset" (click)="closeDetail()"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div *ngIf="detailLoading" class="alert alert-info">Carregando…</div>
+
+    <div class="table-responsive" *ngIf="!detailLoading">
+      <table class="table table-sm align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 110px">Data</th>
+            <th style="width: 100px">Tipo</th>
+            <th style="width: 120px">Conta</th>
+            <th>Descrição</th>
+            <th class="text-end" style="width: 120px">Valor</th>
+            <th class="text-end" style="width: 120px">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of detailItems">
+            <td>{{ e.date | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="badge" [class.bg-success]="e.kind==='RECEIVABLE'" [class.bg-danger]="e.kind==='PAYABLE'">
+                {{ e.kind==='RECEIVABLE' ? 'Recebível' : 'Pagável' }}
+              </span>
+            </td>
+            <td>{{ e.accountCode }}</td>
+            <td>{{ e.description }}</td>
+            <td class="text-end">{{ fmt(e.amount) }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-secondary" (click)="openReclass(e)">Reclassificar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modal de Reclassificação -->
+    <div class="modal d-block" tabindex="-1" *ngIf="reclassOpen" style="background: rgba(0,0,0,.4);">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Reclassificar lançamento</h5>
+            <button type="button" class="btn-close" (click)="closeReclass()"></button>
+          </div>
+          <div class="modal-body">
+            <div *ngIf="reclassTarget" class="mb-3 small text-muted">
+              <div><b>Atual:</b> {{ reclassTarget.costCenterName || selectedCC?.name }} • {{ reclassTarget.accountCode }} - {{ reclassTarget.accountName }}</div>
+              <div><b>Descrição:</b> {{ reclassTarget.description }}</div>
+              <div><b>Valor:</b> {{ fmt(reclassTarget.amount) }}</div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Novo Centro de Custo</label>
+                <select class="form-select" [(ngModel)]="reclass.costCenterId">
+                  <option *ngFor="let c of costCenters" [ngValue]="c.id">{{ c.name }}</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Nova Conta (opcional)</label>
+                <select class="form-select" [(ngModel)]="reclass.accountId">
+                  <option [ngValue]="null">— manter —</option>
+                  <option *ngFor="let a of accounts" [ngValue]="a.id">{{ a.code }} — {{ a.description }}</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Motivo (opcional)</label>
+                <textarea class="form-control" rows="2" [(ngModel)]="reclass.reason" placeholder="Ex.: lançado no CC errado"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-light" (click)="closeReclass()">Cancelar</button>
+            <button class="btn btn-primary" [disabled]="saving || !reclass.costCenterId" (click)="submitReclass()">
+              {{ saving ? 'Salvando…' : 'Salvar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /Modal -->
+  </div>
+</div>

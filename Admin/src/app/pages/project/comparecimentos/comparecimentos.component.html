@@ -1,0 +1,128 @@
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Comparecimento</h5>
+    <button class="btn btn-primary" (click)="openCreate()">+ Lançar comparecimento</button>
+  </div>
+
+  <!-- Filtros -->
+  <form [formGroup]="filters" class="px-3 pt-3 row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label">Data</label>
+      <input type="date" class="form-control" formControlName="onDate">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Funcionário (user_id)</label>
+      <input type="number" class="form-control" formControlName="userId" placeholder="ex.: 12">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Autor (author_id)</label>
+      <input type="number" class="form-control" formControlName="authorId" placeholder="ex.: 3">
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="button" class="btn btn-outline-secondary" (click)="applyFilters()">Filtrar</button>
+      <button type="button" class="btn btn-light" (click)="clearFilters()">Limpar</button>
+
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <label class="text-muted mb-0">Exibir</label>
+        <select class="form-select form-select-sm w-auto"
+                [(ngModel)]="pageSize" (change)="pageChanged(1)"
+                [ngModelOptions]="{ standalone: true }">
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+        </select>
+        <span class="text-muted">/ página</span>
+      </div>
+    </div>
+  </form>
+
+  <!-- Tabela -->
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Chegada</th>
+          <th>Saída</th>
+          <th>author_id</th>
+          <th>user_id</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="loading"><td colspan="6" class="py-4 text-center">Carregando…</td></tr>
+
+        <ng-container *ngIf="!loading">
+          <tr *ngFor="let r of rows">
+            <td>{{ r.date | date:'dd/MM/yyyy' }}</td>
+            <td>{{ fmtTime(r.startedAt) }}</td>
+            <td>{{ fmtTime(r.finishedAt) }}</td>
+            <td>{{ r.authorId }}</td>
+            <td>{{ r.userId }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-secondary me-2" (click)="openEdit(r.id)" title="Editar">✏️</button>
+              <button class="btn btn-sm btn-outline-danger" (click)="remove(r.id)" title="Excluir">🗑️</button>
+            </td>
+          </tr>
+          <tr *ngIf="rows.length===0">
+            <td colspan="6" class="py-4 text-center text-muted">Nenhum registro encontrado.</td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- paginação -->
+  <div class="card-footer d-flex justify-content-between align-items-center">
+    <div>Total: {{ total }}</div>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-outline-secondary btn-sm" [disabled]="page===1" (click)="pageChanged(page-1)">«</button>
+      <span>Página {{ page }}</span>
+      <button class="btn btn-outline-secondary btn-sm" [disabled]="page*pageSize>=total" (click)="pageChanged(page+1)">»</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal (criar/editar) -->
+<div class="modal fade show" tabindex="-1" style="display:block; background:rgba(0,0,0,.4)" *ngIf="form">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ editingId ? 'Editar comparecimento' : 'Lançar comparecimento' }}</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="form" class="row g-3">
+          <div class="col-6">
+            <label class="form-label">Data</label>
+            <input type="date" class="form-control" formControlName="date">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Chegada (started_at)</label>
+            <input type="time" class="form-control" formControlName="startedAt" step="60">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Saída (finished_at)</label>
+            <input type="time" class="form-control" formControlName="finishedAt" step="60">
+          </div>
+          <div class="col-6">
+            <label class="form-label">author_id</label>
+            <input type="number" class="form-control" formControlName="authorId">
+          </div>
+          <div class="col-6">
+            <label class="form-label">user_id</label>
+            <input type="number" class="form-control" formControlName="userId">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" [disabled]="form.invalid || saving" (click)="save()">
+          <span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>
+          Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+.custom-modal {
+  max-width: 70vw;         /* até 90% da largura da tela */
+  height: 90vh;            /* até 90% da altura da tela */
+}
+
+.custom-modal .modal-content {
+  max-height: 100%;
+  overflow: auto;
+  border-radius: 8px;
+}
+
+@media (min-width: 576px) {
+  .custom-modal {
+  max-width: 75vw;         /* até 90% da largura da tela */
+  height: 90vh;            /* até 90% da altura da tela */
+}
+}

@@ -1,0 +1,237 @@
+<div class="ar-page">
+
+  <!-- Header -->
+  <div class="ar-header">
+    <div>
+      <h4 class="mb-1">Contas a Pagar</h4>
+      <div class="text-muted small">Painel de vencimentos e pagamentos</div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="clearFilters()">
+        <i class="bi bi-eraser"></i> Limpar
+      </button>
+
+      <button class="btn btn-primary btn-sm" type="button" (click)="applyFilters()">
+        <i class="bi bi-funnel"></i> Filtrar
+      </button>
+
+      <button class="btn btn-outline-success btn-sm" type="button" (click)="exportExcel()" [disabled]="loading">
+        <i class="bi bi-file-earmark-excel"></i> Excel
+      </button>
+
+    
+      <button class="btn btn-success btn-sm" type="button" (click)="openCreateModal()">
+        <i class="bi bi-plus-circle"></i> Registrar nova
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="ar-cards">
+    <div class="ar-card" (click)="onCardClick('OPEN')" [class.active]="activeCard==='OPEN'">
+      <div class="label">Títulos em aberto</div>
+      <div class="value">{{ cards.openValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+      <div class="meta">{{ cards.openTotal }} títulos</div>
+    </div>
+
+    <div class="ar-card" (click)="onCardClick('DUE_TODAY')" [class.active]="activeCard==='DUE_TODAY'">
+      <div class="label">Vence hoje</div>
+      <div class="value">{{ cards.dueTodayValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+      <div class="meta">{{ cards.dueTodayTotal }} títulos</div>
+    </div>
+
+    <div class="ar-card" (click)="onCardClick('DUE_MONTH')" [class.active]="activeCard==='DUE_MONTH'">
+      <div class="label">Vence esse mês</div>
+      <div class="value">{{ cards.dueMonthValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+      <div class="meta">{{ cards.dueMonthTotal }} títulos</div>
+    </div>
+
+    <div class="ar-card" (click)="onCardClick('OVERDUE')" [class.active]="activeCard==='OVERDUE'">
+      <div class="label">Vencido</div>
+      <div class="value">{{ cards.overdueValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+      <div class="meta">{{ cards.overdueTotal }} títulos</div>
+    </div>
+
+    <div class="ar-card" (click)="onCardClick('PAID_MONTH')" [class.active]="activeCard==='PAID_MONTH'">
+      <div class="label">Pago no mês</div>
+      <div class="value">{{ cards.paidMonthValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+      <div class="meta">{{ cards.paidMonthTotal }} títulos</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="ar-filters card border-0 shadow-sm">
+    <div class="card-body">
+      <form [formGroup]="form">
+        <div class="row g-3 align-items-end">
+
+          <div class="col-12 col-md-3">
+            <label class="form-label">Vencimento (de)</label>
+            <input type="date" class="form-control" formControlName="dueFrom">
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="form-label">Vencimento (até)</label>
+            <input type="date" class="form-control" formControlName="dueTo">
+          </div>
+
+          <div class="col-12 col-md-2">
+            <label class="form-label">Filial</label>
+            <select class="form-select" formControlName="branchId">
+              <option [ngValue]="null">Todas</option>
+              <option *ngFor="let b of branches" [ngValue]="b.id">{{ b.name }}</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-2">
+            <label class="form-label">Categoria</label>
+            <select class="form-select" formControlName="category">
+              <option [ngValue]="null">Todas</option>
+              <option *ngFor="let c of categories" [ngValue]="c.key">{{ c.label }}</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-2">
+            <label class="form-label">Status</label>
+            <select class="form-select" formControlName="status">
+              <option [ngValue]="null">Todos</option>
+              <option value="WAITING">Em aberto</option>
+              <option value="PAID">Pago</option>
+              <option value="CANCELLED">Cancelado</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Busca</label>
+            <input type="text" class="form-control" formControlName="search"
+                   placeholder="Descrição, observação, categoria...">
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="form-label">Exibir</label>
+            <select class="form-select" [ngModel]="pageSize" [ngModelOptions]="{standalone:true}"
+                    (ngModelChange)="onPageSizeChange($event)">
+              <option *ngFor="let s of pageSizeOptions" [ngValue]="s">{{ s }} registros</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-3 d-grid">
+            <button class="btn btn-primary" type="button" (click)="applyFilters()">
+              <i class="bi bi-search"></i> Aplicar filtros
+            </button>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="ar-table card border-0 shadow-sm mt-3">
+    <div class="card-body">
+
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="text-muted small">
+          Total: <strong>{{ totalItems }}</strong> registros
+        </div>
+
+        <div *ngIf="loading" class="text-muted small d-flex align-items-center gap-2">
+          <span class="spinner-border spinner-border-sm"></span>
+          Carregando...
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Criação</th>
+              <th>Vencimento</th>
+              <th>Descrição</th>
+              <th>Status</th>
+              <th>Categoria</th>
+              <th class="text-end">Valor Total</th>
+              <th class="text-end">Valor Pendente</th>
+              <th>Observação</th>
+              <th class="text-center">Venda</th>
+              <th class="text-center">Ações</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let r of rows">
+              <td>{{ r.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td>{{ r.dueDate | date:'dd/MM/yyyy' }}</td>
+
+              <td class="td-desc">
+                <div class="fw-semibold">{{ r.description }}</div>
+                <div class="small text-muted" *ngIf="r.paidDate">Pago em: {{ r.paidDate | date:'dd/MM/yyyy' }}</div>
+              </td>
+
+              <td>
+                <span class="ar-badge" [ngClass]="badgeClass(r.status)">
+                  {{ checkStatus(r.status) }}
+                </span>
+              </td>
+
+              <td>{{ r.category }}</td>
+
+              <td class="text-end">
+                {{ r.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+              </td>
+
+              <td class="text-end">
+                {{ r.pendingAmount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+              </td>
+
+              <td class="td-obs">
+                <span class="text-muted" *ngIf="!r.observations">—</span>
+                <span *ngIf="r.observations">{{ r.observations }}</span>
+              </td>
+
+              <td class="text-center">
+                <a *ngIf="r.saleId" [routerLink]="['/vendas/edit', r.saleId]" class="btn btn-link btn-sm">
+                  <i class="bi bi-box-arrow-up-right"></i> Abrir
+                </a>
+                <span *ngIf="!r.saleId" class="text-muted">—</span>
+              </td>
+
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary"
+                        (click)="openSettleModal(r)"
+                        [disabled]="r.status === 'PAID'">
+                  <i class="bi bi-cash-coin"></i> Baixar
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="!loading && rows.length === 0">
+              <td colspan="10" class="text-center text-muted py-4">
+                Nenhum registro encontrado.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="d-flex justify-content-end mt-2" *ngIf="totalItems > pageSize">
+        <pagination
+          [totalItems]="totalItems"
+          [itemsPerPage]="pageSize"
+          [maxSize]="7"
+          [boundaryLinks]="true"
+          [rotate]="true"
+          [previousText]="'Anterior'"
+          [nextText]="'Próximo'"
+          [firstText]="'Primeira'"
+          [lastText]="'Última'"
+          (pageChanged)="onPageChanged($event)">
+        </pagination>
+      </div>
+
+    </div>
+  </div>
+
+</div>

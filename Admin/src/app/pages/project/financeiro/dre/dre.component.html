@@ -1,0 +1,133 @@
+<div class="container my-3">
+  <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+    <h4 class="m-0">DRE • por mês</h4>
+
+    <div class="d-flex align-items-center gap-2">
+      <div class="input-group">
+        <span class="input-group-text">Mês</span>
+        <input class="form-control" type="month" [(ngModel)]="months" (change)="onMonthChange()">
+      </div>
+
+      <!-- (opcionais) filtros extras -->
+    
+     <!-- <select class="form-select" [(ngModel)]="categoryId" (change)="load()">
+        <option [ngValue]="null">Todas categorias</option>
+        <option [ngValue]="1">Categoria 1</option>
+      </select>
+     -->
+
+      <button class="btn btn-outline-primary text-nowrap btn btn-block" (click)="exportPDF()">Exportar PDF</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="alert alert-info">Carregando…</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Receita Bruta</div>
+          <div class="fs-4 fw-bold">
+            {{ totals?.grossRevenue | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Despesas Totais</div>
+          <div class="fs-4 fw-bold">
+            {{ totals?.totalExpenses | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Resultado Operacional</div>
+          <div class="fs-4 fw-bold" [class.text-success]="(totals?.operatingResult ?? 0) >= 0"
+                                    [class.text-danger]="(totals?.operatingResult ?? 0) < 0">
+            {{ totals?.operatingResult | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECEITAS -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">Receitas</div>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:120px">Conta</th>
+            <th>Descrição</th>
+            <th class="text-end">Receita</th>
+            <th class="text-end">Despesa</th>
+            <th class="text-end">Líquido</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of revenueLines">
+            <td>{{ l.accountCode }}</td>
+            <td>{{ l.accountName }}</td>
+            <td class="text-end">{{ l.totalReceita | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</td>
+            <td class="text-end">{{ l.totalDespesa | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</td>
+            <td class="text-end fw-semibold">
+              {{ l.totalLiquido | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-light">
+          <tr>
+            <th colspan="2" class="text-end">Subtotal Receitas</th>
+            <th class="text-end">{{ revenueTotal | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</th>
+            <th class="text-end">—</th>
+            <th class="text-end">—</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- DESPESAS -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">Despesas</div>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:120px">Conta</th>
+            <th>Descrição</th>
+            <th class="text-end">Receita</th>
+            <th class="text-end">Despesa</th>
+            <th class="text-end">Líquido</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of expenseLines">
+            <td>{{ l.accountCode }}</td>
+            <td>{{ l.accountName }}</td>
+            <td class="text-end">{{ l.totalReceita | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</td>
+            <td class="text-end">{{ l.totalDespesa | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</td>
+            <td class="text-end fw-semibold">
+              {{ l.totalLiquido | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-light">
+          <tr>
+            <th colspan="2" class="text-end">Subtotal Despesas</th>
+            <th class="text-end">—</th>
+            <th class="text-end">{{ expenseTotal | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}</th>
+            <th class="text-end">—</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>

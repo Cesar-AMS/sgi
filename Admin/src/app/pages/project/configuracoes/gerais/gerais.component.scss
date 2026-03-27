@@ -1,0 +1,82 @@
+
+.nav-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.nav-scroll::-webkit-scrollbar { height: 6px; }
+.nav-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.15);
+  border-radius: 999px;
+}
+
+.table thead th { white-space: nowrap; }
+.text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.search-box { min-width: 220px; }
+@media (max-width: 575.98px) {
+  .search-box { min-width: 180px; }
+}
+
+.nav-scroll{
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; 
+  scrollbar-width: none;          
+}
+.nav-scroll::-webkit-scrollbar{     
+  display: none;
+  height: 0;
+}
+
+
+/* Limita o tamanho do modal e mantém estrutura flexível */
+.custom-modal-content {
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* impede rolagem geral */
+}
+
+/* Scroll somente vertical dentro do body */
+.modal-scroll {
+  overflow-y: auto;
+  overflow-x: hidden; /* 🔥 remove o scroll horizontal */
+  max-height: calc(90vh - 150px);
+  padding-right: 10px;
+}
+
+/* Mantém header e footer fixos */
+.modal-header,
+.modal-footer {
+  z-index: 2;
+  background-color: #fff;
+}
+
+/* scrollbar mais elegante */
+.modal-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.modal-scroll::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+.modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Evita que os checkboxes ou colunas forcem overflow lateral */
+.row {
+  flex-wrap: wrap;
+  margin: 0 !important;
+}
+.col-md-4 {
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+
+
+.form-check-label {
+  font-size: 15px;
+  color: #444;
+}

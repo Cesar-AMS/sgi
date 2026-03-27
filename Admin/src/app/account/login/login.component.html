@@ -1,0 +1,99 @@
+<link href="https://fonts.googleapis.com/css?family=Work Sans ' rel='stylesheet'">
+
+<div class="fundoMobile d-block d-sm-flex">
+
+<div class="col-7 d-none d-sm-block colOne bck-image">
+  <div class="overlay"></div> <!-- CAMADA AZUL -->
+  <div class="display-4 display-lg-3 text-contrast mt-4 mt-md-0 bemVi">
+    <h2 class="bem-vindo">
+      Bem-vindo(a) ao <br />
+      <span class="logo text-wrapperS">JM Imóveis</span>
+    </h2>
+  </div>
+</div>
+
+
+  <div class="colTwo">
+
+
+
+    <div class="divMobile">
+
+      <div class="auth-logo text-center marginImg d-none d-sm-block mb-4">
+        <img class="tmz" src="../../../assets/images/logo-dark.png" alt="">
+      </div>
+
+      <div class=" d-block d-sm-none d-flex align-items-center justify-content-center pb-1 col-12 px-2 mb-3">
+        <div class="">
+          <img src="../../../assets/images/logo-dark.png" width="70" class="">
+
+        </div>
+
+      </div>
+
+      <span class="">
+        Todos os dados aqui contidos são de uso exclusivo da <strong class="text-capitalize">JM IMOVEIS LTDA - CNPJ:
+          41.289.036/0002-03.</strong>
+      </span>
+
+      <h1 class="h3 mb-1 mt-4">Login</h1>
+
+      <div>
+        <span class="tamSm">Problemas com acesso?</span><span (click)="openModal()" class="hireSupport"> Contatar
+          suporte</span>
+        <div>
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" action="index.html">
+            <div class="mt-4 mb-3">
+              <label class="form-label fw-semibold">E-mail</label>
+              <input type="email" id="username" class="form-control" placeholder="Digite seu e-mail"
+                formControlName="email" [class.is-invalid]="f['email'].touched && f['email'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['email'].touched && f['email'].errors?.['required']">
+                O e-mail é obrigatório.
+              </div>
+              <div class="invalid-feedback" *ngIf="f['email'].touched && f['email'].errors?.['email']">
+                Informe um e-mail válido.
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="form-label fw-semibold">Senha</label>
+              <input type="password" class="form-control" placeholder="Digite sua senha" formControlName="password"
+                id="password-input" [class.is-invalid]="f['password'].touched && f['password'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['password'].touched && f['password'].errors?.['required']">
+                A senha é obrigatória.
+              </div>
+            </div>
+            <span (click)="openModal()" class="hireSupport float-end"> Esqueci minha senha</span>
+            <button type="submit" class="btn btn-primary btn-rounded w-100 mt-3 mb-3">
+              <span class="text-14">Entrar</span>
+            </button>
+
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="custom-modal" *ngIf="showModal" (click)="onBackdropClick($event)" (keydown.escape)="closeModal()"
+  tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="privadoTitle" aria-describedby="privadoDesc">
+  <div class="custom-modal-dialog">
+    <div class="custom-modal-content shadow-lg">
+      <div class="custom-modal-header">
+        <h5 id="privadoTitle" class="modal-title mb-0">Acesso restrito</h5>
+        <button type="button" class="btn-close" aria-label="Fechar" (click)="closeModal()"></button>
+      </div>
+
+      <div class="custom-modal-body">
+        <p id="privadoDesc" class="mb-0">
+          Este é um <strong>sistema privado</strong>. Para criar um acesso,
+          entre em contato com a <strong>administração</strong>.
+        </p>
+      </div>
+
+      <div class="custom-modal-footer d-flex gap-2 float-e">
+        <button type="button" class="btn btn-outline-secondary " (click)="closeModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>

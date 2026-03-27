@@ -1,0 +1,312 @@
+<div class="row" id="invoiceList">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center g-2">
+                    <div class="col-lg-3 me-auto">
+                        <h6 class="card-title mb-0">Proposta Comercial</h6>
+                    </div>
+                    <div class="col-xl-2 col-md-3">
+                        <div class="search-box">
+                            <input type="text" class="form-control search" placeholder="Pesquisar proposta..."
+                                [(ngModel)]="term" (keyup)="filterdata()" />
+                            <i class="ri-search-line search-icon"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-auto">
+                        <div class="hstack gap-2">
+                            <button class="btn btn-subtle-danger d-none" id="remove-actions"
+                                (click)="deleteRecordModal?.show()">
+                                <i class="ri-delete-bin-2-line"></i>
+                            </button>
+                            <a routerLink="/propostas/create" class="btn btn-secondary">
+                                <i class="bi bi-plus-circle align-baseline me-1"></i> Nova Proposta
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body mt-3">
+                <div class="table-responsive table-card">
+                    <table class="table table-centered align-middle table-custom-effect table-nowrap mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="checkAll"
+                                            [(ngModel)]="masterSelected" (change)="checkUncheckAll($event)" />
+                                        <label class="form-check-label" for="checkAll"></label>
+                                    </div>
+                                </th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('invoice_no')">
+                                    ID
+                                </th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('customer')">
+                                    Cliente
+                                </th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('empreendimento')">
+                                    Empreendimento
+                                </th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('unidade')">
+                                    Unidade
+                                </th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('email')">
+                                    E-mail
+                                </th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('createDate')">
+                                    Data Criação
+                                </th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('dueDate')">
+                                    Validade
+                                </th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('invoice_amount')">
+                                    Valor
+                                </th>
+                                <th scope="col" class="sort cursor-pointer" (click)="onSort('status')">
+                                    Status
+                                </th>
+                                <th scope="col">Ações</th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="list form-check-all" id="invoice-list-data">
+                            @for (data of invoices; track $index) {
+                            <tr id="l_{{ data._id }}">
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="checkAll"
+                                            [value]="data._id" [(ngModel)]="data.states"
+                                            (change)="onCheckboxChange($event)" />
+                                        <label class="form-check-label"></label>
+                                    </div>
+                                </td>
+
+                                <td class="invoice_id">
+                                    <a (click)="openVisualizarModal(data)" class="cursor-pointer">
+                                        #PROP{{ data.invoice_no }}
+                                    </a>
+                                </td>
+
+                                <td class="customer_name">{{ data.customer }}</td>
+                                <td class="empreendimento">{{ data.empreendimento }}</td>
+                                <td class="unidade">{{ data.unidade }}</td>
+                                <td class="email">{{ data.email }}</td>
+                                <td class="create_date">{{ data.createDate | date: 'dd/MM/yyyy' }}</td>
+                                <td class="due_date">{{ data.dueDate | date: 'dd/MM/yyyy' }}</td>
+                                <td class="amount">{{ data.invoice_amount | currency: 'BRL' }}</td>
+
+                                <td class="status">
+                                    <span class="badge" [ngClass]="getStatusClass(data.status)">
+                                        {{ getStatusLabel(data.status) }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <ul class="d-flex gap-2 list-unstyled mb-0">
+                                        <!-- Visualizar -->
+                                        <li>
+                                            <button type="button" class="btn btn-subtle-primary btn-icon btn-sm"
+                                                (click)="openVisualizarModal(data)">
+                                                <i class="ph-eye"></i>
+                                            </button>
+                                        </li>
+
+                                        <!-- Editar -->
+                                        <li>
+                                            <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm"
+                                                (click)="editarProposta(data)">
+                                                <i class="ph-pencil"></i>
+                                            </button>
+                                        </li>
+
+                                        <!-- Excluir -->
+                                        <li>
+                                            <button type="button"
+                                                class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"
+                                                (click)="removeItem(data._id)">
+                                                <i class="ph-trash"></i>
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <div id="elmLoader">
+                        <div class="spinner-border text-primary avatar-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+
+                    <div class="noresult" style="display: none;">
+                        <div class="text-center py-4">
+                            <i class="ph-magnifying-glass fs-1 text-primary"></i>
+                            <h5 class="mt-2">Nenhum resultado encontrado</h5>
+                            <p class="text-muted mb-0">
+                                Não encontramos nenhuma proposta para o termo informado.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row align-items-center mt-4 pt-3" id="pagination-element">
+                    <div class="col-sm">
+                        <div class="text-muted text-center text-sm-start">
+                            Exibindo
+                            <span class="fw-semibold">{{ invoices?.length }}</span>
+                            de
+                            <span class="fw-semibold">{{ invoiceslist?.length }}</span>
+                            resultados
+                        </div>
+                    </div>
+                    <div class="col-sm-auto mt-3 mt-sm-0">
+                        <pagination class="pagination-wrap hstack justify-content-center gap-2"
+                            [totalItems]="invoiceslist.length" [itemsPerPage]="10" (pageChanged)="pageChanged($event)">
+                        </pagination>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Visualizar Proposta -->
+<div bsModal #visualizarModal="bs-modal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title">Detalhes da Proposta</h5>
+                <button type="button" class="btn-close" (click)="visualizarModal.hide()"></button>
+            </div>
+
+            <div class="modal-body pt-2">
+                <div *ngIf="propostaSelecionada">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Cliente</h6>
+                            <p class="mb-0 fw-semibold">
+                                {{ propostaSelecionada.customer }}
+                            </p>
+                            <small class="text-muted">{{ propostaSelecionada.email }}</small>
+                        </div>
+                        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                            <h6 class="text-muted mb-1">Status</h6>
+                            <span class="badge" [ngClass]="getStatusClass(propostaSelecionada.status)">
+                                {{ getStatusLabel(propostaSelecionada.status) }}
+                            </span>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Criada em:
+                                    {{ propostaSelecionada.createDate | date: 'dd/MM/yyyy' }}<br />
+                                    Validade:
+                                    {{ propostaSelecionada.dueDate | date: 'dd/MM/yyyy' }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Empreendimento</h6>
+                            <p class="mb-0 fw-semibold">
+                                {{ propostaSelecionada.empreendimento }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Unidade</h6>
+                            <p class="mb-0 fw-semibold">
+                                {{ propostaSelecionada.unidade }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Gerente</h6>
+                            <p class="mb-0">
+                                {{ propostaSelecionada.gerente || '-' }}
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Coordenador</h6>
+                            <p class="mb-0">
+                                {{ propostaSelecionada.coordenador || '-' }}
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Corretor</h6>
+                            <p class="mb-0">
+                                {{ propostaSelecionada.corretor || '-' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Valor da Proposta</h6>
+                            <h4 class="mb-0">
+                                {{ propostaSelecionada.invoice_amount | currency: 'BRL' }}
+                            </h4>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-success" (click)="tornarCliente(propostaSelecionada)">
+                                <i class="bi bi-person-check me-1"></i> Tornar Cliente
+                            </button>
+
+                            <button type="button" class="btn btn-outline-secondary"
+                                (click)="editarProposta(propostaSelecionada)">
+                                <i class="ph-pencil me-1"></i> Editar
+                            </button>
+
+                            <button type="button" class="btn btn-light" (click)="visualizarModal.hide()">
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- deleteRecordModal -->
+<div bsModal #deleteRecordModal="bs-modal" id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" (click)="deleteRecordModal.hide()"></button>
+            </div>
+            <div class="modal-body p-md-5">
+                <div class="text-center">
+                    <div class="text-danger">
+                        <i class="bi bi-trash display-5"></i>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="mb-2">Tem certeza?</h4>
+                        <p class="text-muted mx-3 mb-0">
+                            Tem certeza que deseja remover este registro?
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 justify-content-center mt-4 pt-2 mb-2">
+                    <button type="button" class="btn w-sm btn-light btn-hover" (click)="deleteRecordModal.hide()">
+                        Fechar
+                    </button>
+                    <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record"
+                        (click)="deleteData(deleteID)">
+                        Sim, deletar!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

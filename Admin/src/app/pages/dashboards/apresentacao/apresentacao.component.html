@@ -1,0 +1,134 @@
+<!-- src/app/components/detalhe-comissoes/detalhe-comissoes.component.html -->
+<div class="wrapper">
+  <div class="toolbar">
+    <div class="filters">
+      <label>
+        Mês:
+        <input type="month" [(ngModel)]="mesSelecionado" (change)="carregar()">
+      </label>
+
+      <label *ngIf="gerentes.length">
+        Gerente:
+        <select [ngModel]="gerentes[gerenteIndex]?.gerenteId" (ngModelChange)="setGerenteById($event)">
+          <option *ngFor="let g of gerentes" [value]="g.gerenteId">{{ g.gerenteNome }}</option>
+        </select>
+      </label>
+    </div>
+
+    <button class="btn-present" (click)="abrirApresentacao()" [disabled]="!atual">
+      Apresentação
+    </button>
+  </div>
+
+  <div class="card" *ngIf="atual as a">
+    <div class="badge-left">
+      <div>Só sobre os<br>comissionamentos</div>
+    </div>
+
+    <header class="title">
+      <div class="top">Detalhamento sobre as vendas</div>
+      <div class="sub">Apresentamos a seguir os valores recebidos a título de ATO no período,
+        bem como o montante destinado ao pagamento de todo o time envolvido nessas vendas.</div>
+    </header>
+
+    <section class="headline">
+      <div class="seller">
+        <div class="seller-name">{{ a.vendedorNome }}</div>
+        <div class="seller-sub">Total de ATO</div>
+        <div class="seller-total">{{ a.totalAto | currency:'BRL':'symbol':'1.2-2' }}</div>
+      </div>
+
+      <div class="media">
+        <div class="media-label">Média de ATO</div>
+        <div class="media-value">{{ a.mediaAto | currency:'BRL':'symbol':'1.2-2' }}</div>
+      </div>
+    </section>
+
+    <h3 class="payment-title">Detalhando os pagamentos</h3>
+
+    <section class="grid-pagamentos">
+      <div class="box" *ngFor="let p of a.pagamentos">
+        <div class="label">{{ p.funcao }}</div>
+        <div class="value">{{ p.valor | currency:'BRL':'symbol':'1.2-2' }}</div>
+      </div>
+
+      <div class="box total">
+        <div class="label">TOTAL</div>
+        <div class="value strong">{{ totalPagamentos | currency:'BRL':'symbol':'1.2-2' }}</div>
+      </div>
+    </section>
+
+    <hr>
+
+    <section class="devedor" [class.negativo]="devedor > 0">
+      <div class="label">Devedor:</div>
+      <div class="value">
+        {{ (devedor >= 0 ? devedor : -devedor) | currency:'BRL':'symbol':'1.2-2' }}
+      </div>
+    </section>
+
+    <footer class="rodape" *ngIf="a.observacao">{{ a.observacao }}</footer>
+    <div class="logo">JM<br>IMÓVEIS</div>
+  </div>
+
+  <div class="empty" *ngIf="!atual">Nenhum dado para o período selecionado.</div>
+</div>
+
+<!-- OVERLAY APRESENTAÇÃO -->
+<div class="overlay" *ngIf="apresentacao" (click)="onOverlayClick($event)" (touchstart)="onOverlayClick($event)">
+  <button class="close" (click)="fecharApresentacao(); $event.stopPropagation()">×</button>
+  <div class="slide">
+    <!-- reutiliza o mesmo bloco visual, porém maior -->
+    <div class="card card-presentation" *ngIf="atual as a">
+      <div class="badge-left big"><div>Só sobre os<br>comissionamentos</div></div>
+
+      <header class="title">
+        <div class="top">Detalhamento sobre as vendas</div>
+        <div class="sub">Apresentamos a seguir os valores recebidos a título de ATO do mês selecionado,
+          e o montante destinado ao time envolvido.</div>
+      </header>
+
+      <section class="headline">
+        <div class="seller">
+          <div class="seller-name">{{ a.vendedorNome }}</div>
+          <div class="seller-sub">Total de ATO</div>
+          <div class="seller-total">{{ a.totalAto | currency:'BRL':'symbol':'1.2-2' }}</div>
+        </div>
+
+        <div class="media">
+          <div class="media-label">Média de ATO</div>
+          <div class="media-value">{{ a.mediaAto | currency:'BRL':'symbol':'1.2-2' }}</div>
+        </div>
+      </section>
+
+      <h3 class="payment-title">Detalhando os pagamentos</h3>
+
+      <section class="grid-pagamentos">
+        <div class="box" *ngFor="let p of a.pagamentos">
+          <div class="label">{{ p.funcao }}</div>
+          <div class="value">{{ p.valor | currency:'BRL':'symbol':'1.2-2' }}</div>
+        </div>
+        <div class="box total">
+          <div class="label">TOTAL</div>
+          <div class="value strong">{{ totalPagamentos | currency:'BRL':'symbol':'1.2-2' }}</div>
+        </div>
+      </section>
+
+      <hr>
+      <section class="devedor" [class.negativo]="devedor > 0">
+        <div class="label">Devedor:</div>
+        <div class="value">
+          {{ (devedor >= 0 ? devedor : -devedor) | currency:'BRL':'symbol':'1.2-2' }}
+        </div>
+      </section>
+
+      <footer class="rodape" *ngIf="a.observacao">{{ a.observacao }}</footer>
+      <div class="logo big">JM<br>IMÓVEIS</div>
+    </div>
+  </div>
+
+  <div class="nav-hint">
+    <span>← anterior</span>
+    <span>próximo →</span>
+  </div>
+</div>

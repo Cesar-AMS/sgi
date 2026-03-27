@@ -1,0 +1,50 @@
+<div class="container-fluid py-4 dashboard-home">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+      <h1 class="fw-bold mb-1">Dashboard</h1>
+      <p class="text-muted mb-0">
+        Visão executiva do sistema com atalhos para os principais fluxos da imobiliária.
+      </p>
+    </div>
+
+    <div class="dashboard-highlight">
+      <span class="dashboard-highlight__label">Painel central</span>
+      <strong>Resumo operacional e acessos rápidos</strong>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3" *ngFor="let card of summaries">
+      <div class="summary-card" [ngClass]="card.accent">
+        <span class="summary-card__title">{{ card.title }}</span>
+        <strong class="summary-card__value">{{ card.value }}</strong>
+        <small class="summary-card__helper">{{ card.helper }}</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+          <h5 class="mb-1">Atalhos</h5>
+          <p class="text-muted mb-0">Acesse rapidamente os módulos mais usados no dia a dia.</p>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6 col-xl-4" *ngFor="let shortcut of shortcuts">
+          <a class="shortcut-card text-decoration-none" [routerLink]="shortcut.route" [ngClass]="shortcut.accent">
+            <div class="shortcut-card__icon">
+              <i class="{{ shortcut.icon }}"></i>
+            </div>
+            <div class="shortcut-card__content">
+              <h6 class="mb-1">{{ shortcut.title }}</h6>
+              <p class="mb-0">{{ shortcut.description }}</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

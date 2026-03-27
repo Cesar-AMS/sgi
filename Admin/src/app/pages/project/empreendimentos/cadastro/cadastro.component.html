@@ -1,0 +1,266 @@
+<div class="row" id="invoiceList">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center g-2">
+                    <div class="col-lg-3 me-auto">
+                        <h6 class="card-title mb-0">Empreendimentos</h6>
+                    </div><!--end col-->
+
+                    <div class="col-md-auto">
+                        <div class="hstack gap-2">
+
+                            <button class="btn btn-outline-success" type="button" (click)="exportExcel()">
+                                <i class="bi bi-file-earmark-excel me-2"></i> Excel
+                            </button>
+                            <a (click)="openModalClient(null,'new')" class="btn btn-primary"><i
+                                    class="bi bi-plus-circle align-baseline me-1"></i> Novo empreendimento</a>
+                        </div>
+                    </div><!--end col-->
+                </div><!--end row-->
+
+
+
+
+            </div>
+
+            <div class="card-body mt-3 p-0">
+                <div class="table-responsive ">
+                    <table class="table  align-middle table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>NOME</th>
+                                <th>ENDEREÇO</th>
+                                <th>CONSTRUTORA</th>
+                                <th>DATA CRIAÇÃO</th>
+                                <th>AÇÕES</th>
+                                <th>ADMIN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let client of empreendimentos">
+                                <td>
+                                    <div>{{client.id}}</div>
+                                </td>
+                                <td>
+                                    <div>{{client.name}}</div>
+                                </td>
+                                <td>
+                                    <div>{{client.address}}</div>
+                                </td>
+                                <td>
+                                    <div>{{client.constructor}}</div>
+                                </td>
+                                <td>
+                                    <div>{{client.createdAt | date : 'dd/MM/yyyy hh:mm:ss'}}</div>
+                                </td>
+                                <td class="acoes ">
+                                    <ul class="d-flex gap-2 list-unstyled mb-0">
+
+                                        <li><a (click)="openModalClient(client.id, 'edit')"
+                                                class="btn btn-subtle-secondary btn-icon btn-sm"><i
+                                                    class="ph-pencil"></i></a> </li>
+                                        <li><a class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i
+                                                    class="ph-trash"></i></a> </li>
+                                    </ul>
+                                </td>
+                                <!-- Telefone principal e secundário / dependente -->
+                                <td class="">
+                                    <div routerLink="/unidades" class="cursor-pointer">Ver unidades</div>
+                                    <div [routerLink]="'/empreendimentos/gerenciar/' + client.id"
+                                        class="pt-1 cursor-pointer">Gerenciar
+                                        unidades</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div><!--end col-->
+</div><!--end row-->
+
+<!-- deleteRecordModal -->
+<div bsModal #deleteRecordModal="bs-modal" id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" (click)="deleteRecordModal.hide()"></button>
+            </div>
+            <div class="modal-body p-md-5">
+                <div class="text-center">
+                    <div class="text-danger">
+                        <i class="bi bi-trash display-5"></i>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="mb-2">Are you sure ?</h4>
+                        <p class="text-muted mx-3 mb-0">Are you sure you want to remove this record ?</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 justify-content-center mt-4 pt-2 mb-2">
+                    <button type="button" class="btn w-sm btn-light btn-hover"
+                        (click)="deleteRecordModal.hide()">Close</button>
+                    <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record"
+                        (click)="deleteData(deleteID)">Yes, Delete
+                        It!</button>
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /deleteRecordModal/ -->
+
+
+<div bsModal #showModal="bs-modal" class="modal fade" id="showModal">
+    <div class="modal-dialog modal-lg modal-dialog-centered custom-modal" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light p-3">
+                <h5 class="modal-title" id="exampleModalLabel">{{titleModal}} Empreendimento</h5>
+                <button type="button" class="btn-close" (click)="showModal.hide()"></button>
+            </div>
+            <form class="tablelist-form" novalidate autocomplete="off">
+                <div class="modal-body">
+                    <div id="alert-error-msg" class="d-none alert alert-danger py-2"></div>
+                    <div class="mt-1">
+
+                        <div class="my-3">
+
+                            <div class="row my-3">
+
+                                <div class="col-12 mb-3">
+                                    <label for="customername-field" class="form-label">Nome Empreendimento<span
+                                            class="text-danger">*</span></label>
+                                    <input [disabled]="disableInputs" type="text" id="customername-field"
+                                        name="empreendimentoname" class="form-control"
+                                        placeholder="Informe o nome completo" [(ngModel)]="empreendimento.name"
+                                        required>
+                                </div>
+                            </div>
+
+                            <div class="row my-3">
+
+
+                                <div class="col-12">
+                                    <label for="customername-field" class="form-label">Endereço <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" id="customername-field" [disabled]="disableInputs" name="name"
+                                        class="form-control" placeholder="Digite o endereço completo" name="address"
+                                        [(ngModel)]="empreendimento.address" required>
+                                </div>
+
+
+                            </div>
+
+                            <hr class="my-2 pb-1" />
+                            <div class="row my-3">
+                                <h6 class="card-title">Dados da construtora
+                                    <a (click)="controllerNewConstrutora = true; construtura.name = ''"
+                                        class="btn btn-secondary float-end"><i
+                                            class="bi bi-plus-circle align-baseline me-1"></i>
+                                        Nova construtora</a>
+                                </h6>
+                                <div class="d-flex pb-2 align-items-center gap-4 float-end">
+
+
+                                </div>
+
+                                <div *ngIf="controllerNewConstrutora" class="d-flex mb-3 align-items-end">
+
+
+                                    <div class="col-8">
+                                        <label class="form-label">Nome da Construtora <span
+                                                class="text-danger">*</span></label>
+                                        <input [(ngModel)]="construtura.name" type="text" class="form-control"
+                                            placeholder="Ex.: " name="nomeC" />
+                                    </div>
+
+
+
+                                    <div class="ms-2 d-flex gap-2">
+                                        <button (click)="newConstrutora()" class="btn btn-success float-end"
+                                            id="add-btn">
+                                            Salvar
+                                        </button>
+                                        <a (click)="controllerNewConstrutora = false"
+                                            class="btn btn-subtle-danger btn-icon remove-item-btn"><i
+                                                class="ph-trash"></i></a>
+
+                                    </div>
+                                </div>
+
+                                <div class="col-12 mb-3">
+                                    <label for="customername-field" class="form-label">Construtora <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-control" data-choices name="productCategories"
+                                        id="productCategories" name="construtura.name"
+                                        [(ngModel)]="empreendimento.constructorId">
+                                        <option value="">Selecione</option>
+                                        <option *ngFor="let c of construtoras" [value]="c.id">{{c.name}}</option>
+
+                                    </select>
+                                </div>
+
+
+                            </div>
+
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    <div class="hstack justify-content-end">
+                        <button type="submit" class="btn btn-success" *ngIf="titleModal != 'Editar'" id="add-btn"
+                            (click)="saveEmpreendimento()">Salvar
+                            Empreendimento</button>
+                        <button type="submit" class="btn btn-success" *ngIf="titleModal === 'Editar'" id="add-btn"
+                            (click)="updateEmpreendimento()">Atualizar Empreendimento</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div bsModal #viewUnidades="bs-modal" class="modal fade" id="showModal">
+    <div class="modal-dialog modal-xl modal-dialog-centered custom-modal" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light p-3">
+                <h5 class="modal-title" id="exampleModalLabel">Disponibilidade</h5>
+                <button type="button" class="btn-close" (click)="viewUnidades.hide()"></button>
+            </div>
+            <h5 class="fw-bold px-4 pt-4">Empreendimento TESTE </h5>
+            <h6 class="mt-3 ps-4">Torre A</h6>
+
+            <table class="table table-bordered text-center align-middle">
+                <thead class="">
+                    <tr>
+                        <th>ANDAR</th>
+                        <th *ngFor="let apt of torreA.andares[0].apartamentos"> </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let andar of torreA.andares">
+                        <td class="  fw-bold">{{ andar.numero }}</td>
+                        <td *ngFor="let apt of andar.apartamentos">
+                            <div *ngIf="apt" class="bg-success text-white p-2 rounded">
+                                <div class="fw-bold">Apto {{ apt.numero }}</div>
+                                <div>{{ apt.metragem }}</div>
+                                <div>{{ apt.dormitorios }}</div>
+                                <div>{{ apt.valor }}</div>
+                                <div>{{ apt.tipo }}</div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+
+        </div>
+    </div>
+</div>

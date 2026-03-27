@@ -1,0 +1,179 @@
+<div class="col-12">
+  <div class="card">
+    <div class="card-body position-relative">
+
+
+      <!-- Status -->
+      <span class="badge bg-info text-white">Lançamento</span>
+      <span class="badge bg-danger text-white ms-2" style="cursor: pointer;" (click)="rules()">Regras de
+        Visualização</span>
+
+      <!-- Título + Switch -->
+      <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+        <h5 class="mb-0">{{emprendimento.name}}</h5>
+        <ul class="list-inline text-muted mb-3">
+        </ul>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox">
+          <label class="form-check-label">
+            {{ emprendimento.hidden == true ? 'Ativado' : 'Desativado' }}
+          </label>
+
+        </div>
+
+
+      </div>
+
+      <!-- Infos -->
+      <ul class="list-inline text-muted mb-3">
+        <li class="list-inline-item me-4">Endereço: <strong>{{emprendimento.address}}</strong></li>
+        <li class="list-inline-item">Criação: <strong>{{emprendimento.createdAt | date: 'dd/MM/yyyy'}}</strong></li>
+      </ul>
+      <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3 mb-3">
+        <button class="btn btn-primary btn-sm" (click)="addUnidade()">+ Adicionar unidade</button>
+      </div>
+
+
+      <div class="table-wrap">
+        <table class="table table-sm table-bordered table-fixed align-middle">
+          <colgroup>
+            <col style="width:56px"> <!-- ID -->
+            <col style="width:70px"> <!-- Andar -->
+            <col style="width:90px"> <!-- Bloco -->
+            <col style="width:90px"> <!-- Número -->
+            <col style="width:120px"> <!-- Valor -->
+            <col style="width:110px"> <!-- Tamanho -->
+            <col style="width:110px"> <!-- Dormitórios -->
+            <col style="width:130px"> <!-- Status -->
+            <col style="width:90px"> <!-- Ativo -->
+            <col style="width:110px"> <!-- Ações -->
+          </colgroup>
+
+          <thead class="table-dark text-center">
+            <tr>
+              <th>ID</th>
+              <th>Andar</th>
+              <th>Bloco</th>
+              <th>Número</th>
+              <th>Valor</th>
+              <th>Tamanho (m²)</th>
+              <th>Dormitórios</th>
+              <th>Status</th>
+              <th>Ativo</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let ap of apartaments; let i = index" [ngClass]="{'pending-row': ap.pending}">
+              <td class="text-center">{{ ap.id }}</td>
+              <td><input type="number" class="form-control form-control-sm text-center" [(ngModel)]="ap.floor"></td>
+              <td><input type="text" class="form-control form-control-sm text-center" [(ngModel)]="ap.block"></td>
+              <td><input type="number" class="form-control form-control-sm text-center" [(ngModel)]="ap.number"></td>
+              <td><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="ap.value"></td>
+              <td><input type="number" class="form-control form-control-sm text-center" [(ngModel)]="ap.size"></td>
+              <td><input type="number" class="form-control form-control-sm text-center" [(ngModel)]="ap.dormitories">
+              </td>
+              <td>
+                <select class="form-select form-select-sm text-center" [(ngModel)]="ap.status">
+                  <option value="OPEN">Aberto</option>
+                  <option value="SELL">Vendido</option>
+                  <option value="AVAILABLE">Disponível</option>
+                  <option value="RESERVED">Reservado</option>
+                </select>
+              </td>
+              <td class="text-center">
+                <input type="checkbox" [(ngModel)]="ap.active">
+              </td>
+              <td class="text-center">
+                <button class="btn btn-success btn-sm" (click)="salvar(ap)">Salvar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+
+
+
+      <div bsModal #modalUsers="bs-modal" class="modal fade" id="showModal">
+        <div class="modal-dialog modal-lg modal-dialog-centered custom-modal" role="document">
+          <div class="modal-content">
+            <div class="modal-header bg-light p-3">
+              <h5 class="modal-title" id="exampleModalLabel">Usuários que podem visualizar empreendimento</h5>
+              <button type="button" class="btn-close" (click)="modalUsers.hide()"></button>
+            </div>
+
+            <!-- Reactive Form -->
+            <form class="tablelist-form" novalidate autocomplete="off">
+              <div class="modal-body">
+                <div class="search-box" style="min-width: 220px;">
+                  <input type="text" class="form-control form-control-sm search mt-2 mb-3" name="testes1223212"
+                    [(ngModel)]="filterUser.name" placeholder="Pesquisar usuário...">
+                  <i class="ri-search-line search-icon"></i>
+                </div>
+                <div class="row">
+                  <div class="d-grid gap-2 d-md-block">
+                    <button class="btn btn-primary btn-sm m-2" type="button" (click)="selectedAll()">Selecionar /
+                      Desmarcar todos</button>
+                    <button class="btn btn-success btn-sm m-2" type="button">Salvar modificações</button>
+                  </div>
+
+
+                </div>
+                <div class="row">
+                  <div class="col-lg-12">
+                    <div class="table-responsive">
+                      <table class="table table-borderless align-middle mb-0">
+                        <thead class="table-light">
+                          <tr>
+                            <th scope="col" class="text-nowrap">ID</th>
+                            <th scope="col" class="text-nowrap">NOME</th>
+                            <th scope="col" class="text-nowrap">TELEFONE</th>
+                            <!-- <th scope="col" class="text-nowrap">CARGO</th>-->
+                            <th scope="col" class="text-nowrap d-none d-lg-table-cell">EMAIL</th>
+                            <th scope="col" class="text-nowrap">STATUS</th>
+                            <th scope="col" class="text-nowrap text-end">AÇÕES</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let u of usuarios | filterBy: filterUser ; let i = index; trackBy: trackById">
+                            <td> <input class="form-check-input" type="checkbox" [name]="'ii' + i"
+                                [(ngModel)]="usuarios[i].enterpriseVisibility" id="auth-remember-check" />
+                            </td>
+                            <td class="text-nowrap">{{ u.id }}</td>
+                            <td class="text-truncate" style="max-width: 220px;">{{ u.name }}</td>
+                            <td class="text-nowrap">{{ u.cellphone }}</td>
+                            <!--<td class="text-nowrap">{{ u.cargo }}</td>-->
+                            <td class="d-none d-lg-table-cell text-truncate" style="max-width: 260px;">{{ u.email }}
+                            </td>
+                            <td>
+                              <span class="badge" [ngClass]="!u.hidden ? 'bg-success' : 'bg-secondary'">
+                                {{ !u.hidden ? 'Ativo' : 'Inativo' }}
+                              </span>
+                            </td>
+
+
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Footer -->
+              <div class="modal-footer">
+
+                <div class="hstack justify-content-end">
+                  <button (click)="saveUser()" class="btn btn-success" id="add-btn">
+                    Salvar Alterações
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>

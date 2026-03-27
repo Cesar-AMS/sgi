@@ -1,0 +1,34 @@
+:host {
+  display: block;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  color: #1f2937;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.summary-card--inflow {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+}
+
+.summary-card--outflow {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.summary-card--balance {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}

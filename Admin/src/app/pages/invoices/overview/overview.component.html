@@ -1,0 +1,466 @@
+<!-- Start Breadcrumbs -->
+<!-- <app-breadcrumbs title="Invoice Overview" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs> -->
+<!-- End Breadcrumbs -->
+
+<div class="row justify-content-center">
+    <div class="col-xxl-9">
+        <div class="hstack gap-2 justify-content-end d-print-none mb-4">
+            <a href="javascript:window.print()" class="btn btn-success"><i
+                    class="ri-printer-line align-bottom me-1"></i> Salvar</a>
+            <button type="button" id="download-button" class="btn btn-primary"><i
+                    class="ri-download-2-line align-bottom me-1"></i> Download</button>
+                    <a href="javascript:void(0);" class="btn btn-danger"><i
+                        class="ri-send-plane-fill align-bottom me-1"></i> Enviar por E-mail</a>
+        </div>
+        <div class="card overflow-hidden" id="invoice">
+            <div class="invoice-effect-top position-absolute start-0">
+                <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 764 182" width="764" height="182">
+                    <title>&lt;Group&gt;</title>
+                    <g id="&lt;Group&gt;">
+                        <g id="&lt;Group&gt;">
+                            <path id="&lt;Path&gt;" style="fill: var(--tb-light);"
+                                d="m-6.6 177.4c17.5 0.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
+                        </g>
+                        <g id="&lt;Group&gt;">
+                            <path id="&lt;Path&gt;" style="fill: var(--tb-secondary);"
+                                d="m-6.6 132.8c43.5 2.1 87.9 2.7 132.9 1.7 246.9-5.6 467.1-59.2 627.4-142.1h-760.3z" />
+                        </g>
+                        <g id="&lt;Group&gt;" style="opacity: .5">
+                            <path id="&lt;Path&gt;" style="fill: var(--tb-primary);"
+                                d="m-6.6 87.2c73.2 7.4 149.3 10.6 227.3 8.8 206.2-4.7 393.8-42.8 543.5-103.6h-770.8z" />
+                        </g>
+                    </g>
+                </svg>
+            </div>
+            <div class="card-body z-1 position-relative">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <img src="assets/images/logo-light.png" class="card-logo" alt="logo light" height="28">
+                    </div>
+                    <div class="flex-shrink-0 mt-sm-0 mt-3">
+                        <h6><span class="text-muted fw-normal">N° Proposta</span> <span
+                                id="legal-register-no">#TBS24301915</span></h6>
+                        <h6><span class="text-muted fw-normal">Email:</span> <span
+                                id="email">{{'jm@imoveis.com.br'}}</span></h6>
+                        <h6><span class="text-muted fw-normal">Site:</span> <a href="https://themesbrand.com/"
+                                class="link-primary" target="_blank" id="website">www.jmimoveiszl.com.br</a></h6>
+                        <h6 class="mb-0"><span class="text-muted fw-normal">Contato: </span><span id="contact-no"> (11)
+                                98765-4321</span></h6>
+                    </div>
+                </div>
+                <div class="mt-5 pt-4">
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="text-muted mb-2 text-uppercase">Empreendimento</p>
+                            <h5 class="fs-md mb-0">Giordano</h5>
+                        </div>
+                        <!--end col-->
+                        <div class=" col-2">
+                            <p class="text-muted mb-2 text-uppercase">Unidade</p>
+                            <h5 class="fs-md mb-0"><span id="invoice-date">102</span></h5>
+                        </div>
+                        <div class="col-2">
+                            <p class="text-muted mb-2 text-uppercase">Bloco</p>
+                            <h5 class="fs-md mb-0"><span id="invoice-due-date">Único</span></h5>
+                        </div>
+                        <!--end col-->
+                        <div class="col-2">
+                            <p class="text-muted mb-2 text-uppercase">Status</p>
+                            <span class="badge bg-success-subtle text-success fs-xxs" id="payment-status">Aberto</span>
+                        </div>
+
+                    </div><!--end row-->
+                </div>
+                <hr *ngIf="true" class="mt-4">
+                <form class="tablelist-form" novalidate autocomplete="off">
+                    <div class="modal-body">
+                        <div id="alert-error-msg" class="d-none alert alert-danger py-2"></div>
+                        <div class="mt-1">
+                            <div class="hstack flex gap-3 mt-1">
+                                <h6 class="card-title">Dados Cadastrais do 1° Componente</h6>
+                            </div>
+
+                            <div class="row my-3">
+
+                                <div class="col-6 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Nome Cliente</p>
+
+                                    <h5 class="fs-md mb-0">Lucas Parise</h5>
+                                </div>
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Data de Nascimento</p>
+
+                                    <h5 class="fs-md mb-0">23/03/1998</h5>
+                                </div>
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">CPF/CNPJ</p>
+
+                                    <h5 class="fs-md mb-0">432543654-90</h5>
+                                </div>
+
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">RG</p>
+
+                                    <h5 class="fs-md mb-0">233213-XX</h5>
+                                </div>
+
+                                <div class="col-6 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">E-mail</p>
+
+                                    <h5 class="fs-md mb-0">{{'lucas@gmail.com'}}</h5>
+                                </div>
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Telefone</p>
+
+                                    <h5 class="fs-md mb-0">(11) 98765-4321</h5>
+                                </div>
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Telefone secundário</p>
+
+                                    <h5 class="fs-md mb-0">-</h5>
+                                </div>
+
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Estado Civil</p>
+
+                                    <h5 class="fs-md mb-0">Casado</h5>
+                                </div>
+
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Profissão</p>
+
+                                    <h5 class="fs-md mb-0">Desenvolvedor</h5>
+                                </div>
+
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Renda</p>
+
+                                    <h5 class="fs-md mb-0">R$ 20.000,00</h5>
+                                </div>
+
+
+                            </div>
+
+
+
+                        </div>
+
+                        <!--secundario cliente-->
+                        <hr *ngIf="true" class="mt-4">
+
+                        <div *ngIf="true" class="mt-3">
+                            <div class="hstack flex gap-3 mt-1">
+                                <h6 class="card-title">Dados Cadastrais do 2° Componente</h6>
+                            </div>
+
+
+                            <div class="row my-3">
+
+                                <div class="col-6 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Nome Cliente</p>
+
+                                    <h5 class="fs-md mb-0">Maria</h5>
+                                </div>
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Data de Nascimento</p>
+
+                                    <h5 class="fs-md mb-0">17/03/1998</h5>
+                                </div>
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">CPF/CNPJ</p>
+
+                                    <h5 class="fs-md mb-0">432543654-90</h5>
+                                </div>
+
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">RG</p>
+
+                                    <h5 class="fs-md mb-0">233213-XX</h5>
+                                </div>
+
+                                <div class="col-6 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">E-mail</p>
+
+                                    <h5 class="fs-md mb-0">{{'maria@gmail.com'}}</h5>
+                                </div>
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Telefone</p>
+
+                                    <h5 class="fs-md mb-0">(11) 98765-4321</h5>
+                                </div>
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Telefone secundário</p>
+
+                                    <h5 class="fs-md mb-0">-</h5>
+                                </div>
+
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Estado Civil</p>
+
+                                    <h5 class="fs-md mb-0">Casado</h5>
+                                </div>
+
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Profissão</p>
+
+                                    <h5 class="fs-md mb-0">Analista</h5>
+                                </div>
+
+                                <div class="col-3 mb-3">
+                                    <p class="text-muted mb-2 text-uppercase">Renda</p>
+
+                                    <h5 class="fs-md mb-0">R$ 7.000,00</h5>
+                                </div>
+
+
+                            </div>
+
+                        </div>
+
+                        <!--endereço-->
+                        <hr class="mt-4">
+
+                        <div class="mt-3">
+                            <div class="hstack  mt-1">
+                                <h6 class="card-title">Dados do endereço</h6>
+
+
+                            </div>
+
+                            <div class="row my-3">
+
+                                <div class="col-3 ">
+                                    <p class="text-muted mb-2 text-uppercase">CEP</p>
+
+                                    <h5 class="fs-md mb-0">03655-010</h5>
+                                </div>
+
+
+
+
+                            </div>
+
+
+                            <div class="row my-3">
+
+                                <div class="col-6 ">
+                                    <p class="text-muted mb-2 text-uppercase">Endereço</p>
+
+                                    <h5 class="fs-md mb-0">Rua: Isaac Tabacow</h5>
+                                </div>
+                                <div class="col-3">
+                                    <p class="text-muted mb-2 text-uppercase">N° do Endereço</p>
+
+                                    <h5 class="fs-md mb-0">73</h5>
+                                </div>
+
+                                <div class="col-3">
+                                    <p class="text-muted mb-2 text-uppercase">Complemento</p>
+
+                                    <h5 class="fs-md mb-0">A</h5>
+                                </div>
+
+                            </div>
+                            <div class="row">
+                                <div class="col-4">
+                                    <p class="text-muted mb-2 text-uppercase">Bairro</p>
+
+                                    <h5 class="fs-md mb-0">Vila Granada</h5>
+                                </div>
+                                <div class="col-4">
+                                    <p class="text-muted mb-2 text-uppercase">Cidade</p>
+
+                                    <h5 class="fs-md mb-0">São Paulo</h5>
+                                </div>
+                                <div class="col-4">
+                                    <p class="text-muted mb-2 text-uppercase">Estado</p>
+
+                                    <h5 class="fs-md mb-0">SP</h5>
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+
+                </form>
+                <div class="table-responsive mt-4">
+                    <table class="table table-borderless text-center table-nowrap align-middle mb-0">
+                        <thead>
+                            <tr class="table-light">
+                                <th scope="col">QTDE</th>
+                                <th scope="col">DESCRIÇÃO</th>
+                                <th scope="col">VENCIMENTO</th>
+                                <th scope="col">VALOR PARCELA</th>
+                                <th scope="col" class="text-end">VALOR TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-list">
+                            <tr id="1" class="product-elem">
+                                <th scope="row" class="">
+                                    <input type="text" class="form-control" value="2" disabled />
+                                </th>
+                                <td class="">
+                                    <input type="text" class="form-control" value="ENTRADA" disabled />
+
+                                </td>
+                                <td>
+                                    <input type="date" class="form-control" value="15/10/2025" disabled />
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" value="R$2.000,30" disabled />
+                                </td>
+                                <td class="">
+                                    <input type="text" class="form-control" value="R$4.000,60" disabled />
+                                </td>
+
+                            </tr>
+                            <tr id="1" class="product-elem">
+                                <th scope="row" class="">
+                                    <input type="text" class="form-control" value="2" disabled />
+                                </th>
+                                <td class="">
+                                    <input type="text" class="form-control" value="ENTRADA" disabled />
+
+                                </td>
+                                <td>
+                                    <input type="date" class="form-control" value="15/10/2025" disabled />
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" value="R$2.000,30" disabled />
+                                </td>
+                                <td class="">
+                                    <input type="text" class="form-control" value="R$4.000,60" disabled />
+                                </td>
+
+                            </tr>
+                            <tr id="1" class="product-elem">
+                                <th scope="row" class="">
+                                    <input type="text" class="form-control" value="2" disabled />
+                                </th>
+                                <td class="">
+                                    <input type="text" class="form-control" value="ENTRADA" disabled />
+
+                                </td>
+                                <td>
+                                    <input type="date" class="form-control" value="15/10/2025" disabled />
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" value="R$2.000,30" disabled />
+                                </td>
+                                <td class="">
+                                    <input type="text" class="form-control" value="R$4.000,60" disabled />
+                                </td>
+
+                            </tr>
+                        </tbody>
+                    </table><!--end table-->
+                </div>
+                <div class="border-top border-top-dashed mt-2" id="products-list-total">
+                    <table class="table table-borderless table-nowrap align-middle mb-0 ms-auto" style="width:250px">
+                        <tbody>
+
+                            <tr class="border-top border-top-dashed fs-base">
+                                <th scope="row">VALOR TOTAL DO IMÓVEL</th>
+                                <th class="text-end">R$2,050.20</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!--end table-->
+                </div>
+
+                <div class="mt-4 mb-4">
+                    <textarea class="form-control alert alert-danger" id="exampleFormControlTextarea1"
+                        placeholder="Notes" rows="2"
+                        required>*ESTA PROPOSTA SOMENTE TERÁ VALIDADE APÓS APROVAÇÃO DO INCORPORADOR E ANALISE QUANTO AO VALOR DE FINANCIAMENTO, SE FOR O CASO.</textarea>
+                </div>
+                <div class="row">
+
+                         <div class="col-6 ">
+                                                <label for="customername-field" class="form-label">Engenharia da Caixa Paga pelo cliente?
+                                                    <span class="text-danger">*</span></label>
+                                                <div class="d-flex gap-3">
+                                                    <div class="form-check mb-2">
+                                                        <input  class="form-check-input" type="radio"
+                                                            name="flexRadioDefault" id="flexRadioDefault1">
+                                                        <label class="form-check-label" for="flexRadioDefault1">
+                                                            Sim
+                                                        </label>
+                                                    </div>
+
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio"
+                                                            name="flexRadioDefault" id="flexRadioDefault2" checked>
+                                                        <label class="form-check-label" for="flexRadioDefault2">
+                                                            Não
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                        <div class="col-6 text-sm pt-3 text-end">
+                            <p>São Paulo, {{'03'}} de {{'agosto'}} de {{'2025'}}.</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-center row">
+                        <div class="col-6">
+                            <h6 class="pb-4">Vendedores</h6>
+                            <div class="px-2 mt-4">
+                                
+                                <hr class="px-2">
+                                <label>VENDEDOR</label>
+                            </div>
+                            <div class="px-2 mt-4">
+                                <hr class="px-2">
+                                <label>AGENTE</label>
+                            </div>
+                            <div class="px-2 mt-4">
+                                <hr class="px-2">
+                                <label>COORDENADOR</label>
+                            </div>
+                            <div class="px-2 mt-4">
+                                <hr class="px-2">
+                                <label>GERENTE</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="pb-4">Compradores</h6>
+                             <div class="px-2 mt-4">
+                                
+                                <hr class="px-2">
+                                <label>1° COMPRADOR</label>
+                            </div>
+                            <div class="px-2 mt-4">
+                                <hr class="px-2">
+                                <label>2° COMPRADOR</label>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <div class="invoice-effect-top position-absolute end-0" style="transform: rotate(180deg); bottom: -80px;">
+                <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 764 182" width="764" height="182">
+                    <title>&lt;Group&gt;</title>
+                    <g id="&lt;Group&gt;">
+                        <g id="&lt;Group&gt;">
+                            <path id="&lt;Path&gt;" style="fill: var(--tb-light);"
+                                d="m-6.6 177.4c17.5 0.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
+                        </g>
+                        <g id="&lt;Group&gt;">
+                            <path id="&lt;Path&gt;" style="fill: var(--tb-secondary);"
+                                d="m-6.6 132.8c43.5 2.1 87.9 2.7 132.9 1.7 246.9-5.6 467.1-59.2 627.4-142.1h-760.3z" />
+                        </g>
+                        <g id="&lt;Group&gt;" style="opacity: .5">
+                            <path id="&lt;Path&gt;" style="fill: var(--tb-primary);"
+                                d="m-6.6 87.2c73.2 7.4 149.3 10.6 227.3 8.8 206.2-4.7 393.8-42.8 543.5-103.6h-770.8z" />
+                        </g>
+                    </g>
+                </svg>
+            </div>
+        </div>
+        <!--end card-->
+    </div>
+    <!--end col-->
+</div>

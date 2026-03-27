@@ -1,0 +1,609 @@
+<div class="card shadow-sm">
+  <!-- Cabeçalho com título e botão Exportar -->
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="mb-0">Relatório de Propostas</h5>
+      <small class="text-muted">Filtre, visualize detalhes e exporte as propostas</small>
+    </div>
+
+    <button type="button" class="btn btn-outline-success btn-sm" (click)="exportar()"
+      [disabled]="loading || !items?.length">
+      <i class="ri-download-2-line align-bottom me-1"></i>
+      Exportar
+    </button>
+  </div>
+
+  <div class="card-body">
+    <!-- Filtros -->
+    <form [formGroup]="form" class="row g-2 align-items-end mb-2">
+      <div class="col-md-2">
+        <label class="form-label">De</label>
+        <input type="date" class="form-control" formControlName="de">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Até</label>
+        <input type="date" class="form-control" formControlName="ate">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Status</label>
+        <select class="form-select" formControlName="status">
+          <option value="ALL">Todos</option>
+          <option value="OPEN">Aberto</option>
+          <option value="APPROVED">Aprovado</option>
+          <option value="REJECTED">Rejeitado</option>
+          <option value="CANCELLED">Cancelado</option>
+        </select>
+      </div>
+
+      <!-- NOVO: filtro de Gerente -->
+      <div class="col-md-3">
+        <label class="form-label">Gerente</label>
+        <select class="form-select" formControlName="gerente">
+          <option value="">Todos</option>
+          <option *ngFor="let g of gerentes" [value]="g.id">
+            {{ g.nome }}
+          </option>
+        </select>
+      </div>
+
+      <!-- NOVO: filtro de Corretor -->
+      <div class="col-md-3">
+        <label class="form-label">Vendedor</label>
+        <select class="form-select" formControlName="corretor">
+          <option value="">Todos</option>
+          <option *ngFor="let c of corretores" [value]="c.id">
+            {{ c.nome }}
+          </option>
+        </select>
+      </div>
+
+      <div class="col-12 text-end mt-2">
+        <button type="button" class="btn btn-primary" (click)="buscar()" [disabled]="loading">
+          <span *ngIf="!loading">
+            <i class="ri-search-line me-1"></i> Buscar
+          </span>
+          <span *ngIf="loading">
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+            Carregando...
+          </span>
+        </button>
+      </div>
+    </form>
+
+    <!-- Tabela -->
+    <div class="table-responsive mt-3">
+      <table class="table table-hover table-sm align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Empreendimento</th>
+            <th>Unidade</th>
+            <th>Cliente</th>
+            <th>Valor</th>
+            <th>Status</th>
+            <th>Criada em</th>
+            <th class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of pagedItems">
+            <td>{{ p.id }}</td>
+            <td>{{ p.enterPriseName }}</td>
+            <td>{{ p.unitName }}</td>
+            <td>{{ p.clienteName }}</td>
+            <td>{{ p.vlrUnidade | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+            <td>
+              <span class="badge" [ngClass]="badgeClass(p.status)">
+                {{ p.status }}
+              </span>
+            </td>
+            <td>{{ p.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="text-end">
+              <button class="btn btn-outline-primary btn-sm" type="button" (click)="openModal(p.id)">
+                <i class="ri-eye-line me-1"></i> Detalhes
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="!loading && totalItems === 0">
+
+            <td colspan="8" class="text-center text-muted py-4">
+              Nenhuma proposta encontrada
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2" *ngIf="totalItems > 0">
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">Itens por página:</span>
+
+          <select class="form-select form-select-sm w-auto" [ngModel]="itemsPerPage"
+            (ngModelChange)="onItemsPerPageChange($event)">
+            <option *ngFor="let n of perPageOptions" [value]="n">{{ n }}</option>
+          </select>
+
+          <span class="text-muted small">
+            Mostrando {{ getStartIndex() }} - {{ getEndIndex() }} de {{ totalItems }}
+          </span>
+        </div>
+
+        <pagination [totalItems]="totalItems" [(ngModel)]="page" [itemsPerPage]="itemsPerPage" [boundaryLinks]="true"
+          [directionLinks]="true" [maxSize]="5" (pageChanged)="onPageChanged($event)" previousText="Anterior"
+          nextText="Próximo" firstText="Primeira" lastText="Última" class="mb-0"></pagination>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL (layout igual, só ajuste de abrir/fechar + botão download) -->
+<!-- MODAL -->
+<div bsModal #detailTpl="bs-modal" class="modal fade" id="detailTpl">
+  <div class="modal-dialog modal-xl modal-dialog-centered custom-modal" role="document">
+    <div class="modal-content">
+      <div class="card-body p-1">
+        <div class="row justify-content-center">
+
+          <div class="col-12 col-xxl-12">
+            <form>
+              <div class="card overflow-hidden">
+                <!-- Efeito decorativo -->
+
+                <div class="card-body z-1 position-relative">
+
+                  <!-- Dados Cadastrais 1º componente -->
+                  <div class="mt-1 pt-2">
+                    <form>
+                      <div id="areaA4" #areaA4Ref class="print-area card overflow-hidden">
+                        <!-- Efeito decorativo -->
+                        <div class="invoice-effect-top position-absolute start-0">
+                          <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 764 182" width="764"
+                            height="182" aria-hidden="true">
+                            <g>
+                              <path style="fill: var(--tb-light);"
+                                d="m-6.6 177.4c17.5 0.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
+                              <path style="fill: var(--tb-secondary);"
+                                d="m-6.6 132.8c43.5 2.1 87.9 2.7 132.9 1.7 246.9-5.6 467.1-59.2 627.4-142.1h-760.3z" />
+                              <path style="fill: var(--tb-primary);opacity:.5"
+                                d="m-6.6 87.2c73.2 7.4 149.3 10.6 227.3 8.8 206.2-4.7 393.8-42.8 543.5-103.6h-770.8z" />
+                            </g>
+                          </svg>
+                        </div>
+
+                        <div class="card-body z-1 position-relative">
+
+                          <div class="mt-2">
+                            <div class="row m-0 p-0">
+                              <div class="col-12">
+                                <button type="button" class="btn-close float-end mt-1"
+                                  (click)="detailTpl.hide()"></button>
+                              </div>
+                            </div>
+                            <div class="row g-3">
+
+                              <div class="col-4">
+                                <label class="form-label text-white" for="inp-empreendimento ">Empreendimento</label>
+                                <input class="form-control" [(ngModel)]="proposta.enterPriseName"
+                                  name="empreendimentoID" disabled />
+
+                              </div>
+                              <div class="col-4">
+                                <label class="form-label text-white" for="inp-empreendimento ">Unidade</label>
+                                <input class="form-control" [(ngModel)]="proposta.unitName" name="unitNameOnly"
+                                  disabled />
+
+                              </div>
+
+                              <!--<div class="col-12 col-md-3">
+                                <label class="form-label" for="inp-unidade">Filial</label>
+                                <select id="inp-unidade" class="form-control" [(ngModel)]="proposta.unidadeID"
+                                  name="unidadeID">
+                                  <option *ngFor="let f of filiais" [value]="f.id">{{ f.name }}</option>
+                                </select>
+                              </div>-->
+
+                              <div class="col-4">
+                                <label class="form-label" for="inp-bloco">Valor Unidade (R$)</label>
+
+                                <input disabled type="text" class="form-control" name="vendda.vlrUnit"
+                                  [value]="proposta.vlrUnidade | currency:'BRL':'symbol-narrow':'1.2-2'" />
+
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Dados Cadastrais 1º componente -->
+                          <div class="mt-4 pt-2">
+                            <form class="tablelist-form" novalidate autocomplete="off">
+                              <div class="modal-body p-0">
+                                <div class="mt-1 form-section">
+                                  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-1">
+                                    <h6 class="card-title mb-0">Dados Cadastrais do 1° Componente</h6>
+                                  </div>
+
+                                  <div class="row g-2 my-2">
+                                    <div class="col-12 col-md-6">
+                                      <label for="c1-nome" class="form-label">Nome Cliente Completo <span
+                                          class="text-danger">*</span></label>
+                                      <input class="form-control" id="c1-nome" [(ngModel)]="proposta.clienteName"
+                                        name="clienteName" />
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-nasc" class="form-label">Data de Nascimento <span
+                                          class="text-danger">*</span></label>
+                                      <input type="date" id="c1-nasc" name="dateNascimento" class="form-control"
+                                        autocomplete="bday" [(ngModel)]="proposta.dateNascimento">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-cpfcnpj" class="form-label">CPF/CNPJ <span
+                                          class="text-danger">*</span></label>
+                                      <div class="position-relative">
+                                        <input type="text" id="c1-cpfcnpj" name="cnpjCPF" class="form-control pe-5"
+                                          placeholder="Informe o cpf/cnpj" inputmode="numeric" autocomplete="off"
+                                          [(ngModel)]="proposta.cnpjCpf">
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Linha 2 -->
+                                  <div class="row g-2 my-2">
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-rg" class="form-label">RG <span
+                                          class="text-danger">*</span></label>
+                                      <input type="text" id="c1-rg" name="rg" class="form-control"
+                                        placeholder="Informe o RG" autocomplete="off" [(ngModel)]="proposta.rg">
+                                    </div>
+
+                                    <div class="col-12 col-md-6">
+                                      <label for="c1-email" class="form-label">E-mail <span
+                                          class="text-danger">*</span></label>
+                                      <input type="email" id="c1-email" name="emailCliente" class="form-control"
+                                        placeholder="Informe o e-mail" autocomplete="email"
+                                        [(ngModel)]="proposta.emailCliente">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-tel1" class="form-label">Telefone <span
+                                          class="text-danger">*</span></label>
+                                      <input type="tel" id="c1-tel1" class="form-control" placeholder="(11) 98765-4321"
+                                        inputmode="tel" autocomplete="tel" name="phoneOne"
+                                        [(ngModel)]="proposta.phoneOne">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-tel2" class="form-label">Telefone secundário</label>
+                                      <input type="tel" id="c1-tel2" class="form-control" placeholder="Se existir"
+                                        inputmode="tel" autocomplete="tel" name="phoneTwo"
+                                        [(ngModel)]="proposta.phoneTwo">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-civil" class="form-label">Estado civil</label>
+                                      <input type="text" id="c1-civil" class="form-control" placeholder="CASADO"
+                                        autocomplete="off" name="estadoCivil" [(ngModel)]="proposta.estadoCivil">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-prof" class="form-label">Profissão</label>
+                                      <input type="text" id="c1-prof" class="form-control"
+                                        placeholder="AUX. ADMINISTRATIVO" autocomplete="organization-title"
+                                        name="profissao" [(ngModel)]="proposta.profissao">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-renda" class="form-label">Renda</label>
+                                      <input type="text" id="c1-renda" class="form-control" placeholder="R$ 2.500,00"
+                                        inputmode="decimal" autocomplete="off" name="renda"
+                                        [(ngModel)]="proposta.renda">
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <!-- 2º componente (se aplicável) -->
+                                <div *ngIf="true" class="mt-3 form-section">
+                                  <div class="d-flex flex-wrap gap-3 mt-1">
+                                    <h6 class="card-title mb-0">Dados Cadastrais do 2° `Proponente</h6>
+                                  </div>
+
+                                  <div class="row g-3 my-3">
+                                    <div class="col-12 col-md-6">
+                                      <label for="c2-nome" class="form-label">Nome Cliente </label>
+                                      <input class="form-control" id="c2-nome"
+                                        [(ngModel)]="proposta.clienteNameSecondary" name="clienteNameSecondary" />
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-nasc" class="form-label">Data de Nascimento</label>
+                                      <input type="date" id="c2-nasc" class="form-control" autocomplete="bday"
+                                        [(ngModel)]="proposta.dataNascimentoSecondary" name="dataNascimentoSecondary">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-cpf" class="form-label">CPF/CNPJ </label>
+                                      <input type="text" id="c2-cpf" class="form-control"
+                                        placeholder="Informe o cpf/cnpj" inputmode="numeric" autocomplete="off"
+                                        [(ngModel)]="proposta.cnpjCPFSecondary" name="cnpjCPFSecondary">
+                                    </div>
+                                  </div>
+
+                                  <div class="row g-3 my-3">
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-rg" class="form-label">RG </label>
+                                      <input type="text" id="c2-rg" class="form-control" placeholder="Informe o RG"
+                                        autocomplete="off" [(ngModel)]="proposta.rgSecondary" name="rgSecondary">
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                      <label for="c2-email" class="form-label">E-mail </label>
+                                      <input type="email" id="c2-email" class="form-control"
+                                        placeholder="Informe o e-mail" autocomplete="email"
+                                        [(ngModel)]="proposta.emailClienteSecondary" name="emailClienteSecondary">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-tel1" class="form-label">Telefone</label>
+                                      <input type="tel" id="c2-tel1" class="form-control" placeholder="(11) 98765-4321"
+                                        inputmode="tel" autocomplete="tel" [(ngModel)]="proposta.phoneOneSecondary"
+                                        name="phoneoneSecondary">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-tel2" class="form-label">Telefone secundário</label>
+                                      <input type="tel" id="c2-tel2" class="form-control" placeholder="Se existir"
+                                        inputmode="tel" autocomplete="tel" [(ngModel)]="proposta.phoneTwoSecondary"
+                                        name="phonetwoSecondary">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-civil" class="form-label">Estado civil</label>
+                                      <input type="text" id="c2-civil" class="form-control" placeholder="CASADO"
+                                        autocomplete="off" [(ngModel)]="proposta.estadoCivilSecondary"
+                                        name="estadoCivilSecondary">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-prof" class="form-label">Profissão</label>
+                                      <input type="text" id="c2-prof" class="form-control"
+                                        placeholder="AUX. ADMINISTRATIVO" autocomplete="organization-title"
+                                        [(ngModel)]="proposta.profissaoSecondary" name="profissaoSecondary">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-renda" class="form-label">Renda</label>
+                                      <input type="text" id="c2-renda" class="form-control" placeholder="R$ 2.500,00"
+                                        inputmode="decimal" autocomplete="off" [(ngModel)]="proposta.rendaSecondary"
+                                        name="rendaSecondary">
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <!-- Endereço -->
+                                <hr class="mt-4">
+                                <div class="mt-3 form-section">
+                                  <div class="mt-1">
+                                    <h6 class="card-title mb-0">Dados do endereço</h6>
+                                  </div>
+
+                                  <div class="row g-3 my-2">
+                                    <div class="col-12 col-sm-6 col-md-4">
+                                      <label for="end-cep" class="form-label">CEP</label>
+                                      <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="00000-000"
+                                          aria-label="Input group example" aria-describedby="btnGroupAddon" id="end-cep"
+                                          name="cep" [(ngModel)]="proposta.cep">
+                                        <div class="input-group-text btn btn-primary" id="btnGroupAddon"
+                                          (click)="cep()">Buscar CEP
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div class="row g-3 my-2">
+                                    <div class="col-12 col-md-6">
+                                      <label for="end-logradouro" class="form-label">Endereço </label>
+                                      <input type="text" id="end-logradouro" name="rua" class="form-control"
+                                        placeholder="Digite o nome da rua" autocomplete="address-line1" required
+                                        [(ngModel)]="proposta.rua">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="end-num" class="form-label">N° do endereço </label>
+                                      <input type="text" id="end-num" name="nro" class="form-control"
+                                        placeholder="123 ou 18A" autocomplete="address-line2" required
+                                        [(ngModel)]="proposta.nro">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="end-comp" class="form-label">Complemento</label>
+                                      <input type="text" id="end-comp" name="comp" class="form-control"
+                                        placeholder="Apartamento, bloco, casa..." autocomplete="address-line2"
+                                        [(ngModel)]="proposta.comp">
+                                    </div>
+                                  </div>
+
+                                  <div class="row g-3">
+                                    <div class="col-12 col-md-4">
+                                      <label for="end-bairro" class="form-label">Bairro</label>
+                                      <input type="text" id="end-bairro" name="bairro" class="form-control"
+                                        placeholder="Digite o nome do bairro" autocomplete="address-level3" required
+                                        [(ngModel)]="proposta.bairro">
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                      <label for="end-cidade" class="form-label">Cidade
+                                      </label>
+                                      <input type="text" id="end-cidade" class="form-control"
+                                        placeholder="Digite o nome da cidade" autocomplete="address-level2" required
+                                        name="cidade" [(ngModel)]="proposta.cidade">
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                      <label for="end-uf" class="form-label">Estado</label>
+                                      <input type="text" id="end-uf" name="estado" class="form-control"
+                                        placeholder="UF (Ex: SP)" maxlength="2" style="text-transform: uppercase;"
+                                        autocomplete="address-level1" required [(ngModel)]="proposta.estado">
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </form>
+                          </div>
+
+                          <hr class="mt-4">
+
+                          <!-- Condições da Proposta -->
+                          <!-- mantive exatamente como estava, só não tinha relação com a interface principal -->
+
+                          <div class="mt-3">
+                            <h6 class="card-title">Condições da Proposta
+                              <small class="bg bg-danger ps-2 pe-2 text-white rounded float-end">
+                                Falta {{proposta.vlrUnidade - vlrTotal() | currency:'BRL':'symbol':'1.2-2':'pt-BR'}}
+                                para completar o valor da venda
+                              </small>
+                            </h6>
+                          </div>
+                          <div class="table-responsive mt-2">
+                            <table class="invoice-table table table-borderless table-nowrap mb-0">
+                              <thead class="align-middle">
+                                <tr class="table-light">
+                                  <th scope="col" class="text-nowrap">Qtde</th>
+                                  <th scope="col" class="text-nowrap">Descrição (Mensais, Anuais etc.)</th>
+                                  <th scope="col" class="text-nowrap">Vencimento</th>
+                                  <th scope="col" class="text-nowrap">Valor Parcela (R$)</th>
+                                  <th scope="col" class="text-nowrap">Valor Total (R$)</th>
+                                  <th scope="col" class="text-nowrap"></th>
+                                </tr>
+                              </thead>
+
+                              <tbody>
+                                <tr *ngFor="let c of proposta.condicao; let i = index; trackBy: track"
+                                  class="p-2 border">
+                                  <td class="border">
+                                    <input type="number" class="form-control form-control-sm border-0"
+                                      [(ngModel)]="c.qtde" name="qtde{{i}}" min="1" step="1"
+                                      (ngModelChange)="recalc(i)" />
+                                  </td>
+
+                                  <td class="border">
+                                    <input type="text" class="form-control form-control-sm border-0"
+                                      [(ngModel)]="c.descricao" name="desc{{i}}" />
+                                  </td>
+
+                                  <td class="border">
+                                    <input type="date" class="form-control form-control-sm border-0"
+                                      [(ngModel)]="c.vencimento" name="venc{{i}}" />
+                                  </td>
+
+                                  <td class="border">
+                                    <input type="number" class="form-control form-control-sm border-0"
+                                      [(ngModel)]="c.valorParcela" name="valor{{i}}" min="0" step="0.01"
+                                      inputmode="decimal" (ngModelChange)="recalc(i)" />
+                                  </td>
+
+                                  <td class="text-end fw-semibold border">
+                                    {{ c.valorTotal | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+                                  </td>
+
+                                  <td class="text-center border pt-1 pb-1 ps-0 pe-0">
+                                    <button type="button" class="btn btn-sm btn-outline-danger p-1"
+                                      (click)="remover(i)">
+                                      &times;
+                                    </button>
+                                  </td>
+                                </tr>
+
+                                <tr *ngIf="proposta?.condicao?.length === 0">
+                                  <td colspan="6" class="text-center text-muted py-4">Nenhuma condição adicionada</td>
+                                </tr>
+                                <tr>
+                                  <td colspan="5">
+                                    <a href="javascript:void(0)" id="add-item"
+                                      class="btn btn-subtle-secondary fw-medium float-end mt-4 mb-4"
+                                      (click)="adicionar()">
+                                      <i class="ri-add-fill me-1 align-bottom"></i> Adicionar condição
+                                    </a>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <!-- Observações -->
+                          <div class="mt-2 mb-2">
+                            <div class="alert alert-danger p-2 ps-4" role="alert">
+                              *Esta proposta somente terá validade após a aprovação do incorporador e analise quanto ao
+                              valor de financimento, se for o caso.<br>
+                              *O Imóvel será reservado até analise da incorporadora.
+
+                            </div>
+                          </div>
+
+                          <!-- Engenharia + Data -->
+                          <div class="row g-3 align-items-center">
+                            <div class="col-12 col-md-6">
+                              <label class="form-label">Engenharia da Caixa paga pelo cliente? <span
+                                  class="text-danger">*</span></label>
+                              <div class="d-flex gap-3">
+                                <div class="form-check">
+                                  <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa"
+                                    name="engCaixa" value="sim" id="engSim">
+                                  <label class="form-check-label" for="engSim">Sim</label>
+                                </div>
+
+                                <div class="form-check">
+                                  <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa"
+                                    name="engCaixa" value="nao" id="engNao">
+                                  <label class="form-check-label" for="engNao">Não</label>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6 pt-2 pt-md-0 text-start text-md-end">
+                              <p class="mb-0 text-white">{{ 'São Paulo' }}, {{ today | date:"dd 'de' MMMM 'de'
+                                yyyy":undefined:'pt-BR' }}.</p>
+                            </div>
+                          </div>
+
+                        </div>
+
+                        <!-- efeito decorativo inferior -->
+                        <div class="invoice-effect-top position-absolute end-0"
+                          style="transform: rotate(180deg); bottom: -80px;">
+                          <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 764 182" width="764"
+                            height="182" aria-hidden="true">
+                            <g>
+                              <path style="fill: var(--tb-light);"
+                                d="m-6.6 177.4c17.5 0.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
+                              <path style="fill: var(--tb-secondary);"
+                                d="m-6.6 132.8c43.5 2.1 87.9 2.7 132.9 1.7 246.9-5.6 467.1-59.2 627.4-142.1h-760.3z" />
+                              <path style="fill: var(--tb-primary);opacity:.5"
+                                d="m-6.6 87.2c73.2 7.4 149.3 10.6 227.3 8.8 206.2-4.7 393.8-42.8 543.5-103.6h-770.8z" />
+                            </g>
+                          </svg>
+                        </div>
+                      </div>
+
+                      <!-- Ações globais -->
+                      <div class="hstack gap-2 flex-wrap justify-content-end d-print-none my-4">
+                        <button type="submit" class="btn btn-success" (click)="saveUser()">
+                          <i class="ri-printer-line align-bottom me-1"></i> Aprovar
+                        </button>
+                        <button type="submit" class="btn btn-success" (click)="saveUser()">
+                          <i class="ri-printer-line align-bottom me-1"></i> Reprovar
+                        </button>
+
+                        <button type="button" class="btn btn-primary" (click)="downloadA4PrimeiraFolha()">
+                          <i class="ri-download-2-line align-bottom me-1"></i> Download
+                        </button>
+                      </div>
+                    </form>
+
+                  </div>
+
+                  <!-- resto do form continua igual -->
+                </div>
+              </div>
+            </form>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,109 @@
+:host {
+  display: block;
+}
+
+.dashboard-highlight {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #eff6ff, #ffffff);
+  border: 1px solid #bfdbfe;
+}
+
+.dashboard-highlight__label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #2563eb;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 160px;
+  padding: 1.1rem;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.summary-card__title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+}
+
+.summary-card__value {
+  font-size: 1rem;
+  color: #111827;
+}
+
+.summary-card__helper {
+  color: #6b7280;
+}
+
+.shortcut-card {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  min-height: 132px;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #111827;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.shortcut-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
+.shortcut-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.shortcut-card__content p {
+  color: #6b7280;
+}
+
+.accent-blue {
+  background: linear-gradient(135deg, #eff6ff, #ffffff);
+  border-color: #bfdbfe;
+}
+
+.accent-green {
+  background: linear-gradient(135deg, #ecfdf5, #ffffff);
+  border-color: #bbf7d0;
+}
+
+.accent-orange {
+  background: linear-gradient(135deg, #fff7ed, #ffffff);
+  border-color: #fdba74;
+}
+
+.accent-purple {
+  background: linear-gradient(135deg, #f5f3ff, #ffffff);
+  border-color: #ddd6fe;
+}
+
+.accent-red {
+  background: linear-gradient(135deg, #fef2f2, #ffffff);
+  border-color: #fecaca;
+}
+
+.accent-teal {
+  background: linear-gradient(135deg, #ecfeff, #ffffff);
+  border-color: #a5f3fc;
+}

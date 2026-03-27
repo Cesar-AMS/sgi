@@ -1,0 +1,507 @@
+<div class="row" id="invoiceList">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <div class="row align-items-center g-2">
+          <div class="col">
+            <h6 class="card-title mb-0">Contas a pagar
+              <a href="javascript:void(0);" class="btn btn-subtle-danger btn-sm flex-shrink-0 float-end"
+                (click)="grid3.show()">
+                Adicionar Lançamento <i class="ph-caret-right align-middle"></i>
+              </a>
+            </h6>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body p-0">
+        <div class="card border-0 shadow-sm rounded-0 rounded-bottom">
+          <div class="card-body">
+
+            <div class="row g-2 align-items-stretch mb-3">
+              <div class="col-12 col-md-6 col-lg-6">
+                <div class="d-grid d-sm-flex gap-2">
+                  <select class="form-control" [(ngModel)]="typeFilter" name="typeFilter">
+                    <option value="create">Data de Criação</option>
+                    <option value="due">Data de Vencimento</option>
+                  </select>
+                  <input type="date" class="form-control" [(ngModel)]="dtIni" name="dtIni" />
+                  <input type="date" class="form-control" [(ngModel)]="dtFim" name="dtFim" />
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6 col-lg-4">
+                <div class="d-grid d-sm-flex gap-2">
+
+                  <input type="text" class="form-control" [(ngModel)]="search" name="q" placeholder="Pesquisar" />
+                  <select class="form-select" id="categoria" [(ngModel)]="categoriaFilter" name="categoriaFilter">
+                    <option value="9999">Todos</option>
+                    <option value="1">Comissão</option>
+                    <option value="2">Contas fixas</option>
+                    <option value="3">Contas variadas</option>
+                    <option value="4">Repasse construtora</option>
+                    <option value="5">Devolução de Comissão</option>
+                    <option value="6">Ajuda de Custo</option>
+                    <option value="7">Salário Registrado</option>
+                    <option value="8">Vale Transporte</option>
+                    <option value="9">Adiantamento CLT</option>
+                    <option value="10">13º Salário</option>
+                    <option value="11">FGTS - Colaboradores</option>
+                    <option value="12">Premiação</option>
+                    <option value="13">Jurídico</option>
+                    <option value="14">Aluguel</option>
+                    <option value="15">Manutenções</option>
+                    <option value="16">Decorado - Itaim Paulista</option>
+                    <option value="17">Impulsionamento - Lead</option>
+                    <option value="18">VR Multi - Vale Refeição/ Alimentação</option>
+                  </select>
+                </div>
+
+              </div>
+
+              <!-- Ações -->
+              <div class="col-12 col-lg-2 p-0">
+                <div class="d-grid d-sm-grid gap-2 p-0" style="grid-template-columns: repeat(2, minmax(0,1fr));">
+                  <button class="btn btn-outline-primary " (click)="filtrar()">Filtrar</button>
+                  <button class="btn btn-outline-success" (click)="exportarExcel()">Exportar</button>
+                  <!--<button class="btn btn-outline-danger" (click)="adicionar()">Adicionar</button>-->
+                </div>
+              </div>
+            </div>
+
+
+            <div class="table-responsive mt-3 d-none d-md-block">
+              <table class="table table-sm align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th class="text-nowrap" (click)="sortBy('dueDate')" role="button">
+                      Dt Vencimento
+                      <i class="bi" [ngClass]="{
+                        'bi-caret-up-fill': sortKey==='dueDate' && sortDir===1,
+                        'bi-caret-down-fill': sortKey==='dueDate' && sortDir===-1
+                      }"></i>
+                    </th>
+                    <th class="text-nowrap" (click)="sortBy('createdAt')" role="button">
+                      Dt Criação
+                      <i class="bi" [ngClass]="{
+                        'bi-caret-up-fill': sortKey==='createdAt' && sortDir===1,
+                        'bi-caret-down-fill': sortKey==='createdAt' && sortDir===-1
+                      }"></i>
+                    </th>
+
+                    <th (click)="sortBy('description')" role="button" class="w-25">
+                      Descrição
+                    </th>
+
+                    <th (click)="sortBy('clientName')" role="button" class="d-none d-lg-table-cell">Cliente</th>
+                    <th (click)="sortBy('accountName')" role="button" class="d-none d-xl-table-cell">Conta</th>
+                    <th (click)="sortBy('categoryName')" role="button" class="d-none d-lg-table-cell">Categoria</th>
+                    <th (click)="sortBy('centerCoustName')" role="button" class="d-none d-xl-table-cell">Centro de Custo
+                    </th>
+
+                    <th class="text-end text-nowrap" (click)="sortBy('amount')" role="button">
+                      Valor
+                      <i class="bi" [ngClass]="{
+                        'bi-caret-up-fill': sortKey==='amount' && sortDir===1,
+                        'bi-caret-down-fill': sortKey==='amount' && sortDir===-1
+                      }"></i>
+                    </th>
+                    <th class="text-center">Ações</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr *ngFor="let r of lancamentos">
+                    <td class="text-nowrap">{{ r.dueDate | date:'dd/MM/yyyy' }}</td>
+                    <td class="text-nowrap">{{ r.createdAt | date:'dd/MM/yyyy' }}</td>
+
+                    <td class="text-nowrap">
+                      <a href="#" class="link-primary text-decoration-none">{{ r.description }}</a>
+                    </td>
+
+                    <td class="d-none d-lg-table-cell text-truncate">
+                      {{ r.clientName || '—' }}
+                    </td>
+                    <td class="fw-semibold">{{ r.accountName }}</td>
+                    <td class="d-none d-lg-table-cell">
+                      <a class="link-primary text-decoration-none">{{ r.categoryName }}</a>
+                    </td>
+                    <td class="d-none d-xl-table-cell text-truncate">
+                      {{ r.centerCoustName }}
+                    </td>
+
+                    <td class="text-end text-nowrap">
+                      {{ r.amount | currency:'BRL':'symbol-narrow':'1.2-2' }}
+                    </td>
+
+                    <td class="text-center">
+                      <div class="btn-group">
+                        <!-- Marcar como pago -->
+                        <button class="btn btn-sm btn-light" (click)="marcarRecebido(r); modalMarcarPago.show()"
+                          title="Marcar como pago">
+                          <i class="bi bi-check2"></i>
+                        </button>
+
+                        <!-- Editar -->
+                        <button class="btn btn-sm btn-light" (click)="editar(r); modalEditar.show()" title="Editar">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+
+                        <!-- Excluir (permanece igual) -->
+                        <button class="btn btn-sm btn-light text-danger" (click)="excluir(r)" title="Excluir">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td colspan="10" class="border-0"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Total -->
+            <div class="d-flex justify-content-end fw-bold pe-2 mt-2">
+              <div>Total&nbsp;&nbsp;{{ total | currency:'BRL':'symbol-narrow':'1.2-2' }}</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div bsModal #grid3="bs-modal" class="modal fade" id="exampleModalgrid">
+  <div class="modal-dialog  modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="fw-bold">Conta a pagar</h5>
+        <button type="button" class="btn-close" (click)="grid3.hide()"></button>
+      </div>
+      <!-- conta-form.component.html -->
+      <!-- conta-contaPagar.component.html -->
+      <div class="container-fluid p-3 bg-white rounded shadow-sm" style="max-width: 1100px;">
+        <form #f="ngForm">
+          <div class="row">
+            <!-- Coluna esquerda -->
+            <div class="col-lg-5 border-mobile-bottom-end">
+
+              <div class="mb-2">
+                <label class="form-label">Valor do pagamento <span class="text-danger">*</span></label>
+                <div class="valor-grande" aria-hidden="true">
+                  {{ (contaPagar.amount || 0) | number:'1.2-2':'pt-BR' }}
+                </div>
+                <div class="input-group mt-2">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" class="form-control" name="valor" [(ngModel)]="contaPagar.amount" required
+                    step="0.01" min="0" placeholder="0,00">
+                </div>
+              </div>
+
+              <!-- Já foi recebido + data -->
+              <div class="d-flex align-items-center gap-3 my-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="chkRecebido" name="jaRecebido"
+                    [(ngModel)]="contaPagar.received">
+                  <label for="chkRecebido" class="form-check-label">Já foi pago</label>
+                </div>
+                <input type="date" class="form-control w-auto" name="dataRecebimento"
+                  [(ngModel)]="contaPagar.receivedDate">
+              </div>
+
+              <!-- Descrição -->
+              <div class="mb-3">
+                <label class="form-label">Descrição</label>
+                <input type="text" class="form-control" name="descricao" [(ngModel)]="contaPagar.description"
+                  placeholder="Digite uma breve descrição do pagamento...">
+              </div>
+
+              <!-- Categoria -->
+              <div class="mb-3">
+                <label class="form-label">Categoria <span class="text-danger">*</span></label>
+                <select class="form-select" name="categoria" [(ngModel)]="contaPagar.categoryId" required>
+                  <option value="" disabled selected>Selecione a categoria do pagamento</option>
+                  <option *ngFor="let c of categories" [value]="c.id">{{ c.description }}</option>
+                </select>
+              </div>
+
+              <!-- Conta -->
+              <div class="mb-4">
+                <label class="form-label">Conta <span class="text-danger">*</span></label>
+                <select class="form-select" name="conta" [(ngModel)]="contaPagar.accountId" required>
+                  <option value="" disabled selected>Selecione a conta que efetuará o pagamento...</option>
+                  <option *ngFor="let c of accountsBankActive" [value]="c.id">{{ c.description }} - Ag: {{c.agency}} -
+                    Cc: {{c.account}}</option>
+                  <!--<option *ngFor="let c of contas" [value]="c">{{ c.nome }}</option>-->
+                </select>
+              </div>
+
+              <!-- Botões -->
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-outline-danger" (click)="addeContasPagar()">
+                  Adicionar e continuar
+                </button>
+              </div>
+            </div>
+
+            <!-- Coluna direita -->
+            <div class="col-lg-7">
+              <!-- Nav Tabs -->
+              <ul class="nav nav-tabs mb-3 p-1">
+                <li class="nav-item p-1">
+                  <button type="button" class="nav-link p-2" [class.active]="activeTab==='dados'"
+                    (click)="setTab('dados')">Lançamento</button>
+                </li>
+                <li class="nav-item p-1">
+                  <button type="button" class="nav-link p-2" [class.active]="activeTab==='adicionais'"
+                    (click)="setTab('adicionais')">Adicionais</button>
+                </li>
+              </ul>
+
+              <!-- Aba: Dados do Lançamento -->
+              <div [hidden]="activeTab!=='dados'">
+                <div class="row mb-3">
+                  <div class="col">
+                    <label class="form-label">Data de competência</label>
+                    <input type="date" class="form-control" name="dataCompetencia"
+                      [(ngModel)]="contaPagar.competenceDate">
+                  </div>
+                  <div class="col">
+                    <label class="form-label">Data de vencimento</label>
+                    <input type="date" class="form-control" name="dataVencimento" [(ngModel)]="contaPagar.dueDate">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Cliente</label>
+                  <select class="form-select" name="cliente" [(ngModel)]="contaPagar.clientId">
+                    <option value="" disabled selected>Selecione o cliente do recebimento</option>
+                    <option *ngFor="let c of clientes" [value]="c.id">{{ c.name }}</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Centro de custo</label>
+                  <select class="form-select" name="centroCusto" [(ngModel)]="contaPagar.costCenterId">
+                    <option value="" disabled selected>Selecione o centro de custo do pagamento</option>
+                    <option *ngFor="let cc of centrosCusto" [value]="cc.id">{{ cc.name }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Aba: Recorrência -->
+              <div [hidden]="activeTab!=='recorrencia'">
+                <div class="form-check form-switch mb-3">
+                  <input class="form-check-input" type="checkbox" id="swRecorrencia" name="recurrencing"
+                    [(ngModel)]="contaPagar.recurrencing">
+                  <label for="swRecorrencia" class="form-check-label">
+                    Recorrência/Parcelamento?
+                  </label>
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col">
+                    <label class="form-label">Período</label>
+                    <select class="form-select" name="periodoRecorrencia" [(ngModel)]="contaPagar.periodic"
+                      [disabled]="!contaPagar.recurrencing">
+                      <option value="" disabled selected>Selecione o período da recorrência</option>
+                      <option *ngFor="let p of periodos" [value]="p.value">{{ p.label }}</option>
+                    </select>
+                  </div>
+                  <div class="col">
+                    <label class="form-label">Parcelas</label>
+                    <input type="number" class="form-control" name="parcelas" [(ngModel)]="contaPagar.parcelas" min="1"
+                      step="1" placeholder="Informe a quantidade de vezes" [disabled]="!contaPagar.recurrencing">
+                  </div>
+                </div>
+
+
+              </div>
+
+              <!-- Aba: Adicionais -->
+              <div [hidden]="activeTab!=='adicionais'">
+                <div class="mb-3">
+                  <label class="form-label">Referência</label>
+                  <input type="text" class="form-control" name="referencia" [(ngModel)]="contaPagar.reference"
+                    placeholder="Informe a referência do recebimento...">
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Anotações</label>
+                  <textarea rows="5" class="form-control" name="anotacoes" [(ngModel)]="contaPagar.notes"
+                    placeholder="Informe aqui as anotações adicionais do recebimento"></textarea>
+                </div>
+              </div>
+
+              <!-- Aba: Documentos -->
+              <!--<div [hidden]="activeTab!=='documentos'">
+                <div class="mb-3">
+                  <label class="form-label d-block">Carregar Documento</label>
+                  <input type="file" class="form-control w-auto" multiple (change)="onUploadChange($event)">
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Nome</th>
+                        <th>Tamanho</th>
+                        <th>Data</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngIf="!contaPagar.documentos?.length">
+                        <td colspan="3" class="text-center text-muted py-5">Não há dados</td>
+                      </tr>
+                      <tr *ngFor="let d of contaPagar.documentos">
+                        <td>{{ d.nome }}</td>
+                        <td>{{ d.tamanho | number }} bytes</td>
+                        <td>{{ d.data | date:'dd/MM/yyyy HH:mm' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>-->
+            </div>
+          </div>
+        </form>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Editar conta a pagar -->
+<div bsModal #modalEditar="bs-modal" class="modal fade">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="fw-bold mb-0">Editar conta a pagar</h5>
+        <button type="button" class="btn-close" (click)="modalEditar.hide()"></button>
+      </div>
+
+      <div class="modal-body" *ngIf="lancamentoSelecionado">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label">Data de vencimento</label>
+            <input type="date" class="form-control" [(ngModel)]="lancamentoSelecionado.dueDate"
+              [ngModelOptions]="{standalone:true}">
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Valor</label>
+            <div class="input-group">
+              <span class="input-group-text">R$</span>
+              <input type="number" step="0.01" min="0" class="form-control text-end"
+                [(ngModel)]="lancamentoSelecionado.amount" [ngModelOptions]="{standalone:true}">
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label">Conta</label>
+            <select class="form-select" [(ngModel)]="lancamentoSelecionado.accountId"
+              [ngModelOptions]="{standalone:true}">
+              <option *ngFor="let c of accountsBankActive" [value]="c.id">
+                {{ c.description }} - Ag: {{c.agency}} - Cc: {{c.account}}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Categoria</label>
+            <select class="form-select" [(ngModel)]="lancamentoSelecionado.categoryId"
+              [ngModelOptions]="{standalone:true}">
+              <option *ngFor="let c of categories" [value]="c.id">{{ c.description }}</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Centro de Custo</label>
+            <select class="form-select" [(ngModel)]="lancamentoSelecionado.costCenterId"
+              [ngModelOptions]="{standalone:true}">
+              <option *ngFor="let cc of centrosCusto" [value]="cc.id">{{ cc.name }}</option>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Descrição</label>
+            <input type="text" class="form-control" [(ngModel)]="lancamentoSelecionado.description"
+              [ngModelOptions]="{standalone:true}">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Observações</label>
+            <textarea rows="3" class="form-control" [(ngModel)]="lancamentoSelecionado.notes"
+              [ngModelOptions]="{standalone:true}"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" *ngIf="lancamentoSelecionado">
+        <button class="btn btn-outline-secondary" (click)="modalEditar.hide()">Cancelar</button>
+        <button class="btn btn-primary" (click)="confirmarEditar(); modalEditar.hide()">
+          Salvar alterações
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: Marcar como pago -->
+<div bsModal #modalMarcarPago="bs-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="fw-bold mb-0">Marcar como pago</h5>
+        <button type="button" class="btn-close" (click)="modalMarcarPago.hide()"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="mb-3">
+          Confirma marcar o lançamento
+          <strong>{{ lancamentoSelecionado?.description }}</strong>
+          como <span class="text-success fw-semibold">PAGO</span>?
+        </p>
+
+        <div class="mb-3">
+          <label class="form-label">Data do pagamento</label>
+          <input type="date" class="form-control" [(ngModel)]="marcarPagoForm.dataPagamento"
+            [ngModelOptions]="{standalone:true}">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Conta utilizada</label>
+          <select class="form-select" [(ngModel)]="marcarPagoForm.accountId" [ngModelOptions]="{standalone:true}">
+            <option *ngFor="let c of accountsBankActive" [value]="c.id">
+              {{ c.description }} - Ag: {{c.agency}} - Cc: {{c.account}}
+            </option>
+          </select>
+        </div>
+
+        <div class="mb-0">
+          <label class="form-label">Valor a pagar</label>
+          <div class="input-group">
+            <span class="input-group-text">R$</span>
+            <input type="number" class="form-control text-end" step="0.01" min="0" [(ngModel)]="marcarPagoForm.amount"
+              [ngModelOptions]="{standalone:true}">
+          </div>
+          <small class="text-muted">Original: {{ lancamentoSelecionado?.amount | currency:'BRL':'symbol-narrow':'1.2-2'
+            }}</small>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="modalMarcarPago.hide()">Cancelar</button>
+        <button class="btn btn-success" (click)="confirmarMarcarPago(); modalMarcarPago.hide()">
+          Confirmar pagamento
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

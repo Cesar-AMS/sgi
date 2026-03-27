@@ -1,0 +1,109 @@
+<div class="container py-2" *ngIf="user">
+    <!-- Cabeçalho -->
+    <div class="d-flex justify-content-between align-items-center bg-primary text-white g-2 p-2 ps-0 rounded mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <div class="avatar bg-white text-primary rounded-circle d-flex justify-content-center align-items-center">
+
+            </div>
+            <div class="ms-2">
+                <h5 class="m-0 text-white">{{ user.name }}</h5>
+                <small>{{ user.role }}</small>
+                <span class="badge bg-success ms-2" *ngIf="user.active">Ativo</span>
+            </div>
+
+        </div>
+        <div class="fw-bold">
+            <select class="form-control form-control-sm float-right">
+                <option>Selecione o mês</option>
+                <option>Janeiro</option>
+                <option>Fevereiro</option>
+                <option>Março</option>
+                <option>Abril</option>
+                <option>Maio</option>
+                <option>Junho</option>
+                <option>Julho</option>
+                <option>Agosto</option>
+                <option>Setembro</option>
+                <option>Outubro</option>
+                <option>Novembro</option>
+                <option>Dezembro</option>
+            </select>
+        </div>
+
+    </div>
+    <div class="row ps-2 mb-2">
+
+    </div>
+    <div class="row ps-2">
+        <div class="col-md-4">
+            <div class="row">
+                <div class="card">
+                     <h6 class="fw-semibold text-capitalize ms-4 mt-4">Dados Pessoais
+                        <button class="btn btn-primary float-end">Editar</button>
+                     </h6>
+                    <div class="card-body ps-4 pb-2 small personal-data">
+                        <div class="row border-bottom pt-3 pb-1">
+                            <h6>CPF: <span class="value">{{ user.cpf }}</span></h6>                      
+                        </div>
+                        <div class="row border-bottom pt-3 pb-1">
+                            <h6 class="label">E-mail: 
+                                  <span class="value text-primary fw-semibold">{{ user.email }}</span>
+                            </h6>                          
+                        </div>
+                        <div class="row border-bottom pt-3 pb-1">
+                            <h6 class="label">Telefone: 
+                                  <span class="value text-primary fw-semibold">{{ user.phone }}</span>
+                            </h6>                          
+                        </div>
+                        <div class="row border-bottom pt-3 pb-1">
+                            <h6 class="label">Admissão: 
+                                  <span class="value text-primary fw-semibold">{{ user.admission }}</span>
+                            </h6>                          
+                        </div>
+                         <div class="row pt-3 pb-1">
+                            <h6 class="label">Chave PIX: 
+                                  <span class="value text-primary fw-semibold">{{ user.pix }}</span>
+                            </h6>                          
+                             <div class="text-muted small">Tipo: {{ user.pixType }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--<div class="row">
+                <div class="card">
+                    teste
+                </div>
+            </div>-->
+
+        </div>
+        <div class="col-md-8">
+            <div class="row g-2">
+                <div class="col-3"
+                    *ngFor="let k of ['Sálário Base','Comissão','Vale Transporte','V Alimentacao','Bonificações','Aniversário','Descontos']">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="fw-semibold text-capitalize">
+                                {{ k }}
+                            </h6>
+                            <p class="fs-5 fw-bold" [class.text-danger]="user.totals[k] > 0"
+                                [class.text-success]="user.totals[k] < 0">
+                                R$ {{ user.totals[k] | number:'1.2-2' }}
+                            </p>
+                            <button class="float-end btn btn-outline-primary btn-sm p-1 mb-0"><i
+                                    class=" ri-ball-pen-line fs-sm align-middle"></i> Editar</button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="fw-bold alert alert-primary p-2">
+
+                Total a Pagar <br>
+                <span class="fs-4">R$ {{ total() | number:'1.2' }}</span>
+                <button class="btn btn-success float-end btn-sm ">Gerar PDF</button>
+                <button class="btn btn-primary float-end btn-sm ms-2 me-2 ">Atualizar Painel</button>
+
+            </div>
+        </div>
+    </div>
+</div>

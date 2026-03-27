@@ -1,0 +1,38 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Folha de Pagamentos</h2>
+      <p class="text-muted mb-0">Resumo operacional da folha do período atual.</p>
+    </div>
+    <div class="badge rounded-pill bg-success-subtle text-success-emphasis px-3 py-2">
+      Total: {{ totalFolha | currency: 'BRL' }}
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Colaborador</th>
+              <th>Cargo</th>
+              <th>Salário Base</th>
+              <th>Adicionais</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of rows">
+              <td class="fw-semibold">{{ row.colaborador }}</td>
+              <td>{{ row.cargo }}</td>
+              <td>{{ row.salarioBase | currency: 'BRL' }}</td>
+              <td>{{ row.adicional | currency: 'BRL' }}</td>
+              <td>{{ row.total | currency: 'BRL' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

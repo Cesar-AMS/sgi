@@ -1,0 +1,162 @@
+<div class="container my-3" id="dash-root">
+  <!-- Cabeçalho -->
+  <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-3">
+    <div>
+      <h2 class="mb-1">
+        Dashboard - Faturamento Sede
+        <span class="export" (click)="exportPDF()">(exportar)</span>
+        <span class="export ms-2" (click)="entrarApresentacao()">(apresentação)</span>
+      </h2>
+
+      <!-- Filtro Mês/Ano -->
+      <div class="d-flex align-items-center gap-2 mt-1">
+        <label class="text-muted small mb-0">Período:</label>
+        <select class="form-select form-select-sm w-auto"
+                [(ngModel)]="selectedPeriod"
+                (change)="onChangePeriod()">
+          <option *ngFor="let opt of monthYearOptions" [ngValue]="opt">
+            {{ opt.label }}
+          </option>
+        </select>
+      </div>
+
+      <p class="text-muted mb-0 mt-2">
+        Este dashboard tem como objetivo oferecer uma visão clara e objetiva do desempenho financeiro e comercial da Sede no mês de {{ mesLabel }}.
+      </p>
+    </div>
+    <img src="assets/images/logo-light.png" style="height:64px" alt="logo" />
+  </div>
+
+  <!-- Linha 1: Vendas por mês -->
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card card-soft h-100">
+        <div class="card-header fw-semibold">Vendas por Mês (valor + quantidade)</div>
+        <div class="card-body">
+          <canvas baseChart [data]="vendasPorMesData" [options]="vendasPorMesOpts" [type]="'bar'"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Linha 2: Corretor / Gerente -->
+  <div class="row g-3 mt-1">
+    <div class="col-xl-6">
+      <div class="card card-soft h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-semibold">Vendas por Corretor</span>
+          <select class="form-select form-select-sm w-auto"
+                  [(ngModel)]="filtroMesCorretor"
+                  (change)="loadRealtor(selectedPeriod.year, filtroMesCorretor)">
+            <option *ngFor="let m of months" [ngValue]="m.v">{{ m.l }}</option>
+          </select>
+        </div>
+        <div class="card-body">
+          <canvas baseChart [data]="porCorretorData" [options]="porCorretorOpts" [type]="'bar'"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-6">
+      <div class="card card-soft h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-semibold">Vendas por Gerente</span>
+          <select class="form-select form-select-sm w-auto"
+                  [(ngModel)]="filtroMesGerente"
+                  (change)="loadManager(selectedPeriod.year, filtroMesGerente)">
+            <option *ngFor="let m of months" [ngValue]="m.v">{{ m.l }}</option>
+          </select>
+        </div>
+        <div class="card-body">
+          <canvas baseChart [data]="porGerenteData" [options]="porGerenteOpts" [type]="'bar'"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Linha 3: Coordenador / Filial -->
+  <div class="row g-3 mt-1">
+    <div class="col-xl-6">
+      <div class="card card-soft h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-semibold">Vendas por Coordenador</span>
+          <select class="form-select form-select-sm w-auto"
+                  [(ngModel)]="filtroMesCoord"
+                  (change)="loadCoord(selectedPeriod.year, filtroMesCoord)">
+            <option *ngFor="let m of months" [ngValue]="m.v">{{ m.l }}</option>
+          </select>
+        </div>
+        <div class="card-body">
+          <canvas baseChart [data]="porCoordData" [options]="porCoordOpts" [type]="'bar'"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-6">
+      <div class="card card-soft h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-semibold">Vendas por Filial</span>
+          <select class="form-select form-select-sm w-auto"
+                  [(ngModel)]="filtroMesFilial"
+                  (change)="loadBranch(selectedPeriod.year, filtroMesFilial)">
+            <option *ngFor="let m of months" [ngValue]="m.v">{{ m.l }}</option>
+          </select>
+        </div>
+        <div class="card-body">
+          <canvas baseChart [data]="porFilialData" [options]="porFilialOpts" [type]="'bar'"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="presenter" *ngIf="presentation">
+  <div class="presenter-inner">
+    <!-- Header da apresentação -->
+    <div class="presenter-header d-flex align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <img src="assets/images/logo-light.png" class="brand-logo" alt="logo" />
+        <div class="lh-1">
+          <div class="h5 m-0 fw-bold">{{ slidesTitles[slide] }}</div>
+          <small class="text-muted">
+            Ano: {{ selectedPeriod.year }} • Mês: {{ presentationMonthLabel  }}
+          </small>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 presenter-controls">
+        <label class="small text-muted mb-0">Mês:</label>
+        <select class="form-select form-select-sm w-auto"
+                [(ngModel)]="presentationMonth">
+          <option *ngFor="let m of months" [ngValue]="m.v">{{ m.l }}</option>
+        </select>
+        <button class="btn btn-outline-primary btn-sm" (click)="aplicarMesApresentacao()">Aplicar a todos</button>
+
+        <span class="slide-indicator text-muted">{{ slide + 1 }} / 5</span>
+        <button class="btn btn-light" (click)="ant()" title="Anterior">◀</button>
+        <button class="btn btn-primary" (click)="prox()" title="Próximo">▶</button>
+        <button class="btn btn-outline-dark" (click)="sairApresentacao()" title="Sair">Sair</button>
+      </div>
+    </div>
+
+    <!-- “Folha” da apresentação -->
+    <div class="presenter-stage">
+      <div [style.display]="slide===0 ? 'block':'none'">
+        <canvas baseChart [data]="vendasPorMesData" [options]="vendasPorMesOpts" [type]="'bar'"></canvas>
+      </div>
+      <div [style.display]="slide===1 ? 'block':'none'">
+        <canvas baseChart [data]="porCorretorData" [options]="porCorretorOpts" [type]="'bar'"></canvas>
+      </div>
+      <div [style.display]="slide===2 ? 'block':'none'">
+        <canvas baseChart [data]="porGerenteData" [options]="porGerenteOpts" [type]="'bar'"></canvas>
+      </div>
+      <div [style.display]="slide===3 ? 'block':'none'">
+        <canvas baseChart [data]="porCoordData" [options]="porCoordOpts" [type]="'bar'"></canvas>
+      </div>
+      <div [style.display]="slide===4 ? 'block':'none'">
+        <canvas baseChart [data]="porFilialData" [options]="porFilialOpts" [type]="'bar'"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>

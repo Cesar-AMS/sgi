@@ -1,0 +1,165 @@
+<div class="container my-3" id="corretor-root">
+
+  <!-- Header + Filtros -->
+  <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-3">
+    <div>
+      <h2 class="mb-1">
+        Dashboard — Vendedor
+        <span class="export" (click)="exportPDF()">(exportar)</span>
+      </h2>
+
+      <div class="d-flex align-items-center gap-2 mt-1">
+        <label class="text-muted small mb-0">Período:</label>
+        <select class="form-select form-select-sm w-auto"
+                [(ngModel)]="selectedPeriod"
+                (change)="onChangePeriod()">
+          <option *ngFor="let opt of monthYearOptions" [ngValue]="opt">{{ opt.label }}</option>
+        </select>
+
+        <label class="text-muted small mb-0 ms-3">Gerente:</label>
+        <select class="form-select form-select-sm w-auto"
+                [(ngModel)]="selectedManagerId"
+                (change)="onChangeManager()">
+          <option *ngFor="let g of managerOptions" [ngValue]="g.id">{{ g.label }}</option>
+        </select>
+
+        <span class="badge bg-month fs-6 px-3 py-2 ms-2">{{ mesCurto }}</span>
+      </div>
+
+      <p class="text-muted mb-0 mt-2">
+        Mês de referência: {{ mesLabel }} — filtro de gerente aplicado: <strong>{{ currentManagerLabel }}</strong>.
+      </p>
+    </div>
+    <img src="assets/images/logo-light.png" style="height:64px" />
+  </div>
+
+  <!-- ===== SALÁRIOS ===== -->
+  <div class="card card-soft border-0 shadow-sm mb-4">
+    <div class="card-header bg-section text-white py-2"><strong>Salários — Corretores</strong></div>
+    <div class="table-responsive">
+      <table class="table table-sm table-striped table-bordered align-middle finance-table mb-0">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th class="w-25 sticky-col">Corretor</th>
+            <th *ngFor="let m of monthsHeader">{{ m }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of salariosCorretores">
+            <th class="row-head sticky-col">{{ row.name }}</th>
+            <td class="text-end" *ngFor="let v of row.values">{{ fmt(v) }}</td>
+          </tr>
+          <tr class="table-total fw-semibold">
+            <th class="row-head sticky-col">Total</th>
+            <td class="text-end" *ngFor="let t of totalSalariosCorretores">{{ fmt(t) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card card-soft border-0 shadow-sm mb-4">
+    <div class="card-header bg-section text-white py-2"><strong>Salários — Gerentes</strong></div>
+    <div class="table-responsive">
+      <table class="table table-sm table-striped table-bordered align-middle finance-table mb-0">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th class="w-25 sticky-col">Gerente</th>
+            <th *ngFor="let m of monthsHeader">{{ m }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of salariosGerentes">
+            <th class="row-head sticky-col">{{ row.name }}</th>
+            <td class="text-end" *ngFor="let v of row.values">{{ fmt(v) }}</td>
+          </tr>
+          <tr class="table-total fw-semibold">
+            <th class="row-head sticky-col">Total</th>
+            <td class="text-end" *ngFor="let t of totalSalariosGerentes">{{ fmt(t) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== COMISSÕES ===== -->
+  <div class="card card-soft border-0 shadow-sm mb-4">
+    <div class="card-header bg-section text-white py-2">
+      <strong>Comissões — Corretores (por Gerente)</strong>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm table-striped table-bordered align-middle finance-table mb-0">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th class="w-25 sticky-col">Corretor</th>
+            <th *ngFor="let m of monthsHeader">{{ m }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of comissoesCorretores">
+            <th class="row-head sticky-col">{{ row.name }}</th>
+            <td class="text-end" *ngFor="let v of row.values">{{ fmt(v) }}</td>
+          </tr>
+          <tr class="table-total fw-semibold">
+            <th class="row-head sticky-col">Total</th>
+            <td class="text-end" *ngFor="let t of totalComissoesCorretores">{{ fmt(t) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card card-soft border-0 shadow-sm mb-4">
+    <div class="card-header bg-section text-white py-2">
+      <strong>Comissões — Gerentes</strong>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm table-striped table-bordered align-middle finance-table mb-0">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th class="w-25 sticky-col">Gerente</th>
+            <th *ngFor="let m of monthsHeader">{{ m }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of comissoesGerentes">
+            <th class="row-head sticky-col">{{ row.name }}</th>
+            <td class="text-end" *ngFor="let v of row.values">{{ fmt(v) }}</td>
+          </tr>
+          <tr class="table-total fw-semibold">
+            <th class="row-head sticky-col">Total</th>
+            <td class="text-end" *ngFor="let t of totalComissoesGerentes">{{ fmt(t) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== DESPESAS POR FILIAIS ===== -->
+  <div class="card card-soft border-0 shadow-sm">
+    <div class="card-header bg-section text-white py-2">
+      <strong>Despesas por Filiais</strong>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm table-striped table-bordered align-middle finance-table mb-0">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th class="w-25 sticky-col">Filial</th>
+            <th *ngFor="let m of monthsHeader">{{ m }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of despesasFiliais">
+            <th class="row-head sticky-col">{{ row.name }}</th>
+            <td class="text-end" *ngFor="let v of row.values">{{ fmt(v) }}</td>
+          </tr>
+          <tr class="table-total fw-semibold">
+            <th class="row-head sticky-col">Total</th>
+            <td class="text-end" *ngFor="let t of totalDespesasFiliais">{{ fmt(t) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

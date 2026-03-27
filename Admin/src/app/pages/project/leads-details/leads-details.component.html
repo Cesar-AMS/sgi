@@ -1,0 +1,425 @@
+<div class="lead-details-wrapper container-fluid py-4" *ngIf="lead; else loadingTpl">
+  <!-- Topo -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <button class="btn btn-link text-decoration-none px-0 mb-2" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i>
+        <span class="ms-1">Voltar</span>
+      </button>
+
+      <div class="d-flex align-items-center gap-3">
+        <div>
+          <h3 class="fw-bold mb-0">{{ lead.nome }}</h3>
+          <div class="text-muted small">
+            {{ lead.imoveisInteresse || 'Lead' }}
+          </div>
+        </div>
+        <span class="badge status-badge">{{ lead.status }}</span>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-outline-secondary d-flex align-items-center" (click)="callLead()">
+        <i class="bi bi-telephone me-2"></i> Ligar
+      </button>
+      <button type="button" class="btn btn-outline-success d-flex align-items-center" (click)="whatsappLead()">
+        <i class="bi bi-whatsapp me-2"></i> WhatsApp
+      </button>
+      <button type="button" class="btn btn-outline-secondary d-flex align-items-center" (click)="toggleEdit()">
+        <i class="bi bi-pencil-square me-2"></i> Editar
+      </button>
+      <button type="button" class="btn btn-outline-secondary d-flex align-items-center" (click)="emailLead()">
+        <i class="bi bi-envelope me-2"></i> Email
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab === 'info'" (click)="setTab('info')" type="button">
+        Informações
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab === 'docs'" (click)="setTab('docs')" type="button">
+        Documentos
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab === 'proposal'" (click)="setTab('proposal')" type="button">
+        Proposta
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab === 'schedule'" (click)="setTab('schedule')" type="button">
+        Agendamentos
+      </button>
+    </li>
+  </ul>
+
+  <!-- Conteúdo principal: esquerda (tabs) / direita (histórico) -->
+  <div class="row">
+    <!-- ESQUERDA -->
+    <div class="col-lg-8 mb-3">
+      <!-- Tab Informações -->
+      <div *ngIf="activeTab === 'info'">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Informações do Lead</h5>
+
+            <!-- modo visualização -->
+            <div *ngIf="!isEditing; else editInfoTpl" class="row g-3 info-grid">
+              <div class="col-md-6">
+                <div class="label">Nome</div>
+                <div class="value">{{ lead.nome }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="label">E-mail</div>
+                <div class="value">{{ lead.email || '-' }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="label">Telefone</div>
+                <div class="value">{{ lead.telefone || '-' }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="label">Status</div>
+                <div class="value">{{ lead.status }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="label">Origem</div>
+                <div class="value">{{ lead.fonte || '-' }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="label">Valor</div>
+                <div class="value">
+                  {{ lead.valor | currency: 'BRL':'symbol':'1.0-0' }}
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="label">Observação</div>
+                <div class="value">{{ lead.observacao || '-' }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="label">Vendedor</div>
+                <div class="value">{{ selectNameSale(lead.vendedor) }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="label">Imóvel de Interesse</div>
+                <div class="value">{{ lead.imoveisInteresse || '-' }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="label">Data de Criação</div>
+                <div class="value">
+                  {{ lead.dataCriacao | date: 'dd/MM/yyyy' }}
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="label">Último Contato</div>
+                <div class="value">
+                  {{ lead.dataCriacao | date: 'dd/MM/yyyy' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- modo edição -->
+            <ng-template #editInfoTpl>
+              <form [formGroup]="infoForm" (ngSubmit)="saveInfo()" class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Nome</label>
+                  <input type="text" class="form-control" formControlName="nome" />
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">E-mail</label>
+                  <input type="email" class="form-control" formControlName="email" />
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Telefone</label>
+                  <input type="text" class="form-control" formControlName="telefone" />
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Status</label>
+                  <select type="text" class="form-control" formControlName="status">
+                    <option *ngFor="let s of statusOptions" [value]="s">{{s}}</option>
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Origem</label>
+                  <input type="text" class="form-control" formControlName="origem" />
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Valor</label>
+                  <input type="number" class="form-control" formControlName="valor" />
+                </div>
+
+                <div class="col-md-12">
+                  <label class="form-label">Observação</label>
+                  <textarea rows="2" class="form-control" formControlName="observacao"></textarea>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Imóvel de Interesse</label>
+                  <input type="text" class="form-control" formControlName="imoveisInteresse" />
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Vendedor</label>
+                  <select class="form-select" formControlName="vendedor">
+                    <option value="">Todos</option>
+                    <option *ngFor="let c of corretores" [value]="c.id">
+                      {{ c.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+                  <button type="button" class="btn btn-outline-secondary" (click)="toggleEdit()">
+                    Cancelar
+                  </button>
+                  <button type="submit" class="btn btn-orange">
+                    Salvar
+                  </button>
+                </div>
+              </form>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Documentos -->
+      <div *ngIf="activeTab === 'docs'">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Documentos</h5>
+            <p class="text-muted mb-0">Em breve vamos implementar o upload e listagem de documentos do lead.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Proposta -->
+      <div *ngIf="activeTab === 'proposal'">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Proposta</h5>
+            <p class="text-muted mb-0">Aqui depois você pode exibir os dados da proposta vinculada ao lead.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Agendar -->
+      <div *ngIf="activeTab === 'schedule'">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title mb-0">Agendar Contato</h5>
+            </div>
+
+            <!-- Criar agendamento -->
+            <form [formGroup]="scheduleForm" (ngSubmit)="saveSchedule('contato')" class="row g-3 mb-4">
+              <div class="col-md-3">
+                <label class="form-label">Data</label>
+                <input type="date" class="form-control" formControlName="date" />
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">Horário</label>
+                <input type="time" class="form-control" formControlName="time" />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Observação</label>
+                <input type="text" class="form-control" formControlName="note"
+                  placeholder="Ex: Retornar ligação, visita..." />
+              </div>
+
+              <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-orange">
+                  Salvar Agendamento de contato
+                </button>
+              </div>
+            </form>
+
+            <!-- Lista de agendamentos -->
+            <div class="table-responsive" *ngIf="schedules.length > 0; else noSchedulesContatoTpl">
+              <table class="table align-middle">
+                <thead>
+                  <tr>
+                    <th>Data/Hora</th>
+                    <th>Observação</th>
+                    <th style="width: 220px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let s of schedules">
+                    <td>{{ s.scheduledAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ s.note || '-' }}</td>
+                    <td>
+                      <select class="form-select" [ngModel]="s.status" (ngModelChange)="changeScheduleStatus(s, $event)"
+                        [ngModelOptions]="{ standalone: true }">
+                        <option *ngFor="let opt of scheduleStatusOptions" [value]="opt.value">
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <ng-template #noSchedulesContatoTpl>
+              <div class="text-muted">Nenhum agendamento de contato cadastrado.</div>
+            </ng-template>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title mb-0">Agendar Visita</h5>
+            </div>
+
+            <!-- Criar agendamento -->
+            <form [formGroup]="scheduleForm" (ngSubmit)="saveSchedule('visita')" class="row g-3 mb-4">
+              <div class="col-md-3">
+                <label class="form-label">Data</label>
+                <input type="date" class="form-control" formControlName="date" />
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">Horário</label>
+                <input type="time" class="form-control" formControlName="time" />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Observação</label>
+                <input type="text" class="form-control" formControlName="note"
+                  placeholder="Ex: Retornar ligação, visita..." />
+              </div>
+
+              <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-orange">
+                  Salvar Agendamento da Visita
+                </button>
+              </div>
+            </form>
+
+            <!-- Lista de agendamentos -->
+            <div class="table-responsive" *ngIf="schedulesVisit.length > 0; else noSchedulesVisitaTpl">
+              <table class="table align-middle">
+                <thead>
+                  <tr>
+                    <th>Data/Hora</th>
+                    <th>Observação</th>
+                    <th style="width: 220px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let s of schedulesVisit">
+                    <td>{{ s.scheduledAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ s.note || '-' }}</td>
+                    <td>
+                      <select class="form-select" [ngModel]="s.status" (ngModelChange)="changeScheduleStatus(s, $event)"
+                        [ngModelOptions]="{ standalone: true }">
+                        <option *ngFor="let opt of scheduleStatusOptions" [value]="opt.value">
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <ng-template #noSchedulesVisitaTpl>
+              <div class="text-muted">Nenhum agendamento de visita cadastrado.</div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DIREITA: Histórico -->
+    <div class="col-lg-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Histórico</h5>
+        <button type="button" class="btn btn-orange btn-sm" (click)="startAddActivity()" *ngIf="!isAddingActivity">
+          <i class="bi bi-plus-lg me-1"></i>
+          Adicionar Atividade
+        </button>
+      </div>
+
+      <!-- Form de nova atividade -->
+      <div class="card mb-3" *ngIf="isAddingActivity">
+        <div class="card-body">
+          <form [formGroup]="activityForm" (ngSubmit)="saveActivity()" class="row g-2">
+            <div class="col-6">
+              <label class="form-label">Data</label>
+              <input type="date" class="form-control" formControlName="date" />
+            </div>
+            <div class="col-6">
+              <label class="form-label">Horário</label>
+              <input type="time" class="form-control" formControlName="time" />
+            </div>
+            <div class="col-12">
+              <label class="form-label">Observação</label>
+              <textarea class="form-control" rows="2" formControlName="description"></textarea>
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelAddActivity()">
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-orange btn-sm">
+                Salvar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Card de histórico -->
+      <div class="card shadow-sm border-0">
+        <div class="card-body history-body">
+          <h6 class="mb-3">Histórico de Atividades</h6>
+
+          <div *ngIf="activities.length === 0" class="text-muted small">
+            Nenhuma atividade registrada.
+          </div>
+
+          <div class="history-list" *ngIf="activities.length > 0">
+            <div *ngFor="let act of activities" class="history-item">
+              <div class="dot"></div>
+              <div class="history-content">
+                <div class="small text-muted">
+                  {{ act.dateTime | date: 'dd/MM/yyyy HH:mm' }} •
+                  {{ act.author || 'Sistema' }}
+                  <span *ngIf="act.type" class="badge bg-light text-muted border ms-1">
+                    {{ act.type }}
+                  </span>
+                </div>
+                <div class="fw-semibold">Criação</div>
+                <div class="small">{{ act.description }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="text-center text-muted py-5">Carregando lead...</div>
+</ng-template>

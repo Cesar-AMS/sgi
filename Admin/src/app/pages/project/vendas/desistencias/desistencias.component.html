@@ -1,0 +1,83 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Desistências</h2>
+      <p class="text-muted mb-0">
+        Clientes relacionados a propostas canceladas, recusadas ou desistentes.
+      </p>
+    </div>
+
+    <div class="badge rounded-pill bg-warning-subtle text-warning-emphasis px-3 py-2">
+      Baseado na situação atual das propostas
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="row g-3 align-items-center mb-3">
+        <div class="col-lg-6">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control border-start-0"
+              placeholder="Buscar cliente, CPF, email, telefone ou empreendimento..."
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="applyFilter()"
+            />
+          </div>
+        </div>
+        <div class="col-lg-6 text-lg-end text-muted">
+          {{ filteredRows.length }} cliente(s) com desistência identificada
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="text-center text-muted py-5">
+        Carregando desistências...
+      </div>
+
+      <ng-container *ngIf="!loading">
+        <div class="table-responsive" *ngIf="filteredRows.length > 0; else emptyState">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Cliente</th>
+                <th>Status</th>
+                <th>Contato</th>
+                <th>Empreendimento</th>
+                <th>Unidade</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of filteredRows">
+                <td>
+                  <div class="fw-semibold">{{ row.clientName }}</div>
+                  <div class="text-muted small">{{ row.cpfCnpj }}</div>
+                </td>
+                <td>
+                  <span class="badge text-bg-warning">{{ row.status }}</span>
+                </td>
+                <td>
+                  <div>{{ row.email }}</div>
+                  <div class="text-muted small">{{ row.phone }}</div>
+                </td>
+                <td>{{ row.empreendimento }}</td>
+                <td>{{ row.unidade }}</td>
+                <td>{{ row.createdAt | date: 'dd/MM/yyyy' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #emptyState>
+          <div class="text-center text-muted py-5">
+            Nenhuma desistência encontrada com os filtros atuais.
+          </div>
+        </ng-template>
+      </ng-container>
+    </div>
+  </div>
+</div>

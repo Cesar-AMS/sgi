@@ -1,0 +1,736 @@
+<!-- Start Breadcrumbs -->
+<button type="button" class="btn btn-subtle-primary  float-end btn-sm">
+  <i class=" ph-plus-circle-light"></i> Contas Cadastradas
+</button>
+
+<app-breadcrumbs title="Painel"></app-breadcrumbs>
+
+<div class="row mb-3">
+  @for (data of statedata; track $index) {
+  <div class="col-xxl col-sm-6">
+    <div class="card">
+      <div class="card-body">
+        <div class="avatar-sm float-end">
+          <div class="avatar-title bg-{{data.iconcolor}}-subtle text-{{data.iconcolor}} fs-3xl rounded">
+            <i class="ph ph-{{data.icon}}"></i>
+          </div>
+        </div>
+        <h4>{{data.frontsymbol}}<span class="counter-value"> {{data.amount}}</span>{{data.symbol}} </h4>
+        <p class="text-muted mb-2">{{data.title}}</p>
+        <p class="text-muted mb-0"></p>
+      </div>
+      <div class="progress-sm rounded-0"
+        role="progrehttps://www.devmedia.com.br/website-com-controle-de-acesso-usando-asp-net-mvc-bootstrap-e-razor/33093ssbar">
+        <progressbar [value]="data.rangevalue" [type]="data.iconcolor"></progressbar>
+      </div>
+    </div>
+  </div><!--end col-->
+  }
+</div><!--end row-->
+
+<div class="row">
+  <div class="col-xl-4">
+    <div class="card">
+      <div class="card-header align-items-center d-flex">
+        <h6 class="card-title mb-0 flex-grow-1">Todas as Contas</h6>
+        <div dropdown class="dropdown card-header-dropdown flex-shrink-0">
+          <button type="button" class="btn btn-subtle-primary btn-sm" (click)="grid.show()">
+            <i class=" ph-plus-circle-light"></i> Nova Conta
+          </button>
+
+        </div>
+      </div>
+      <div class="card-body px-0">
+        <ngx-simplebar class="card-body py-0" style="max-height: 350px;">
+          <div class="vstack gap-2">
+            @for (data of accountsBank; track $index) {
+            <div class="py-2 px-3 border border-dashed rounded">
+              <div class="d-flex align-items-center gap-2">
+                <div class="flex-shrink-0 mt-2">
+                  <img alt="" class="avatar-sm rounded">
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                  <h6 class="fs-md text-truncate mt-3 mb-1"><a href="javascript:void(0);"
+                      class="text-reset p-0 ">{{data.description}}</a></h6>
+                  <p class="text-muted mb-0 mt-1 text-8" style="font-size: 10px !important;">
+                    Ag :{{data.agency}} Cc: {{data.account}}</p>
+                </div>
+                <div class="text-end">
+                  <h5 class="fs-md text-primary mb-0">{{data.amountActual}}</h5>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+        </ngx-simplebar>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-8">
+    <div class="card card-height-100">
+      <div class="card-header align-items-center d-flex">
+        <h6 class="card-title mb-0 flex-grow-1">Fluxo de Caixa </h6>
+
+      </div>
+      <div class="card-body">
+        <div id="balance_overview" class="apex-charts ms-n3" dir="ltr">
+          <apx-chart [series]="balance_overviewChart.series" [chart]="balance_overviewChart.chart"
+            [markers]="balance_overviewChart.markers" [grid]="balance_overviewChart.grid"
+            [legend]="balance_overviewChart.legend" [dataLabels]="balance_overviewChart.dataLabels"
+            [colors]="balance_overviewChart.colors" [xaxis]="balance_overviewChart.xaxis"
+            [stroke]="balance_overviewChart.stroke" dir="ltr"></apx-chart>
+        </div>
+        <div class="table-responsive table-card mb-0 mt-2">
+          <table class="table table-sm table-borderless align-middle text-center mb-0 table-nowrap">
+            <tbody>
+              <tr>
+                <td class="text-start border-bottom-0"><i
+                    class="bi bi-diamond-fill align-baseline me-1 text-primary"></i> Fluxo Geral
+                </td>
+                <th>R$10000</th>
+                <td class="text-muted"></td>
+                <td class="text-end" style="width: 150px;"><a href="javascript:void(0);"
+                    class="icon-link icon-link-hover text-decoration-underline link-underline link-underline-opacity-0 link-underline-opacity-75-hover">Ver
+                    mais <i class="bi bi-arrow-right"></i></a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div><!--end col-->
+</div><!--end row-->
+
+<div class="row">
+  <div class="col-xl-6">
+    <div class="card" id="leadsList">
+      <div class="card-header d-flex flex-column flex-sm-row align-items-start align-items-sm-center">
+        <h4 class="card-title mb-2 mb-sm-0 flex-grow-1 text-nowrap">Contas a Receber</h4>
+
+        <div class="d-flex w-sm-75 w-sm-auto align-items-center gap-2">
+          <input class="form-control form-control-sm flex-grow-1" />
+
+          <a href="javascript:void(0);" class="btn btn-subtle-success btn-sm flex-shrink-0" (click)="grid2.show()">
+            Adicionar Lançamento <i class="ph-caret-right align-middle"></i>
+          </a>
+        </div>
+      </div>
+
+      <tabset class="nav-tabs-custom nav-success mb-3 mt-3">
+        <tab heading="Em aberto">
+          <div class="card-body">
+            <div class="table-responsive table-card mt-0 ms-1 me-1 p-0" style="font-size: 10px !important;">
+              <table class="table table-sm table-borderless table-centered align-middle table-nowrap mb-0">
+                <thead class="text-muted table-light">
+                  <tr class="p-1">
+                    <th scope="col" style="cursor:pointer" (click)="sort('createdAt')">#</th>
+                    <th scope="col" style="cursor:pointer" (click)="sort('createdAt')"> Dt. Lançamento {{
+                      arrow('createdAt') }} </th>
+                    <th scope="col" style="cursor:pointer" (click)="sort('description')"> Descrição {{
+                      arrow('description') }}</th>
+                    <th scope="col" style="cursor:pointer" (click)="sort('amount')"> Valor {{ arrow('amount') }}</th>
+                  </tr>
+                </thead>
+                <tbody class="list">
+                  @for (data of financialReceibled ; track $index) {
+                  <tr>
+                    <td>
+                      {{data.id}}
+                    </td>
+                    <td class="phone_number">{{data.createdAt | date: 'dd/MM/yyyy hh:mm:ss'}}</td>
+                    <td class="leads_score">{{data.description}}</td>
+                    <td class="location">{{data.amount}}</td>
+
+                  </tr><!-- end tr -->
+                  }
+                </tbody><!-- end tbody -->
+              </table><!-- end table -->
+            </div>
+            <div class="align-items-center mt-4 pt-2 row" style="font-size: 10px !important">
+              <div class="col-sm">
+                <div class="text-muted text-center text-sm-start">
+                  Procurando <span class="fw-semibold">{{leadlist?.length}}</span> de <span
+                    class="fw-semibold">{{contact?.length}}</span> Resultados
+                </div>
+              </div>
+              <div class="col-sm-auto mt-3 mt-sm-0" style="font-size: 10px;">
+                <pagination [totalItems]="leadlist?.length" [itemsPerPage]="10" (pageChanged)="pageChanged($event)"
+                  previousText="Último" nextText="Próximo">
+                </pagination>
+              </div>
+            </div>
+          </div>
+        </tab>
+      </tabset>
+
+    </div>
+  </div><!--end col-->
+  <div class="col-xl-6">
+    <div class="card" id="leadsList">
+      <div class="card-header d-flex flex-column flex-sm-row align-items-start align-items-sm-center">
+        <h4 class="card-title mb-2 mb-sm-0 flex-grow-1 text-nowrap">Contas a pagar</h4>
+
+        <div class="d-flex w-sm-75 w-sm-auto align-items-center gap-2">
+          <input class="form-control form-control-sm flex-grow-1" />
+          <a href="javascript:void(0);" class="btn btn-subtle-danger btn-sm flex-shrink-0" (click)="grid3.show()">
+            Adicionar Lançamento <i class="ph-caret-right align-middle"></i>
+          </a>
+        </div>
+      </div>
+
+      <tabset class="nav-tabs-custom nav-danger mb-3 mt-3">
+        <tab heading="Em aberto">
+          <div class="card-body">
+            <div class="table-responsive table-card mt-0 ms-1 me-1 p-0" style="font-size: 10px !important;">
+              <table class="table table-sm table-borderless table-centered align-middle table-nowrap mb-0">
+                <thead class="text-muted table-light">
+                  <tr class="p-1">
+                    <th scope="col" style="cursor:pointer" (click)="sort('createdAt')">#</th>
+                    <th scope="col" style="cursor:pointer" (click)="sort('createdAt')"> Dt. Lançamento {{
+                      arrow('createdAt') }} </th>
+                    <th scope="col" style="cursor:pointer" (click)="sort('description')"> Descrição {{
+                      arrow('description') }}</th>
+                    <th scope="col" style="cursor:pointer" (click)="sort('amount')"> Valor {{ arrow('amount') }}</th>
+                  </tr>
+                </thead>
+                <tbody class="list">
+                  @for (data of financialPayable; track $index) {
+                  <tr>
+                    <td>
+                      {{data.id}}
+                    </td>
+                    <td class="phone_number">{{data.createdAt | date: 'dd/MM/yyyy hh:mm:ss'}}</td>
+                    <td class="leads_score">{{data.description}}</td>
+                    <td class="location">{{data.amount}}</td>
+
+                  </tr><!-- end tr -->
+                  }
+                </tbody><!-- end tbody -->
+              </table><!-- end table -->
+            </div>
+            <div class="align-items-center mt-4 pt-2 row" style="font-size: 10px !important">
+              <div class="col-sm">
+                <div class="text-muted text-center text-sm-start">
+                  Procurando <span class="fw-semibold">{{leadlist?.length}}</span> de <span
+                    class="fw-semibold">{{contact?.length}}</span> Resultados
+                </div>
+              </div>
+              <div class="col-sm-auto mt-3 mt-sm-0" style="font-size: 10px;">
+                <pagination [totalItems]="leadlist?.length" [itemsPerPage]="10" (pageChanged)="pageChanged($event)"
+                  previousText="Último" nextText="Próximo">
+                </pagination>
+              </div>
+            </div>
+          </div>
+        </tab>
+      </tabset>
+    </div>
+  </div><!--end col-->
+</div><!--end row-->
+
+<div bsModal #grid="bs-modal" class="modal fade" id="exampleModalgrid">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="mb-3 fw-bold">Cadastro da conta</h5>
+        <button type="button" class="btn-close" (click)="grid.hide()"></button>
+      </div>
+      <!-- conta-form.component.html -->
+      <div class="container mt-4">
+        <form #f="ngForm" class="p-3 border rounded bg-white shadow-sm">
+
+
+          <!-- Nome da conta -->
+          <div class="mb-3">
+            <label class="form-label">Nome da conta <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="nome" [(ngModel)]="conta.description"
+              placeholder="Informe o nome para você identificar essa conta" required>
+          </div>
+
+          <!-- Saldo inicial + Conta ativa -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Saldo inicial</label>
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input type="number" class="form-control" name="saldoInicial" [(ngModel)]="conta.amount"
+                  placeholder="Informe o saldo inicial da conta" step="0.01" min="0">
+              </div>
+            </div>
+            <div class="col-md-6 d-flex align-items-end justify-content-end">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" name="ativa" [(ngModel)]="conta.active">
+                <label class="form-check-label">Conta ativa?</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Número da conta + Agência -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Número da conta</label>
+              <input type="text" class="form-control" name="numeroConta" [(ngModel)]="conta.account"
+                placeholder="Informe o número da conta">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Agência</label>
+              <input type="text" class="form-control" name="agencia" [(ngModel)]="conta.agency"
+                placeholder="Informe o número da agência">
+            </div>
+          </div>
+
+          <!-- Tipo chave Pix + Chave Pix -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Tipo chave Pix</label>
+              <select class="form-select" name="tipoChavePix" [(ngModel)]="conta.type_key">
+                <option value="" disabled selected>Informe o tipo da chave Pix</option>
+                <option *ngFor="let tipo of tiposPix" [value]="tipo.value">
+                  {{ tipo.label }}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Chave Pix</label>
+              <input type="text" class="form-control" name="chavePix" [(ngModel)]="conta.key_value"
+                placeholder="Informe a chave Pix" [required]="!!conta.key_value">
+            </div>
+          </div>
+
+          <!-- Botão -->
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary" [disabled]="f.invalid" (click)="saveAccount()">
+              Adicionar
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div bsModal #grid2="bs-modal" class="modal fade" id="exampleModalgrid">
+  <div class="modal-dialog  modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="fw-bold">Conta a receber</h5>
+        <button type="button" class="btn-close" (click)="grid2.hide()"></button>
+      </div>
+      <!-- conta-form.component.html -->
+      <!-- conta-receber.component.html -->
+      <div class="container-fluid p-3 bg-white rounded shadow-sm" style="max-width: 1100px;">
+        <form #f="ngForm">
+          <div class="row">
+            <!-- Coluna esquerda -->
+            <div class="col-lg-5 border-mobile-bottom-end">
+              <!-- Valor -->
+              <div class="mb-2">
+                <label class="form-label">Valor do recebimento <span class="text-danger">*</span></label>
+                <div class="valor-grande" aria-hidden="true">
+                  {{ (accountsReceivable.amount || 0) | number:'1.2-2':'pt-BR' }}
+                </div>
+                <div class="input-group mt-2">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" class="form-control" name="amount" [(ngModel)]="accountsReceivable.amount"
+                    required step="0.01" min="0" placeholder="0,00">
+                </div>
+              </div>
+
+              <!-- Já foi recebido + data -->
+              <div class="d-flex align-items-center gap-3 my-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="chkRecebido" name="jareceivedRecebido"
+                    [(ngModel)]="accountsReceivable.received">
+                  <label for="chkRecebido" class="form-check-label">Já foi recebido</label>
+                </div>
+                <input type="date" class="form-control w-auto" name="datacontaReceberRecebimento"
+                  [(ngModel)]="accountsReceivable.receivedDate">
+              </div>
+
+              <!-- Descrição -->
+              <div class="mb-3">
+                <label class="form-label">Descrição</label>
+                <input type="text" class="form-control" name="descriptiondescricao"
+                  [(ngModel)]="accountsReceivable.description"
+                  placeholder="Digite uma breve descrição do recebimento...">
+              </div>
+
+              <!-- Categoria -->
+              <div class="mb-3">
+                <label class="form-label">Categoria <span class="text-danger">*</span></label>
+                <select class="form-select" name="categoria" [(ngModel)]="accountsReceivable.categoryId" required>
+                  <option value="" disabled selected>Selecione a categoria do recebimento</option>
+                  <option *ngFor="let c of categories" [value]="c.id">{{ c.description }}</option>
+                </select>
+              </div>
+
+              <!-- Conta -->
+              <div class="mb-4">
+                <label class="form-label">Conta <span class="text-danger">*</span></label>
+                <select class="form-select" name="conta" [(ngModel)]="accountsReceivable.accountId" required>
+                  <option value="" disabled selected>Selecione a conta que efetuará o recebimento...</option>
+                  <option *ngFor="let c of accountsBankActive" [value]="c.id">{{ c.description }} - Ag: {{c.agency}} -
+                    Cc: {{c.account}}</option>
+                </select>
+              </div>
+
+              <!-- Botões -->
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-outline-primary" (click)="addeContinua()">
+                  Adicionar e continuar
+                </button>
+                <button type="submit" class="btn btn-teal btn-success" (click)="addeFecha()">
+                  Adicionar
+                </button>
+              </div>
+            </div>
+
+            <!-- Coluna direita -->
+            <div class="col-lg-7">
+              <!-- Nav Tabs -->
+              <ul class="nav nav-tabs mb-3 p-1">
+                <li class="nav-item p-1">
+                  <button type="button" class="nav-link p-2" [class.active]="activeTab==='dados'"
+                    (click)="setTab('dados')">Lançamento</button>
+                </li>
+                <li class="nav-item p-1">
+                  <button type="button" class="nav-link p-2" [class.active]="activeTab==='recorrencia'"
+                    (click)="setTab('recorrencia')">Recorrência</button>
+                </li>
+                <li class="nav-item p-1">
+                  <button type="button" class="nav-link p-2" [class.active]="activeTab==='adicionais'"
+                    (click)="setTab('adicionais')">Adicionais</button>
+                </li>
+                <li class="nav-item p-1">
+                  <button type="button" class="nav-link p-2" [class.active]="activeTab==='documentos'"
+                    (click)="setTab('documentos')">Documentos</button>
+                </li>
+              </ul>
+
+              <!-- Aba: Dados do Lançamento -->
+              <div [hidden]="activeTab!=='dados'">
+                <div class="row mb-3">
+                  <div class="col">
+                    <label class="form-label">Data de competência</label>
+                    <input type="date" class="form-control" name="dataCompetencia"
+                      [(ngModel)]="accountsReceivable.competenceDate">
+                  </div>
+                  <div class="col">
+                    <label class="form-label">Data de vencimento</label>
+                    <input type="date" class="form-control" name="dataVencimento"
+                      [(ngModel)]="accountsReceivable.dueDate">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Cliente</label>
+                  <select class="form-select" name="cliente" [(ngModel)]="accountsReceivable.clientId">
+                    <option value="" disabled selected>Selecione o cliente do recebimento</option>
+                    <option *ngFor="let c of clientes" [value]="c.id">{{ c.nome }}</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Centro de custo</label>
+                  <select class="form-select" name="centroCusto" [(ngModel)]="accountsReceivable.costCenterId">
+                    <option value="" disabled selected>Selecione o centro de custo do recebimento</option>
+                    <option *ngFor="let cc of centrosCusto" [value]="cc.id">{{ cc.name }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Aba: Recorrência -->
+              <div [hidden]="activeTab!=='recorrencia'">
+                <div class="form-check form-switch mb-3">
+                  <input class="form-check-input" type="checkbox" id="swRecorrencia" name="usarrecurrencing"
+                    [(ngModel)]="accountsReceivable.recurrencing">
+                  <label for="swRecorrencia" class="form-check-label">
+                    Recorrência/Parcelamento?
+                  </label>
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col">
+                    <label class="form-label">Período</label>
+                    <select class="form-select" name="periodoPeriodic" [(ngModel)]="accountsReceivable.periodic"
+                      [disabled]="!accountsReceivable.recurrencing">
+                      <option value="" disabled selected>Selecione o período da recorrência</option>
+                      <option *ngFor="let p of periodos" [value]="p.value">{{ p.label }}</option>
+                    </select>
+                  </div>
+                  <div class="col">
+                    <label class="form-label">Parcelas</label>
+                    <input type="number" class="form-control" name="parcelasParcelas"
+                      [(ngModel)]="accountsReceivable.parcelas" min="1" step="1"
+                      placeholder="Informe a quantidade de vezes" [disabled]="!accountsReceivable.parcelas">
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Aba: Adicionais -->
+              <div [hidden]="activeTab!=='adicionais'">
+                <div class="mb-3">
+                  <label class="form-label">Referência</label>
+                  <input type="text" class="form-control" name="referencia" [(ngModel)]="accountsReceivable.reference"
+                    placeholder="Informe a referência do recebimento...">
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Anotações</label>
+                  <textarea rows="5" class="form-control" name="anotacoes" [(ngModel)]="accountsReceivable.notes"
+                    placeholder="Informe aqui as anotações adicionais do recebimento"></textarea>
+                </div>
+              </div>
+
+              <!-- Aba: Documentos -->
+              <!--<div [hidden]="activeTab!=='documentos'">
+                <div class="mb-3">
+                  <label class="form-label d-block">Carregar Documento</label>
+                  <input type="file" class="form-control w-auto" multiple (change)="onUploadChange($event)">
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Nome</th>
+                        <th>Tamanho</th>
+                        <th>Data</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngIf="!contaReceber.documentos?.length">
+                        <td colspan="3" class="text-center text-muted py-5">Não há dados</td>
+                      </tr>
+                      <tr *ngFor="let d of contaReceber.documentos">
+                        <td>{{ d.nome }}</td>
+                        <td>{{ d.tamanho | number }} bytes</td>
+                        <td>{{ d.data | date:'dd/MM/yyyy HH:mm' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>-->
+            </div><!-- /col direita -->
+          </div>
+        </form>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+<div bsModal #grid3="bs-modal" class="modal fade" id="exampleModalgrid">
+  <div class="modal-dialog  modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="fw-bold">Conta a pagar</h5>
+        <button type="button" class="btn-close" (click)="grid3.hide()"></button>
+      </div>
+      <!-- conta-form.component.html -->
+      <!-- conta-contaPagar.component.html -->
+      <div class="container-fluid p-3 bg-white rounded shadow-sm" style="max-width: 1100px;">
+        <form #f="ngForm">
+          <div class="row">
+            <!-- Coluna esquerda -->
+            <div class="col-lg-5 border-mobile-bottom-end">
+
+              <div class="mb-2">
+                <label class="form-label">Valor do pagamento <span class="text-danger">*</span></label>
+                <div class="valor-grande" aria-hidden="true">
+                  {{ (contaPagar.amount || 0) | number:'1.2-2':'pt-BR' }}
+                </div>
+                <div class="input-group mt-2">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" class="form-control" name="valor" [(ngModel)]="contaPagar.amount" required
+                    step="0.01" min="0" placeholder="0,00">
+                </div>
+              </div>
+
+              <!-- Já foi recebido + data -->
+              <div class="d-flex align-items-center gap-3 my-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="chkRecebido" name="jaRecebido"
+                    [(ngModel)]="contaPagar.received">
+                  <label for="chkRecebido" class="form-check-label">Já foi pago</label>
+                </div>
+                <input type="date" class="form-control w-auto" name="dataRecebimento"
+                  [(ngModel)]="contaPagar.receivedDate">
+              </div>
+
+              <!-- Descrição -->
+              <div class="mb-3">
+                <label class="form-label">Descrição</label>
+                <input type="text" class="form-control" name="descricao" [(ngModel)]="contaPagar.description"
+                  placeholder="Digite uma breve descrição do pagamento...">
+              </div>
+
+              <!-- Categoria -->
+              <div class="mb-3">
+                <label class="form-label">Categoria <span class="text-danger">*</span></label>
+                <select class="form-select" name="categoria" [(ngModel)]="contaPagar.categoryId" required>
+                  <option value="" disabled selected>Selecione a categoria do pagamento</option>
+                  <option *ngFor="let c of categories" [value]="c.id">{{ c.description }}</option>
+                </select>
+              </div>
+
+              <!-- Conta -->
+              <div class="mb-4">
+                <label class="form-label">Conta <span class="text-danger">*</span></label>
+                <select class="form-select" name="conta" [(ngModel)]="contaPagar.accountId" required>
+                  <option value="" disabled selected>Selecione a conta que efetuará o pagamento...</option>
+                  <option *ngFor="let c of accountsBankActive" [value]="c.id">{{ c.description }} - Ag: {{c.agency}} -
+                    Cc: {{c.account}}</option>
+                  <!--<option *ngFor="let c of contas" [value]="c">{{ c.nome }}</option>-->
+                </select>
+              </div>
+
+              <!-- Botões -->
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-outline-primary" (click)="addeContinuaPagar()">
+                  Adicionar e continuar
+                </button>
+                <button type="submit" class="btn btn-teal btn-danger" (click)="addeFechaPagar()">
+                  Adicionar
+                </button>
+              </div>
+            </div>
+
+            <!-- Coluna direita -->
+            <div class="col-lg-7">
+              <!-- Nav Tabs -->
+              <ul class="nav nav-tabs mb-3 p-1">
+                <li class="nav-item p-1">
+                  <button type="button" class="nav-link p-2" [class.active]="activeTab==='dados'"
+                    (click)="setTab('dados')">Lançamento</button>
+                </li>
+                <li class="nav-item p-1">
+                  <button type="button" class="nav-link p-2" [class.active]="activeTab==='recorrencia'"
+                    (click)="setTab('recorrencia')">Recorrência</button>
+                </li>
+                <li class="nav-item p-1">
+                  <button type="button" class="nav-link p-2" [class.active]="activeTab==='adicionais'"
+                    (click)="setTab('adicionais')">Adicionais</button>
+                </li>
+                <li class="nav-item p-1">
+                  <button type="button" class="nav-link p-2" [class.active]="activeTab==='documentos'"
+                    (click)="setTab('documentos')">Documentos</button>
+                </li>
+              </ul>
+
+              <!-- Aba: Dados do Lançamento -->
+              <div [hidden]="activeTab!=='dados'">
+                <div class="row mb-3">
+                  <div class="col">
+                    <label class="form-label">Data de competência</label>
+                    <input type="date" class="form-control" name="dataCompetencia"
+                      [(ngModel)]="contaPagar.competenceDate">
+                  </div>
+                  <div class="col">
+                    <label class="form-label">Data de vencimento</label>
+                    <input type="date" class="form-control" name="dataVencimento" [(ngModel)]="contaPagar.dueDate">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Cliente</label>
+                  <select class="form-select" name="cliente" [(ngModel)]="contaPagar.clientId">
+                    <option value="" disabled selected>Selecione o cliente do recebimento</option>
+                    <option *ngFor="let c of clientes" [value]="c">{{ c }}</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Centro de custo</label>
+                  <select class="form-select" name="centroCusto" [(ngModel)]="contaPagar.costCenterId">
+                    <option value="" disabled selected>Selecione o centro de custo do pagamento</option>
+                    <option *ngFor="let cc of centrosCusto" [value]="cc">{{ cc }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Aba: Recorrência -->
+              <div [hidden]="activeTab!=='recorrencia'">
+                <div class="form-check form-switch mb-3">
+                  <input class="form-check-input" type="checkbox" id="swRecorrencia" name="recurrencing"
+                    [(ngModel)]="contaPagar.recurrencing">
+                  <label for="swRecorrencia" class="form-check-label">
+                    Recorrência/Parcelamento?
+                  </label>
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col">
+                    <label class="form-label">Período</label>
+                    <select class="form-select" name="periodoRecorrencia" [(ngModel)]="contaPagar.periodic"
+                      [disabled]="!contaPagar.recurrencing">
+                      <option value="" disabled selected>Selecione o período da recorrência</option>
+                      <option *ngFor="let p of periodos" [value]="p.value">{{ p.label }}</option>
+                    </select>
+                  </div>
+                  <div class="col">
+                    <label class="form-label">Parcelas</label>
+                    <input type="number" class="form-control" name="parcelas" [(ngModel)]="contaPagar.parcelas" min="1"
+                      step="1" placeholder="Informe a quantidade de vezes" [disabled]="!contaPagar.parcelas">
+                  </div>
+                </div>
+
+
+              </div>
+
+              <!-- Aba: Adicionais -->
+              <div [hidden]="activeTab!=='adicionais'">
+                <div class="mb-3">
+                  <label class="form-label">Referência</label>
+                  <input type="text" class="form-control" name="referencia" [(ngModel)]="contaPagar.reference"
+                    placeholder="Informe a referência do recebimento...">
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Anotações</label>
+                  <textarea rows="5" class="form-control" name="anotacoes" [(ngModel)]="contaPagar.notes"
+                    placeholder="Informe aqui as anotações adicionais do recebimento"></textarea>
+                </div>
+              </div>
+
+              <!-- Aba: Documentos -->
+              <!--<div [hidden]="activeTab!=='documentos'">
+                <div class="mb-3">
+                  <label class="form-label d-block">Carregar Documento</label>
+                  <input type="file" class="form-control w-auto" multiple (change)="onUploadChange($event)">
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Nome</th>
+                        <th>Tamanho</th>
+                        <th>Data</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngIf="!contaPagar.documentos?.length">
+                        <td colspan="3" class="text-center text-muted py-5">Não há dados</td>
+                      </tr>
+                      <tr *ngFor="let d of contaPagar.documentos">
+                        <td>{{ d.nome }}</td>
+                        <td>{{ d.tamanho | number }} bytes</td>
+                        <td>{{ d.data | date:'dd/MM/yyyy HH:mm' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>-->
+            </div>
+          </div>
+        </form>
+      </div>
+
+
+    </div>
+  </div>
+</div>

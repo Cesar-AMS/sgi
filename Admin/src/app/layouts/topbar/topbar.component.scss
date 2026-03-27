@@ -1,0 +1,14 @@
+.bg-primary-esp {
+  background: linear-gradient(
+    145deg,
+    #041d79,   /* tom mais escuro */
+    #0325ad,   /* tom médio */
+    #002bd6,   /* tom mais claro e vivo */
+    #001563    /* volta para o escuro para dar contraste */
+  );
+  background-size: 300% 300%;
+  color: white;
+  padding: 20px;
+  text-align: center;
+  font-weight: bold;
+}

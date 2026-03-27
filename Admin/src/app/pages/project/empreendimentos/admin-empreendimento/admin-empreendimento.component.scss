@@ -1,0 +1,17 @@
+.border-dashed {
+  border-style: dashed !important;
+}
+
+.table input,
+.table select {
+  padding: 0.25rem 0.5rem;
+  height: 32px;
+  font-size: 0.9rem;
+}
+.table td {
+  vertical-align: middle !important;
+}
+
+.pending-row > td {
+  background: #ffe6f2;           /* rosa claro */
+}

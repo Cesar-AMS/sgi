@@ -1,0 +1,569 @@
+<div class="sale-new-container" *ngIf="!loading; else loadingTpl">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+
+  </div>
+
+  <form [formGroup]="form">
+
+    <!-- ÁREA CAPTURADA NO PDF -->
+    <div #pdfArea class="pdf-page">
+
+      <!-- CABEÇALHO DO PDF -->
+      <div class="pdf-header d-flex justify-content-between align-items-center mb-4">
+
+        <div class="row">
+          <div class="col-2">
+            <img src="../../../assets/images/logo-dark.png" alt="Logo" class="logo-pdf me-3">
+          </div>
+          <div class="col">
+            <h5 class="mb-0 fw-bold">TERMO DE COMPROMISSO DE VENDA</h5>
+            <small class="text-muted">
+              Detalhamento da venda e condições comerciais
+            </small>
+          </div>
+        </div>
+        <div class="btn-group float-end">
+          <button class="btn btn-outline-secondary btn-sm" type="button" (click)="exportPdf()">
+            <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" routerLink="/vendas/visao-geral">
+            <i class="bi bi-box-arrow-left"></i> Voltar</button>
+          <button class="btn btn-primary btn-sm" type="button" (click)="save()" [disabled]="saving">
+            <i class="bi bi-check-circle"></i>
+            {{ saving ? 'Salvando...' : 'Salvar' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- ============ CARD: DADOS DA VENDA ============ -->
+      <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body">
+          <div class="row text-white p-0 d-flex justify-content-center mb-4" style="background:#e0e0e0; color:#000">
+            <h5 class="section-title p-0 rounded mt-2" style="text-align:center;">
+              Dados da Venda
+            </h5>
+          </div>
+
+
+          <div class="row g-3">
+
+            <!-- Filial -->
+            <div class="col-md-3">
+              <label class="form-label">Filial</label>
+              <ng-select [items]="filiais" bindValue="id" bindLabel="name" formControlName="branchId"
+                placeholder="Selecione...">
+
+
+              </ng-select>
+
+            </div>
+
+            <!-- Empreendimento (ng-select) -->
+            <div class="col-md-3">
+              <label class="form-label">Empreendimento</label>
+              <ng-select [items]="empreendimentos" bindValue="id" bindLabel="name" formControlName="enterpriseId"
+                placeholder="Selecione..." (change)="getUnits()">
+
+
+              </ng-select>
+            </div>
+
+            <!-- Unidade (ng-select) -->
+            <div class="col-md-3">
+              <label class="form-label">Unidade</label>
+              <ng-select [items]="unidades" bindValue="id" formControlName="unitId" (change)="setUnitValue()"
+                placeholder="Selecione um empreendimento">
+                <ng-template ng-label-tmp let-item="item">
+                  <span class="fw-bold">
+                    Apto - {{ item.number }} {{ item.block }}
+                  </span>
+                </ng-template>
+                <ng-template ng-option-tmp let-item="item">
+                  <div>
+                    <strong> Apto - {{ item.number }}</strong>&nbsp;
+                    <small class="text-muted">{{ item.block }}</small>
+                  </div>
+                </ng-template>
+              </ng-select>
+            </div>
+
+            <!-- Data da Venda -->
+            <div class="col-md-3">
+              <label class="form-label">Data da Venda</label>
+              <input type="date" class="form-control" formControlName="selledAt">
+            </div>
+
+            <!-- Valor do Imóvel -->
+            <div class="col-md-3">
+              <label class="form-label">Valor do Imóvel</label>
+              <input type="text" class="form-control"
+                [value]="form.get('unitValue')?.value | currency:'BRL':'symbol':'1.2-2':'pt-BR'" disabled>
+            </div>
+
+            <!-- Forma de Pagamento (ng-select) -->
+
+
+            <!-- Nº Contrato -->
+            <div class="col-md-6">
+              <label class="form-label">Nº Contrato</label>
+              <input type="text" class="form-control" formControlName="contractNumber">
+            </div>
+
+            <!-- Status -->
+            <div class="col-md-3">
+              <label class="form-label">Status</label>
+              <select class="form-select" formControlName="status">
+                <option value="OPEN">Ativo</option>
+                <option value="WAITING">Pendente</option>
+                <option value="FAILED">Desistiu</option>
+              </select>
+            </div>
+
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ENVOLVIDOS NA VENDA -->
+          <div class="row text-white p-0 d-flex justify-content-center mb-4" style="background:#e0e0e0; color:#000">
+            <h5 class="section-title p-0 rounded mt-2" style="text-align:center;">
+              PARTICIPANTES DA VENDA
+            </h5>
+          </div>
+
+          <div class="row g-3">
+
+            <!-- Corretor -->
+            <div class="col-md-3">
+              <label class="form-label">Corretor</label>
+              <ng-select [items]="corretores" bindLabel="name" bindValue="id" formControlName="realtorId"
+                placeholder="Selecione...">
+              </ng-select>
+            </div>
+
+            <!-- Coordenador -->
+            <div class="col-md-3">
+              <label class="form-label">Coordenador</label>
+              <ng-select [items]="coordenatorsAll" bindLabel="name" bindValue="id" formControlName="coordenatorId"
+                placeholder="Selecione...">
+              </ng-select>
+            </div>
+
+            <!-- Gerente -->
+            <div class="col-md-3">
+              <label class="form-label">Gerente</label>
+              <ng-select [items]="gerentes" bindLabel="name" bindValue="id" formControlName="managerId"
+                placeholder="Selecione...">
+              </ng-select>
+            </div>
+
+            <!-- Gestor Comercial -->
+            <div class="col-md-3">
+              <label class="form-label">Gestor Comercial</label>
+              <ng-select [items]="commercialManagers" bindLabel="name" bindValue="id"
+                formControlName="commercialManagerId" placeholder="Selecione...">
+              </ng-select>
+            </div>
+
+            <!-- Clientes (ng-select multiple) -->
+            <div class="col-md-6">
+              <label class="form-label">Cliente(s)</label>
+              <ng-select [items]="listClient" bindLabel="name" bindValue="id" formControlName="clients_ids"
+                [multiple]="true" placeholder="Selecione cliente(s)...">
+              </ng-select>
+              <small class="text-muted">Selecione um ou mais clientes para vincular à venda.</small>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PAGAMENTO ==================== -->
+      <div class="card shadow-sm mb-2 border-0">
+        <div class="card-body">
+          <div class="row text-white p-0 d-flex justify-content-center mb-4" style="background:#e0e0e0; color:#000">
+            <h5 class="section-title p-0 rounded mt-2" style="text-align:center;">
+              CONDIÇÕES DE PAGAMENTO
+            </h5>
+          </div>
+
+          <!-- ========== ATO ========= -->
+          <div class="mb-4">
+            <h6 class="sub-title">Ato (Entrada)</h6>
+
+            <div class="row g-3 align-items-end mb-3">
+
+              <div class="col-md-3">
+                <label class="form-label">Valor do Ato</label>
+                <input type="number" class="form-control" [(ngModel)]="newAct.value"
+                  [ngModelOptions]="{standalone:true}">
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">Vencimento</label>
+                <input type="date" class="form-control" [(ngModel)]="newAct.date" [ngModelOptions]="{standalone:true}">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Observação</label>
+                <input type="text" class="form-control" [(ngModel)]="newAct.observations"
+                  [ngModelOptions]="{standalone:true}">
+              </div>
+
+              <div class="col-md-2 d-grid">
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="addAct()">
+                  <i class="bi bi-plus-lg"></i> Novo Ato
+                </button>
+              </div>
+
+            </div>
+
+            <div class="table-responsive" *ngIf="actParcels.length > 0">
+              <table class="table table-sm table-striped align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Vencimento</th>
+                    <th>Valor</th>
+                    <th>Observação</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let a of actParcels; let i = index">
+                    <td>{{ a.number }}</td>
+                    <td>{{ a.date | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ a.value | number:'1.2-2' }}</td>
+                    <td>
+                      <input type="text" class="form-control form-control-sm" [(ngModel)]="a.observations"
+                        [ngModelOptions]="{standalone:true}">
+                    </td>
+                    <td>
+                      <select class="form-select form-select-sm" [(ngModel)]="a.status"
+                        [ngModelOptions]="{standalone:true}">
+                        <option value="WAITING">A Receber</option>
+                        <option value="PAID">Pago</option>
+                      </select>
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-link text-danger p-0" (click)="removeAct(i)">
+                        <i class="bi bi-x-circle"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+          <hr>
+
+          <!-- ========== PARCELAS ========= -->
+          <h6 class="sub-title">Parcelas
+            <button class="btn btn-sm mb-2 btn-primary float-end">
+              <i class="bi bi-cash-coin m-2"></i> Gerar remessa Leve - FI
+            </button>
+          </h6>
+
+          <div class="row g-3 align-items-end mb-3 mt-3">
+
+            <div class="col-md-3">
+              <label class="form-label">Data de Início</label>
+              <input type="date" class="form-control" [(ngModel)]="parcelStartDate"
+                [ngModelOptions]="{standalone:true}">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Valor da Parcela</label>
+              <input type="number" class="form-control" [(ngModel)]="parcelAmount" [ngModelOptions]="{standalone:true}">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Quantidade</label>
+              <input type="number" class="form-control" [(ngModel)]="parcelQuantity"
+                [ngModelOptions]="{standalone:true}">
+            </div>
+
+            <div class="col-md-3 d-grid">
+              <button type="button" class="btn btn-outline-primary btn-sm" (click)="generateParcels()">
+                <i class="bi bi-arrow-repeat"></i> Gerar Parcelas
+              </button>
+            </div>
+
+          </div>
+
+          <div class="table-responsive mb-4" *ngIf="paymentParcels.length > 0">
+            <table class="table table-sm table-striped align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Vencimento</th>
+                  <th>Valor</th>
+                  <th>Observação</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of paymentParcels">
+                  <td>{{ p.number }}</td>
+                  <td>{{ p.date | date:'dd/MM/yyyy' }}</td>
+                  <td>R$ {{ p.value | number:'1.2-2' }}</td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="p.observations"
+                      [ngModelOptions]="{standalone:true}">
+                  </td>
+                  <td>
+                    <select class="form-select form-select-sm" [(ngModel)]="p.status"
+                      [ngModelOptions]="{standalone:true}">
+                      <option value="WAITING">A Receber</option>
+                      <option value="PAID">Pago</option>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <hr>
+
+          <!-- ========== INTERMEDIÁRIAS ========= -->
+          <h6 class="sub-title">Intermediárias</h6>
+
+          <div class="row g-3 align-items-end mb-3">
+
+            <div class="col-md-3">
+              <label class="form-label">Valor</label>
+              <input type="number" class="form-control" [(ngModel)]="newIntermediary.value"
+                [ngModelOptions]="{standalone:true}">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Vencimento</label>
+              <input type="date" class="form-control" [(ngModel)]="newIntermediary.date"
+                [ngModelOptions]="{standalone:true}">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Observação</label>
+              <input type="text" class="form-control" [(ngModel)]="newIntermediary.observations"
+                [ngModelOptions]="{standalone:true}">
+            </div>
+
+            <div class="col-md-2 d-grid">
+              <button type="button" class="btn btn-outline-primary btn-sm" (click)="addIntermediary()">
+                <i class="bi bi-plus-lg"></i> Adicionar
+              </button>
+            </div>
+
+          </div>
+
+          <div class="table-responsive" *ngIf="intermediaryParcels.length > 0">
+            <table class="table table-sm table-striped align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Vencimento</th>
+                  <th>Valor</th>
+                  <th>Observação</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of intermediaryParcels; let i = index">
+                  <td>{{ p.number }}</td>
+                  <td>{{ p.date | date:'dd/MM/yyyy' }}</td>
+                  <td>R$ {{ p.value | number:'1.2-2' }}</td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="p.observations"
+                      [ngModelOptions]="{standalone:true}">
+                  </td>
+                  <td>
+                    <select class="form-select form-select-sm" [(ngModel)]="p.status"
+                      [ngModelOptions]="{standalone:true}">
+                      <option value="WAITING">A Receber</option>
+                      <option value="PAID">Pago</option>
+                    </select>
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-link text-danger p-0" (click)="removeIntermediary(i)">
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ==================== COMISSÕES ==================== -->
+      <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body">
+          <div class="row text-white p-0 d-flex justify-content-center mb-4" style="background:#e0e0e0; color:#000">
+            <h5 class="section-title p-0 rounded mt-2" style="text-align:center;">
+              COMISSÕES
+            </h5>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle table-striped table-hover">
+              <thead class="thead-light">
+                <tr>
+                  <th></th>
+                  <th>Vendedor</th>
+                  <th>Coordenador</th>
+                  <th>Gerente</th>
+                  <th>Financeiro</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                <tr>
+                  <td>%</td>
+                  <td>
+                    <input (change)="onCommissionValueChangePercent('percentageToRealtor', 'realtorComission')" type="number" class="form-control form-control-sm" formControlName="percentageToRealtor">
+                  </td>
+                  <td>
+                    <input (change)="onCommissionValueChangePercent('percentageToCoordenator', 'coordenatorComission')" type="number" class="form-control form-control-sm"
+                      formControlName="percentageToCoordenator"></td>
+                  <td>
+                    <input (change)="onCommissionValueChangePercent('percentageToManager', 'managerComission')" type="number" class="form-control form-control-sm" formControlName="percentageToManager">
+                  </td>
+                  <td>
+                    <input (change)="onCommissionValueChangePercent('percentageToFinancial', 'financialComission')" type="number" class="form-control form-control-sm" formControlName="percentageToFinancial">
+                  </td>
+                </tr>
+
+                <tr>
+                  <td>Valor</td>
+
+                  <td>
+                    <input type="text" class="form-control form-control-sm" formControlName="realtorComission"
+                      currencyMask [options]="currencyOptions" (blur)="onCommissionValueChange('realtor')">
+                  </td>
+
+                  <td>
+                    <input type="text" class="form-control form-control-sm" formControlName="coordenatorComission"
+                      currencyMask [options]="currencyOptions" (blur)="onCommissionValueChange('coordenator')">
+                  </td>
+
+                  <td>
+                    <input type="text" class="form-control form-control-sm" formControlName="managerComission"
+                      currencyMask [options]="currencyOptions" (blur)="onCommissionValueChange('manager')">
+                  </td>
+
+                  <td>
+                    <input type="text" class="form-control form-control-sm" formControlName="financialComission"
+                      currencyMask [options]="currencyOptions" (blur)="onCommissionValueChange('financial')">
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td>Status</td>
+                  <td>
+                    <select class="form-select form-select-sm" formControlName="realtorComissionStatus">
+                      <option value="WAITING">A Receber</option>
+                      <option value="PAID">Pago</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="form-select form-select-sm" formControlName="coordenatorComissionStatus">
+                      <option value="WAITING">A Receber</option>
+                      <option value="PAID">Pago</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="form-select form-select-sm" formControlName="managerComissionStatus">
+                      <option value="WAITING">A Receber</option>
+                      <option value="PAID">Pago</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="form-select form-select-sm" formControlName="financialComissionStatus">
+                      <option value="WAITING">A Receber</option>
+                      <option value="PAID">Pago</option>
+                    </select>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RESUMO CORPORATIVO -->
+      <div class="card shadow-sm mb-4 border-0 ms-2 me-2">
+        <div class="card-body p-0">
+          <div class="row text-white p-0 d-flex justify-content-center mb-4" style="background:#e0e0e0; color:#000">
+            <h5 class="section-title p-0 rounded mt-2" style="text-align:center;">
+              RESUMO OPERACIONAL
+            </h5>
+          </div>
+          <table class="table table-sm mb-0 table-bordered">
+            <thead>
+              <tr>
+                <th>UNIDADE</th>
+                <th>IMOBILIÁRIA</th>
+                <th>VENDEDOR</th>
+                <th>COORDENADOR</th>
+                <th>GERENTE</th>
+                <th>VALOR DO ATO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>R$ {{ form.value.unitValue ?? 0 | number:'1.2-2' }}</td>
+                <td>R$ {{ form.value.valueToRealstate ?? 0 | number:'1.2-2' }}</td>
+                <td>R$ {{ form.value.realtorComission ?? 0 | number:'1.2-2' }}</td>
+                <td>R$ {{ form.value.coordenatorComission ?? 0 | number:'1.2-2' }}</td>
+                <td>R$ {{ form.value.managerComission ?? 0 | number:'1.2-2' }}</td>
+                <td>R$ {{ form.value.startValue ?? 0 | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ASSINATURAS PDF -->
+      <div *ngIf="showPdfSignatures" class="assinaturas mt-5">
+        <div class="row text-center">
+          <div class="col-md-3">
+            <div class="assinatura-line"></div>
+            <small>Diretor Financeiro</small>
+          </div>
+          <div class="col-md-3">
+            <div class="assinatura-line"></div>
+            <small>Gerente</small>
+          </div>
+          <div class="col-md-3">
+            <div class="assinatura-line"></div>
+            <small>Coordenador</small>
+          </div>
+          <div class="col-md-3">
+            <div class="assinatura-line"></div>
+            <small>VENDEDOR</small>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- pdfArea -->
+
+  </form>
+</div>
+
+<!-- LOADING -->
+<ng-template #loadingTpl>
+  <div class="d-flex justify-content-center align-items-center py-5">
+    <div class="spinner-border text-primary me-2" role="status"></div>
+    <span>Carregando...</span>
+  </div>
+</ng-template>

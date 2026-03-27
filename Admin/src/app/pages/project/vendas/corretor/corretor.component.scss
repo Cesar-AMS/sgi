@@ -1,0 +1,10 @@
+.card-soft { border: 0; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.export { font-size: 12px; color: #e74c3c; cursor: pointer; margin-left: .5rem; }
+.bg-section { background: #2f7ae5; }
+.bg-month { background: #76b6ff !important; color: #003366; border-radius: 6px; }
+
+.finance-table th, .finance-table td { white-space: nowrap; }
+.finance-table .row-head { background: #f7fbff; }
+.finance-table .table-total th { background: #e9f2ff; border-top: 2px solid #2f7ae5; }
+.sticky-top { position: sticky; top: 0; z-index: 2; }
+.sticky-col { position: sticky; left: 0; z-index: 3; background: #f7fbff; }

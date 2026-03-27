@@ -1,0 +1,59 @@
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead th {
+  font-weight: 600;
+  background-color: #f8f9fa;
+}
+
+.table td, .table th {
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+
+.table td div {
+  line-height: 1.4;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f2f2f2;
+}
+
+.card {
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.custom-modal {
+  max-width: 70vw;         /* até 90% da largura da tela */
+  height: 90vh;            /* até 90% da altura da tela */
+}
+
+.custom-modal .modal-content {
+  max-height: 100%;
+  overflow: auto;
+  border-radius: 8px;
+}
+
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10500; /* acima do conteúdo */
+}
+
+
+@media (max-width: 576px) {
+  .custom-modal {
+  max-width: 100vw;       
+  height: 90vh;           
+}
+}

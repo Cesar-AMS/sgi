@@ -1,0 +1,573 @@
+<div class="card">
+  <div class="row g-2 align-items-end p-3">
+    <!-- Select 1 -->
+    <div class="col-12 col-md-4 col-lg-3">
+      <label class="form-label mb-1">Construtora</label>
+      <select class="form-select form-select-sm" name="constructor" [(ngModel)]="construtorFilter"
+        (change)="changeEnterprise()">
+        <option value="0">Selecione a construtora</option>
+        <option *ngFor="let e of construtora" [value]="e.id">{{e.name}}</option>
+      </select>
+    </div>
+
+    <!-- Select 2 -->
+    <div class="col-12 col-md-4 col-lg-3">
+      <label class="form-label mb-1">Empreendimentos</label>
+      <select class="form-select form-select-sm" name="Empreenddsfdimentos" [(ngModel)]="empreendimentoFilter"
+        (change)="changeEmpreendimento()">
+        <option value="0">Selecione o empreendimento</option>
+        <option *ngFor="let e of empreendimentos" [value]="e.id">{{e.name}}</option>
+      </select>
+    </div>
+
+    <!-- Botões (col ocupa o restante e alinha à direita) -->
+    <div class="col-12 col-md d-flex justify-content-md-end gap-2 mt-2 mt-md-0">
+      <button (click)="baixarPDF()" type="button" class="btn btn-outline-primary border border-dashed bg-white">
+        <i class="ri-download-2-line me-1"></i> Exportar
+      </button>
+
+    </div>
+  </div>
+
+  <!-- Disponível
+        <div class="p-3 text-center">
+            <div class="fw-light small">Disponível</div>
+            <div class="d-flex justify-content-center align-items-center gap-2">
+                <div class="bg-success rounded-pill" style="width: 1rem; height: 0.5rem;"></div>
+                <span class="mt-1 fw-bold">23</span>
+            </div>
+        </div> -->
+
+
+  <!-- Botões -->
+
+</div>
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex align-items-center gap-2 small text-muted mb-2 float-end">
+      <span class="me-1">Legenda de status:</span>
+      <span class="badge bg-success">Disponível</span>
+      <span class="badge bg-warning text-dark">Reservado</span>
+      <span class="badge bg-danger">Vendido</span>
+    </div>
+  </div>
+
+</div>
+
+
+@if(apartamentos.length > 0){
+<div class="mapa">
+  <div *ngFor="let b of grupos; trackBy: trackBloco" class="bloco mb-4">
+    <div class="border-top mt-4"></div>
+    <h3 class="h6 fw-semibold text-secondary mt-4 mb-2">{{b.bloco }}<span class="font-italic text-danger ms-2"
+        style="font-size: 8px;">(bloco)</span></h3>
+
+    <div *ngFor="let a of b.andares; trackBy: trackAndar" class="andar">
+      <div class="fw-semibold text-muted mb-1">Andar {{ a.andar }}</div>
+
+      <div class="row m-0 p-0" style="flex-wrap: wrap;">
+        <div *ngFor="let u of a.unidades; trackBy: trackUnidade" (click)="setUnit(u.id, u.valor);modalReserva.show()"
+          [ngClass]="{
+        'bg-success': u.status === 'OPEN',
+        'bg-warning text-black': u.status === 'RESERVED',
+        'bg-danger': u.status === 'SELL'
+      }" class="text-center text-white p-1 col-3 col-sm-2 col-md-1 col-lg-1 border border-1 "
+          style="cursor: pointer; transition: all 0.3s ease-in-out;"
+          onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 10px rgba(0,0,0,0.2)'"
+          onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+          <div class="p-1 text-white fw-bold" style="font-size: 12px; word-break: break-word;">
+            {{ u.numero }}<br />
+            <span style="font-size: 10px;">{{ u.mt2 }} m²</span>
+            <span style="font-size: 10px;">R$ {{ u.valor | currency:'BRL':'symbol':'1.2-2' }} </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+}
+
+@if(apartamentos.length === 0){
+<div class="alert alert-primary p-4 mt-4" role="alert">
+  <h4 class="mt-2 mb-2 ms-1 p-0 text-primary">Atenção!</h4>
+  Selecione uma construtora e empreendimento para ver a disponibilidade
+</div>
+
+}
+
+
+
+
+<div bsModal #modalReserva="bs-modal" class="modal fade" id="modalReserva">
+  <div class="modal-dialog modal-xl modal-dialog-centered custom-modal" role="document">
+    <div class="modal-content">
+      <div class="card-body p-1">
+        <div class="row justify-content-center">
+
+          <div class="col-12 col-xxl-12">
+            <form>
+              <div class="card overflow-hidden">
+                <!-- Efeito decorativo -->
+
+                <div class="card-body z-1 position-relative">
+
+
+
+                  <!-- Dados Cadastrais 1º componente -->
+                  <div class="mt-1 pt-2">
+                    <form>
+                      <div id="areaA4" #areaA4Ref class="print-area card overflow-hidden">
+                        <!-- Efeito decorativo -->
+                        <div class="invoice-effect-top position-absolute start-0">
+                          <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 764 182" width="764"
+                            height="182" aria-hidden="true">
+                            <g>
+                              <path style="fill: var(--tb-light);"
+                                d="m-6.6 177.4c17.5 0.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
+                              <path style="fill: var(--tb-secondary);"
+                                d="m-6.6 132.8c43.5 2.1 87.9 2.7 132.9 1.7 246.9-5.6 467.1-59.2 627.4-142.1h-760.3z" />
+                              <path style="fill: var(--tb-primary);opacity:.5"
+                                d="m-6.6 87.2c73.2 7.4 149.3 10.6 227.3 8.8 206.2-4.7 393.8-42.8 543.5-103.6h-770.8z" />
+                            </g>
+                          </svg>
+                        </div>
+
+                        <div class="card-body z-1 position-relative">
+
+                          <div class="mt-2">
+                            <div class="row m-0 p-0">
+                              <div class="col-12">
+                                <button type="button" class="btn-close float-end mt-1"
+                                  (click)="modalReserva.hide()"></button>
+                              </div>
+                            </div>
+                            <div class="row g-3">
+
+                              <div class="col-12 col-md-6">
+                                <label class="form-label text-white" for="inp-empreendimento ">Empreendimento</label>
+                                <select id="inp-empreendimento" class="form-control" disabled
+                                  [(ngModel)]="proposta.empreendimentoID" name="empreendimentoID">
+                                  <option *ngFor="let e of empreendimentos" [value]="e.id">{{ e.name }}</option>
+                                </select>
+                              </div>
+
+                              <!--<div class="col-12 col-md-3">
+                                <label class="form-label" for="inp-unidade">Filial</label>
+                                <select id="inp-unidade" class="form-control" [(ngModel)]="proposta.unidadeID"
+                                  name="unidadeID">
+                                  <option *ngFor="let f of filiais" [value]="f.id">{{ f.name }}</option>
+                                </select>
+                              </div>-->
+
+                              <div class="col-12 col-md-3">
+                                <label class="form-label" for="inp-bloco">Valor Unidade (R$)</label>
+                                <input type="text" class="form-control" id="inp-bloco" placeholder="Bloco" disabled
+                                  [(ngModel)]="proposta.vlrUnidade" name="bloco">
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Dados Cadastrais 1º componente -->
+                          <div class="mt-4 pt-2">
+                            <form class="tablelist-form" novalidate autocomplete="off">
+                              <div class="modal-body p-0">
+                                <div class="mt-1 form-section">
+                                  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-1">
+                                    <h6 class="card-title mb-0">Dados Cadastrais do 1° proponente2</h6>
+                                  </div>
+
+                                  <div class="row g-2 my-2">
+                                    <div class="col-12 col-md-6">
+                                      <label for="c1-nome" class="form-label">Nome Cliente Completo <span
+                                          class="text-danger">*</span></label>
+                                      <input class="form-control" id="c1-nome" [(ngModel)]="proposta.clienteName"
+                                        name="clienteName" />
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-nasc" class="form-label">Data de Nascimento <span
+                                          class="text-danger">*</span></label>
+                                      <input type="date" id="c1-nasc" name="dateNascimento" class="form-control"
+                                        autocomplete="bday" [(ngModel)]="proposta.dateNascimento">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-cpfcnpj" class="form-label">CPF/CNPJ <span
+                                          class="text-danger">*</span></label>
+                                      <div class="position-relative">
+                                        <input type="text" id="c1-cpfcnpj" name="cnpjCPF" class="form-control pe-5"
+                                          placeholder="Informe o cpf/cnpj" inputmode="numeric" autocomplete="off"
+                                          [(ngModel)]="proposta.cnpjCpf">
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Linha 2 -->
+                                  <div class="row g-2 my-2">
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-rg" class="form-label">RG <span
+                                          class="text-danger">*</span></label>
+                                      <input type="text" id="c1-rg" name="rg" class="form-control"
+                                        placeholder="Informe o RG" autocomplete="off" [(ngModel)]="proposta.rg">
+                                    </div>
+
+                                    <div class="col-12 col-md-6">
+                                      <label for="c1-email" class="form-label">E-mail <span
+                                          class="text-danger">*</span></label>
+                                      <input type="email" id="c1-email" name="emailCliente" class="form-control"
+                                        placeholder="Informe o e-mail" autocomplete="email"
+                                        [(ngModel)]="proposta.emailCliente">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-tel1" class="form-label">Telefone <span
+                                          class="text-danger">*</span></label>
+                                      <input type="tel" id="c1-tel1" class="form-control" placeholder="(11) 98765-4321"
+                                        inputmode="tel" autocomplete="tel" name="phoneone"
+                                        [(ngModel)]="proposta.phoneOne">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-tel2" class="form-label">Telefone secundário</label>
+                                      <input type="tel" id="c1-tel2" class="form-control" placeholder="Se existir"
+                                        inputmode="tel" autocomplete="tel" name="phonetwo"
+                                        [(ngModel)]="proposta.phoneTwo">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-civil" class="form-label">Estado civil</label>
+                                      <input type="text" id="c1-civil" class="form-control" placeholder="CASADO"
+                                        autocomplete="off" name="estadoCivil" [(ngModel)]="proposta.estadoCivil">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-prof" class="form-label">Profissão</label>
+                                      <input type="text" id="c1-prof" class="form-control"
+                                        placeholder="AUX. ADMINISTRATIVO" autocomplete="organization-title"
+                                        name="profissao" [(ngModel)]="proposta.profissao">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c1-renda" class="form-label">Renda</label>
+                                      <input type="text" id="c1-renda" class="form-control" placeholder="R$ 2.500,00"
+                                        inputmode="decimal" autocomplete="off" name="renda"
+                                        [(ngModel)]="proposta.renda">
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <!-- 2º componente (se aplicável) -->
+                                <div *ngIf="true" class="mt-3 form-section">
+                                  <div class="d-flex flex-wrap gap-3 mt-1">
+                                    <h6 class="card-title mb-0">Dados Cadastrais do 2° Proponente</h6>
+                                  </div>
+
+                                  <div class="row g-3 my-3">
+                                    <div class="col-12 col-md-6">
+                                      <label for="c2-nome" class="form-label">Nome Cliente </label>
+                                      <input class="form-control" id="c2-nome"
+                                        [(ngModel)]="proposta.clienteNameSecondary" name="clienteNameSecondary" />
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-nasc" class="form-label">Data de Nascimento</label>
+                                      <input type="date" id="c2-nasc" class="form-control" autocomplete="bday"
+                                        [(ngModel)]="proposta.dataNascimentoSecondary" name="dataNascimentoSecondary">
+                                    </div>
+
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-cpf" class="form-label">CPF/CNPJ </label>
+                                      <input type="text" id="c2-cpf" class="form-control"
+                                        placeholder="Informe o cpf/cnpj" inputmode="numeric" autocomplete="off"
+                                        [(ngModel)]="proposta.cnpjCPFSecondary" name="cnpjCPFSecondary">
+                                    </div>
+                                  </div>
+
+                                  <div class="row g-3 my-3">
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-rg" class="form-label">RG </label>
+                                      <input type="text" id="c2-rg" class="form-control" placeholder="Informe o RG"
+                                        autocomplete="off" [(ngModel)]="proposta.rgSecondary" name="rgSecondary">
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                      <label for="c2-email" class="form-label">E-mail </label>
+                                      <input type="email" id="c2-email" class="form-control"
+                                        placeholder="Informe o e-mail" autocomplete="email"
+                                        [(ngModel)]="proposta.emailClienteSecondary" name="emailClienteSecondary">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-tel1" class="form-label">Telefone</label>
+                                      <input type="tel" id="c2-tel1" class="form-control" placeholder="(11) 98765-4321"
+                                        inputmode="tel" autocomplete="tel" [(ngModel)]="proposta.phoneOneSecondary"
+                                        name="phoneOneSecondary">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-tel2" class="form-label">Telefone secundário</label>
+                                      <input type="tel" id="c2-tel2" class="form-control" placeholder="Se existir"
+                                        inputmode="tel" autocomplete="tel" [(ngModel)]="proposta.phoneTwoSecondary"
+                                        name="phoneTwoSecondary">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-civil" class="form-label">Estado civil</label>
+                                      <input type="text" id="c2-civil" class="form-control" placeholder="CASADO"
+                                        autocomplete="off" [(ngModel)]="proposta.estadoCivilSecondary"
+                                        name="estadoCivilSecondary">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-prof" class="form-label">Profissão</label>
+                                      <input type="text" id="c2-prof" class="form-control"
+                                        placeholder="AUX. ADMINISTRATIVO" autocomplete="organization-title"
+                                        [(ngModel)]="proposta.profissaoSecondary" name="profissaoSecondary">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="c2-renda" class="form-label">Renda</label>
+                                      <input type="text" id="c2-renda" class="form-control" placeholder="R$ 2.500,00"
+                                        inputmode="decimal" autocomplete="off" [(ngModel)]="proposta.rendaSecondary"
+                                        name="rendaSecondary">
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <!-- Endereço -->
+                                <hr class="mt-4">
+                                <div class="mt-3 form-section">
+                                  <div class="mt-1">
+                                    <h6 class="card-title mb-0">Dados do endereço</h6>
+                                  </div>
+
+                                  <div class="row g-3 my-2">
+                                    <div class="col-12 col-sm-6 col-md-4">
+                                      <label for="end-cep" class="form-label">CEP</label>
+                                      <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="00000-000"
+                                          aria-label="Input group example" aria-describedby="btnGroupAddon" id="end-cep"
+                                          name="cep" [(ngModel)]="proposta.cep">
+                                        <div class="input-group-text btn btn-primary" id="btnGroupAddon"
+                                          (click)="cep()">Buscar CEP
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div class="row g-3 my-2">
+                                    <div class="col-12 col-md-6">
+                                      <label for="end-logradouro" class="form-label">Endereço </label>
+                                      <input type="text" id="end-logradouro" name="rua" class="form-control"
+                                        placeholder="Digite o nome da rua" autocomplete="address-line1" required
+                                        [(ngModel)]="proposta.rua">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="end-num" class="form-label">N° do endereço </label>
+                                      <input type="text" id="end-num" name="nro" class="form-control"
+                                        placeholder="123 ou 18A" autocomplete="address-line2" required
+                                        [(ngModel)]="proposta.nro">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                      <label for="end-comp" class="form-label">Complemento</label>
+                                      <input type="text" id="end-comp" name="comp" class="form-control"
+                                        placeholder="Apartamento, bloco, casa..." autocomplete="address-line2"
+                                        [(ngModel)]="proposta.comp">
+                                    </div>
+                                  </div>
+
+                                  <div class="row g-3">
+                                    <div class="col-12 col-md-4">
+                                      <label for="end-bairro" class="form-label">Bairro</label>
+                                      <input type="text" id="end-bairro" name="bairro" class="form-control"
+                                        placeholder="Digite o nome do bairro" autocomplete="address-level3" required
+                                        [(ngModel)]="proposta.bairro">
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                      <label for="end-cidade" class="form-label">Cidade
+                                      </label>
+                                      <input type="text" id="end-cidade" class="form-control"
+                                        placeholder="Digite o nome da cidade" autocomplete="address-level2" required
+                                        name="cidade" [(ngModel)]="proposta.cidade">
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                      <label for="end-uf" class="form-label">Estado</label>
+                                      <input type="text" id="end-uf" name="estado" class="form-control"
+                                        placeholder="UF (Ex: SP)" maxlength="2" style="text-transform: uppercase;"
+                                        autocomplete="address-level1" required [(ngModel)]="proposta.estado">
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </form>
+                          </div>
+
+                          <hr class="mt-4">
+
+                          <!-- Condições da Proposta -->
+                          <!-- mantive exatamente como estava, só não tinha relação com a interface principal -->
+
+                          <div class="mt-3">
+                            <h6 class="card-title">Condições da Proposta
+                              <small class="bg bg-danger ps-2 pe-2 text-white rounded float-end">Falta
+                                {{proposta.vlrUnidade - vlrTotal() | currency:'BRL':'symbol':'1.2-2':'pt-BR'}} para
+                                completar o valor da venda</small>
+                            </h6>
+                          </div>
+                          <div class="table-responsive mt-2">
+                            <table class="invoice-table table table-borderless table-nowrap mb-0">
+                              <thead class="align-middle">
+                                <tr class="table-light">
+                                  <th scope="col" class="text-nowrap">Qtde</th>
+                                  <th scope="col" class="text-nowrap">Descrição (Mensais, Anuais etc.)</th>
+                                  <th scope="col" class="text-nowrap">Vencimento</th>
+                                  <th scope="col" class="text-nowrap">Valor Parcela (R$)</th>
+                                  <th scope="col" class="text-nowrap">Valor Total (R$)</th>
+                                  <th scope="col" class="text-nowrap"></th>
+                                </tr>
+                              </thead>
+
+                              <tbody>
+                                <tr *ngFor="let c of proposta.condicao; let i = index; trackBy: track"
+                                  class="p-2 border">
+                                  <td class="border">
+                                    <input type="number" class="form-control form-control-sm border-0"
+                                      [(ngModel)]="c.qtde" name="qtde{{i}}" min="1" step="1"
+                                      (ngModelChange)="recalc(i)" />
+                                  </td>
+
+                                  <td class="border">
+                                    <input type="text" class="form-control form-control-sm border-0"
+                                      [(ngModel)]="c.descricao" name="desc{{i}}" />
+                                  </td>
+
+                                  <td class="border">
+                                    <input type="date" class="form-control form-control-sm border-0"
+                                      [(ngModel)]="c.vencimento" name="venc{{i}}" />
+                                  </td>
+
+                                  <td class="border">
+                                    <input type="number" class="form-control form-control-sm border-0"
+                                      [(ngModel)]="c.valorParcela" name="valor{{i}}" min="0" step="0.01"
+                                      inputmode="decimal" (ngModelChange)="recalc(i)" />
+                                  </td>
+
+                                  <td class="text-end fw-semibold border">
+                                    {{ c.valorTotal | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+                                  </td>
+
+                                  <td class="text-center border pt-1 pb-1 ps-0 pe-0">
+                                    <button type="button" class="btn btn-sm btn-outline-danger p-1"
+                                      (click)="remover(i)">
+                                      &times;
+                                    </button>
+                                  </td>
+                                </tr>
+
+                                <tr *ngIf="proposta.condicao.length === 0">
+                                  <td colspan="6" class="text-center text-muted py-4">Nenhuma condição adicionada</td>
+                                </tr>
+                                <tr>
+                                  <td colspan="5">
+                                    <a href="javascript:void(0)" id="add-item"
+                                      class="btn btn-subtle-secondary fw-medium float-end mt-4 mb-4"
+                                      (click)="adicionar()">
+                                      <i class="ri-add-fill me-1 align-bottom"></i> Adicionar condição
+                                    </a>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <!-- Observações -->
+                          <div class="mt-2 mb-2">
+                            <div class="alert alert-danger p-2 ps-4" role="alert">
+                              *Esta proposta somente terá validade após a aprovação do incorporador e analise quanto ao
+                              valor de financimento, se for o caso.<br>
+                              *O Imóvel será reservado até analise da incorporadora.
+
+                            </div>
+                          </div>
+
+                          <!-- Engenharia + Data -->
+                          <div class="row g-3 align-items-center">
+                            <div class="col-12 col-md-6">
+                              <label class="form-label">Engenharia da Caixa paga pelo cliente? <span
+                                  class="text-danger">*</span></label>
+                              <div class="d-flex gap-3">
+                                <div class="form-check">
+                                  <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa"
+                                    name="engCaixa" [value]="true" id="engSim">
+                                  <label class="form-check-label" for="engSim">Sim</label>
+                                </div>
+
+                                <div class="form-check">
+                                  <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa"
+                                    name="engCaixa" [value]="false" id="engNao">
+                                  <label class="form-check-label" for="engNao">Não</label>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row text-center mt-3">
+                              <div class="col-12 col-md-4">
+                                <div class="px-2 mt-4">
+                                  <hr class="px-2"><label>VENDEDOR</label>
+                                </div>
+                              </div>
+                              <div class="col-12 col-md-4">
+                                <div class="px-2 mt-4">
+                                  <hr class="px-2"><label>COORDENADOR</label>
+                                </div>
+                              </div>
+                              <div class="col-12 col-md-4">
+                                <div class="px-2 mt-4">
+                                  <hr class="px-2"><label>GERENTE</label>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-12 col-md-6 pt-2 pt-md-0 text-start text-md-end">
+                              <p class="mb-0 text-white">{{ 'São Paulo' }}, {{ today | date:"dd 'de' MMMM 'de'
+                                yyyy":undefined:'pt-BR' }}.</p>
+                            </div>
+                          </div>
+
+                        </div>
+
+                        <!-- efeito decorativo inferior -->
+                        <div class="invoice-effect-top position-absolute end-0"
+                          style="transform: rotate(180deg); bottom: -80px;">
+                          <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 764 182" width="764"
+                            height="182" aria-hidden="true">
+                            <g>
+                              <path style="fill: var(--tb-light);"
+                                d="m-6.6 177.4c17.5 0.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
+                              <path style="fill: var(--tb-secondary);"
+                                d="m-6.6 132.8c43.5 2.1 87.9 2.7 132.9 1.7 246.9-5.6 467.1-59.2 627.4-142.1h-760.3z" />
+                              <path style="fill: var(--tb-primary);opacity:.5"
+                                d="m-6.6 87.2c73.2 7.4 149.3 10.6 227.3 8.8 206.2-4.7 393.8-42.8 543.5-103.6h-770.8z" />
+                            </g>
+                          </svg>
+                        </div>
+                      </div>
+
+                      <!-- Ações globais -->
+                      <div class="hstack gap-2 flex-wrap justify-content-end d-print-none my-4">
+                        <button type="submit" class="btn btn-success" (click)="saveUser()">
+                          <i class="ri-printer-line align-bottom me-1"></i> Salvar
+                        </button>
+                    <a href="javascript:void(0);" class="btn btn-primary" (click)="downloadPropostaPDF()">
+  <i class="ri-download-2-line align-bottom me-1"></i> Download
+</a>  </div>
+                    </form>
+
+                  </div>
+
+                  <!-- resto do form continua igual -->
+                </div>
+              </div>
+            </form>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

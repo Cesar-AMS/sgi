@@ -1,0 +1,249 @@
+<div class="leads-wrapper container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Leads</h2>
+      <p class="text-muted mb-0">
+        Gerencie seus leads e oportunidades de vendas.
+      </p>
+    </div>
+
+    <div class="d-flex gap-2">
+
+      <button class="btn btn-outline-success" type="button" (click)="exportExcel()">
+        <i class="bi bi-file-earmark-excel me-2"></i> Excel
+      </button>
+
+      <button class="btn btn-orange d-flex align-items-center" type="button" (click)="openCreateModal()">
+        <i class="bi bi-plus-lg me-2"></i>
+        Novo Lead
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros em uma linha -->
+  <div class="d-flex align-items-center gap-2 flex-wrap flex-lg-nowrap mb-3 filter-bar">
+    <!-- Busca por nome -->
+    <div class="flex-grow-1">
+      <div class="input-group">
+        <span class="input-group-text bg-white border-end-0">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" class="form-control border-start-0" placeholder="Buscar por nome..." [(ngModel)]="nomeTerm"
+          (ngModelChange)="onFilterChange()" />
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="flex-shrink-0">
+      <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+        <option value="">Todos status</option>
+        <option *ngFor="let s of statusOptions" [value]="s">
+          {{ s }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Vendedor -->
+    <div class="flex-shrink-0">
+      <select class="form-select" [(ngModel)]="vendedorFilter" (ngModelChange)="onFilterChange()">
+        <option value="">Todos vendedores</option>
+        <option *ngFor="let v of corretores" [value]="v.id">
+          {{ v.name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Coordenador -->
+    <div class="flex-shrink-0">
+      <select class="form-select" [(ngModel)]="coordenadorFilter" (ngModelChange)="onFilterChange()">
+        <option value="">Todos coordenadores</option>
+        <option *ngFor="let c of coordenatorsAll" [value]="c.id">
+          {{ c.name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Gerente -->
+    <div class="flex-shrink-0">
+      <select class="form-select" [(ngModel)]="gerenteFilter" (ngModelChange)="onFilterChange()">
+        <option value="">Todos gerentes</option>
+        <option *ngFor="let g of gerentes" [value]="g.id">
+          {{ g.name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Range de datas -->
+    <div class="flex-shrink-0">
+      <select class="form-select" [(ngModel)]="dateRange" (ngModelChange)="onFilterChange()">
+        <option value="all">Todos períodos</option>
+        <option value="today">Hoje</option>
+        <option value="last7">Últimos 7 dias</option>
+        <option value="last30">Últimos 30 dias</option>
+        <option value="thisMonth">Este mês</option>
+        <option value="thisYear">Este ano</option>
+      </select>
+    </div>
+  </div>
+
+  <hr class="mt-0 mb-3" />
+
+  <!-- Lista de leads -->
+  <ng-container *ngIf="!isLoading; else loadingTpl">
+    <ng-container *ngIf="leads.length > 0; else emptyTpl">
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Status</th>
+              <th>Vendedor</th>
+              <th>Coordenador</th>
+              <th>Gerente</th>
+              <th>Valor (R$)</th>
+              <th>Fonte</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let lead of pagedLeads" (click)="openLeadDetails(lead.id)" style="cursor: pointer;"
+              class="table-row-click">
+              <td>{{ lead.nome }}</td>
+              <td>
+                <span class="badge bg-status">{{ lead.status }}</span>
+              </td>
+              <td>{{ selectNameSale(lead.vendedor) }}</td>
+              <td>{{ selectNameSale(lead.coordenador) }}</td>
+              <td>{{ lead.gerente || '-' }}</td>
+              <td>{{ lead.valor | currency: 'BRL' : 'symbol' : '1.0-0' }}</td>
+              <td>{{ lead.fonte || '-' }}</td>
+              <td>{{ lead.dataCriacao | date: 'shortDate' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2" *ngIf="totalItems > 0">
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">Itens por página:</span>
+          <select class="form-select form-select-sm w-auto" [ngModel]="itemsPerPage"
+            (ngModelChange)="onItemsPerPageChange($event)">
+            <option *ngFor="let n of perPageOptions" [value]="n">{{ n }}</option>
+          </select>
+          <span class="text-muted small">
+            Mostrando
+            {{ getStartIndex() }}
+            -
+            {{ getEndIndex() }}
+          </span>
+        </div>
+
+        <pagination [totalItems]="totalItems" [(ngModel)]="page" [itemsPerPage]="itemsPerPage" [boundaryLinks]="true"
+          previousText="Anterior" nextText="Próximo" firstText="Primeira" lastText="Última" [directionLinks]="true"
+          [maxSize]="5" (pageChanged)="onPageChanged($event)" class="mb-0"></pagination>
+      </div>
+
+    </ng-container>
+  </ng-container>
+
+  <!-- Loading -->
+  <ng-template #loadingTpl>
+    <div class="text-center text-muted py-5">Carregando leads...</div>
+  </ng-template>
+
+  <!-- Empty state -->
+  <ng-template #emptyTpl>
+    <div class="text-center text-muted py-5">
+      <p class="mb-0 fs-5">Nenhum lead encontrado.</p>
+    </div>
+  </ng-template>
+</div>
+
+<!-- Mantém o modal de Novo Lead igual ao que já montamos antes -->
+<!-- ... -->
+
+
+<!-- MODAL DE NOVO LEAD (side panel) -->
+<div class="modal-backdrop-custom" *ngIf="showCreateModal">
+  <div class="modal-panel">
+    <div class="modal-header border-0 px-4 pt-4 pb-2">
+      <h5 class="modal-title fw-semibold">Novo Lead</h5>
+      <button type="button" class="btn-close" aria-label="Close" (click)="closeCreateModal()"></button>
+    </div>
+
+    <div class="modal-body px-4 pb-4">
+      <form [formGroup]="createForm" (ngSubmit)="submitCreate()">
+        <div class="mb-3">
+          <label class="form-label">Nome</label>
+          <input type="text" class="form-control" placeholder="Nome do lead" formControlName="nome" />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" placeholder="Email do lead" formControlName="email" />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Telefone</label>
+          <input type="text" class="form-control" placeholder="Telefone do lead" formControlName="telefone" />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Status</label>
+          <select class="form-select" formControlName="status">
+            <option value="">Selecione...</option>
+            <option *ngFor="let s of statusOptions" [value]="s">
+              {{ s }}
+            </option>
+          </select>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label">Valor (R$)</label>
+            <input type="number" class="form-control" placeholder="Valor do lead" formControlName="valor" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Fonte</label>
+            <select class="form-select" formControlName="fonte">
+              <option value="">Selecione...</option>
+              <option *ngFor="let f of fontesMock" [value]="f">
+                {{ f }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Imóveis de Interesse</label>
+          <input type="text" class="form-control" placeholder="Selecione..." formControlName="imoveisInteresse" />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Vendedor</label>
+          <select class="form-select" formControlName="vendedor">
+            <option value="">Selecione...</option>
+            <option *ngFor="let v of corretores" [value]="v.id">
+              {{ v.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Observação</label>
+          <textarea class="form-control" rows="3" placeholder="Observações sobre o lead"
+            formControlName="observacao"></textarea>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeCreateModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-orange">
+            Salvar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

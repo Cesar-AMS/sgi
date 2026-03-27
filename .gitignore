@@ -1,0 +1,90 @@
+# .NET build artifacts
+.dotnet-home/
+.artifacts/
+.dotnet-build/
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# Visual Studio / local user files
+.vs/
+**/.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# Angular / Node
+**/node_modules/
+**/dist/
+**/.angular/
+**/npm-debug.log
+**/yarn-error.log
+**/yarn-debug.log
+**/.pnpm-debug.log
+**/package-lock.json
+
+# IDE - VS Code
+.vscode/
+**/.vscode/
+*.code-workspace
+
+# IDE - Rider
+.idea/
+**/.idea/
+*.sln.iml
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.cache
+*.pid
+*.seed
+*.pid.lock
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# NuGet packages
+**/packages/
+*.nupkg
+*.snupkg
+
+# Test results
+**/TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Publish profiles
+**/Properties/PublishProfiles/*.pubxml.user
+
+# Database files
+*.mdf
+*.ldf
+*.sdf
+*.db
+
+# Coverage reports
+**/coverage/
+**/coverage.json
