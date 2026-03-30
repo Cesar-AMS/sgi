@@ -36,6 +36,7 @@ namespace JMImoveisAPI.Configurations
             services.AddScoped<IVisitasRepository, VisitasRepository>();
             services.AddScoped<IReceivableRepository, ReceivableRepository>();
             services.AddScoped<ILeadRepository, LeadRepository>();
+            services.AddScoped<ILeadService, LeadService>();
             services.AddScoped<ISaleCustomerRepository, SaleCustomerRepository>();
             services.AddScoped<IDashboardSalesRepository, DashboardSalesRepository>();
             services.AddScoped<IAccountsReceivableRepository, AccountsReceivableRepository>();

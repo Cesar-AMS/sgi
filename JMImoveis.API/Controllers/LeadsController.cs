@@ -1,8 +1,6 @@
-﻿using JMImoveisAPI.Entities;
+using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Globalization;
 
 namespace JMImoveisAPI.Controllers
 {
@@ -10,35 +8,26 @@ namespace JMImoveisAPI.Controllers
     [ApiController]
     public class LeadsController : ControllerBase
     {
-        private readonly ILeadRepository _leadRepository;
+        private readonly ILeadService _leadService;
 
-        public LeadsController(ILeadRepository leadRepository)
+        public LeadsController(ILeadService leadService)
         {
-            _leadRepository = leadRepository;
+            _leadService = leadService;
         }
 
         [HttpGet("{leadId}/schedules")]
-        public async Task<IActionResult> GetLeadsSchedulesById(int leadId, [FromQuery] string typeSchedule) => Ok(await _leadRepository.GetSchedulesByLeadId(leadId, typeSchedule));
+        public async Task<IActionResult> GetLeadsSchedulesById(int leadId, [FromQuery] string typeSchedule)
+            => Ok(await _leadService.GetSchedulesByLeadIdAsync(leadId, typeSchedule));
 
         [HttpPost("{leadId}/schedules")]
-        public async Task<IActionResult> CreateLeadsActivitiesById(CreateLeadScheduleRequest lead) => Ok(await _leadRepository.CreateSchedule(lead));
+        public async Task<IActionResult> CreateLeadsActivitiesById(CreateLeadScheduleRequest lead)
+            => Ok(await _leadService.CreateScheduleAsync(lead));
 
-     
         [HttpPost("schedule")]
         public async Task<IActionResult> Create([FromBody] LeadScheduleRequest request)
         {
-            if (request == null) return BadRequest("Body inválido.");
-
-            if (string.IsNullOrWhiteSpace(request.NomeCliente))
-                return BadRequest("nomeCliente é obrigatório.");
-
-            if (string.IsNullOrWhiteSpace(request.Status))
-                return BadRequest("status é obrigatório.");
-
-            if (request.VendedorId <= 0)
-                return BadRequest("vendedorId inválido.");
-
-            var newId = await _leadRepository.InsertAsync(request, 0);
+            var (isValid, errorMessage) = await _leadService.CreateScheduleAsync(request, 0);
+            if (!isValid) return BadRequest(errorMessage);
 
             return Ok();
         }
@@ -46,114 +35,78 @@ namespace JMImoveisAPI.Controllers
         [HttpPost("{leadId}/schedule/v2")]
         public async Task<IActionResult> CreateV2([FromBody] LeadScheduleRequest request, int leadId)
         {
-            if (request == null) return BadRequest("Body inválido.");
-
-            if (string.IsNullOrWhiteSpace(request.NomeCliente))
-                return BadRequest("nomeCliente é obrigatório.");
-
-            if (string.IsNullOrWhiteSpace(request.Status))
-                return BadRequest("status é obrigatório.");
-
-            if (request.VendedorId <= 0)
-                return BadRequest("vendedorId inválido.");
-
-            var newId = await _leadRepository.InsertAsync(request, leadId);
+            var (isValid, errorMessage) = await _leadService.CreateScheduleAsync(request, leadId);
+            if (!isValid) return BadRequest(errorMessage);
 
             return Ok();
         }
 
         [HttpGet("schedule")]
         public async Task<IActionResult> ListSchedule(
-        [FromQuery] string? q,
-        [FromQuery] int? vendedorId,
-        [FromQuery] string? status,
-        [FromQuery] bool? compareceu,
-        [FromQuery] bool? virouVenda,
-        [FromQuery] string? startAt,
-        [FromQuery] string? finishAt
-    )
-        {
-            DateTime? start = TryParseIsoDate(startAt);
-            DateTime? finish = TryParseIsoDate(finishAt);
-
-            var result = await _leadRepository.ListScheduleAsync(
-                q, vendedorId, status, compareceu, virouVenda, start, finish
-            );
-
-            return Ok(result);
-        }
-
-        private static DateTime? TryParseIsoDate(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) return null;
-
-              if (DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dto))
-                return dto.LocalDateTime;
-
-            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
-                return dt;
-
-            return null;
-        }
+            [FromQuery] string? q,
+            [FromQuery] int? vendedorId,
+            [FromQuery] string? status,
+            [FromQuery] bool? compareceu,
+            [FromQuery] bool? virouVenda,
+            [FromQuery] string? startAt,
+            [FromQuery] string? finishAt)
+            => Ok(await _leadService.ListScheduleAsync(
+                q, vendedorId, status, compareceu, virouVenda, startAt, finishAt
+            ));
 
         [HttpPut("{leadId}/schedules/{scheduleId}/status")]
         public async Task<IActionResult> UpdateStatus(
-        int leadId,
-        int scheduleId,
-        [FromBody] UpdateLeadScheduleStatusRequest request
-    )
+            int leadId,
+            int scheduleId,
+            [FromBody] UpdateLeadScheduleStatusRequest request)
         {
-            await _leadRepository.UpdateStatus(leadId, scheduleId, request.Status);
+            await _leadService.UpdateScheduleStatusAsync(leadId, scheduleId, request);
             return NoContent();
         }
 
         [HttpPut("schedule/{id:int}")]
         public async Task<IActionResult> UpdateSchedule(int id, [FromBody] VisitaPatchRequest patch)
         {
-                var ok = await _leadRepository.UpdateScheduleAsync(id, patch);
+            var ok = await _leadService.UpdateScheduleAsync(id, patch);
             if (!ok) return BadRequest("Nada para atualizar.");
 
             return Ok();
         }
 
         [HttpGet("{leadId}/activities")]
-        public async Task<IActionResult> GetLeadsActivitiesById(int leadId) => Ok(await _leadRepository.GetActivitiesByLeadId(leadId));
+        public async Task<IActionResult> GetLeadsActivitiesById(int leadId)
+            => Ok(await _leadService.GetActivitiesByLeadIdAsync(leadId));
 
         [HttpPost("{leadId}/activities")]
-        public async Task<IActionResult> CreateLeadsActivitiesById(CreateLeadActivityRequest lead) => Ok(await _leadRepository.CreateActivity(lead));
+        public async Task<IActionResult> CreateLeadsActivitiesById(CreateLeadActivityRequest lead)
+            => Ok(await _leadService.CreateActivityAsync(lead));
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id) => Ok(await _leadRepository.GetLeadById(id));
+        public async Task<IActionResult> GetById(int id)
+            => Ok(await _leadService.GetByIdAsync(id));
 
         [HttpPost("report")]
         public async Task<IActionResult> GetReportLead(LeadFilter filter)
-        {
-            var report = await _leadRepository.GetAllByFilters(filter);
-
-            return Ok(report);
-        }
+            => Ok(await _leadService.GetAllByFiltersAsync(filter));
 
         [HttpPost]
         public async Task<IActionResult> CreateLead(Lead lead)
         {
-            await _leadRepository.CreateLead(lead);
-
+            await _leadService.CreateLeadAsync(lead);
             return Ok();
         }
 
         [HttpPatch]
         public async Task<IActionResult> UpdateLead(Lead lead)
         {
-            await _leadRepository.UpdateLead(lead);
-
+            await _leadService.UpdateLeadAsync(lead);
             return Ok();
         }
 
         [HttpDelete]
         public async Task<IActionResult> DeleteLead(Lead lead)
         {
-            await _leadRepository.DeleteLead(lead);
-
+            await _leadService.DeleteLeadAsync(lead);
             return Ok();
         }
     }
