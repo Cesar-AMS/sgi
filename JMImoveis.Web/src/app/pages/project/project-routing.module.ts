@@ -116,7 +116,8 @@ const routes: Routes = [
   },
   {
     path: 'leads',
-    component: LeadsComponent,
+    redirectTo: 'atendimento/leads/listagem',
+    pathMatch: 'full',
   },
   {
     path: 'atendimento/leads/listagem',
@@ -124,11 +125,17 @@ const routes: Routes = [
   },
   {
     path: 'atendimento/leads/andamento',
-    component: LeadsComponent,
+    redirectTo: 'atendimento/leads/listagem',
+    pathMatch: 'full',
+  },
+  {
+    path: 'atendimento/leads/:id',
+    component: LeadDetailsComponent,
   },
   {
     path: 'leads/:id',
-    component: LeadDetailsComponent,
+    redirectTo: 'atendimento/leads/:id',
+    pathMatch: 'full',
   },
   {
     path: 'clientes',

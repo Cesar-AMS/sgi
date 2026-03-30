@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { PageChangedEvent } from 'ngx-bootstrap/pagination';
 import { ToastrService } from 'ngx-toastr';
 import { ApiService } from 'src/app/core/services/api.service';
+import { LeadsService } from 'src/app/core/services/leads.service';
 import { LeadFilter, LeadSchedule, LeadScheduleStatus, Usuarios } from 'src/app/models/ContaBancaria';
 import { Lead, LeadStatus } from 'src/app/models/lead';
 import { exportToExcel } from 'src/app/shared/utils/excel-export';
@@ -71,19 +72,20 @@ export class LeadsComponent {
   constructor(private fb: FormBuilder,
     private toast: ToastrService,
     private router: Router,
-    private leadService: ApiService) { }
+    private leadService: LeadsService,
+    private apiService: ApiService) { }
 
   ngOnInit(): void {
 
-    this.leadService.getGerentes().subscribe((data) => {
+    this.apiService.getGerentes().subscribe((data) => {
       this.gerentes = data
     });
 
-    this.leadService.getCoordenadores().subscribe((data) => {
+    this.apiService.getCoordenadores().subscribe((data) => {
       this.coordenatorsAll = data
     });
 
-    this.leadService.getCorretores().subscribe((data) => {
+    this.apiService.getCorretores().subscribe((data) => {
       console.log('corretores', data)
       this.corretores = data
     });
@@ -147,7 +149,7 @@ export class LeadsComponent {
   }
 
   openLeadDetails(id: number): void {
-    this.router.navigate(['/leads', id]);
+    this.router.navigate(['/jm/atendimento/leads', id]);
   }
 
   onPageChanged(event: PageChangedEvent): void {

@@ -36,13 +36,6 @@ export const MENU: MenuItem[] = [
             parentId: 21,
             permissionKey: 'commercial.leads.view',
           },
-          {
-            id: 212,
-            label: 'Andamento',
-            link: '/jm/atendimento/leads/andamento',
-            parentId: 21,
-            permissionKey: 'commercial.leads.view',
-          },
         ],
       },
       {

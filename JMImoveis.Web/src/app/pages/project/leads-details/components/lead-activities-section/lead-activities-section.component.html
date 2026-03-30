@@ -1,0 +1,42 @@
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="mb-0">Histórico</h5>
+  <button type="button" class="btn btn-orange btn-sm" (click)="addRequested.emit()" *ngIf="!isAddingActivity">
+    <i class="bi bi-plus-lg me-1"></i>
+    Adicionar Atividade
+  </button>
+</div>
+
+<div class="card mb-3" *ngIf="isAddingActivity">
+  <div class="card-body">
+    <form [formGroup]="activityForm" (ngSubmit)="activitySubmitted.emit()" class="row g-2">
+      <div class="col-6"><label class="form-label">Data</label><input type="date" class="form-control" formControlName="date" /></div>
+      <div class="col-6"><label class="form-label">Horário</label><input type="time" class="form-control" formControlName="time" /></div>
+      <div class="col-12"><label class="form-label">Observação</label><textarea class="form-control" rows="2" formControlName="description"></textarea></div>
+      <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="addCanceled.emit()">Cancelar</button>
+        <button type="submit" class="btn btn-orange btn-sm">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm border-0">
+  <div class="card-body history-body">
+    <h6 class="mb-3">Histórico de Atividades</h6>
+    <div *ngIf="activities.length === 0" class="text-muted small">Nenhuma atividade registrada.</div>
+    <div class="history-list" *ngIf="activities.length > 0">
+      <div *ngFor="let act of activities" class="history-item">
+        <div class="dot"></div>
+        <div class="history-content">
+          <div class="small text-muted">
+            {{ act.dateTime | date: 'dd/MM/yyyy HH:mm' }} •
+            {{ act.author || 'Sistema' }}
+            <span *ngIf="act.type" class="badge bg-light text-muted border ms-1">{{ act.type }}</span>
+          </div>
+          <div class="fw-semibold">Criação</div>
+          <div class="small">{{ act.description }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

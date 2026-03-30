@@ -29,6 +29,10 @@ import { DashboardHomeComponent } from './dashboard/dashboard-home.component';
 import { AdminEmpreendimentoComponent } from './empreendimentos/admin-empreendimento/admin-empreendimento.component';
 import { CadastroComponent } from './empreendimentos/cadastro/cadastro.component';
 import { EspelhoComponent } from './empreendimentos/espelho/espelho.component';
+import { LeadActivitiesSectionComponent } from './leads-details/components/lead-activities-section/lead-activities-section.component';
+import { LeadAgendaSectionComponent } from './leads-details/components/lead-agenda-section/lead-agenda-section.component';
+import { LeadSummarySectionComponent } from './leads-details/components/lead-summary-section/lead-summary-section.component';
+import { LeadVisitsSectionComponent } from './leads-details/components/lead-visits-section/lead-visits-section.component';
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
 import { LeadsComponent } from './leads/leads.component';
 import { ModalVendaComponent } from './modal-venda/modal-venda.component';
@@ -55,6 +59,10 @@ import { VisaoGeralComponent } from './vendas/visao-geral/visao-geral.component'
     VisitasComponent,
     LeadsComponent,
     LeadDetailsComponent,
+    LeadSummarySectionComponent,
+    LeadActivitiesSectionComponent,
+    LeadAgendaSectionComponent,
+    LeadVisitsSectionComponent,
     PropostasComponent,
     ClientListComponent,
     PropostaComponent,

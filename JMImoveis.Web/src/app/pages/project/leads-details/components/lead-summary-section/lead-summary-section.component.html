@@ -1,0 +1,87 @@
+<ng-container *ngIf="lead">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <button class="btn btn-link text-decoration-none px-0 mb-2" (click)="backRequested.emit()">
+        <i class="bi bi-arrow-left"></i>
+        <span class="ms-1">Voltar</span>
+      </button>
+
+      <div class="d-flex align-items-center gap-3">
+        <div>
+          <h3 class="fw-bold mb-0">{{ lead.nome }}</h3>
+          <div class="text-muted small">
+            {{ lead.imoveisInteresse || 'Lead' }}
+          </div>
+        </div>
+        <span class="badge status-badge">{{ lead.status }}</span>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-outline-secondary d-flex align-items-center" (click)="callRequested.emit()">
+        <i class="bi bi-telephone me-2"></i> Ligar
+      </button>
+      <button type="button" class="btn btn-outline-success d-flex align-items-center" (click)="whatsappRequested.emit()">
+        <i class="bi bi-whatsapp me-2"></i> WhatsApp
+      </button>
+      <button type="button" class="btn btn-outline-secondary d-flex align-items-center" (click)="editToggled.emit()">
+        <i class="bi bi-pencil-square me-2"></i> Editar
+      </button>
+      <button type="button" class="btn btn-outline-secondary d-flex align-items-center" (click)="emailRequested.emit()">
+        <i class="bi bi-envelope me-2"></i> Email
+      </button>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <h5 class="card-title mb-3">Informações do Lead</h5>
+
+      <div *ngIf="!isEditing; else editInfoTpl" class="row g-3 info-grid">
+        <div class="col-md-6"><div class="label">Nome</div><div class="value">{{ lead.nome }}</div></div>
+        <div class="col-md-6"><div class="label">E-mail</div><div class="value">{{ lead.email || '-' }}</div></div>
+        <div class="col-md-6"><div class="label">Telefone</div><div class="value">{{ lead.telefone || '-' }}</div></div>
+        <div class="col-md-6"><div class="label">Status</div><div class="value">{{ lead.status }}</div></div>
+        <div class="col-md-6"><div class="label">Origem</div><div class="value">{{ lead.fonte || '-' }}</div></div>
+        <div class="col-md-6">
+          <div class="label">Valor</div>
+          <div class="value">{{ lead.valor | currency: 'BRL':'symbol':'1.0-0' }}</div>
+        </div>
+        <div class="col-md-6"><div class="label">Observação</div><div class="value">{{ lead.observacao || '-' }}</div></div>
+        <div class="col-md-6"><div class="label">Vendedor</div><div class="value">{{ selectNameSale(lead.vendedor) }}</div></div>
+        <div class="col-md-6"><div class="label">Imóvel de Interesse</div><div class="value">{{ lead.imoveisInteresse || '-' }}</div></div>
+        <div class="col-md-6"><div class="label">Data de Criação</div><div class="value">{{ lead.dataCriacao | date: 'dd/MM/yyyy' }}</div></div>
+        <div class="col-md-6"><div class="label">Último Contato</div><div class="value">{{ lead.dataCriacao | date: 'dd/MM/yyyy' }}</div></div>
+      </div>
+
+      <ng-template #editInfoTpl>
+        <form [formGroup]="infoForm" (ngSubmit)="infoSubmitted.emit()" class="row g-3">
+          <div class="col-md-6"><label class="form-label">Nome</label><input type="text" class="form-control" formControlName="nome" /></div>
+          <div class="col-md-6"><label class="form-label">E-mail</label><input type="email" class="form-control" formControlName="email" /></div>
+          <div class="col-md-6"><label class="form-label">Telefone</label><input type="text" class="form-control" formControlName="telefone" /></div>
+          <div class="col-md-6">
+            <label class="form-label">Status</label>
+            <select type="text" class="form-control" formControlName="status">
+              <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+          <div class="col-md-6"><label class="form-label">Origem</label><input type="text" class="form-control" formControlName="origem" /></div>
+          <div class="col-md-6"><label class="form-label">Valor</label><input type="number" class="form-control" formControlName="valor" /></div>
+          <div class="col-md-12"><label class="form-label">Observação</label><textarea rows="2" class="form-control" formControlName="observacao"></textarea></div>
+          <div class="col-md-6"><label class="form-label">Imóvel de Interesse</label><input type="text" class="form-control" formControlName="imoveisInteresse" /></div>
+          <div class="col-md-6">
+            <label class="form-label">Vendedor</label>
+            <select class="form-select" formControlName="vendedor">
+              <option value="">Todos</option>
+              <option *ngFor="let c of corretores" [value]="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+          <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+            <button type="button" class="btn btn-outline-secondary" (click)="editToggled.emit()">Cancelar</button>
+            <button type="submit" class="btn btn-orange">Salvar</button>
+          </div>
+        </form>
+      </ng-template>
+    </div>
+  </div>
+</ng-container>

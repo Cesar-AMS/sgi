@@ -4,6 +4,9 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Lead, LeadStatus } from 'src/app/models/lead';
 import { LeadActivity, LeadSchedule, LeadScheduleStatus, Usuarios } from 'src/app/models/ContaBancaria';
 import { ApiService } from 'src/app/core/services/api.service';
+import { LeadsService } from 'src/app/core/services/leads.service';
+import { LeadAgendaStatusChangeEvent } from './components/lead-agenda-section/lead-agenda-section.component';
+import { LeadVisitStatusChangeEvent } from './components/lead-visits-section/lead-visits-section.component';
 
 @Component({
   selector: 'app-lead-details',
@@ -54,7 +57,8 @@ export class LeadDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private fb: FormBuilder,
-    private leadService: ApiService
+    private leadService: LeadsService,
+    private apiService: ApiService
   ) { }
 
   ngOnInit(): void {
@@ -70,7 +74,7 @@ export class LeadDetailsComponent implements OnInit {
       this.loadSchedules(id, 'contato');
     }
 
-    this.leadService.getCorretores().subscribe((data) => {
+    this.apiService.getCorretores().subscribe((data) => {
       console.log('corretores', data)
       this.corretores = data
     });
@@ -117,17 +121,13 @@ export class LeadDetailsComponent implements OnInit {
     });
   }
 
-  selectNameSale(idvendedor: any) {
-    return this.corretores.find(it => it.id.toString().trim() === idvendedor.toString().trim())?.name
-  }
-
-  saveSchedule(type: any): void {
+  saveSchedule(type: 'contato' | 'visita'): void {
     if (!this.lead || this.scheduleForm.invalid) return;
 
     const { date, time, note } = this.scheduleForm.value;
     const iso = new Date(`${date}T${time}:00`).toISOString();
 
-    var obj = {
+    const obj = {
       nomeCliente: this.lead.nome,
       dataHoraISO: iso,
       vendedorId: this.lead.vendedor,
@@ -138,12 +138,10 @@ export class LeadDetailsComponent implements OnInit {
       tipoAgenda: type
     }
     this.leadService.createScheduleV3(this.lead.id, obj).subscribe({
-      next: (created) => {
-
+      next: () => {
         if (this.lead?.id) {
           this.loadSchedules(this.lead.id, type)
         }
-
       },
     });
   }
@@ -158,6 +156,14 @@ export class LeadDetailsComponent implements OnInit {
         item.status = status;
       },
     });
+  }
+
+  handleContactScheduleStatusChange(event: LeadAgendaStatusChangeEvent): void {
+    this.changeScheduleStatus(event.schedule, event.status);
+  }
+
+  handleVisitScheduleStatusChange(event: LeadVisitStatusChangeEvent): void {
+    this.changeScheduleStatus(event.schedule, event.status);
   }
 
 
@@ -204,7 +210,7 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/leads']);
+    this.router.navigate(['/jm/atendimento/leads/listagem']);
   }
 
   setTab(tab: 'info' | 'docs' | 'proposal' | 'schedule'): void {
@@ -290,14 +296,10 @@ export class LeadDetailsComponent implements OnInit {
     };
 
     this.leadService.addActivity(this.lead.id, payload).subscribe({
-      next: (created) => {
-        // adiciona no topo
-        this.activities.unshift(created);
+      next: () => {
         this.isAddingActivity = false;
-        this.loadActivities(this.lead?.id ?? 0)
+        this.loadActivities(this.lead?.id ?? 0);
       },
     });
-
-
   }
 }
