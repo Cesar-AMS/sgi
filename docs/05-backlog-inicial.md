@@ -7,7 +7,7 @@ O objetivo é orientar a evolução do projeto com foco em:
 - prioridade de negócio
 - redução de risco técnico
 - ganho incremental
-- clareza para uso com Codex
+- clareza para execução
 - documentação alinhada com implementação
 
 ---
@@ -27,7 +27,7 @@ A ordem de prioridade deste backlog considera:
 A implementação sugerida para o sistema é:
 
 1. Base técnica e padronização
-2. Leads e Atendimento
+2. Atendimento
 3. Vendas
 4. Clientes
 5. Empreendimentos e Imóveis
@@ -55,7 +55,7 @@ Objetivo: entender o estado atual do projeto e criar base consistente para evolu
 - identificar módulos prontos, incompletos e duplicados
 - identificar inconsistências de nomenclatura
 - padronizar convenções básicas de pastas
-- padronizar convenções de DTOs
+- padronizar convenções de contratos
 - padronizar convenções de rotas
 - definir padrão de retorno da API
 - definir padrão de tratamento de erro
@@ -71,41 +71,51 @@ Objetivo: entender o estado atual do projeto e criar base consistente para evolu
 
 ---
 
-## Fase 1 — Leads e Atendimento (MVP funcional)
+## Fase 1 — Atendimento (MVP funcional)
 Objetivo: construir o primeiro módulo central do negócio com fluxo completo e utilizável.
 
 ### Itens de backend
-- criar entidade Lead
-- criar entidade OrigemLead
-- criar entidade LeadHistorico
-- criar DTOs de request e response
-- criar repository de lead
-- criar service de lead
-- criar endpoints de cadastro, listagem, detalhe e edição
-- criar endpoint de alteração de status
-- criar endpoint de registro de interação
-- criar endpoint de conversão para oportunidade
+- criar ou consolidar entidade Lead
+- consolidar OrigemLead
+- consolidar histórico de lead
+- consolidar contratos de request e response
+- consolidar repository de lead
+- consolidar service de lead
+- consolidar endpoints de cadastro, listagem, detalhe e edição
+- consolidar endpoint de alteração de status
+- consolidar endpoint de registro de interação
+- consolidar endpoint de agendamento
+- consolidar endpoint de atualização de status de agendamento
+- consolidar endpoint de conversão para oportunidade
 
 ### Itens de frontend
-- criar tela de listagem de leads
-- criar filtros por nome, origem, status, responsável e período
-- criar tela de cadastro de lead
-- criar tela de detalhe de lead
-- criar ação de editar lead
-- criar ação de alterar status
-- criar timeline/histórico de interações
-- criar ação de converter em oportunidade
+- consolidar tela de listagem de leads
+- consolidar filtros por nome, origem, status, responsável e período
+- consolidar tela de cadastro de lead
+- consolidar tela de detalhe de lead
+- consolidar ação de editar lead
+- consolidar ação de alterar status
+- consolidar timeline/histórico de interações
+- consolidar fluxo de agendamento
+- consolidar entrada de navegação em:
+  - Atendimento
+    - Leads
+      - Listagem
+    - Agendamento
 
 ### Itens de regra
 - definir status iniciais
 - validar obrigatoriedade de nome, telefone e origem
 - registrar data de cadastro
 - manter histórico das interações
-- impedir conversão de lead sem qualificação, se regra for aplicada
+- manter agendamentos vinculados ao lead
+- impedir conversão de lead sem qualificação, se a regra for aplicada
 
 ### Entregáveis
-- módulo funcional de Leads e Atendimento
+- módulo funcional de Atendimento
 - fluxo utilizável da entrada até conversão em oportunidade
+- caminho oficial consolidado de Leads
+- agendamento operacional integrado ao atendimento
 
 ### Prioridade
 **Muito alta**
@@ -116,26 +126,26 @@ Objetivo: construir o primeiro módulo central do negócio com fluxo completo e 
 Objetivo: estruturar o núcleo comercial da empresa após a entrada dos leads.
 
 ### Itens de backend
-- criar entidade Oportunidade
-- criar entidade Proposta
-- criar entidade Venda
-- criar histórico da oportunidade
-- criar DTOs de vendas
-- criar endpoints de oportunidade
-- criar endpoint de proposta
-- criar endpoint de fechamento
-- criar endpoint de perda/cancelamento
-- criar consulta de vendas fechadas
-- criar espelho inicial de vendas
+- consolidar entidade Oportunidade
+- consolidar entidade Proposta
+- consolidar entidade Venda
+- consolidar histórico da oportunidade
+- consolidar contratos de vendas
+- consolidar endpoints de oportunidade
+- consolidar endpoint de proposta
+- consolidar endpoint de fechamento
+- consolidar endpoint de perda/cancelamento
+- consolidar consulta de vendas fechadas
+- consolidar espelho inicial de vendas
 
 ### Itens de frontend
-- criar listagem de oportunidades
-- criar tela de detalhe da oportunidade
-- criar cadastro de oportunidade
-- criar formulário de proposta
-- criar alteração de status
-- criar tela de vendas fechadas
-- criar visualização de espelho de vendas
+- consolidar listagem de oportunidades
+- consolidar tela de detalhe da oportunidade
+- consolidar cadastro de oportunidade
+- consolidar formulário de proposta
+- consolidar alteração de status
+- consolidar tela de vendas fechadas
+- consolidar visualização de espelho de vendas
 
 ### Itens de regra
 - oportunidade deve estar ligada a lead convertido ou cliente
@@ -156,11 +166,11 @@ Objetivo: estruturar o núcleo comercial da empresa após a entrada dos leads.
 Objetivo: centralizar dados cadastrais do cliente de forma consistente.
 
 ### Itens
-- criar entidade Cliente
-- criar entidades auxiliares de contato e endereço
-- criar listagem de clientes
-- criar cadastro de cliente
-- criar detalhe do cliente
+- consolidar entidade Cliente
+- consolidar estruturas auxiliares de contato e endereço
+- consolidar listagem de clientes
+- consolidar cadastro de cliente
+- consolidar detalhe do cliente
 - vincular cliente a lead, oportunidade e venda
 - definir regra de reaproveitamento cadastral
 - evitar duplicidade de cliente
@@ -177,12 +187,13 @@ Objetivo: centralizar dados cadastrais do cliente de forma consistente.
 Objetivo: estruturar o catálogo comercial da empresa.
 
 ### Itens
-- criar entidade Empreendimento
-- criar entidade Imovel/Unidade
-- criar status de disponibilidade
-- criar cadastro de empreendimento
-- criar cadastro de unidade
-- criar listagem de unidades
+- consolidar entidade Empreendimento
+- consolidar entidade Imovel/Unidade
+- padronizar nomenclatura do domínio
+- consolidar status de disponibilidade
+- consolidar cadastro de empreendimento
+- consolidar cadastro de unidade
+- consolidar listagem de unidades
 - permitir vínculo com oportunidade e venda
 - impedir uso de unidade indisponível
 
@@ -245,14 +256,15 @@ Objetivo: formalizar a venda após o fechamento comercial.
 Objetivo: controlar a parte financeira após o fechamento.
 
 ### Itens
-- criar entidade Cobranca
-- criar entidade Parcela
-- criar entidade Recebimento
-- criar entidade Boleto (ou representação equivalente)
-- criar listagem financeira por cliente
-- criar acompanhamento de recebimentos
-- criar status de inadimplência
-- criar filtros financeiros
+- consolidar entidade Cobranca
+- consolidar entidade Parcela
+- consolidar entidade Recebimento
+- consolidar representação de boleto
+- consolidar listagem financeira por cliente
+- consolidar acompanhamento de recebimentos
+- consolidar status de inadimplência
+- consolidar filtros financeiros
+- reduzir duplicidade entre trilhas financeiras paralelas
 
 ### Entregáveis
 - módulo inicial de pós-venda financeiro
@@ -287,10 +299,10 @@ Objetivo: consolidar resultado comercial e remuneração.
 Objetivo: estruturar governança da plataforma.
 
 ### Itens
-- criar gestão de usuários
-- criar perfis de acesso
-- criar permissões por módulo
-- criar auditoria básica
+- consolidar gestão de usuários
+- consolidar perfis de acesso
+- consolidar permissões por módulo
+- consolidar auditoria básica
 - restringir telas e ações conforme perfil
 
 ### Entregáveis
@@ -306,12 +318,12 @@ Objetivo: estruturar governança da plataforma.
 Objetivo: organizar processos internos de pessoas.
 
 ### Itens
-- cadastro de funcionários
-- cargos
-- salários
-- benefícios
-- folha
-- estoque de uniformes
+- consolidar cadastro de funcionários
+- consolidar cargos
+- consolidar salários
+- consolidar benefícios
+- consolidar folha
+- consolidar estoque de uniformes
 
 ### Entregáveis
 - módulo corporativo de RH
@@ -325,11 +337,11 @@ Objetivo: organizar processos internos de pessoas.
 Objetivo: dar suporte interno e técnico à plataforma.
 
 ### Itens
-- painel técnico
-- chamados internos
-- controle técnico de usuários/equipamentos, se aplicável
-- logs operacionais
-- monitoramento administrativo
+- consolidar painel técnico
+- consolidar chamados internos
+- consolidar controle técnico de usuários/equipamentos, se aplicável
+- consolidar logs operacionais
+- consolidar monitoramento administrativo
 
 ### Entregáveis
 - módulo corporativo de TI
@@ -343,13 +355,13 @@ Objetivo: dar suporte interno e técnico à plataforma.
 Objetivo: consolidar visão gerencial da operação.
 
 ### Itens
-- indicadores de leads
-- indicadores de vendas
-- indicadores financeiros
-- indicadores de comissão
-- visão resumida por perfil
-- cards com métricas
-- gráficos e totais consolidados
+- consolidar indicadores de atendimento
+- consolidar indicadores de vendas
+- consolidar indicadores financeiros
+- consolidar indicadores de comissão
+- consolidar visão resumida por perfil
+- consolidar cards com métricas
+- consolidar gráficos e totais gerais
 
 ### Regra importante
 O dashboard deve **consumir dados dos módulos**, não centralizar a lógica deles.
@@ -368,7 +380,7 @@ O dashboard deve **consumir dados dos módulos**, não centralizar a lógica del
 Esses itens devem acontecer ao longo das fases, e não apenas em uma etapa isolada.
 
 ### Backend
-- padronizar DTOs
+- padronizar contratos
 - padronizar responses
 - padronizar tratamento de erro
 - padronizar logs
@@ -376,11 +388,12 @@ Esses itens devem acontecer ao longo das fases, e não apenas em uma etapa isola
 - criar mapeamentos
 - reduzir código duplicado
 - revisar organização de services e repositories
+- separar controller, service e repository nos domínios principais
 
 ### Frontend
-- padronizar estrutura de features
+- padronizar estrutura dos domínios
 - padronizar componentes reutilizáveis
-- padronizar serviços HTTP
+- padronizar serviços HTTP por domínio
 - padronizar tratamento de loading e erro
 - padronizar formulários
 - padronizar navegação
@@ -389,7 +402,7 @@ Esses itens devem acontecer ao longo das fases, e não apenas em uma etapa isola
 ### Banco de dados
 - revisar nomes de tabelas e colunas
 - revisar chaves e relacionamentos
-- evitar duplicidade de entidades
+- evitar duplicidade de estruturas
 - garantir integridade mínima dos vínculos principais
 
 ---
@@ -404,23 +417,24 @@ Esses itens devem acontecer ao longo das fases, e não apenas em uma etapa isola
 
 ---
 
-# 6. Ordem de uso com Codex
-Sugestão prática de execução com Codex:
+# 6. Regra de encerramento por domínio
+Um domínio deve ser considerado bom o suficiente para avançar quando atingir estes 4 pontos:
 
-### Etapa 1
-Pedir diagnóstico do projeto atual
+- **1 caminho oficial**
+- **fluxo principal funcionando**
+- **responsabilidades principais separadas**
+- **dívida restante documentada**
 
-### Etapa 2
-Pedir implementação do módulo Leads e Atendimento em pequenas partes
+### Interpretação prática
+Isso significa que o time não deve buscar perfeição antes de seguir para o próximo módulo.
 
-### Etapa 3
-Revisar com base na documentação
+Se o domínio já possui:
+- uma rota/tela/serviço/caminho oficial
+- o fluxo principal funcionando
+- separação mínima entre responsabilidades
+- pendências registradas
 
-### Etapa 4
-Atualizar documentação conforme o módulo for ficando pronto
-
-### Etapa 5
-Seguir para Vendas e repetir o processo
+então ele pode ser considerado consolidado o suficiente para continuar a evolução do sistema.
 
 ---
 
@@ -430,12 +444,13 @@ Uma sprint inicial prática poderia ser:
 ## Sprint 1
 - diagnóstico técnico do projeto
 - padronização mínima
-- cadastro e listagem de leads
+- consolidação de Atendimento > Leads > Listagem
 
 ## Sprint 2
 - detalhe de lead
 - alteração de status
 - histórico de interação
+- agendamento
 
 ## Sprint 3
 - conversão em oportunidade
@@ -453,12 +468,12 @@ Uma sprint inicial prática poderia ser:
 O backlog inicial será considerado bem executado se:
 
 - o sistema tiver uma base modular mais clara
-- Leads e Atendimento estiver funcional
+- Atendimento estiver funcional
 - Vendas estiver funcional
 - clientes e imóveis estiverem integrados
 - a arquitetura estiver mais previsível
 - a documentação acompanhar a implementação
-- o trabalho com Codex estiver orientado por escopo e não por improviso
+- os domínios avançarem sem refatoração infinita
 
 ---
 
@@ -467,7 +482,8 @@ O backlog inicial do projeto foi estruturado para seguir o fluxo real da empresa
 
 A prioridade máxima está em:
 - criar uma base técnica consistente
-- estruturar Leads e Atendimento
+- estruturar Atendimento
 - estruturar Vendas
 
 Esses módulos devem servir como base para os demais contextos, permitindo que o sistema cresça de forma incremental, documentada e alinhada ao domínio do negócio.
+

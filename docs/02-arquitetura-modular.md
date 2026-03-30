@@ -1,3 +1,36 @@
+ATENDIMENTO
+- Leads
+  - Listagem
+- Agendamento
+
+VENDAS
+- Oportunidades
+- Propostas
+- Fechamentos
+
+ANÁLISE
+- Perfil e Crédito
+
+FORMALIZAÇÃO
+- Contratos e Repasse
+
+CADASTROS E PRODUTO
+- Clientes
+- Empreendimentos e Imóveis
+
+FINANCEIRO
+- Financeiro Pós-venda
+- Comissões
+- Espelho de Vendas
+
+CORPORATIVO
+- RH
+- Administração
+- TI
+
+GERAL
+- Dashboard
+
 # Arquitetura Modular
 
 ## 1. Objetivo deste documento
@@ -36,7 +69,7 @@ A arquitetura deve evoluir para refletir os bounded contexts do negócio, tanto 
 ### Core Modules
 Módulos centrais da operação:
 
-- Leads e Atendimento
+- Atendimento
 - Vendas
 - Análise de Perfil e Crédito
 - Contratos e Repasse
@@ -62,9 +95,9 @@ Módulos corporativos e transversais:
 # 5. Arquitetura do Frontend
 
 ## 5.1 Diretriz geral
-No Angular, a organização deve ser feita por **feature modules** ou por **pastas de features**, agrupando componentes, serviços, modelos e rotas por contexto de negócio.
+No Angular, a organização deve ser feita por contexto funcional de negócio, agrupando componentes, serviços, modelos e rotas por área do domínio.
 
-A estrutura deve refletir os módulos do domínio, e não apenas separações técnicas genéricas.
+A estrutura deve refletir os módulos do negócio, e não apenas separações técnicas genéricas.
 
 ---
 
@@ -77,56 +110,53 @@ JMImoveisWeb/
       ├─ core/
       ├─ shared/
       ├─ layout/
-      ├─ features/
-      │  ├─ dashboard/
-      │  ├─ leads-atendimento/
-      │  ├─ vendas/
-      │  ├─ analise-perfil-credito/
-      │  ├─ contratos-repasse/
-      │  ├─ clientes/
-      │  ├─ empreendimentos-imoveis/
-      │  ├─ financeiro-pos-venda/
-      │  ├─ comissoes/
-      │  ├─ rh/
-      │  ├─ administracao/
-      │  └─ ti/
+      ├─ pages/
+      │  └─ project/
+      │     ├─ atendimento/
+      │     │  ├─ leads/
+      │     │  ├─ agendamento/
+      │     │  └─ leads-details/
+      │     ├─ vendas/
+      │     ├─ clientes/
+      │     ├─ empreendimentos/
+      │     ├─ financeiro/
+      │     ├─ rh/
+      │     └─ administracao/
       └─ app-routing.module.ts
 
-      /features/leads-atendimento/
-├─ pages/
-├─ components/
-├─ services/
-├─ models/
-├─ enums/
-├─ leads-atendimento-routing.module.ts
-└─ leads-atendimento.module.ts
+      Atendimento
+├─ Leads
+│  └─ Listagem
+└─ Agendamento
+
+/pages/project/atendimento/
+├─ leads/
+│  ├─ leads.component.ts
+│  └─ leads.component.html
+├─ leads-details/
+│  ├─ leads-details.component.ts
+│  ├─ leads-details.component.html
+│  └─ components/
+│     ├─ lead-summary-section/
+│     ├─ lead-activities-section/
+│     ├─ lead-agenda-section/
+│     └─ lead-visits-section/
+└─ agendamento/
+
+Controller -> Service -> Repository
 
 JMImoveisAPI/
-├─ Modules/
-│  ├─ LeadsAtendimento/
-│  ├─ Vendas/
-│  ├─ AnalisePerfilCredito/
-│  ├─ ContratosRepasse/
-│  ├─ Clientes/
-│  ├─ EmpreendimentosImoveis/
-│  ├─ FinanceiroPosVenda/
-│  ├─ Comissoes/
-│  ├─ RH/
-│  ├─ Administracao/
-│  └─ TI/
-├─ Shared/
-├─ Infrastructure/
+├─ Controllers/
+├─ Entities/
+├─ Interfaces/
+├─ Repositories/
+├─ Services/
+├─ Configurations/
+├─ Middlewares/
 ├─ Program.cs
 └─ appsettings.json
 
-/Modules/Vendas/
-├─ Controllers/
-├─ Services/
-├─ Repositories/
-├─ Entities/
-├─ Dtos/
-├─ Interfaces/
-└─ Mappers/
+LeadsController -> LeadService -> LeadRepository
 
 Controller
   -> Service
@@ -139,23 +169,18 @@ Banco de Dados
       -> Controller
         -> Response DTO
 
-GET    /api/leads
-GET    /api/leads/{id}
-POST   /api/leads
-PUT    /api/leads/{id}
-PATCH  /api/leads/{id}/status
-POST   /api/leads/{id}/converter
+ATENDIMENTO
+- Leads
+  - Listagem
+- Agendamento
 
-GET    /api/vendas
-GET    /api/vendas/{id}
-POST   /api/vendas
-PUT    /api/vendas/{id}
-POST   /api/vendas/{id}/fechar
+VENDAS
+- Oportunidades
+- Propostas
+- Fechamentos
 
-COMERCIAL
-- Leads e Atendimento
-- Vendas
-- Análise de Perfil
+ANÁLISE
+- Perfil e Crédito
 
 FORMALIZAÇÃO
 - Contratos e Repasse

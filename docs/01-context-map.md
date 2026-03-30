@@ -1,13 +1,14 @@
 # Context Map
 
 ## 1. Objetivo deste documento
-Este documento descreve o mapa de contextos do sistema, mostrando como os principais módulos do negócio se relacionam entre si dentro do domínio de **Operação de Vendas Imobiliárias**.
+Este documento descreve o mapa de contextos do sistema, mostrando como os principais módulos do negócio se relacionam dentro do domínio de **Operação de Vendas Imobiliárias**.
 
 O objetivo é criar clareza sobre:
 - os limites de cada contexto
 - as responsabilidades de cada módulo
 - o fluxo principal da operação
 - as integrações entre áreas do sistema
+- a organização funcional da navegação do sistema
 
 ---
 
@@ -23,7 +24,7 @@ Este domínio representa a atividade central da empresa: captar leads, atender, 
 ### Core Contexts
 São os contextos centrais do negócio, onde está a maior geração de valor e o principal diferencial competitivo da empresa.
 
-- Leads e Atendimento
+- Atendimento
 - Vendas
 - Análise de Perfil e Crédito
 - Contratos e Repasse
@@ -50,32 +51,33 @@ São contextos corporativos e administrativos, necessários para o funcionamento
 O fluxo central do negócio ocorre da seguinte forma:
 
 1. O lead entra por um canal de captação
-2. O lead é atendido e qualificado
-3. A oportunidade comercial evolui para proposta
-4. O perfil do cliente é analisado
-5. A venda é formalizada
-6. O contrato e o repasse são processados
-7. O financeiro realiza o pós-venda
-8. As comissões e os resultados comerciais são consolidados
+2. O lead é tratado dentro do contexto de Atendimento
+3. O atendimento evolui por meio de leads, atividades e agendamentos
+4. A oportunidade comercial evolui para negociação em Vendas
+5. O perfil do cliente é analisado
+6. A venda é formalizada
+7. O contrato e o repasse são processados
+8. O financeiro realiza o pós-venda
+9. As comissões e os resultados comerciais são consolidados
 
 ---
 
 ## 5. Mapa textual dos contextos
 
 ```text
-[Leads e Atendimento]
-        ↓
+[Atendimento]
+      ↓
 [Vendas]
-        ↓
+      ↓
 [Análise de Perfil e Crédito]
-        ↓
+      ↓
 [Contratos e Repasse]
-        ↓
+      ↓
 [Financeiro Pós-venda]
-        ↓
+      ↓
 [Comissões e Resultado Comercial]
 
-[Clientes] <-> [Leads e Atendimento]
+[Clientes] <-> [Atendimento]
 [Clientes] <-> [Vendas]
 [Clientes] <-> [Análise de Perfil e Crédito]
 [Clientes] <-> [Contratos e Repasse]
@@ -88,7 +90,7 @@ O fluxo central do negócio ocorre da seguinte forma:
 [RH] -> contexto corporativo interno
 [TI / Suporte Técnico] -> sustentação da plataforma
 
-Leads e Atendimento
+Atendimento
   -> Vendas
   -> Análise de Perfil e Crédito
   -> Contratos e Repasse
@@ -96,7 +98,7 @@ Leads e Atendimento
   -> Comissões e Resultado Comercial
 
   Clientes
-  -> apoia Leads, Vendas, Crédito, Contratos e Financeiro
+  -> apoia Atendimento, Vendas, Crédito, Contratos e Financeiro
 
 Empreendimentos e Imóveis
   -> apoia Vendas
@@ -107,10 +109,18 @@ Administração e Acessos
 Dashboard
   -> consolida dados dos contextos principais
 
-  COMERCIAL
-- Leads e Atendimento
-- Vendas
-- Análise de Perfil
+  ATENDIMENTO
+- Leads
+  - Listagem
+- Agendamento
+
+VENDAS
+- Oportunidades
+- Propostas
+- Fechamentos
+
+ANÁLISE
+- Perfil e Crédito
 
 FORMALIZAÇÃO
 - Contratos e Repasse
