@@ -8,13 +8,13 @@
         public DateTime CreateDate { get; set; }
         public DateTime DueDate { get; set; }
         public DateTime? PayDate { get; set; }
-        public string Description { get; set; }
-        public string Status { get; set; }         // WAITING / PAID
+        public string Description { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;         // WAITING / PAID
         public decimal Amount { get; set; }
         public decimal PendingAmount { get; set; }
-        public string Category { get; set; }       // ENTRADA, PARCELA, PARCELA ATO
+        public string Category { get; set; } = string.Empty;       // ENTRADA, PARCELA, PARCELA ATO
         public int? ParcelNumber { get; set; }
-        public string Observations { get; set; }
+        public string Observations { get; set; } = string.Empty;
     }
 
     public class AccountPayableV2
@@ -25,12 +25,12 @@
         public DateTime CreateDate { get; set; }
         public DateTime DueDate { get; set; }
         public DateTime? PayDate { get; set; }
-        public string Description { get; set; }
-        public string Status { get; set; }         // WAITING / PAID
+        public string Description { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;         // WAITING / PAID
         public decimal Amount { get; set; }
         public decimal PendingAmount { get; set; }
-        public string Category { get; set; }       // COMISSAO_CORRETOR, COMISSAO_GERENTE, etc.
-        public string Observations { get; set; }
+        public string Category { get; set; } = string.Empty;       // COMISSAO_CORRETOR, COMISSAO_GERENTE, etc.
+        public string Observations { get; set; } = string.Empty;
     }
 
     public class AccountsReceivableRowDto
@@ -43,9 +43,9 @@
         public DateTime? DueDate { get; set; }
         public DateTime? PaidDate { get; set; }
 
-        public string Description { get; set; } = "";
+        public string Description { get; set; } = string.Empty;
         public string Status { get; set; } = "WAITING";
-        public string Category { get; set; } = "";
+        public string Category { get; set; } = string.Empty;
 
         public decimal Amount { get; set; }
         public decimal PendingAmount { get; set; }
@@ -62,9 +62,9 @@
         public DateTime? DueDate { get; set; }
         public DateTime? PaidDate { get; set; }
 
-        public string Description { get; set; } = "";
+        public string Description { get; set; } = string.Empty;
         public string Status { get; set; } = "WAITING"; // WAITING | PAID | CANCELLED
-        public string Category { get; set; } = "";
+        public string Category { get; set; } = string.Empty;
 
         public decimal Amount { get; set; }
         public decimal PendingAmount { get; set; }
@@ -114,5 +114,4 @@
         public DateTime? PaidDate { get; set; }
         public string? Observations { get; set; }
     }
-
 }
