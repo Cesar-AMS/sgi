@@ -9,11 +9,11 @@ namespace JMImoveisAPI.Controllers
     [ApiController]
     public sealed class DashboardSalesController : ControllerBase
     {
-        private readonly IDashboardSalesRepository _repo;
+        private readonly IDashboardSalesService _dashboardSalesService;
 
-        public DashboardSalesController(IDashboardSalesRepository repo)
+        public DashboardSalesController(IDashboardSalesService dashboardSalesService)
         {
-            _repo = repo;
+            _dashboardSalesService = dashboardSalesService;
         }
 
         // 1) Vendas por mês (ano inteiro)
@@ -21,10 +21,7 @@ namespace JMImoveisAPI.Controllers
         [HttpGet("by-month")]
         public async Task<ActionResult<IReadOnlyList<SalesByMonthDto>>> GetByMonth([FromQuery] int year, CancellationToken ct)
         {
-            if (year <= 0) year = DateTime.UtcNow.Year;
-            var start = new DateTime(year, 1, 1);
-            var end = start.AddYears(1);
-            var rows = await _repo.GetByMonthAsync(start, end, ct);
+            var rows = await _dashboardSalesService.GetByMonthAsync(year, ct);
             return Ok(rows);
         }
 
@@ -33,8 +30,7 @@ namespace JMImoveisAPI.Controllers
         [HttpGet("by-realtor")]
         public async Task<ActionResult<IReadOnlyList<SalesByEntityDto>>> GetByRealtor([FromQuery] int year, [FromQuery] int month, CancellationToken ct)
         {
-            var (start, end) = MonthRange(year, month);
-            var rows = await _repo.GetByRealtorAsync(start, end, ct);
+            var rows = await _dashboardSalesService.GetByRealtorAsync(year, month, ct);
             return Ok(rows);
         }
 
@@ -42,8 +38,7 @@ namespace JMImoveisAPI.Controllers
         [HttpGet("by-manager")]
         public async Task<ActionResult<IReadOnlyList<SalesByEntityDto>>> GetByManager([FromQuery] int year, [FromQuery] int month, CancellationToken ct)
         {
-            var (start, end) = MonthRange(year, month);
-            var rows = await _repo.GetByManagerAsync(start, end, ct);
+            var rows = await _dashboardSalesService.GetByManagerAsync(year, month, ct);
             return Ok(rows);
         }
 
@@ -51,8 +46,7 @@ namespace JMImoveisAPI.Controllers
         [HttpGet("by-coordenator")]
         public async Task<ActionResult<IReadOnlyList<SalesByEntityDto>>> GetByCoordenator([FromQuery] int year, [FromQuery] int month, CancellationToken ct)
         {
-            var (start, end) = MonthRange(year, month);
-            var rows = await _repo.GetByCoordenatorAsync(start, end, ct);
+            var rows = await _dashboardSalesService.GetByCoordenatorAsync(year, month, ct);
             return Ok(rows);
         }
 
@@ -60,17 +54,8 @@ namespace JMImoveisAPI.Controllers
         [HttpGet("by-branch")]
         public async Task<ActionResult<IReadOnlyList<SalesByEntityDto>>> GetByBranch([FromQuery] int year, [FromQuery] int month, CancellationToken ct)
         {
-            var (start, end) = MonthRange(year, month);
-            var rows = await _repo.GetByBranchAsync(start, end, ct);
+            var rows = await _dashboardSalesService.GetByBranchAsync(year, month, ct);
             return Ok(rows);
-        }
-
-        private static (DateTime start, DateTime end) MonthRange(int year, int month)
-        {
-            if (year <= 0) year = DateTime.UtcNow.Year;
-            if (month < 1 || month > 12) month = DateTime.UtcNow.Month;
-            var start = new DateTime(year, month, 1);
-            return (start, start.AddMonths(1));
         }
     }
 }

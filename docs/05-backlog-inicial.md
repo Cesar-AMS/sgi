@@ -722,6 +722,29 @@ Proximo corte recomendado:
 - pausar Empreendimentos backend se nao houver necessidade operacional imediata
 - e so voltar nele se surgir necessidade clara de abrir `Apartament` ou consolidar mais o frontend de Construtora
 
+## 8.7 Atualizacao incremental - Comissoes e Resultado Comercial no backend
+O dominio de Comissoes e Resultado Comercial avancou tambem no backend, sem mudanca de contrato HTTP.
+
+Caminho oficial atual no backend para o recorte:
+- `DashboardSalesController -> IDashboardSalesService -> DashboardSalesService`
+- `IDashboardSalesRepository -> DashboardSalesRepository`
+
+Fluxos ja cobertos:
+- vendas por mes
+- vendas por corretor
+- vendas por gerente
+- vendas por coordenador
+- vendas por filial
+
+Divida assumida:
+- o backend ainda cobre so o painel agregado do recorte
+- `ViewCorretorComponent` continua fora do caminho oficial no frontend
+- `ComissoesService` ainda sustenta uma trilha paralela mockada
+
+Proximo corte recomendado:
+- documentar o recorte atual como suficiente antes de abrir outro subfluxo
+- ou pausar o dominio se nao houver necessidade operacional clara de aprofundar o backend agora
+
 # 9. Resumo executivo
 O backlog inicial do projeto foi estruturado para seguir o fluxo real da empresa e reduzir o risco de construir funcionalidades desconectadas da operação.
 
