@@ -25,6 +25,7 @@ import { AccountsPayableComponent } from './financeiro/accounts-payable/accounts
 import { AccountsReceivableComponent } from './financeiro/accounts-receivable/accounts-receivable.component';
 import { ClientListComponent } from './clientes/client-list/client-list.component';
 import { GeraisComponent } from './configuracoes/gerais/gerais.component';
+import { CreditAnalysisComponent } from './credit-analysis/credit-analysis.component';
 import { DashboardHomeComponent } from './dashboard/dashboard-home.component';
 import { AdminEmpreendimentoComponent } from './empreendimentos/admin-empreendimento/admin-empreendimento.component';
 import { CadastroComponent } from './empreendimentos/cadastro/cadastro.component';
@@ -55,6 +56,7 @@ import { VisaoGeralComponent } from './vendas/visao-geral/visao-geral.component'
 @NgModule({
   declarations: [
     ViewCorretorComponent,
+    CreditAnalysisComponent,
     DashboardHomeComponent,
     VisitasComponent,
     LeadsComponent,
