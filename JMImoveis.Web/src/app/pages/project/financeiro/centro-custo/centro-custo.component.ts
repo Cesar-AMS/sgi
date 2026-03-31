@@ -1,10 +1,10 @@
-import { ApiService } from 'src/app/core/services/api.service';
 import { Component, OnInit } from '@angular/core';
 
 import * as moment from 'moment';
 import { AccountOption, CostCenter, CostCenterSummary, Entry, ReclassifyRequest, SummaryResponse } from 'src/app/models/CC';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CostCenterAnalysisService } from 'src/app/core/services/cost-center-analysis.service';
 
 
 @Component({
@@ -42,12 +42,12 @@ export class CentroCustoComponent  implements OnInit{
   reclass: ReclassifyRequest = { costCenterId: 0, accountId: undefined, categoryId: undefined, reason: '' };
   saving = false;
 
-  constructor(private api: ApiService) {}
+  constructor(private costCenterAnalysisService: CostCenterAnalysisService) {}
 
   ngOnInit(): void {
    // this.loadSummary();
-   // this.api.getCostCenters().subscribe(cs => this.costCenters = cs);
-   // this.api.getAccounts().subscribe(a => this.accounts = a);
+   // this.costCenterAnalysisService.getCostCenters().subscribe(cs => this.costCenters = cs);
+   // this.costCenterAnalysisService.getAccounts().subscribe(a => this.accounts = a);
   }
 
   private getPeriod() {
@@ -63,7 +63,7 @@ export class CentroCustoComponent  implements OnInit{
   loadSummary() {
     this.loading = true; this.error = undefined;
     const { startDate, endDate } = this.getPeriod();
-    this.api.getMonthlySummary(startDate, endDate, this.type).subscribe({
+    this.costCenterAnalysisService.getMonthlySummary(startDate, endDate, this.type).subscribe({
       next: (res: SummaryResponse) => {
         this.items = res.items ?? [];
         this.totalRevenue = res.totalRevenue ?? 0;
@@ -82,7 +82,7 @@ export class CentroCustoComponent  implements OnInit{
     this.detailLoading = true;
 
     const { startDate, endDate } = this.getPeriod();
-    this.api.getEntries(cc.costCenterId, startDate, endDate, this.type).subscribe({
+    this.costCenterAnalysisService.getEntries(cc.costCenterId, startDate, endDate, this.type).subscribe({
       next: (rows) => this.detailItems = rows,
       error: (e) => console.error(e),
       complete: () => this.detailLoading = false
@@ -104,7 +104,7 @@ export class CentroCustoComponent  implements OnInit{
   submitReclass() {
     if (!this.reclassTarget) return;
     this.saving = true;
-    this.api.reclassify(this.reclassTarget.kind, this.reclassTarget.id, this.reclass).subscribe({
+    this.costCenterAnalysisService.reclassify(this.reclassTarget.kind, this.reclassTarget.id, this.reclass).subscribe({
       next: () => {
         // otimista: atualiza a linha no detalhe
         if (this.selectedCC && this.reclass.costCenterId !== this.selectedCC.id) {

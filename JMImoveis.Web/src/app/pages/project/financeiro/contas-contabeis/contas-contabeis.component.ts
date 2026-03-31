@@ -3,11 +3,12 @@ import * as moment from 'moment';
 import jsPDF from 'jspdf';
 import autoTable, { RowInput } from 'jspdf-autotable';
 import { AccountOption, AccountSummary, AccountSummaryResponse, CostCenter, Entry, ReclassifyRequest } from 'src/app/models/contas';
-import { ApiService } from 'src/app/core/services/api.service';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { CommonModule, DatePipe, registerLocaleData } from '@angular/common';
 import { AccountPlain, AccountPlains, CentroCusto } from 'src/app/models/ContaBancaria';
+import { AdminAccessService } from 'src/app/core/services/admin-access.service';
+import { AccountAnalysisService } from 'src/app/core/services/account-analysis.service';
 
 @Component({
   selector: 'app-contas-contabeis',
@@ -47,16 +48,19 @@ export class ContasContabeisComponent implements OnInit {
   costCenters: CentroCusto[] = [];
   saving = false;
 
-  constructor(private api: ApiService) {}
+  constructor(
+    private adminAccessService: AdminAccessService,
+    private accountAnalysisService: AccountAnalysisService
+  ) {}
 
   ngOnInit(): void {
     this.loadSummary();
-    this.api.getAccPlan().subscribe((data: any) => {
+    this.adminAccessService.listAccountPlains().subscribe((data: any) => {
       this.planAcc = data;
     });
 
     
-     this.api.getCentroCusto().subscribe((data) => {
+     this.adminAccessService.listCostCenters().subscribe((data) => {
       this.costCenters = data;
     });
   }
@@ -71,7 +75,7 @@ export class ContasContabeisComponent implements OnInit {
   loadSummary() {
     this.loading = true; this.error = undefined;
     const { start, end } = this.getPeriod();
-    this.api.getSummary({
+    this.accountAnalysisService.getSummary({
       start, end, type: this.type,
       costCenterId: this.costCenterId ?? undefined,
       categoryId:  this.categoryId  ?? undefined
@@ -94,7 +98,7 @@ export class ContasContabeisComponent implements OnInit {
     this.detailLoading = true;
 
     const { start, end } = this.getPeriod();
-    this.api.getEntriesAC(acc.accountId, {
+    this.accountAnalysisService.getEntries(acc.accountId, {
       start, end, type: this.type,
       costCenterId: this.costCenterId ?? undefined,
       categoryId:  this.categoryId  ?? undefined
@@ -124,7 +128,7 @@ export class ContasContabeisComponent implements OnInit {
   submitReclass() {
     if (!this.reclassTarget) return;
     this.saving = true;
-    this.api.reclassify(this.reclassTarget.kind, this.reclassTarget.id, this.reclass).subscribe({
+    this.accountAnalysisService.reclassify(this.reclassTarget.kind, this.reclassTarget.id, this.reclass).subscribe({
       next: () => {
         // atualiza a lista de detalhe (otimista)
         const i = this.detailItems.findIndex(x => x.id === this.reclassTarget!.id);

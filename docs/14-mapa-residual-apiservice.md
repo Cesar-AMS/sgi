@@ -72,6 +72,13 @@ Estes pontos ainda usam `ApiService`, mas o uso e compreensivel dentro do recort
 - [accounts-receivable.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/accounts-receivable/accounts-receivable.component.ts)
   - o fluxo principal ja estava em `AccountsReceivableService`
   - o uso residual de `ApiService` para filiais saiu para `AdminAccessService`
+- [centro-custo.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/centro-custo/centro-custo.component.ts)
+  - o fluxo analitico saiu para `CostCenterAnalysisService`
+  - `ApiService` deixou de ser necessario nessa tela
+- [contas-contabeis.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-contabeis/contas-contabeis.component.ts)
+  - o fluxo analitico saiu para `AccountAnalysisService`
+  - os lookups passaram para `AdminAccessService`
+  - `ApiService` deixou de ser necessario nessa tela
 
 ---
 
@@ -112,8 +119,8 @@ Estes pontos nao devem puxar a fase inteira agora:
 Se a equipe quiser seguir pela melhor relacao entre risco e ganho, a ordem mais sensata e:
 
 1. assumir explicitamente `ApiService` como fachada legada nos pontos que ja estao estabilizados
-2. revisar telas financeiras secundarias que ainda nao tenham service oficial claro
-3. decidir se vale mais um corte em `gerais.component.ts` ou se o componente ja esta bom o suficiente para a Fase 2
+2. decidir se vale mais um corte em `gerais.component.ts` ou se o componente ja esta bom o suficiente para a Fase 2
+3. revisar se o frontend da Fase 2 ja esta maduro o suficiente para virar o foco para backend hygiene
 4. deixar visitas, comparecimentos, espelho e dashboards paralelos para cortes proprios futuros
 
 ---

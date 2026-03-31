@@ -117,6 +117,8 @@ Os primeiros cortes da Fase 2 ja executados foram:
 - migracao do bloco de categorias em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
 - migracao do bloco de centro de custo em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
 - migracao do bloco de plano de contas em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
+- migracao de [centro-custo.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/centro-custo/centro-custo.component.ts) para `CostCenterAnalysisService`
+- migracao de [contas-contabeis.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-contabeis/contas-contabeis.component.ts) para `AccountAnalysisService`, com lookups em `AdminAccessService`
 
 Leitura pratica desta atualizacao:
 - o `ApiService` ja perdeu usos indevidos importantes em Empreendimentos e Financeiro
@@ -128,6 +130,6 @@ Leitura pratica desta atualizacao:
 ## 11. Proximo corte recomendado desta fase
 O proximo corte mais coerente agora e um destes:
 
-1. revisar telas financeiras secundarias que ainda nao tenham service oficial claro
-2. decidir se vale mais um corte em `gerais.component.ts` ou se o componente ja esta bom o suficiente para a Fase 2
+1. decidir se vale mais um corte em `gerais.component.ts` ou se o componente ja esta bom o suficiente para a Fase 2
+2. revisar se o frontend da Fase 2 ja esta maduro o suficiente para virar o foco para backend hygiene
 3. mudar o foco para backend hygiene de baixo risco, se a equipe quiser variar a frente tecnica sem abrir novo dominio
