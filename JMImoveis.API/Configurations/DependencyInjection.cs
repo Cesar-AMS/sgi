@@ -19,6 +19,7 @@ namespace JMImoveisAPI.Configurations
             services.AddScoped<ICargoService, CargoService>();
             services.AddScoped<ICentroCustoRepository, CentroCustoRepository>();
             services.AddScoped<IClienteRepository, ClienteRepository>();
+            services.AddScoped<IClienteService, ClienteService>();
             services.AddScoped<IConstrutoraRepository, ConstrutoraRepository>();
             services.AddScoped<ICustoPessoalRepository, CustoPessoalRepository>();
             services.AddScoped<IDesistenciaRepository, DesistenciaRepository>();

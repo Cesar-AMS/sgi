@@ -38,13 +38,13 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<IEnumerable<Cliente?>> GetByTerms(string terms)
         {
-            var sql = @$"SELECT T0.id, T0.name, T0.email , T0.cellphone , T0.cpf_cnpj as ""CpfCnpj""
+            var sql = @"SELECT T0.id, T0.name, T0.email , T0.cellphone , T0.cpf_cnpj as ""CpfCnpj""
                          FROM customers T0 
                          WHERE T0.name
-                         LIKE '{terms}%'";
+                         LIKE @terms";
 
             await using var conn = await _context.OpenConnectionAsync();
-            return await conn.QueryAsync<Cliente>(sql);
+            return await conn.QueryAsync<Cliente>(sql, new { terms = $"{terms}%" });
         }
         public async Task<Cliente?> GetByIdAsync(int id)
         {
@@ -55,10 +55,10 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<Cliente?> GetDependentByClientIdAsync(int id)
         {
-            var sql = @$"select t0.cpf_cnpj as ""CpfCnpj"",
+            var sql = @"select t0.cpf_cnpj as ""CpfCnpj"",
                                 t0.address_number as ""AddressNumber"" from customers t0
                          where t0.id in (select max(cd.dependent_customer_id)
-                                         from customer_dependents cd where cd.customer_id = {id})";
+                                         from customer_dependents cd where cd.customer_id = @id)";
 
             await using var conn = await _context.OpenConnectionAsync();
             return await conn.QueryFirstOrDefaultAsync<Cliente>(sql, new { id });
@@ -106,12 +106,12 @@ namespace JMImoveisAPI.Repositories
 
         public async Task InsertDependents(int customerId, int dependentId)
         {
-            string sql = @$"INSERT INTO customer_dependents (customer_id, dependent_customer_id, created_at, updated_at)
-                                    VALUES ({customerId},{dependentId},now(),now());
+            string sql = @"INSERT INTO customer_dependents (customer_id, dependent_customer_id, created_at, updated_at)
+                                    VALUES (@customerId,@dependentId,now(),now());
                             SELECT LAST_INSERT_ID();";
 
             await using var conn = await _context.OpenConnectionAsync();
-            await conn.ExecuteScalarAsync(sql);
+            await conn.ExecuteScalarAsync(sql, new { customerId, dependentId });
         }
     }
 }
