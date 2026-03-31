@@ -3,7 +3,7 @@ import { CommonModule, CurrencyPipe } from '@angular/common';
 import jsPDF from 'jspdf';
 import autoTable, { RowInput } from 'jspdf-autotable';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ApiService } from 'src/app/core/services/api.service';
+import { DreService } from 'src/app/core/services/dre.service';
 import { DreLine, DreResponse, DreTotals } from 'src/app/models/ContaBancaria';
 import * as moment from 'moment';
 
@@ -34,7 +34,7 @@ export class DreComponent implements OnInit {
   loading = false;
   error?: string;
 
-  constructor(private dreService: ApiService) { }
+  constructor(private dreService: DreService) { }
 
   ngOnInit(): void {
     // mês corrente (AAAA-MM)

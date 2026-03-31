@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { PainelService } from 'src/app/core/services/painel.service';
-import { ApiService } from 'src/app/core/services/api.service';
+import { CommercialResultsService } from 'src/app/core/services/commercial-results.service';
 import { CorretorDashboardResponse, ManagerOption } from 'src/app/models/ContaBancaria';
 
 type MonthYearOpt = { month: number; year: number; label: string; short: string };
@@ -49,7 +48,7 @@ export class CorretorComponent implements OnInit {
   totalComissoesGerentes: number[] = Array(12).fill(0);
   totalDespesasFiliais: number[] = Array(12).fill(0);
 
-  constructor(private api: ApiService) {}
+  constructor(private commercialResultsService: CommercialResultsService) {}
 
   ngOnInit(): void {
     this.buildMonthYearOptions();
@@ -82,7 +81,7 @@ export class CorretorComponent implements OnInit {
   }
 
   private loadFromApi(year: number, month: number, managerId: number | null) {
-    this.api.getCorretorDashboard(year, month, managerId).subscribe({
+    this.commercialResultsService.getBrokerDashboard(year, month, managerId).subscribe({
       next: (res) => this.applyResponse(res),
       error: (err) => console.error('Erro ao carregar dashboard corretor:', err)
     });

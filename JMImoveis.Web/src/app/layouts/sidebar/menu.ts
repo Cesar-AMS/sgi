@@ -3,7 +3,7 @@ import { MenuItem } from './menu.model';
 export const MENU: MenuItem[] = [
   {
     id: 1,
-    label: 'Navegação',
+    label: 'Navegacao',
     isTitle: true,
   },
   {
@@ -61,13 +61,13 @@ export const MENU: MenuItem[] = [
       {
         id: 31,
         label: 'Clientes',
-        link: '/clientes',
+        link: '/jm/clientes',
         parentId: 30,
         permissionKey: 'customers.customers.view',
       },
       {
         id: 32,
-        label: 'Visão Geral',
+        label: 'Visao Geral',
         link: '/jm/vendas/visao-geral',
         parentId: 30,
         permissionKey: 'commercial.overview.view',
@@ -81,7 +81,7 @@ export const MENU: MenuItem[] = [
       },
       {
         id: 34,
-        label: 'Desistências',
+        label: 'Desistencias',
         link: '/jm/vendas/desistencias',
         parentId: 30,
         permissionKey: 'commercial.sales.view',
@@ -101,21 +101,21 @@ export const MENU: MenuItem[] = [
       {
         id: 41,
         label: 'Construtoras',
-        link: '/construtora',
+        link: '/jm/construtora',
         parentId: 40,
         permissionKey: 'enterprises.builders.view',
       },
       {
         id: 42,
         label: 'Empreendimentos',
-        link: '/empreendimentos',
+        link: '/jm/empreendimentos',
         parentId: 40,
         permissionKey: 'enterprises.projects.view',
       },
       {
         id: 43,
         label: 'Unidades',
-        link: '/unidades',
+        link: '/jm/unidades',
         parentId: 40,
         permissionKey: 'enterprises.units.view',
       },
@@ -125,12 +125,12 @@ export const MENU: MenuItem[] = [
     id: 50,
     label: 'Clientes',
     icon: 'ph-users',
-    link: '/clientes',
+    link: '/jm/clientes',
     permissionKey: 'customers.customers.view',
   },
   {
     id: 60,
-    label: 'Finanças',
+    label: 'Financas',
     icon: 'ph-wallet',
     permissionKeys: [
       'finance.accounts-receivable.view',
@@ -170,7 +170,7 @@ export const MENU: MenuItem[] = [
       },
       {
         id: 65,
-        label: 'Projeção',
+        label: 'Projecao',
         link: '/jm/financeiro/projecao',
         parentId: 60,
         permissionKey: 'finance.projection.view',
@@ -191,7 +191,7 @@ export const MENU: MenuItem[] = [
     subItems: [
       {
         id: 71,
-        label: 'Controle de Funcionários',
+        label: 'Controle de Funcionarios',
         link: '/jm/rh/controle-funcionarios',
         parentId: 70,
         permissionKey: 'hr.staff-control.view',
@@ -212,7 +212,7 @@ export const MENU: MenuItem[] = [
       },
       {
         id: 74,
-        label: 'Férias',
+        label: 'Ferias',
         link: '/jm/rh/ferias',
         parentId: 70,
         permissionKey: 'hr.vacations.view',
@@ -228,7 +228,7 @@ export const MENU: MenuItem[] = [
   },
   {
     id: 80,
-    label: 'Administração',
+    label: 'Administracao',
     icon: 'ph-gear-six',
     permissionKeys: [
       'admin.users.view',
@@ -239,29 +239,29 @@ export const MENU: MenuItem[] = [
     subItems: [
       {
         id: 81,
-        label: 'Usuários',
-        link: '/settings',
+        label: 'Usuarios',
+        link: '/jm/settings',
         parentId: 80,
         permissionKey: 'admin.users.view',
       },
       {
         id: 82,
         label: 'Perfis',
-        link: '/settings',
+        link: '/jm/settings',
         parentId: 80,
         permissionKey: 'admin.profiles.view',
       },
       {
         id: 83,
-        label: 'Permissões',
-        link: '/settings',
+        label: 'Permissoes',
+        link: '/jm/settings',
         parentId: 80,
         permissionKey: 'admin.permissions.view',
       },
       {
         id: 84,
         label: 'Gerais',
-        link: '/settings',
+        link: '/jm/settings',
         parentId: 80,
         permissionKey: 'admin.general-settings.view',
       },

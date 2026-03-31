@@ -591,6 +591,56 @@ Proximo corte recomendado:
 - decidir se RH ja pode ser pausado como bom o suficiente
 - ou fazer mais um corte pequeno em um subfluxo especifico quando houver necessidade operacional
 
+## 8.2 Atualizacao incremental - Financeiro Pos-venda
+O dominio de Financeiro Pos-venda ja possui um recorte inicial consolidado no frontend.
+
+Caminho oficial atual:
+- rotas oficiais em:
+  - `/jm/financeiro/contas-receber`
+  - `/jm/financeiro/contas-pagar`
+  - `/jm/financeiro/dre`
+- services oficiais do recorte:
+  - `AccountsReceivableService`
+  - `AccountsPayableService`
+  - `DreService`
+
+Fluxos ja cobertos:
+- contas a receber
+- contas a pagar
+- DRE por periodo
+
+Divida assumida:
+- fluxo de caixa ainda fora do caminho oficial
+- projecao ainda fora do caminho oficial
+- `ApiService` ainda mantem fluxos financeiros legados por compatibilidade
+
+Proximo corte recomendado:
+- decidir se o dominio ja pode ser pausado como bom o suficiente
+- ou fazer mais um corte pequeno em fluxo de caixa ou projecao
+
+## 8.3 Atualizacao incremental - Comissoes e Resultado Comercial
+O dominio de Comissoes e Resultado Comercial ja possui um recorte inicial consolidado no frontend.
+
+Caminho oficial atual:
+- rota oficial em `/jm/vendas/corretor`
+- componente oficial do recorte em `CorretorComponent`
+- `CommercialResultsService` como service oficial do recorte
+
+Fluxos ja cobertos:
+- painel comercial por mes e gerente
+- salarios de corretores e gerentes
+- comissoes de corretores e gerentes
+- despesas por filial
+- exportacao em PDF
+
+Divida assumida:
+- `ViewCorretorComponent` ainda fora do caminho oficial
+- `ComissoesService` ainda sustenta uma trilha paralela mockada de apresentacao
+
+Proximo corte recomendado:
+- decidir se vale consolidar `ViewCorretorComponent`
+- ou encerrar o dominio como bom o suficiente neste escopo atual
+
 # 9. Resumo executivo
 O backlog inicial do projeto foi estruturado para seguir o fluxo real da empresa e reduzir o risco de construir funcionalidades desconectadas da operação.
 
