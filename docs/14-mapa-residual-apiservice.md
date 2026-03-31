@@ -1,0 +1,127 @@
+# Mapa Residual do ApiService
+
+## 1. Objetivo deste documento
+Este documento registra onde o `ApiService` ainda aparece na base e como esses usos devem ser classificados dentro da Fase 2.
+
+O objetivo nao e remover tudo de uma vez.
+
+O objetivo e separar o que hoje e:
+- fachada legada aceitavel
+- uso ainda justificavel temporariamente
+- uso que merece sair para service de dominio
+- uso paralelo ou fora do foco atual
+
+---
+
+## 2. Leitura executiva
+O `ApiService` continua sendo a maior divida transversal do frontend.
+
+Mesmo depois da consolidacao por dominios, ele ainda aparece em:
+- fluxos oficiais que dependem de lookups auxiliares
+- telas paralelas ainda nao consolidadas
+- trilhas legadas de compatibilidade
+- modulos fora do foco principal de negocio
+
+Isso significa que a Fase 2 nao precisa "apagar o ApiService".
+
+Ela precisa:
+- reduzir o uso indevido
+- assumir explicitamente o que e fachada legada
+- priorizar apenas os pontos que ainda atrapalham a clareza arquitetural
+
+---
+
+## 3. Fachada legada aceitavel por enquanto
+Estes casos ainda podem continuar usando `ApiService` sem urgencia de corte:
+
+- [propostas.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/propostas/propostas.component.ts)
+  - o `ApiService` ja funciona como fachada legada para `ProposalsService`
+- [leads.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/leads/leads.component.ts)
+  - uso residual para lookups auxiliares de usuarios
+- [leads-details.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/leads-details/leads-details.component.ts)
+  - uso residual auxiliar, sem quebrar o caminho oficial de `LeadsService`
+- [desistencias.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/vendas/desistencias/desistencias.component.ts)
+  - continua com dependencia auxiliar, mas a trilha principal de propostas ja saiu para `ProposalsService`
+
+---
+
+## 4. Uso temporariamente justificavel
+Estes pontos ainda usam `ApiService`, mas o uso e compreensivel dentro do recorte atual:
+
+- [visao-geral.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/vendas/visao-geral/visao-geral.component.ts)
+  - o fluxo principal esta no `SalesService`
+  - `ApiService` ainda serve como provedor de lookups auxiliares
+- [vendas-new.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/vendas/vendas-new/vendas-new.component.ts)
+  - a venda principal ja esta em `SalesService`
+  - `ApiService` segue para apoios e dependencias nao isoladas
+- [cadastro.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/empreendimentos/cadastro/cadastro.component.ts)
+  - o fluxo principal esta em `EnterprisesService`
+  - `ApiService` continua no apoio de construtora
+- [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts)
+  - `AdminAccessService` ja cobre usuarios, cargos e filiais
+  - `ApiService` ainda sustenta as demais abas do componente inchado
+
+---
+
+## 5. Pontos que merecem sair do ApiService
+Estes sao os melhores candidatos da Fase 2 para novos cortes pequenos:
+
+- [construtora.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/empreendimentos/construtora/construtora.component.ts)
+  - dominio concreto
+  - recorte pequeno
+  - combina com a consolidacao ja feita de Empreendimentos
+
+- [contas-receber.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-receber/contas-receber.component.ts)
+  - ainda depende de `ApiService`, apesar do dominio ja ter service oficial
+
+- [contas-pagar.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-pagar/contas-pagar.component.ts)
+  - mesma situacao de `contas-receber`
+
+- [accounts-receivable.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/accounts-receivable/accounts-receivable.component.ts)
+  - o dominio financeiro ja tem service oficial e este uso residual merece revisao
+
+---
+
+## 6. Fluxos paralelos ou fora do foco atual
+Estes pontos nao devem puxar a fase inteira agora:
+
+- [visitas.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/visitas/visitas.component.ts)
+  - ainda mistura `ApiService` com `VisitasApiService`
+  - merece revisao propria quando Atendimento voltar a ser priorizado
+
+- [comparecimentos.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/comparecimentos/comparecimentos.component.ts)
+  - fluxo paralelo, nao prioritario nesta etapa
+
+- [espelho.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/empreendimentos/espelho/espelho.component.ts)
+  - mistura empreendimentos com fluxo comercial
+  - nao e o melhor alvo transversal agora
+
+- [admin-empreendimento.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/empreendimentos/admin-empreendimento/admin-empreendimento.component.ts)
+  - subfluxo fora do caminho oficial principal
+
+- [crm.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/dashboards/crm/crm.component.ts)
+- [create.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/invoices/create/create.component.ts)
+- [modal-venda.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/modal-venda/modal-venda.component.ts)
+  - trilhas fora do foco principal da consolidacao transversal
+
+---
+
+## 7. Recomendacao pratica
+Se a equipe quiser seguir pela melhor relacao entre risco e ganho, a ordem mais sensata e:
+
+1. assumir explicitamente `ApiService` como fachada legada nos pontos que ja estao estabilizados
+2. atacar `ConstrutoraComponent`
+3. revisar `Contas a Receber` e `Contas a Pagar`
+4. deixar visitas, comparecimentos, espelho e dashboards paralelos para cortes proprios futuros
+
+---
+
+## 8. Conclusao
+O `ApiService` ainda nao e um problema porque "existe".
+
+Ele e um problema apenas quando:
+- concorre com service oficial do dominio
+- embaralha o caminho oficial
+- dificulta entender onde um fluxo realmente mora
+
+Na Fase 2, a prioridade correta e atacar so esses pontos.
