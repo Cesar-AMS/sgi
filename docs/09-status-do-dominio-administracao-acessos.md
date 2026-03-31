@@ -55,6 +55,7 @@ No backend, o recorte atual tambem passou a ter uma camada de aplicacao inicial:
 - `UsuarioController -> IUsuarioService -> UsuarioService`
 - `CargoController -> ICargoService -> CargoService`
 - `FilialController -> IFilialService -> FilialService`
+- `FormasPagamentoController -> IFormasPagamentoService -> FormasPagamentoService`
 
 ---
 
@@ -91,7 +92,7 @@ Permanece como divida conhecida, mas nao bloqueante neste recorte:
 - `GeraisComponent` ainda concentra muitas responsabilidades
 - filiais, categorias, centro de custo, plano de contas e formas de pagamento ainda usam `ApiService`
 - o fluxo de permissoes continua baseado em menu por usuario e ainda nao representa RBAC completo
-- backend de usuarios, cargos e filiais ja possuem service estruturado, mas o restante do dominio administrativo ainda nao segue o mesmo padrao
+- backend de usuarios, cargos, filiais e formas de pagamento ja possuem service estruturado, mas o restante do dominio administrativo ainda nao segue o mesmo padrao
 - ainda nao existe separacao formal de Perfis, Permissoes e overrides por usuario
 
 ---

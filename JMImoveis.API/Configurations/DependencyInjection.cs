@@ -25,6 +25,7 @@ namespace JMImoveisAPI.Configurations
             services.AddScoped<IEmpreendimentoRepository, EmpreendimentoRepository>();
             services.AddScoped<IFormaPagamentoRepository, FormaPagamentoRepository>();
             services.AddScoped<IFormasPagamentoRepository, FormasPagamentoRepository>();
+            services.AddScoped<IFormasPagamentoService, FormasPagamentoService>();
             services.AddScoped<IFilialRepository, FilialRepository>();
             services.AddScoped<IFilialService, FilialService>();
             services.AddScoped<IIntermediariasRepository, IntermediariasRepository>();

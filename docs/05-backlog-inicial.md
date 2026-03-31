@@ -653,6 +653,7 @@ Fluxos ja cobertos:
 - usuarios
 - cargos
 - filiais
+- formas de pagamento
 
 Divida assumida:
 - o restante do dominio administrativo ainda nao segue o mesmo padrao de service

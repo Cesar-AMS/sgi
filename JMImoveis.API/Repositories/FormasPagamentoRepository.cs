@@ -26,8 +26,9 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<int> CreateAsync(PaymentType entity)
         {
-            const string sql = @" INSERT INTO payment_types  (name, can_parceling, deleted_at, created_at, updated_at)
-                                 VALUES  (@Name, @CanParceling, @DeletedAt, @CreatedAt, @UpdatedAt);";
+            const string sql = @"INSERT INTO payment_types (name, can_parceling, deleted_at, created_at, updated_at)
+                                 VALUES (@Name, @CanParceling, @DeletedAt, @CreatedAt, @UpdatedAt);
+                                 SELECT LAST_INSERT_ID();";
 
             await using var conn = await _context.OpenConnectionAsync();
             return await conn.ExecuteScalarAsync<int>(sql, entity);
