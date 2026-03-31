@@ -98,6 +98,7 @@ Responsabilidades ja centralizadas nesse caminho:
 - criacao da venda com parcels
 - atualizacao da venda
 - atualizacao explicita de status no detalhe da oportunidade
+- fechamento explicito da venda no detalhe oficial, reaproveitando o contrato atual de update
 
 ---
 
@@ -149,10 +150,12 @@ Pela regua adotada no projeto, o dominio de Vendas esta assim neste recorte:
 - `fluxo principal funcionando`
   - atendido para listar, abrir, criar e editar
   - atendido para atualizar status no detalhe oficial
+  - atendido para fechamento inicial no detalhe oficial
   - atendido para listar e aprovar propostas no caminho oficial
 - `responsabilidades principais separadas`
   - atendido de forma inicial no frontend, com `SalesService` assumindo o nucleo do fluxo
   - atendido de forma inicial para status, com acao explicita no detalhe oficial sem criar contrato HTTP novo
+  - atendido de forma inicial para fechamento, com acao explicita no detalhe oficial sem criar endpoint novo
   - atendido de forma inicial para propostas, com `ProposalsService` isolando a tela oficial
   - atendido de forma adicional com `ApiService` servindo apenas como fachada legada, sem concentrar mais a implementacao HTTP de propostas
 - `divida restante documentada`
@@ -161,9 +164,21 @@ Pela regua adotada no projeto, o dominio de Vendas esta assim neste recorte:
 ---
 
 ## 10. Proximo passo recomendado
-O proximo passo seguro para Vendas e partir para o recorte de fechamento, mantendo o que ja foi consolidado em oportunidades, status e propostas.
+Com o recorte principal atual, o dominio de Vendas ja pode ser considerado consolidado o suficiente para avancar.
 
-Objetivo do proximo corte:
-- definir o menor fluxo oficial de fechamento
-- preservar o contrato HTTP atual sempre que possivel
-- evitar abrir dashboard, espelho e financeiro alem do inevitavel
+Isso significa que, neste escopo:
+- existe 1 caminho oficial para oportunidades
+- existe 1 caminho oficial para propostas
+- o fluxo principal funciona de oportunidade ate fechamento inicial
+- as responsabilidades principais ja estao separadas o suficiente
+- a divida restante esta documentada
+
+Divida que permanece assumida:
+- criacao ainda acoplada ao endpoint `api/Financial/sales`
+- backend ainda nao possui um endpoint explicito de fechamento
+- `PropostaComponent` continua como legado temporario
+- dashboard, espelho, desistencias e corretor continuam fora deste recorte
+
+Proximo passo recomendado:
+- encerrar este recorte principal de Vendas como bom o suficiente
+- seguir para o proximo dominio prioritario, ou abrir um novo recorte especifico dentro de Vendas apenas se houver necessidade real

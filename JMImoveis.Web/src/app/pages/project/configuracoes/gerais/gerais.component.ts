@@ -5,6 +5,7 @@ import { ModalDirective } from 'ngx-bootstrap/modal';
 import { ToastrService } from 'ngx-toastr';
 import { ApiService } from 'src/app/core/services/api.service';
 import { UserMenuService } from 'src/app/core/services/user-menu.service';
+import { AdminAccessService } from 'src/app/core/services/admin-access.service';
 import { MENU } from 'src/app/layouts/sidebar/menu';
 import { MenuItem } from 'src/app/layouts/sidebar/menu.model';
 import {
@@ -226,6 +227,7 @@ loadUserMenu(userId: number) {
   ];
 
   constructor(private service: ApiService, 
+    private adminAccessService: AdminAccessService,
     private excel: ExportExcelService, 
     private toast: ToastrService, 
     public translate: TranslateService,
@@ -236,10 +238,10 @@ loadUserMenu(userId: number) {
   loading = false;
 
   patchUser() {
-    this.service.updateUsuarios(this.userForm).subscribe({
+    this.adminAccessService.updateUser(this.userForm).subscribe({
       next: () => {
         this.toast.success('Atualizado com sucesso'),
-          this.service.getUsuariosFilter(this.statusFilter).subscribe((data) => {
+          this.adminAccessService.listUsersByStatus(this.statusFilter).subscribe((data) => {
             this.usuarios = data;
           });
 
@@ -251,10 +253,10 @@ loadUserMenu(userId: number) {
 
 
   addUser() {
-    this.service.postUsuarios(this.userForm).subscribe({
+    this.adminAccessService.createUser(this.userForm).subscribe({
       next: () => {
         this.toast.success('Adicionado com sucesso'),
-          this.service.getUsuariosFilter(this.statusFilter).subscribe((data) => {
+          this.adminAccessService.listUsersByStatus(this.statusFilter).subscribe((data) => {
             this.usuarios = data;
           });
 
@@ -273,7 +275,7 @@ loadUserMenu(userId: number) {
     }
 
     if (mode === 'edit') {
-      this.service.getUserById(id!).subscribe({
+      this.adminAccessService.getUserById(id!).subscribe({
         next: (d: Usuarios) => {
           d.password = ''
           this.userForm = d;
@@ -286,11 +288,11 @@ loadUserMenu(userId: number) {
 
   removeFilial(id: any) {
 
-    this.service.deleteFilial(id).subscribe({
+    this.adminAccessService.deleteBranch(id).subscribe({
       next: () => {
         this.toast.success('Removido com sucesso'),
           this.modalFilial?.hide(),
-          this.service.getFiliais().subscribe((data) => {
+          this.adminAccessService.listBranches().subscribe((data) => {
             this.filiais = data;
             this.filiaisSelect = data;
           });
@@ -300,11 +302,11 @@ loadUserMenu(userId: number) {
   }
 
   addFilial() {
-    this.service.postFilial(this.filialForm).subscribe({
+    this.adminAccessService.createBranch(this.filialForm).subscribe({
       next: () => {
         this.toast.success('Salvo com sucesso'),
           this.modalFilial?.hide(),
-          this.service.getFiliais().subscribe((data) => {
+          this.adminAccessService.listBranches().subscribe((data) => {
             this.filiais = data;
             this.filiaisSelect = data;
           });
@@ -314,11 +316,11 @@ loadUserMenu(userId: number) {
   }
 
   updateFilial() {
-    this.service.updateFilial(this.filialForm).subscribe({
+    this.adminAccessService.updateBranch(this.filialForm).subscribe({
       next: () => {
         this.toast.success('Salvo com sucesso'),
           this.modalFilial?.hide(),
-          this.service.getFiliais().subscribe((data) => {
+          this.adminAccessService.listBranches().subscribe((data) => {
             this.filiais = data;
             this.filiaisSelect = data;
           });
@@ -337,7 +339,7 @@ loadUserMenu(userId: number) {
 
     if (mode === 'edit') {
       this.modeFilial = 'edit';
-      this.service.getFiliaisById(id!).subscribe({
+      this.adminAccessService.getBranchById(id!).subscribe({
         next: (d: Filial) => {
           this.filialForm = d;
           this.modalFilial?.show();
@@ -426,7 +428,7 @@ loadUserMenu(userId: number) {
   }
 
   addCargo() {
-    this.service.postCargos(this.cargoForm).subscribe({
+    this.adminAccessService.createRole(this.cargoForm).subscribe({
       next: () => { },
       error: (err) => console.error(err),
     });
@@ -440,7 +442,7 @@ loadUserMenu(userId: number) {
     }
 
     if (mode === 'edit') {
-      this.service.getCargoById(id!).subscribe({
+      this.adminAccessService.getRoleById(id!).subscribe({
         next: (d: Cargos) => {
           this.cargoForm = d;
           this.modalCargo?.show();
@@ -538,16 +540,16 @@ loadUserMenu(userId: number) {
       this.formasPagamento = data;
     });
 
-    this.service.getFiliais().subscribe((data) => {
+    this.adminAccessService.listBranches().subscribe((data) => {
       this.filiais = data;
       this.filiaisSelect = data;
     });
 
-    this.service.getUsuariosFilter(this.statusFilter).subscribe((data) => {
+    this.adminAccessService.listUsersByStatus(this.statusFilter).subscribe((data) => {
       this.usuarios = data;
     });
 
-    this.service.getCargos().subscribe((data) => {
+    this.adminAccessService.listRoles().subscribe((data) => {
       this.cargos = data;
       this.cargosSelect = data;
     });
@@ -639,7 +641,7 @@ private extractClickableItems(menu: MenuItem[]): MenuItem[] {
   }
 
   changeStatus() {
-    this.service.getUsuariosFilter(this.statusFilter).subscribe((data) => {
+    this.adminAccessService.listUsersByStatus(this.statusFilter).subscribe((data) => {
       this.usuarios = data;
     });
   }

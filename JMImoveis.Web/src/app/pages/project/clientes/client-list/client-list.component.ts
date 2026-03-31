@@ -2,13 +2,13 @@ import { DecimalPipe } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
 import { ModalDirective } from 'ngx-bootstrap/modal';
 import { Cliente } from 'src/app/models/ContaBancaria';
-import { ApiService } from 'src/app/core/services/api.service';
 import { HttpClient } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
 import { PaginationComponent } from 'ngx-bootstrap/pagination';
 import { ExportExcelService } from 'src/app/shared/export-excel.service';
 import { finalize, of } from 'rxjs';
 import { catchError, concatMap, switchMap, tap } from 'rxjs/operators';
+import { CustomersService } from 'src/app/core/services/customers.service';
 
 @Component({
   selector: 'app-client-list',
@@ -37,7 +37,7 @@ export class ClientListComponent {
   @ViewChild('pager') pager?: PaginationComponent;
 
   constructor(
-    private service: ApiService,
+    private customersService: CustomersService,
     private http: HttpClient,
     public toast: ToastrService,
     private excel: ExportExcelService
@@ -46,7 +46,7 @@ export class ClientListComponent {
   ngOnInit(): void {
     this.loading = true;
 
-    this.service.getClientes().subscribe({
+    this.customersService.list().subscribe({
       next: (data) => {
         this.loading = false;
         this.listClient = data;
@@ -131,15 +131,15 @@ export class ClientListComponent {
     const main = this.sanitizeCliente(this.cliente);
     const hasDep = this.dependent && this.isFilledDependent(this.dependente);
 
-    this.service.postClientes(main).pipe(
+    this.customersService.create(main).pipe(
       concatMap((createdMainId: number) => {
         if (!hasDep) return of({ createdMainId });
 
         const dep = this.sanitizeCliente(this.dependente);
 
-        return this.service.postClientes(dep).pipe(
+        return this.customersService.create(dep).pipe(
           concatMap((depId: number) =>
-            this.service.linkDependent(createdMainId, depId).pipe(
+            this.customersService.linkDependent(createdMainId, depId).pipe(
               switchMap(() => of({ createdMainId }))
             )
           )
@@ -151,7 +151,7 @@ export class ClientListComponent {
         this.dependent = false;
         this.dependente = {} as Cliente;
       }),
-      concatMap(() => this.service.getClientes()),
+      concatMap(() => this.customersService.list()),
       tap((data) => {
         this.listClient = data;
         this.currentPage = 1;
@@ -212,7 +212,7 @@ export class ClientListComponent {
       state: (this.cliente.state || '').trim().toUpperCase(),
     };
 
-    this.service.putCliente(payload).subscribe({
+    this.customersService.update(payload).subscribe({
       next: () => {
         this.loading = false;
         this.toast.success('Usuário atualizado com sucesso.', 'Sucesso!', {
@@ -222,20 +222,20 @@ export class ClientListComponent {
         if (this.dependent) {
           if (this.dependente?.id == null || this.dependente?.id == 0 || this.dependente?.id == undefined) {
             
-            this.service.postClientes(this.dependente).pipe(
+            this.customersService.create(this.dependente).pipe(
               concatMap((createdMainId: number) => {
                 const dep = this.sanitizeCliente(this.dependente);
 
-                return this.service.postClientes(dep).pipe(
+                return this.customersService.create(dep).pipe(
                   concatMap((depId: number) =>
-                    this.service.linkDependent(createdMainId, depId).pipe(
+                    this.customersService.linkDependent(createdMainId, depId).pipe(
                       switchMap(() => of({ createdMainId }))
                     )
                   )
                 );
               }),)
           } else {
-            this.service.putCliente(payload).subscribe(
+            this.customersService.update(payload).subscribe(
               {
                 next: () => {
                   console.log('teste');
@@ -246,8 +246,7 @@ export class ClientListComponent {
         }
 
 
-        this.service
-        this.service.getClientes().subscribe((data) => {
+        this.customersService.list().subscribe((data) => {
           this.listClient = data;
 
           this.clientsPage = this.listClient.slice(0, 10);
@@ -273,14 +272,14 @@ export class ClientListComponent {
 
   delClient() {
     this.loading = true
-    this.service.delClienteById(this.clientDelId).subscribe({
+    this.customersService.delete(this.clientDelId).subscribe({
       next: () => {
         this.deleteRecordModal?.hide();
         this.loading = false
         this.toast.success('Usuário deletado com sucesso.', 'Sucesso!', {
           timeOut: 3000,
         });
-        this.service.getClientes().subscribe((data) => {
+        this.customersService.list().subscribe((data) => {
           this.listClient = data;
 
           this.clientsPage = this.listClient.slice(0, 10);
@@ -306,11 +305,11 @@ export class ClientListComponent {
     this.textTitleModal = 'Editar Cliente'
     this.loading = true;
 
-    this.service.getClienteById(id).pipe(
+    this.customersService.getById(id).pipe(
       tap((d: Cliente) => {
         this.cliente = d;
       }),
-      switchMap(() => this.service.getDependentsByClientId(id)),
+      switchMap(() => this.customersService.getDependentsByCustomerId(id)),
       tap((dep: Cliente | null) => {
         if (dep && dep?.id) {
           this.dependent = true;

@@ -163,15 +163,18 @@ O recorte principal de Vendas já possui um caminho oficial inicial no frontend:
 - criação, detalhe e edição oficiais em `VendasNewComponent`
 - `SalesService` como service oficial do fluxo principal
 - alteração de status já explícita no detalhe oficial
+- fechamento inicial já explícito no detalhe oficial
 
 Dívida assumida e documentada nesta fase:
 - `PropostasComponent` já é a trilha oficial de propostas
 - `PropostaComponent` ainda existe como legado temporário
 - `ApiService` ficou apenas como fachada de compatibilidade para propostas
 - criação ainda acoplada ao endpoint `api/Financial/sales`
+- backend ainda não possui endpoint explícito de fechamento
 
-Próximo corte recomendado dentro de Vendas:
-- consolidar o recorte de fechamento
+Conclusão deste recorte:
+- o fluxo principal de Vendas já pode ser considerado bom o suficiente neste escopo
+- próximos cortes em Vendas só devem acontecer se houver necessidade operacional clara
 
 ### Prioridade
 **Muito alta**
@@ -194,6 +197,28 @@ Objetivo: centralizar dados cadastrais do cliente de forma consistente.
 ### Entregáveis
 - base de clientes reutilizável nos demais módulos
 
+### Estado atual do recorte principal
+O recorte inicial de Clientes já possui um caminho oficial no frontend:
+- rota oficial em `/jm/clientes`
+- componente oficial em `ClientListComponent`
+- `CustomersService` como service oficial do fluxo principal
+
+Fluxos já cobertos nesse caminho:
+- listagem de clientes
+- criação
+- edição
+- exclusão
+- gestão básica de dependente
+
+Dívida assumida e documentada nesta fase:
+- `ApiService` ainda mantém métodos de cliente por compatibilidade
+- backend de Clientes ainda não foi consolidado com service de aplicação dedicado
+- ainda não existe um documento funcional específico de Clientes no mesmo nível de Vendas
+
+Próximo corte recomendado dentro de Clientes:
+- decidir se vale transformar `ApiService` em fachada legada de compatibilidade para cliente
+- ou encerrar Clientes como bom o suficiente neste escopo atual
+
 ### Prioridade
 **Alta**
 
@@ -215,6 +240,28 @@ Objetivo: estruturar o catálogo comercial da empresa.
 
 ### Entregáveis
 - módulo de produto comercial estruturado
+
+### Estado atual do recorte principal
+O recorte inicial de Empreendimentos já possui um caminho oficial no frontend:
+- rota oficial em `/jm/empreendimentos`
+- componente oficial em `CadastroComponent`
+- `EnterprisesService` como service oficial do fluxo principal
+
+Fluxos já cobertos nesse caminho:
+- listagem de empreendimentos
+- criação
+- edição
+- carregamento do empreendimento por id
+
+Dívida assumida e documentada nesta fase:
+- o subfluxo de Construtora ainda não foi consolidado no mesmo caminho oficial
+- `AdminEmpreendimentoComponent` e `EspelhoComponent` continuam fora do recorte principal
+- `ApiService` ainda mantém métodos de empreendimentos e construtoras por compatibilidade
+- backend de Empreendimentos ainda não foi consolidado com service de aplicação dedicado
+
+Próximo corte recomendado dentro de Empreendimentos:
+- decidir se vale consolidar `ConstrutoraComponent`
+- ou encerrar Empreendimentos como bom o suficiente neste escopo atual
 
 ### Prioridade
 **Alta**
@@ -323,6 +370,29 @@ Objetivo: estruturar governança da plataforma.
 
 ### Entregáveis
 - base de segurança e governança
+
+### Estado atual do recorte principal
+O recorte inicial de Administração e Acessos já possui um caminho oficial no frontend para o núcleo de filiais, usuários e cargos:
+- rota atual em `/jm/settings`
+- componente oficial do recorte em `GeraisComponent`
+- `AdminAccessService` como service oficial do núcleo administrativo inicial
+
+Fluxos já cobertos nesse caminho:
+- listagem de filiais
+- criação, edição e exclusão de filial
+- listagem de usuários por status
+- criação e edição de usuário
+- listagem de cargos
+- criação e edição básica de cargo
+
+Dívida assumida e documentada nesta fase:
+- `GeraisComponent` ainda concentra muitas abas e responsabilidades
+- `ApiService` ainda mantém os demais fluxos administrativos por compatibilidade
+- o sistema ainda não possui consolidação completa de Perfis, Permissões e RBAC real neste domínio
+
+Próximo corte recomendado dentro de Administração e Acessos:
+- decidir se vale extrair mais uma aba de `GeraisComponent`
+- ou encerrar este recorte inicial como bom o suficiente por agora
 
 ### Prioridade
 **Alta**

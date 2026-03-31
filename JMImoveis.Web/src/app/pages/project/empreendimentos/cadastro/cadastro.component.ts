@@ -8,9 +8,10 @@ import { deleteinvoice, fetchInvoiceData, fetchInvoicelistData } from 'src/app/s
 import { Client } from 'src/app/core/data/client';
 import { BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
 import { Construtoras, Empreendimento } from 'src/app/models/ContaBancaria';
-import { ApiService } from 'src/app/core/services/api.service';
 import { ToastrService } from 'ngx-toastr';
 import { exportToExcel } from 'src/app/shared/utils/excel-export';
+import { EnterprisesService } from 'src/app/core/services/enterprises.service';
+import { ApiService } from 'src/app/core/services/api.service';
 
 
 interface Empreendimentol {
@@ -115,17 +116,22 @@ padronizarColunas(torre: any) {
      construtura: Construtoras = {} as Construtoras
 
    
-  constructor(public store: Store, private service: ApiService, private toast: ToastrService) {
+  constructor(
+    public store: Store,
+    private enterprisesService: EnterprisesService,
+    private service: ApiService,
+    private toast: ToastrService
+  ) {
     
   }
 
   ngOnInit() {
 
-      this.service.getConstrutora().subscribe((data)=>{
+      this.enterprisesService.listConstructors().subscribe((data)=>{
       this.construtoras = data
     })
 
-    this.service.getEmpreendimentos().subscribe((data)=>{
+    this.enterprisesService.listEnterprises().subscribe((data)=>{
       this.empreendimentos = data
     })
 
@@ -226,19 +232,19 @@ private toBRDate(value?: string | null): string {
   }
 
   updateEmpreendimento(){
-     this.service.putEmpreendimentos(this.empreendimento.id, this.empreendimento).subscribe((data)=>{
+     this.enterprisesService.updateEnterprise(this.empreendimento.id, this.empreendimento).subscribe((data)=>{
       this.toast.success('Empreendimento atualizado com sucesso')
       this.showModal?.hide()
-      this.service.getEmpreendimentos().subscribe((data)=>{
+      this.enterprisesService.listEnterprises().subscribe((data)=>{
         this.empreendimentos = data
       })
     })
   }
   saveEmpreendimento(){
-    this.service.postEmpreendimentos(this.empreendimento).subscribe((data)=>{
+    this.enterprisesService.createEnterprise(this.empreendimento).subscribe((data)=>{
       this.toast.success('Empreendimento criado com sucesso')
       this.showModal?.hide()
-      this.service.getEmpreendimentos().subscribe((data)=>{
+      this.enterprisesService.listEnterprises().subscribe((data)=>{
         this.empreendimentos = data
       })
     })
@@ -266,7 +272,7 @@ private toBRDate(value?: string | null): string {
 
      if(action === 'edit'){
       this.titleModal = 'Editar'
-      this.service.getEmpreendimentosById(id).subscribe((data)=>{
+      this.enterprisesService.getEnterpriseById(id).subscribe((data)=>{
         this.empreendimento = data
       })
 
