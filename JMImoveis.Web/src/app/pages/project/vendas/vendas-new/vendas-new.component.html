@@ -28,8 +28,18 @@
           <button class="btn btn-outline-secondary btn-sm" type="button" (click)="exportPdf()">
             <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
           </button>
-          <button class="btn btn-outline-secondary btn-sm" routerLink="/vendas/visao-geral">
+          <button class="btn btn-outline-secondary btn-sm" routerLink="/jm/vendas/visao-geral">
             <i class="bi bi-box-arrow-left"></i> Voltar</button>
+          <button class="btn btn-outline-success btn-sm" type="button" (click)="closeSale()"
+            [disabled]="closing || !isEdit">
+            <i class="bi bi-check2-square"></i>
+            {{ closing ? 'Fechando venda...' : 'Fechar venda' }}
+          </button>
+          <button class="btn btn-outline-primary btn-sm" type="button" (click)="updateStatus()"
+            [disabled]="statusSaving || !isEdit">
+            <i class="bi bi-arrow-repeat"></i>
+            {{ statusSaving ? 'Atualizando status...' : 'Atualizar status' }}
+          </button>
           <button class="btn btn-primary btn-sm" type="button" (click)="save()" [disabled]="saving">
             <i class="bi bi-check-circle"></i>
             {{ saving ? 'Salvando...' : 'Salvar' }}
@@ -109,15 +119,19 @@
             <div class="col-md-6">
               <label class="form-label">Nº Contrato</label>
               <input type="text" class="form-control" formControlName="contractNumber">
+              <small class="text-danger"
+                *ngIf="form.get('contractNumber')?.hasError('required') && form.get('contractNumber')?.touched">
+                Informe o número do contrato para fechar a venda.
+              </small>
             </div>
 
             <!-- Status -->
             <div class="col-md-3">
               <label class="form-label">Status</label>
               <select class="form-select" formControlName="status">
-                <option value="OPEN">Ativo</option>
-                <option value="WAITING">Pendente</option>
-                <option value="FAILED">Desistiu</option>
+                <option *ngFor="let option of saleStatusOptions" [value]="option.value">
+                  {{ option.label }}
+                </option>
               </select>
             </div>
 

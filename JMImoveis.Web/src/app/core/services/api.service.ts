@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { GlobalComponent } from '../../global-component';
 import { BACKEND_API_URL } from './backend-api-url';
+import { ProposalsService } from './proposals.service';
 import {
   AccountBank,
   AccountPlains,
@@ -57,7 +58,10 @@ var API_VIACEP = 'https://viacep.com.br/ws/03690040/json/'
 })
 export class ApiService {
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private proposalsService: ProposalsService
+  ) { }
 
   getVIACEP(cep: string) {
     return this.http.get<ViaCEP>(`https://viacep.com.br/ws/${cep}/json/`);
@@ -204,40 +208,22 @@ export class ApiService {
   }
 
   listPropostas(params: { de?: string; ate?: string; gerente: number, corretor: number, status?: string }): Observable<PropostaReserva[]> {
-
-    var headerToken = {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    };
-
-    let hp = new HttpParams();
-    if (params.de) hp = hp.set('de', params.de);
-    if (params.ate) hp = hp.set('ate', params.ate);
-    if (params.status && params.status !== 'ALL') hp = hp.set('status', params.status);
-    return this.http.get<PropostaReserva[]>(API_URL + `api/Propostas`, { params: hp, headers: headerToken });
+    // Compatibilidade temporaria: manter ApiService como fachada legada
+    // enquanto consumidores antigos sao migrados para ProposalsService.
+    return this.proposalsService.list(params);
   }
 
   getPropostasById(id: number) {
-    var headerToken = {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    };
-    return this.http.get<PropostaReserva>(API_URL + `api/Propostas/${id}`, {
-      headers: headerToken,
-    });
+    return this.proposalsService.getById(id);
   }
 
   createProposta(body: any) {
-    var headerToken = {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    };
-    return this.http.post(API_URL + `api/Propostas`, body, { headers: headerToken });
+    return this.proposalsService.create(body);
   }
 
   // suposição: endpoint para aprovar (implemente no .NET como PATCH/PUT)
   approveProposta(id: number) {
-    var headerToken = {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    };
-    return this.http.patch(API_URL + `api/Propostas/${id}/aprovar`, null, { headers: headerToken });
+    return this.proposalsService.approve(id);
   }
 
   getReceivablePeriodo(dtini: string, dtfim: string, typeFilter: string, categoriaFilter: string) {

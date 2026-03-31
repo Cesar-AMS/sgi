@@ -2,6 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { BsModalRef, ModalDirective } from 'ngx-bootstrap/modal';
 import { ApiService } from 'src/app/core/services/api.service';
+import { ProposalsService } from 'src/app/core/services/proposals.service';
 import { PropostaReserva } from 'src/app/models/proposta-reserva';
 import { Condicao } from '../empreendimentos/espelho/espelho.component';
 import * as moment from 'moment';
@@ -52,7 +53,8 @@ export class PropostasComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private toast: ToastrService,
-    private svc: ApiService
+    private svc: ApiService,
+    private proposalsService: ProposalsService
   ) { }
 
   ngOnInit(): void {
@@ -176,7 +178,7 @@ export class PropostasComponent implements OnInit {
     const { de, ate, status, gerente, corretor } = this.form.value;
 
     // Ajuste: passa também gerente e corretor para o backend filtrar
-    this.svc.listPropostas({ de, ate, status, gerente, corretor }).subscribe({
+    this.proposalsService.list({ de, ate, status, gerente, corretor }).subscribe({
       next: res => {
         this.items = res || [];
         this.page = 1;
@@ -189,7 +191,7 @@ export class PropostasComponent implements OnInit {
 
   // Agora abre APENAS o modal clicado, usando a diretiva @ViewChild
   openModal(id: number) {
-    this.svc.getPropostasById(id).subscribe({
+    this.proposalsService.getById(id).subscribe({
       next: p => {
 
         p.condicao.forEach(its =>{
@@ -214,7 +216,7 @@ export class PropostasComponent implements OnInit {
   approveSelected() {
     if (!this.proposta || this.proposta.status === 'APPROVED') return;
     this.approving = true;
-    this.svc.approveProposta(this.proposta.id).subscribe({
+    this.proposalsService.approve(this.proposta.id).subscribe({
       next: () => {
         this.proposta!.status = 'APPROVED';
         this.buscar();
@@ -291,7 +293,7 @@ export class PropostasComponent implements OnInit {
   saveUser() {
     console.log('proposta', this.proposta);
 
-    this.svc.createProposta(this.proposta).subscribe(() => {
+    this.proposalsService.create(this.proposta).subscribe(() => {
       this.toast.success('Proposta criada com sucesso');
       this.buscar();
     });

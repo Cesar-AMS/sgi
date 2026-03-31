@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { Sale } from 'src/app/models/sale.mode';
 import { Parcel } from 'src/app/pages/project/vendas/vendas-new/vendas-new.component';
 import { BACKEND_API_URL } from './backend-api-url';
+import { Sales } from 'src/app/models/ContaBancaria';
 
 
 @Injectable({ providedIn: 'root' })
@@ -13,6 +14,34 @@ export class SalesService {
   private readonly financialSalesUrl = `${BACKEND_API_URL}api/Financial/sales`;
 
   constructor(private http: HttpClient) { }
+
+  getOpportunityList(filter: {
+    startAt: string;
+    finishAt: string;
+    enterpriseId: number;
+    filialId: number;
+    clienteId: number;
+    status: string;
+    managementId: number;
+  }): Observable<Sales[]> {
+    const headerToken = {
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    };
+
+    return this.http.post<Sales[]>(`${this.salesUrl}/filters`, filter, { headers: headerToken });
+  }
+
+  getFullById(id: number): Observable<Sales> {
+    const headerToken = {
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    };
+
+    return this.http.get<Sales>(`${this.salesUrl}/sales/${id}/full`, { headers: headerToken });
+  }
+
+  getOpportunityById(id: number): Observable<Sales> {
+    return this.getFullById(id);
+  }
 
   getById(id: number): Observable<Sale> {
      var headerToken = {
@@ -27,6 +56,10 @@ export class SalesService {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     };
     return this.http.post(this.financialSalesUrl, { sale, parcels, customerIds }, { headers: headerToken });
+  }
+
+  createOpportunity(sale: Sale, parcels: Parcel[], customerIds: number[]) {
+    return this.createWithParcels(sale, parcels, customerIds);
   }
 
 
@@ -53,5 +86,23 @@ export class SalesService {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     };
     return this.http.put<void>(this.salesUrl, sale, { headers: headerToken });
+  }
+
+  updateOpportunity(id: number, sale: Sale): Observable<void> {
+    return this.update(id, sale);
+  }
+
+  updateOpportunityStatus(id: number, sale: Sale, status: string): Observable<void> {
+    return this.updateOpportunity(id, {
+      ...sale,
+      status,
+    });
+  }
+
+  closeOpportunity(id: number, sale: Sale): Observable<void> {
+    return this.updateOpportunity(id, {
+      ...sale,
+      status: 'APPROVED',
+    });
   }
 }

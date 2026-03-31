@@ -26,6 +26,7 @@ import { ApiService } from 'src/app/core/services/api.service';
 import { ExportExcelService } from 'src/app/shared/export-excel.service';
 import { Act, Empreendimento, Filial, FormasPagamento, Installments, Sales, UnitsEnterprise, Usuarios } from 'src/app/models/ContaBancaria';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
+import { SalesService } from 'src/app/core/services/sales.service';
 
 @Component({
   selector: 'app-visao-geral',
@@ -88,6 +89,7 @@ export class VisaoGeralComponent {
   constructor(
     public store: Store,
     private apiService: ApiService,
+    private salesService: SalesService,
     private toastr: ToastrService,
     private excel: ExportExcelService
   ) { }
@@ -220,7 +222,7 @@ export class VisaoGeralComponent {
 
   buscarVendas() {
 
-    var obj = {
+    const obj = {
       startAt: moment(this.startAt).format('YYYY-MM-DD'),
       finishAt: moment(this.finishAt).format('YYYY-MM-DD'),
       enterpriseId: this.enterpriseId,
@@ -230,8 +232,7 @@ export class VisaoGeralComponent {
       managementId: this.managementId
     }
 
-    // Enviar para a API
-    this.apiService.postFilterVenda(obj).subscribe((data) => {
+    this.salesService.getOpportunityList(obj).subscribe((data) => {
       this.listVendas = data
       this.applyFilterAndPaginateVendas();
     })
@@ -314,7 +315,7 @@ export class VisaoGeralComponent {
 
       this.isEdicao = true;
 
-      this.apiService.getVendaFullById(id as number).subscribe((data: Sales) => {
+      this.salesService.getOpportunityById(id as number).subscribe((data: Sales) => {
         this.objetoCriacao = data;
 
         data.selledAt = new Date(data.selledAt);

@@ -5,6 +5,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Construtoras, Empreendimento, Filial } from 'src/app/models/ContaBancaria';
 import { ApiService } from 'src/app/core/services/api.service';
+import { ProposalsService } from 'src/app/core/services/proposals.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -145,7 +146,7 @@ export class EspelhoComponent implements OnInit {
   @ViewChild('pdfContent', { static: false }) pdfContent!: ElementRef;
 
 
-    constructor(private route: ActivatedRoute, private formBuilder: UntypedFormBuilder, public router: Router, private service: ApiService, public toast: ToastrService) {
+    constructor(private route: ActivatedRoute, private formBuilder: UntypedFormBuilder, public router: Router, private service: ApiService, private proposalsService: ProposalsService, public toast: ToastrService) {
     this.userForm = this.formBuilder.group({
       productName: ['', [Validators.required]],
       rate: ['', [Validators.required]],
@@ -278,7 +279,7 @@ export class EspelhoComponent implements OnInit {
     return;
   }
 
-    this.service.createProposta(this.proposta).subscribe(()=>{
+    this.proposalsService.create(this.proposta).subscribe(()=>{
       this.toast.success('Proposta criada com sucesso')
     })
   }

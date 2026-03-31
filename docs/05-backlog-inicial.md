@@ -157,6 +157,22 @@ Objetivo: estruturar o núcleo comercial da empresa após a entrada dos leads.
 - módulo funcional de vendas
 - fluxo de oportunidade até fechamento
 
+### Estado atual do recorte principal
+O recorte principal de Vendas já possui um caminho oficial inicial no frontend:
+- listagem oficial em `VisaoGeralComponent`
+- criação, detalhe e edição oficiais em `VendasNewComponent`
+- `SalesService` como service oficial do fluxo principal
+- alteração de status já explícita no detalhe oficial
+
+Dívida assumida e documentada nesta fase:
+- `PropostasComponent` já é a trilha oficial de propostas
+- `PropostaComponent` ainda existe como legado temporário
+- `ApiService` ficou apenas como fachada de compatibilidade para propostas
+- criação ainda acoplada ao endpoint `api/Financial/sales`
+
+Próximo corte recomendado dentro de Vendas:
+- consolidar o recorte de fechamento
+
 ### Prioridade
 **Muito alta**
 

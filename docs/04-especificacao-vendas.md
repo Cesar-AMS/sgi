@@ -1,117 +1,169 @@
-# Especificação Funcional — Vendas
+# Especificacao Funcional - Vendas
 
 ## 1. Objetivo deste documento
-Este documento descreve o módulo **Vendas**, responsável por conduzir a oportunidade comercial até o fechamento da venda de um imóvel.
+Este documento descreve o modulo **Vendas**, responsavel por conduzir a oportunidade comercial ate o fechamento da venda de um imovel.
 
-O objetivo é definir:
-- a finalidade do módulo
+O objetivo e definir:
+- a finalidade do modulo
 - suas responsabilidades
 - os fluxos principais
 - os dados envolvidos
-- as regras de negócio iniciais
-- a relação com Atendimento
-- a base para implementação no frontend e backend
+- as regras de negocio iniciais
+- a relacao com Atendimento
+- a base para implementacao no frontend e backend
 
 ---
 
-## 2. Contexto no negócio
-O módulo de Vendas é o núcleo da geração de receita da empresa.
+## 2. Contexto no negocio
+O modulo de Vendas e o nucleo da geracao de receita da empresa.
 
-A empresa atua principalmente com:
-- venda de imóveis
-- empreendimentos próprios
-- comissão comercial
-- atendimento consultivo e personalizado
-- fechamento presencial
-
-Na operação atual:
-- o lead entra por múltiplos canais
+Na operacao atual:
+- o lead entra por multiplos canais
 - evolui no Atendimento
-- quando qualificado, segue para negociação
+- quando qualificado, segue para negociacao
 - a proposta acontece presencialmente
-- o fechamento também acontece presencialmente
-- depois disso, a operação segue para contrato, repasse e financeiro pós-venda
+- o fechamento tambem acontece presencialmente
+- depois disso, a operacao segue para contrato, repasse e financeiro pos-venda
 
 ---
 
-## 3. Objetivo do módulo
-O módulo deve permitir que a empresa:
-
+## 3. Objetivo do modulo
+O modulo deve permitir que a empresa:
 - acompanhe oportunidades comerciais
-- registre propostas
-- relacione cliente, imóvel e vendedor
-- acompanhe negociação
+- relacione cliente, imovel e vendedor
+- acompanhe negociacao
+- registre proposta principal no fluxo
 - registre o fechamento da venda
-- alimente espelho de vendas e comissão
-- encaminhe a venda para formalização contratual
 
 ---
 
-## 4. Escopo do módulo
-Este módulo cobre:
+## 4. Escopo desta fase de consolidacao
+Nesta fase, o recorte oficial de Vendas ficou limitado ao fluxo principal transacional:
+- oportunidade
+- detalhe da oportunidade
+- proposta principal apenas como etapa conceitual do fluxo
+- mudanca de status
+- fechamento inicial
 
-- criação de oportunidade comercial
-- vínculo com lead qualificado
-- vínculo com cliente
-- vínculo com empreendimento/unidade/imóvel
-- proposta comercial
-- negociação
-- status da venda
-- fechamento da venda
+Ficam fora desta fase:
+- dashboard
 - espelho de vendas
-
-Este módulo **não** cobre:
-- emissão de contrato
-- gestão documental detalhada
-- repasse financeiro contratual
-- boletos e cobranças pós-venda
-- folha de pagamento
-- parametrizações administrativas globais
+- desistencias
+- corretor e view-corretor
+- consolidacao completa de propostas
+- refatoracao do acoplamento com Financeiro
 
 ---
 
-## 5. Relação com Atendimento
-O módulo de Vendas recebe insumos do contexto de Atendimento.
+## 5. Relacao com Atendimento
+O modulo de Vendas recebe insumos do contexto de Atendimento.
 
-A navegação funcional esperada do sistema até a entrada em Vendas é:
+A navegacao funcional esperada ate a entrada em Vendas e:
 
 ```text
 Atendimento
-├─ Leads
-│  └─ Listagem
-└─ Agendamento
-      ↓
+|- Leads
+|  |- Listagem
+|- Agendamento
+   |
+   v
 Vendas
+```
 
-GET    /api/vendas/oportunidades
-GET    /api/vendas/oportunidades/{id}
-POST   /api/vendas/oportunidades
-PUT    /api/vendas/oportunidades/{id}
-PATCH  /api/vendas/oportunidades/{id}/status
-POST   /api/vendas/oportunidades/{id}/propostas
-POST   /api/vendas/oportunidades/{id}/fechar
-POST   /api/vendas/oportunidades/{id}/perder
-POST   /api/vendas/oportunidades/{id}/cancelar
+---
 
-GET    /api/vendas/fechadas
-GET    /api/vendas/fechadas/{id}
+## 6. Caminho oficial atual no frontend
+O caminho oficial atual de Vendas no frontend e:
 
-/pages/project/vendas/
-├─ opportunities-list/
-├─ opportunity-create/
-├─ opportunity-detail/
-├─ sales-list/
-├─ sales-detail/
-├─ proposta/
-├─ propostas/
-└─ components/
+### Listagem oficial
+- componente: `VisaoGeralComponent`
+- rota: `/jm/vendas/visao-geral`
+- responsabilidade: listar oportunidades e abrir o detalhe/edicao
 
-VendaController -> VendaService -> VendaRepository
+### Detalhe, criacao e edicao oficiais
+- componente: `VendasNewComponent`
+- rotas:
+  - `/jm/vendas/new`
+  - `/jm/vendas/edit/:id`
+- responsabilidade: criar, abrir, editar e fechar o fluxo principal da venda
 
+### Service oficial do fluxo principal
+- `SalesService`
+
+Responsabilidades ja centralizadas nesse caminho:
+- listagem de oportunidades
+- carregamento do detalhe completo
+- carregamento de parcels
+- carregamento de clientes vinculados
+- criacao da venda com parcels
+- atualizacao da venda
+- atualizacao explicita de status no detalhe da oportunidade
+
+---
+
+## 7. Backend atual do fluxo principal
+No backend, a trilha principal atual de Vendas e:
+
+```text
 VendaController
   -> VendaConsultaService
   -> VendaCriacaoService
   -> VendaGestaoService
+  -> IVendaRepository
   -> VendaRepository
+```
 
-  
+Esse e o caminho principal atual para o dominio de Vendas.
+
+---
+
+## 8. Propostas no estado atual
+Para o subfluxo de propostas dentro de Vendas, o caminho oficial atual ficou assim:
+
+- tela oficial: `PropostasComponent`
+- rota oficial: `/jm/vendas/propostas`
+- service oficial: `ProposalsService`
+
+Responsabilidades ja centralizadas nesse caminho:
+- listar propostas
+- abrir detalhe em modal
+- aprovar proposta
+- criar/atualizar a proposta principal pelo fluxo atual da tela
+
+Trilhas paralelas e divida assumida:
+- `/jm/propostas` permanece apenas como redirect de compatibilidade
+- `PropostaComponent` em `/jm/vendas/proposta` permanece como legado temporario e tambem redireciona
+- `ApiService` mantem metodos de propostas apenas como fachada legada de compatibilidade, delegando para `ProposalsService`
+- criacao de venda continua acoplada ao endpoint `api/Financial/sales`
+
+Essas trilhas nao sao o caminho oficial atual de propostas.
+
+---
+
+## 9. Estado atual da consolidacao
+Pela regua adotada no projeto, o dominio de Vendas esta assim neste recorte:
+
+- `1 caminho oficial`
+  - atendido para o fluxo principal por `VisaoGeralComponent -> VendasNewComponent -> SalesService`
+  - atendido para propostas por `PropostasComponent -> ProposalsService`
+- `fluxo principal funcionando`
+  - atendido para listar, abrir, criar e editar
+  - atendido para atualizar status no detalhe oficial
+  - atendido para listar e aprovar propostas no caminho oficial
+- `responsabilidades principais separadas`
+  - atendido de forma inicial no frontend, com `SalesService` assumindo o nucleo do fluxo
+  - atendido de forma inicial para status, com acao explicita no detalhe oficial sem criar contrato HTTP novo
+  - atendido de forma inicial para propostas, com `ProposalsService` isolando a tela oficial
+  - atendido de forma adicional com `ApiService` servindo apenas como fachada legada, sem concentrar mais a implementacao HTTP de propostas
+- `divida restante documentada`
+  - atendido neste documento
+
+---
+
+## 10. Proximo passo recomendado
+O proximo passo seguro para Vendas e partir para o recorte de fechamento, mantendo o que ja foi consolidado em oportunidades, status e propostas.
+
+Objetivo do proximo corte:
+- definir o menor fluxo oficial de fechamento
+- preservar o contrato HTTP atual sempre que possivel
+- evitar abrir dashboard, espelho e financeiro alem do inevitavel

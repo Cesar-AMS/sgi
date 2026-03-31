@@ -29,11 +29,20 @@ export interface Parcel {
 export class VendasNewComponent implements OnInit {
   @ViewChild('pdfArea') pdfArea!: ElementRef;
 
+  readonly saleStatusOptions = [
+    { value: 'OPEN', label: 'Ativo' },
+    { value: 'WAITING', label: 'Pendente' },
+    { value: 'FAILED', label: 'Desistiu' },
+    { value: 'APPROVED', label: 'Aprovado' },
+  ];
+
   form!: FormGroup;
   isEdit = false;
   saleId?: number;
   loading = false;
   saving = false;
+  statusSaving = false;
+  closing = false;
 
   currencyOptions = {
   prefix: 'R$ ',
@@ -276,9 +285,9 @@ export class VendasNewComponent implements OnInit {
     this.loading = true;
 
     forkJoin({
-      sale: this.salesService.getById(id),
-      parcels: this.salesService.getParcelsBySaleId(id),        // criar no SalesService
-      customers: this.salesService.getCustomerIdsBySaleId(id)   // criar no SalesService
+      sale: this.salesService.getOpportunityById(id),
+      parcels: this.salesService.getParcelsBySaleId(id),
+      customers: this.salesService.getCustomerIdsBySaleId(id)
     })
       .pipe(
         switchMap(({ sale, parcels, customers }) => {
@@ -553,7 +562,7 @@ export class VendasNewComponent implements OnInit {
     this.saving = true;
 
     if (this.isEdit && this.saleId) {
-      this.salesService.update(this.saleId, sale).subscribe({
+      this.salesService.updateOpportunity(this.saleId, sale).subscribe({
         next: () => {
           this.saving = false;
         },
@@ -563,12 +572,12 @@ export class VendasNewComponent implements OnInit {
         }
       });
     } else {
-      this.salesService.createWithParcels(sale, parcels, this.form.get('clients_ids')?.value).subscribe({
+      this.salesService.createOpportunity(sale, parcels, this.form.get('clients_ids')?.value).subscribe({
         next: (res: any) => {
           this.saving = false;
           const newId = res?.saleId ?? res?.id;
           if (newId) {
-            this.router.navigate(['/edit', newId]);
+            this.router.navigate(['/jm/vendas/edit', newId]);
           }
         },
         error: (err) => {
@@ -577,6 +586,66 @@ export class VendasNewComponent implements OnInit {
         }
       });
     }
+  }
+
+  updateStatus(): void {
+    if (!this.isEdit || !this.saleId) {
+      return;
+    }
+
+    const sale = this.form.getRawValue() as Sale;
+    const status = this.form.get('status')?.value;
+
+    if (!status) {
+      return;
+    }
+
+    this.statusSaving = true;
+
+    this.salesService.updateOpportunityStatus(this.saleId, sale, status).subscribe({
+      next: () => {
+        this.statusSaving = false;
+      },
+      error: (err) => {
+        console.error('Erro ao atualizar status da venda', err);
+        this.statusSaving = false;
+      }
+    });
+  }
+
+  closeSale(): void {
+    if (!this.isEdit || !this.saleId) {
+      return;
+    }
+
+    const contractNumberControl = this.form.get('contractNumber');
+    const contractNumber = (contractNumberControl?.value ?? '').toString().trim();
+
+    if (!contractNumber) {
+      contractNumberControl?.markAsTouched();
+      contractNumberControl?.setErrors({ required: true });
+      return;
+    }
+
+    if (contractNumberControl?.hasError('required')) {
+      contractNumberControl.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    }
+
+    this.form.patchValue({ status: 'APPROVED', contractNumber });
+
+    const sale = this.form.getRawValue() as Sale;
+    this.closing = true;
+
+    this.salesService.closeOpportunity(this.saleId, sale).subscribe({
+      next: () => {
+        this.form.patchValue({ status: 'APPROVED' });
+        this.closing = false;
+      },
+      error: (err) => {
+        console.error('Erro ao fechar venda', err);
+        this.closing = false;
+      }
+    });
   }
 
   calculatePercentageToRealtor(){

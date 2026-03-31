@@ -27,7 +27,6 @@ import { FolhaPagamentosComponent } from './rh/folha-pagamentos/folha-pagamentos
 import { ComparecimentosComponent as StandaloneComparecimentosComponent } from './comparecimentos/comparecimentos.component';
 import { VisitasComponent } from './visitas/visitas.component';
 import { CorretorComponent } from './vendas/corretor/corretor.component';
-import { PropostaComponent } from './vendas/proposta/proposta.component';
 import { DesistenciasComponent } from './vendas/desistencias/desistencias.component';
 import { VendasNewComponent } from './vendas/vendas-new/vendas-new.component';
 import { ViewCorretorComponent } from './vendas/view-corretor/view-corretor.component';
@@ -59,8 +58,13 @@ const routes: Routes = [
     component: ViewCorretorComponent,
   },
   {
+    path: 'vendas/propostas',
+    component: PropostasComponent,
+  },
+  {
     path: 'vendas/proposta',
-    component: PropostaComponent,
+    redirectTo: 'vendas/propostas',
+    pathMatch: 'full',
   },
   {
     path: 'vendas/desistencias',
@@ -175,7 +179,8 @@ const routes: Routes = [
   },
   {
     path: 'propostas',
-    component: PropostasComponent,
+    redirectTo: 'vendas/propostas',
+    pathMatch: 'full',
   },
 ];
 

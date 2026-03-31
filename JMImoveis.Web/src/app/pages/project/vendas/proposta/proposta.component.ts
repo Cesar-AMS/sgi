@@ -13,6 +13,10 @@ import {
 import { ExportExcelService } from 'src/app/shared/export-excel.service';
 import { Router } from '@angular/router';
 
+// Legacy temporario: o caminho oficial de propostas esta em
+// `/jm/vendas/propostas` com `PropostasComponent` + `ProposalsService`.
+// Este componente fica preservado apenas por compatibilidade e referencia historica
+// ate a remocao segura da trilha paralela.
 @Component({
   selector: 'app-proposta',
   templateUrl: './proposta.component.html',

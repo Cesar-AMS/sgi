@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { finalize, forkJoin } from 'rxjs';
 import { ApiService } from 'src/app/core/services/api.service';
+import { ProposalsService } from 'src/app/core/services/proposals.service';
 import { Cliente } from 'src/app/models/ContaBancaria';
 import { PropostaReserva } from 'src/app/models/proposta-reserva';
 
@@ -27,7 +28,10 @@ export class DesistenciasComponent implements OnInit {
   filteredRows: DesistenciaRow[] = [];
   searchTerm = '';
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private proposalsService: ProposalsService
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -37,7 +41,7 @@ export class DesistenciasComponent implements OnInit {
     this.loading = true;
 
     forkJoin({
-      propostas: this.apiService.listPropostas({
+      propostas: this.proposalsService.list({
         gerente: 0,
         corretor: 0,
         status: 'ALL',

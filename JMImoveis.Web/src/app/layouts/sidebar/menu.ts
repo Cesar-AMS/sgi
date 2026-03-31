@@ -75,7 +75,7 @@ export const MENU: MenuItem[] = [
       {
         id: 33,
         label: 'Propostas',
-        link: '/propostas',
+        link: '/jm/vendas/propostas',
         parentId: 30,
         permissionKey: 'commercial.proposals.view',
       },
