@@ -34,7 +34,10 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<bool> UpdateAsync(Cargo entity)
         {
-            var sql = "UPDATE roles SET name = @Name, update WHERE id = @id";
+            var sql = @"UPDATE roles
+                        SET name = @Name,
+                            updated_at = now()
+                        WHERE id = @Id";
             await using var conn = await _context.OpenConnectionAsync();
             return await conn.ExecuteAsync(sql, entity) > 0;
         }

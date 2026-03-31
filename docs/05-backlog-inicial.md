@@ -641,6 +641,27 @@ Proximo corte recomendado:
 - decidir se vale consolidar `ViewCorretorComponent`
 - ou encerrar o dominio como bom o suficiente neste escopo atual
 
+## 8.4 Atualizacao incremental - Administracao e Acessos no backend
+O dominio de Administracao e Acessos avancou tambem no backend, sem mudanca de contrato HTTP.
+
+Caminho oficial atual no backend para o recorte:
+- `UsuarioController -> IUsuarioService -> UsuarioService`
+- `CargoController -> ICargoService -> CargoService`
+- `FilialController -> IFilialService -> FilialService`
+
+Fluxos ja cobertos:
+- usuarios
+- cargos
+- filiais
+
+Divida assumida:
+- o restante do dominio administrativo ainda nao segue o mesmo padrao de service
+- RBAC real completo ainda nao foi consolidado
+
+Proximo corte recomendado:
+- decidir se vale seguir no backend de Administracao e Acessos
+- ou documentar o recorte atual como suficiente antes de abrir outro backend
+
 # 9. Resumo executivo
 O backlog inicial do projeto foi estruturado para seguir o fluxo real da empresa e reduzir o risco de construir funcionalidades desconectadas da operação.
 

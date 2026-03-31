@@ -51,6 +51,11 @@ Responsabilidades ja cobertas nesse caminho:
 - buscar cargo por id
 - criar cargo
 
+No backend, o recorte atual tambem passou a ter uma camada de aplicacao inicial:
+- `UsuarioController -> IUsuarioService -> UsuarioService`
+- `CargoController -> ICargoService -> CargoService`
+- `FilialController -> IFilialService -> FilialService`
+
 ---
 
 ## 4. Compatibilidade mantida
@@ -62,7 +67,7 @@ Por isso:
 - `UserMenuService` continua separado para menu por usuario
 - nao houve mudanca de contrato HTTP
 - nao houve mudanca de rota
-- nao houve mudanca no backend
+- os endpoints HTTP existentes de usuario, cargo e filial foram preservados no backend
 
 ---
 
@@ -72,9 +77,9 @@ Pela regua adotada no projeto, Administracao e Acessos esta assim neste recorte:
 - `1 caminho oficial`
   - atendido de forma inicial para filiais, usuarios e cargos por `GeraisComponent -> AdminAccessService`
 - `fluxo principal funcionando`
-  - atendido para o nucleo de filiais, usuarios e cargos
+  - atendido para o nucleo de filiais, usuarios e cargos no frontend e no backend
 - `responsabilidades principais separadas`
-  - atendido de forma inicial, com filiais, usuarios e cargos deixando de depender diretamente do `ApiService`
+  - atendido de forma inicial, com filiais, usuarios e cargos deixando de depender diretamente do `ApiService` no frontend e de `Controller -> Repository` direto no backend para cargo e filial
 - `divida restante documentada`
   - atendido neste documento
 
@@ -86,7 +91,7 @@ Permanece como divida conhecida, mas nao bloqueante neste recorte:
 - `GeraisComponent` ainda concentra muitas responsabilidades
 - filiais, categorias, centro de custo, plano de contas e formas de pagamento ainda usam `ApiService`
 - o fluxo de permissoes continua baseado em menu por usuario e ainda nao representa RBAC completo
-- backend de usuarios ja possui service estruturado, mas cargos ainda seguem controller + repository
+- backend de usuarios, cargos e filiais ja possuem service estruturado, mas o restante do dominio administrativo ainda nao segue o mesmo padrao
 - ainda nao existe separacao formal de Perfis, Permissoes e overrides por usuario
 
 ---
@@ -94,8 +99,8 @@ Permanece como divida conhecida, mas nao bloqueante neste recorte:
 ## 7. Proximo passo recomendado
 O proximo passo seguro quando Administracao e Acessos voltar a ser priorizado e um destes:
 
-1. extrair mais um subfluxo de `GeraisComponent`, como `Filiais`
-2. consolidar o fluxo de menu/permissao por usuario com um service mais explicito no frontend
+1. extrair mais um subfluxo de `GeraisComponent`, como categorias ou centro de custo
+2. consolidar o fluxo de menu/permissao por usuario com um service mais explicito no frontend e no backend
 3. ou encerrar este dominio como bom o suficiente neste escopo inicial e seguir para o proximo dominio prioritario
 
 O melhor criterio para decidir e:

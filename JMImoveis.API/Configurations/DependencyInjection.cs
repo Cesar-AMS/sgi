@@ -16,6 +16,7 @@ namespace JMImoveisAPI.Configurations
             services.AddScoped<IApartamentosRepository, ApartamentosRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ICargoRepository, CargoRepository>();
+            services.AddScoped<ICargoService, CargoService>();
             services.AddScoped<ICentroCustoRepository, CentroCustoRepository>();
             services.AddScoped<IClienteRepository, ClienteRepository>();
             services.AddScoped<IConstrutoraRepository, ConstrutoraRepository>();
@@ -25,6 +26,7 @@ namespace JMImoveisAPI.Configurations
             services.AddScoped<IFormaPagamentoRepository, FormaPagamentoRepository>();
             services.AddScoped<IFormasPagamentoRepository, FormasPagamentoRepository>();
             services.AddScoped<IFilialRepository, FilialRepository>();
+            services.AddScoped<IFilialService, FilialService>();
             services.AddScoped<IIntermediariasRepository, IntermediariasRepository>();
             services.AddScoped<INotificacaoRepository, NotificacaoRepository>();
             services.AddScoped<IParcelasRepository, ParcelasRepository>();
