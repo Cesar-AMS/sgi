@@ -694,6 +694,8 @@ O dominio de Empreendimentos avancou tambem no backend, sem mudanca de contrato 
 Caminho oficial atual no backend para o recorte:
 - `EmpreendimentoController -> IEmpreendimentoService -> EmpreendimentoService`
 - `IEmpreendimentoRepository -> EmpreendimentoRepository`
+- `ConstrutoraController -> IConstrutoraService -> ConstrutoraService`
+- `IConstrutoraRepository -> ConstrutoraRepository`
 
 Fluxos ja cobertos:
 - listar empreendimentos
@@ -704,15 +706,21 @@ Fluxos ja cobertos:
 - criar empreendimento
 - atualizar empreendimento
 - soft delete e hard delete
+- listar construtoras
+- buscar construtora por id
+- criar construtora
+- atualizar construtora
+- soft delete e hard delete de construtora
 
 Divida assumida:
-- `ConstrutoraController` e `ApartamentController` ainda seguem sem camada de service
+- `ApartamentController` ainda segue sem camada de service
 - o dominio ainda carrega inconsistencias de nomenclatura
 - ainda existem queries interpoladas em partes do repository
+- `ConstrutoraRepository` ainda possui `HardDeleteAsync` nao implementado
 
 Proximo corte recomendado:
-- documentar o recorte atual como suficiente antes de abrir outro subfluxo
-- ou seguir com `Construtora` no mesmo padrao, se houver necessidade operacional clara
+- pausar Empreendimentos backend se nao houver necessidade operacional imediata
+- e so voltar nele se surgir necessidade clara de abrir `Apartament` ou consolidar mais o frontend de Construtora
 
 # 9. Resumo executivo
 O backlog inicial do projeto foi estruturado para seguir o fluxo real da empresa e reduzir o risco de construir funcionalidades desconectadas da operação.

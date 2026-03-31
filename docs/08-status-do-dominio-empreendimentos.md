@@ -63,6 +63,9 @@ O caminho oficial atual de Empreendimentos no backend e:
 - controller oficial: `EmpreendimentoController`
 - service oficial: `IEmpreendimentoService -> EmpreendimentoService`
 - repository oficial: `IEmpreendimentoRepository -> EmpreendimentoRepository`
+- controller oficial para construtora: `ConstrutoraController`
+- service oficial para construtora: `IConstrutoraService -> ConstrutoraService`
+- repository oficial para construtora: `IConstrutoraRepository -> ConstrutoraRepository`
 
 Responsabilidades ja cobertas nesse caminho:
 - listar empreendimentos
@@ -73,6 +76,11 @@ Responsabilidades ja cobertas nesse caminho:
 - criar empreendimento
 - atualizar empreendimento
 - soft delete e hard delete
+- listar construtoras
+- buscar construtora por id
+- criar construtora
+- atualizar construtora
+- soft delete e hard delete de construtora
 
 Os contratos HTTP e rotas atuais foram preservados nesse recorte.
 
@@ -84,12 +92,14 @@ Pela regua adotada no projeto, Empreendimentos esta assim neste momento:
 - `1 caminho oficial`
   - atendido no frontend por `CadastroComponent -> EnterprisesService`
   - atendido no backend por `EmpreendimentoController -> IEmpreendimentoService -> EmpreendimentoService`
+  - atendido no backend para construtora por `ConstrutoraController -> IConstrutoraService -> ConstrutoraService`
 - `fluxo principal funcionando`
   - atendido para listagem, criacao e edicao do empreendimento
   - atendido no backend para consulta, manutencao e operacoes centrais do recorte
+  - atendido no backend para o subfluxo principal de construtora
 - `responsabilidades principais separadas`
   - atendido de forma inicial, com a tela oficial deixando de depender do `ApiService` no nucleo do fluxo
-  - atendido no backend com controller, service e repository separados para o subfluxo central
+  - atendido no backend com controller, service e repository separados para empreendimento e construtora
 - `divida restante documentada`
   - atendido neste documento
 
@@ -102,19 +112,20 @@ Permanece como divida conhecida, mas nao bloqueante neste recorte:
 - `AdminEmpreendimentoComponent` ainda segue fora do recorte principal
 - `EspelhoComponent` mistura unidades com fluxo comercial e ainda nao deve ser tratado como caminho oficial de Empreendimentos
 - `ApiService` ainda contem metodos de empreendimentos e construtoras por compatibilidade
-- `ConstrutoraController` e `ApartamentController` ainda seguem em `Controller -> Repository`
+- `ApartamentController` ainda segue em `Controller -> Repository`
 - o backend ainda possui inconsistencias de nomenclatura como `Apartament`
 - ainda existem queries interpoladas em partes do repository de Empreendimentos e Unidades
+- `ConstrutoraRepository` ainda possui `HardDeleteAsync` nao implementado
 
 ---
 
 ## 8. Proximo passo recomendado
 O proximo passo seguro quando Empreendimentos voltar a ser priorizado e um destes:
 
-1. consolidar `Construtora` no backend no mesmo padrao, com `IConstrutoraService -> ConstrutoraService`
-2. consolidar `ConstrutoraComponent` no frontend no mesmo caminho oficial, por meio de `EnterprisesService` ou de um `BuildersService`
+1. consolidar `ConstrutoraComponent` no frontend no mesmo caminho oficial, por meio de `EnterprisesService` ou de um `BuildersService`
+2. abrir `Apartament` somente se houver necessidade operacional clara
 3. ou encerrar Empreendimentos como bom o suficiente neste escopo atual e seguir para outro dominio mais prioritario
 
 O melhor criterio para decidir e:
 - se o uso operacional principal estiver concentrado em cadastro de empreendimento, o recorte atual pode ser pausado
-- se construtoras forem parte frequente da operacao, vale fazer mais um corte pequeno antes de encerrar o dominio
+- se nao houver demanda real de unidades/espelho no backend, vale pausar o dominio sem abrir `Apartament`

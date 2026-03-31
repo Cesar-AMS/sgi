@@ -9,37 +9,37 @@ namespace JMImoveisAPI.Controllers
     [ApiController]
     public class ConstrutoraController : ControllerBase
     {
-        private readonly IConstrutoraRepository _repo;
-        public ConstrutoraController(IConstrutoraRepository repo) => _repo = repo;
+        private readonly IConstrutoraService _construtoraService;
+        public ConstrutoraController(IConstrutoraService construtoraService) => _construtoraService = construtoraService;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Constructor>>> GetAll() => Ok(await _repo.GetAllAsync());
+        public async Task<ActionResult<IEnumerable<Constructor>>> GetAll() => Ok(await _construtoraService.GetAllAsync());
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Constructor>> Get(int id)
         {
-            var item = await _repo.GetByIdAsync(id);
+            var item = await _construtoraService.GetByIdAsync(id);
             return item is null ? NotFound() : Ok(item);
         }
 
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] Constructor dto)
         {
-            var id = await _repo.CreateAsync(dto.Name);
+            var id = await _construtoraService.CreateAsync(dto.Name);
             return CreatedAtAction(nameof(Get), new { id }, new { id });
         }
 
         [HttpPut("{id:int}")]
         public async Task<ActionResult> Update(int id, [FromBody] Constructor dto)
-            => await _repo.UpdateAsync(id, dto.Name) ? NoContent() : NotFound();
+            => await _construtoraService.UpdateAsync(id, dto.Name) ? NoContent() : NotFound();
 
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> SoftDelete(int id)
-            => await _repo.SoftDeleteAsync(id) ? NoContent() : NotFound();
+            => await _construtoraService.SoftDeleteAsync(id) ? NoContent() : NotFound();
 
         [HttpDelete("{id:int}/hard")]
         public async Task<ActionResult> HardDelete(int id)
-            => await _repo.HardDeleteAsync(id) ? NoContent() : NotFound();
+            => await _construtoraService.HardDeleteAsync(id) ? NoContent() : NotFound();
 
 
     }
