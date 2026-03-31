@@ -1,21 +1,19 @@
-import { Component } from '@angular/core';
-
-type EmployeeControlRow = {
-  name: string;
-  area: string;
-  status: string;
-  branch: string;
-};
+import { Component, OnInit } from '@angular/core';
+import { EmployeeControlRow, HrService } from 'src/app/core/services/hr.service';
 
 @Component({
   selector: 'app-controle-funcionarios',
   templateUrl: './controle-funcionarios.component.html',
   styleUrl: './controle-funcionarios.component.scss',
 })
-export class ControleFuncionariosComponent {
-  rows: EmployeeControlRow[] = [
-    { name: 'Ana Souza', area: 'Atendimento', status: 'Ativo', branch: 'Matriz' },
-    { name: 'Carlos Lima', area: 'Vendas', status: 'Ativo', branch: 'Filial Norte' },
-    { name: 'Juliana Rocha', area: 'Financeiro', status: 'Afastado', branch: 'Matriz' },
-  ];
+export class ControleFuncionariosComponent implements OnInit {
+  rows: EmployeeControlRow[] = [];
+
+  constructor(private hrService: HrService) {}
+
+  ngOnInit(): void {
+    this.hrService.getEmployeeControl().subscribe((rows) => {
+      this.rows = rows;
+    });
+  }
 }

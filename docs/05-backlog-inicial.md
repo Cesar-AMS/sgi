@@ -563,6 +563,34 @@ O backlog inicial será considerado bem executado se:
 
 ---
 
+## 8.1 Atualizacao incremental - RH
+O dominio de RH ja possui um recorte inicial consolidado no frontend.
+
+Caminho oficial atual:
+- rotas oficiais em:
+  - `/jm/rh/controle-funcionarios`
+  - `/jm/rh/controle-faltas`
+  - `/jm/rh/folha-pagamentos`
+  - `/jm/rh/ferias`
+  - `/jm/rh/controle-uniforme`
+- `HrService` como service oficial do recorte
+
+Fluxos ja cobertos:
+- controle de funcionarios
+- controle de faltas
+- folha de pagamentos
+- ferias
+- controle de uniforme
+
+Divida assumida:
+- dominio ainda sem backend oficial dedicado
+- dados ainda mockados no frontend
+- persistencia real ainda nao definida
+
+Proximo corte recomendado:
+- decidir se RH ja pode ser pausado como bom o suficiente
+- ou fazer mais um corte pequeno em um subfluxo especifico quando houver necessidade operacional
+
 # 9. Resumo executivo
 O backlog inicial do projeto foi estruturado para seguir o fluxo real da empresa e reduzir o risco de construir funcionalidades desconectadas da operação.
 
