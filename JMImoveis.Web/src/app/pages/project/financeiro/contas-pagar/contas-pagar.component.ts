@@ -4,6 +4,7 @@ import { AccountBank, Categories, CentroCusto, Cliente, ContaPagarDto, Lancament
 import { CommonModule } from '@angular/common';
 import { ExportExcelService } from 'src/app/shared/export-excel.service';
 import { ApiService } from 'src/app/core/services/api.service';
+import { AccountsPayableService } from 'src/app/core/services/accounts-payable.service';
 import * as moment from 'moment';
 import { FinancialEntry } from 'src/app/pages/dashboards/crm/crm.component';
 import { ModalDirective, ModalModule } from 'ngx-bootstrap/modal';
@@ -111,7 +112,12 @@ export class ContasPagarComponent implements OnInit {
 
   sortDir: 1 | -1 = -1;
 
-  constructor(private excel: ExportExcelService, private service: ApiService, private toast: ToastrService) {
+  constructor(
+    private excel: ExportExcelService,
+    private service: ApiService,
+    private accountsPayableService: AccountsPayableService,
+    private toast: ToastrService
+  ) {
   }
 
   activeTab: 'dados' | 'recorrencia' | 'adicionais' | 'documentos' = 'dados';
@@ -160,7 +166,7 @@ export class ContasPagarComponent implements OnInit {
   }
 
   filtrar() {
-    this.service.getPayablePeriodo(this.dtIni, this.dtFim, this.typeFilter, this.categoriaFilter).subscribe((data) => {
+    this.accountsPayableService.listByPeriod(this.dtIni, this.dtFim, this.typeFilter, this.categoriaFilter).subscribe((data) => {
       this.lancamentos = data
     })
   }
@@ -171,7 +177,7 @@ export class ContasPagarComponent implements OnInit {
 
   addeContasPagar() {
 
-    this.service.postPayable(this.contaPagar).subscribe(() => {
+    this.accountsPayableService.createLegacy(this.contaPagar).subscribe(() => {
       this.toast.success('Salvo com sucesso!', 'Continue.. ')
       this.contaPagar.id = null,
         this.contaPagar.seriesId = null,
@@ -234,7 +240,7 @@ export class ContasPagarComponent implements OnInit {
       notes: this.lancamentoSelecionado.notes
     };
 
-    this.service.updatePayable(payload.id, payload).subscribe({
+    this.accountsPayableService.updateLegacy(payload.id, payload).subscribe({
       next: () => {
         // sincroniza a lista na UI
         const idx = this.lancamentos.findIndex((x: any) => x.id === payload.id);
@@ -264,7 +270,7 @@ export class ContasPagarComponent implements OnInit {
       amount: Number(this.marcarPagoForm.amount || 0)
     };
 
-    this.service.markAsPaid(body.id, body).subscribe({
+    this.accountsPayableService.markAsPaid(body.id, body).subscribe({
       next: () => {
         // atualiza item na lista
         const idx = this.lancamentos.findIndex((x: any) => x.id === body.id);

@@ -36,4 +36,16 @@ export class EnterprisesService {
   listConstructors(): Observable<Construtoras[]> {
     return this.http.get<Construtoras[]>(this.constructorUrl, { headers: this.authHeaders });
   }
+
+  getConstructorById(id: number): Observable<Construtoras> {
+    return this.http.get<Construtoras>(`${this.constructorUrl}/${id}`, { headers: this.authHeaders });
+  }
+
+  createConstructor(constructor: Partial<Construtoras>): Observable<unknown> {
+    return this.http.post(this.constructorUrl, constructor, { headers: this.authHeaders });
+  }
+
+  updateConstructor(id: number, constructor: Partial<Construtoras>): Observable<unknown> {
+    return this.http.put(`${this.constructorUrl}/${id}`, constructor, { headers: this.authHeaders });
+  }
 }

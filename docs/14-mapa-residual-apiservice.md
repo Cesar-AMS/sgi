@@ -56,29 +56,31 @@ Estes pontos ainda usam `ApiService`, mas o uso e compreensivel dentro do recort
   - `ApiService` segue para apoios e dependencias nao isoladas
 - [cadastro.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/empreendimentos/cadastro/cadastro.component.ts)
   - o fluxo principal esta em `EnterprisesService`
-  - `ApiService` continua no apoio de construtora
+  - o apoio de construtora tambem ja saiu para `EnterprisesService`
 - [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts)
-  - `AdminAccessService` ja cobre usuarios, cargos e filiais
-  - `ApiService` ainda sustenta as demais abas do componente inchado
+  - `AdminAccessService` ja cobre usuarios, cargos, filiais, formas de pagamento, categorias, centro de custo e plano de contas
+  - `ApiService` ainda sustenta apenas abas e lookups auxiliares restantes do componente inchado
+- [contas-receber.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-receber/contas-receber.component.ts)
+  - o fluxo principal ja saiu para `AccountsReceivableService`
+  - `ApiService` ficou apenas para lookups auxiliares
+- [contas-pagar.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-pagar/contas-pagar.component.ts)
+  - o fluxo principal ja saiu para `AccountsPayableService`
+  - `ApiService` ficou apenas para lookups auxiliares
+- [construtora.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/empreendimentos/construtora/construtora.component.ts)
+  - o fluxo principal ja saiu para `EnterprisesService`
+  - `ApiService` deixou de ser necessario nessa tela
+- [accounts-receivable.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/accounts-receivable/accounts-receivable.component.ts)
+  - o fluxo principal ja estava em `AccountsReceivableService`
+  - o uso residual de `ApiService` para filiais saiu para `AdminAccessService`
 
 ---
 
 ## 5. Pontos que merecem sair do ApiService
 Estes sao os melhores candidatos da Fase 2 para novos cortes pequenos:
 
-- [construtora.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/empreendimentos/construtora/construtora.component.ts)
-  - dominio concreto
-  - recorte pequeno
-  - combina com a consolidacao ja feita de Empreendimentos
-
-- [contas-receber.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-receber/contas-receber.component.ts)
-  - ainda depende de `ApiService`, apesar do dominio ja ter service oficial
-
-- [contas-pagar.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-pagar/contas-pagar.component.ts)
-  - mesma situacao de `contas-receber`
-
-- [accounts-receivable.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/accounts-receivable/accounts-receivable.component.ts)
-  - o dominio financeiro ja tem service oficial e este uso residual merece revisao
+- [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts)
+  - segue como concentrador de abas administrativas
+  - ainda carrega parte relevante do uso residual do `ApiService`, sobretudo alguns lookups auxiliares e o restante nao consolidado do componente
 
 ---
 
@@ -110,8 +112,8 @@ Estes pontos nao devem puxar a fase inteira agora:
 Se a equipe quiser seguir pela melhor relacao entre risco e ganho, a ordem mais sensata e:
 
 1. assumir explicitamente `ApiService` como fachada legada nos pontos que ja estao estabilizados
-2. atacar `ConstrutoraComponent`
-3. revisar `Contas a Receber` e `Contas a Pagar`
+2. revisar telas financeiras secundarias que ainda nao tenham service oficial claro
+3. decidir se vale mais um corte em `gerais.component.ts` ou se o componente ja esta bom o suficiente para a Fase 2
 4. deixar visitas, comparecimentos, espelho e dashboards paralelos para cortes proprios futuros
 
 ---

@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModalDirective, ModalModule } from 'ngx-bootstrap/modal';
 import { ToastrService } from 'ngx-toastr';
-import { ApiService } from 'src/app/core/services/api.service';
+import { EnterprisesService } from 'src/app/core/services/enterprises.service';
 import { Construtoras } from 'src/app/models/ContaBancaria';
 import { ExportExcelService } from 'src/app/shared/export-excel.service';
 
@@ -20,14 +20,12 @@ export class ConstrutoraComponent implements OnInit {
 
   construtura: Construtoras = {} as Construtoras
 
-  constructor(private service: ApiService, private excel: ExportExcelService, private toast: ToastrService){
+  constructor(private enterprisesService: EnterprisesService, private excel: ExportExcelService, private toast: ToastrService){
 
   }
 
   ngOnInit(){
-    this.service.getConstrutora().subscribe((data)=>{
-      this.construtoras = data
-    })
+    this.loadConstructors();
   }
 
 @ViewChild('showModal', { static: false }) showModal?: ModalDirective;
@@ -39,16 +37,18 @@ export class ConstrutoraComponent implements OnInit {
   openModalClient(action: 'new' | 'edit', id: number){
     if(action === 'new'){
       this.title = 'Nova'
+      this.idContrutora = 0
+      this.construtura = { name: '' } as Construtoras
       this.showModal?.show() 
     }
 
      if(action === 'edit'){
       this.title = 'Editar'
       this.idContrutora = id
+      const selected = this.construtoras.find(item => item.id === id);
+      this.construtura = selected ? { ...selected } : ({ name: '' } as Construtoras);
       this.showModal?.show() 
     }
-
-    this.construtura.name = ''
   }
 
   exportarExcel(): void {
@@ -66,12 +66,10 @@ export class ConstrutoraComponent implements OnInit {
   }
 
   newConstrutora(){
-    this.service.postConstrutora(this.construtura).subscribe({
+    this.enterprisesService.createConstructor(this.construtura).subscribe({
       next: () => {
         this.toast.success('Construtora cadastrada com sucesso!')
-        this.service.getConstrutora().subscribe((data)=>{
-      this.construtoras = data
-    })
+        this.loadConstructors();
         this.showModal?.hide()
       },
       error: () => {this.toast.error('Erro ao cadastrar!')}
@@ -79,16 +77,20 @@ export class ConstrutoraComponent implements OnInit {
   }
 
   editConstrutora(){
-    this.service.putConstrutora(this.construtura, this.idContrutora).subscribe({
+    this.enterprisesService.updateConstructor(this.idContrutora, this.construtura).subscribe({
       next: () => {
         this.toast.success('Construtora atualizada com sucesso!')
-        this.service.getConstrutora().subscribe((data)=>{
-      this.construtoras = data
-    })
+        this.loadConstructors();
         this.showModal?.hide()
       },
       error: () => {this.toast.error('Erro ao atualizar!')}
     })
+  }
+
+  private loadConstructors(): void {
+    this.enterprisesService.listConstructors().subscribe((data) => {
+      this.construtoras = data;
+    });
   }
 
 }

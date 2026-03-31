@@ -5,6 +5,7 @@ import * as moment from 'moment';
 import { ModalDirective, ModalModule } from 'ngx-bootstrap/modal';
 import { ToastrService } from 'ngx-toastr';
 import { ApiService } from 'src/app/core/services/api.service';
+import { AccountsReceivableService } from 'src/app/core/services/accounts-receivable.service';
 import { AccountBank, AccountPlains, Cargos, Categories, CentroCusto, Cliente, ContaPagarDto, ContaReceberDto, Filial, Lancamento } from 'src/app/models/ContaBancaria';
 import { FinancialEntry } from 'src/app/pages/dashboards/crm/crm.component';
 import { ExportExcelService } from 'src/app/shared/export-excel.service';
@@ -37,7 +38,12 @@ export class ContasReceberComponent implements OnInit {
        
       accountsBankActive: AccountBank[] = []
       
-  constructor(private excel: ExportExcelService, private service: ApiService, private toast: ToastrService) {
+  constructor(
+    private excel: ExportExcelService,
+    private service: ApiService,
+    private accountsReceivableService: AccountsReceivableService,
+    private toast: ToastrService
+  ) {
 
   }
 
@@ -163,7 +169,7 @@ export class ContasReceberComponent implements OnInit {
 
   filtrar() {
 
-    this.service.getReceivablePeriodo(this.dtIni, this.dtFim, this.typeFilter, this.categoriaFilter).subscribe((data) => {
+    this.accountsReceivableService.listByPeriod(this.dtIni, this.dtFim, this.typeFilter, this.categoriaFilter).subscribe((data) => {
       this.lancamentos = data
     })
   }
@@ -186,7 +192,7 @@ export class ContasReceberComponent implements OnInit {
 
  addeContinua() {
 
-    this.service.postReceivables(this.accountsReceivable).subscribe(() => {
+    this.accountsReceivableService.createLegacy(this.accountsReceivable).subscribe(() => {
       this.toast.success('Salvo com sucesso!', 'Continue.. ')
       this.accountsReceivable.id = null,
         this.accountsReceivable.seriesId = null,
@@ -212,7 +218,7 @@ export class ContasReceberComponent implements OnInit {
   }
 
   addeFecha() {
-    this.service.postReceivables(this.accountsReceivable).subscribe(() => {
+    this.accountsReceivableService.createLegacy(this.accountsReceivable).subscribe(() => {
       this.toast.success('Salvo com sucesso!', 'Continue.. ')
       this.accountsReceivable.id = null,
         this.accountsReceivable.seriesId = null,
@@ -264,7 +270,7 @@ editar(r: any) {
 }
 
 // confirma salvar edição
-confirmarEditarReceber() {
+  confirmarEditarReceber() {
   const p = this.recebimentoSelecionado;
   const payload = {
     id: p.id,
@@ -277,7 +283,7 @@ confirmarEditarReceber() {
     notes: p.notes
   };
 
-  this.service.updateReceived(payload.id, payload).subscribe({
+  this.accountsReceivableService.updateLegacy(payload.id, payload).subscribe({
     next: () => {
       const idx = this.lancamentos.findIndex((x:any) => x.id === payload.id);
       if (idx >= 0) this.lancamentos[idx] = { ...this.recebimentoSelecionado };
@@ -296,7 +302,7 @@ confirmarReceber() {
     amount: Number(this.receberForm.amount || 0)
   };
 
-  this.service.markAsReceived(body.id, body).subscribe({
+  this.accountsReceivableService.markAsReceived(body.id, body).subscribe({
     next: () => {
       const idx = this.lancamentos.findIndex((x:any) => x.id === body.id);
       if (idx >= 0) {

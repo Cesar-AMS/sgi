@@ -101,3 +101,33 @@ O primeiro movimento desta fase deve ser uma revisao transversal curta do que ai
 - warnings de backend de baixo risco
 
 Depois disso, a equipe pode escolher a proxima fase operacional com foco explicito.
+
+---
+
+## 10. Atualizacao incremental desta fase
+Os primeiros cortes da Fase 2 ja executados foram:
+
+- migracao de [construtora.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/empreendimentos/construtora/construtora.component.ts) para `EnterprisesService`
+- migracao de [contas-receber.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-receber/contas-receber.component.ts) para `AccountsReceivableService` no fluxo principal
+- migracao de [contas-pagar.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-pagar/contas-pagar.component.ts) para `AccountsPayableService` no fluxo principal
+- retirada do uso residual de `ApiService` em [accounts-receivable.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/accounts-receivable/accounts-receivable.component.ts), com lookup de filiais migrado para `AdminAccessService`
+- retirada do apoio residual de construtora em [cadastro.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/empreendimentos/cadastro/cadastro.component.ts), com criacao e recarga passando por `EnterprisesService`
+- validacao de [accounts-payable.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/accounts-payable/accounts-payable.component.ts), confirmando que a tela ja nao depende de `ApiService`
+- migracao do bloco de formas de pagamento em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
+- migracao do bloco de categorias em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
+- migracao do bloco de centro de custo em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
+- migracao do bloco de plano de contas em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
+
+Leitura pratica desta atualizacao:
+- o `ApiService` ja perdeu usos indevidos importantes em Empreendimentos e Financeiro
+- os services oficiais dos dominios ficaram mais coerentes com o caminho real das telas
+- os lookups auxiliares ainda permanecem no `ApiService`, de forma controlada, para evitar abrir refatoracao grande
+
+---
+
+## 11. Proximo corte recomendado desta fase
+O proximo corte mais coerente agora e um destes:
+
+1. revisar telas financeiras secundarias que ainda nao tenham service oficial claro
+2. decidir se vale mais um corte em `gerais.component.ts` ou se o componente ja esta bom o suficiente para a Fase 2
+3. mudar o foco para backend hygiene de baixo risco, se a equipe quiser variar a frente tecnica sem abrir novo dominio

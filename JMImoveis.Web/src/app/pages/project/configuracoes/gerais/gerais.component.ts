@@ -356,10 +356,10 @@ loadUserMenu(userId: number) {
       status: this.categoriesForm.status
     }
 
-    this.service.putCategories(this.categoriesForm.id, obj).subscribe({
+    this.adminAccessService.updateCategory(this.categoriesForm.id, obj).subscribe({
       next: () => {
         this.toast.success('Categoria atualizada com sucesso')
-        this.service.getCategories().subscribe((data: any) => {
+        this.adminAccessService.listCategories().subscribe((data: any) => {
           this.categories = data;
         });
 
@@ -370,10 +370,10 @@ loadUserMenu(userId: number) {
   }
 
   addCategories() {
-    this.service.postCategories(this.categoriesForm).subscribe({
+    this.adminAccessService.createCategory(this.categoriesForm).subscribe({
       next: () => {
         this.toast.success('Categoria salva com sucesso')
-        this.service.getCategories().subscribe((data: any) => {
+        this.adminAccessService.listCategories().subscribe((data: any) => {
           this.categories = data;
         });
         this.modalCategories?.hide()
@@ -393,7 +393,7 @@ loadUserMenu(userId: number) {
 
     if (mode === 'edit') {
       this.modeCategoria = 'edit'
-      this.service.getCategoriesById(id!).subscribe({
+      this.adminAccessService.getCategoryById(id!).subscribe({
         next: (d: Categories) => {
           this.categoriesForm = d;
           this.modeUser = 'edit'
@@ -404,7 +404,7 @@ loadUserMenu(userId: number) {
   }
 
   addPlanAcc() {
-    this.service.postAccPlan(this.planAccForm).subscribe({
+    this.adminAccessService.createAccountPlain(this.planAccForm).subscribe({
       next: () => { },
       error: (err) => console.error(err),
     });
@@ -418,7 +418,7 @@ loadUserMenu(userId: number) {
     }
 
     if (mode === 'edit') {
-      this.service.getAccPlanById(id!).subscribe({
+      this.adminAccessService.getAccountPlainById(id!).subscribe({
         next: (d: AccountPlains) => {
           this.planAccForm = d;
           this.modalAccPlan?.show();
@@ -452,7 +452,7 @@ loadUserMenu(userId: number) {
   }
 
   addCC() {
-    this.service.postCentroCusto(this.centroCustoForm).subscribe({
+    this.adminAccessService.createCostCenter(this.centroCustoForm).subscribe({
       next: () => {
 
         this.toast.success('Salvo com sucesso'),
@@ -471,7 +471,7 @@ loadUserMenu(userId: number) {
     }
 
     if (mode === 'edit') {
-      this.service.getCentroCustoById(id!).subscribe({
+      this.adminAccessService.getCostCenterById(id!).subscribe({
         next: (d: CentroCusto) => {
           this.centroCustoForm = d;
           this.modalCC?.show();
@@ -481,10 +481,10 @@ loadUserMenu(userId: number) {
   }
 
   addFF() {
-    this.service.postFormasPagamento(this.formasPagamentoForm).subscribe({
+    this.adminAccessService.createPaymentMethod(this.formasPagamentoForm).subscribe({
       next: () => {
 
-        this.service.getFormasPagamento().subscribe((data) => {
+        this.adminAccessService.listPaymentMethods().subscribe((data) => {
           this.formasPagamento = data;
         });
         this.toast.success('Forma de pagamento adicionada com sucesso!')
@@ -495,9 +495,9 @@ loadUserMenu(userId: number) {
   }
 
   editFF() {
-    this.service.putFormasPagamento(this.formasPagamentoForm).subscribe({
+    this.adminAccessService.updatePaymentMethod(this.formasPagamentoForm).subscribe({
       next: () => {
-        this.service.getFormasPagamento().subscribe((data) => {
+        this.adminAccessService.listPaymentMethods().subscribe((data) => {
           this.formasPagamento = data;
         });
         this.toast.success('Forma de pagamento editada com sucesso!')
@@ -522,7 +522,7 @@ loadUserMenu(userId: number) {
 
     if (mode === 'edit') {
       this.titleFF = 'Editar'
-      this.service.getFormasPagamentoById(id!).subscribe({
+      this.adminAccessService.getPaymentMethodById(id!).subscribe({
         next: (d: FormasPagamento) => {
           this.formasPagamentoForm = d;
           this.modalFF?.show();
@@ -532,11 +532,11 @@ loadUserMenu(userId: number) {
   }
 
   ngOnInit() {
-    this.service.getCentroCusto().subscribe((data) => {
+    this.adminAccessService.listCostCenters().subscribe((data) => {
       this.centroCusto = data;
     });
 
-    this.service.getFormasPagamento().subscribe((data) => {
+    this.adminAccessService.listPaymentMethods().subscribe((data) => {
       this.formasPagamento = data;
     });
 
@@ -554,11 +554,11 @@ loadUserMenu(userId: number) {
       this.cargosSelect = data;
     });
 
-    this.service.getCategories().subscribe((data: any) => {
+    this.adminAccessService.listCategories().subscribe((data: any) => {
       this.categories = data;
     });
 
-    this.service.getAccPlan().subscribe((data: any) => {
+    this.adminAccessService.listAccountPlains().subscribe((data: any) => {
       this.planAcc = data;
     });
 

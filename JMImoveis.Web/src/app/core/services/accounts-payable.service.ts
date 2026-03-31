@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BACKEND_API_URL } from './backend-api-url';
+import { ContaPagarDto } from 'src/app/models/ContaBancaria';
 
 export interface AccountsPayableRow {
   id: number;
@@ -21,6 +22,7 @@ export interface AccountsPayableRow {
 @Injectable({ providedIn: 'root' })
 export class AccountsPayableService {
   private readonly baseUrl = `${BACKEND_API_URL}api/accounts-payable`;
+  private readonly legacyPayableUrl = `${BACKEND_API_URL}api/Payable`;
   
   constructor(private http: HttpClient) {}
 
@@ -50,6 +52,28 @@ export class AccountsPayableService {
   exportPdf(query: any) {
     const params = this.toParams(query);
     return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  listByPeriod(dtini: string, dtfim: string, typeFilter: string, categoriaFilter: string) {
+    const params = new HttpParams()
+      .set('de', dtini)
+      .set('ate', dtfim)
+      .set('typeFilter', typeFilter)
+      .set('categoriaFilter', categoriaFilter);
+
+    return this.http.get<ContaPagarDto[]>(`${this.legacyPayableUrl}/periodo`, { params });
+  }
+
+  createLegacy(payload: any) {
+    return this.http.post(this.legacyPayableUrl, payload);
+  }
+
+  updateLegacy(id: number, payload: any) {
+    return this.http.patch(`${this.legacyPayableUrl}/${id}`, payload);
+  }
+
+  markAsPaid(id: number, body: { paidDate: string; accountId: number | null; amount: number; }) {
+    return this.http.post(`${this.legacyPayableUrl}/${id}/pay`, body);
   }
 
   private toParams(q: any): HttpParams {

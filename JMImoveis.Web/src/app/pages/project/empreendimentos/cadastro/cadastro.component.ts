@@ -11,7 +11,6 @@ import { Construtoras, Empreendimento } from 'src/app/models/ContaBancaria';
 import { ToastrService } from 'ngx-toastr';
 import { exportToExcel } from 'src/app/shared/utils/excel-export';
 import { EnterprisesService } from 'src/app/core/services/enterprises.service';
-import { ApiService } from 'src/app/core/services/api.service';
 
 
 interface Empreendimentol {
@@ -119,7 +118,6 @@ padronizarColunas(torre: any) {
   constructor(
     public store: Store,
     private enterprisesService: EnterprisesService,
-    private service: ApiService,
     private toast: ToastrService
   ) {
     
@@ -210,10 +208,10 @@ private toBRDate(value?: string | null): string {
 }
 
   newConstrutora(){
-    this.service.postConstrutora(this.construtura).subscribe({
+    this.enterprisesService.createConstructor(this.construtura).subscribe({
       next: () => {
         this.toast.success('Construtora cadastrada com sucesso!')
-        this.service.getConstrutora().subscribe((data)=>{
+        this.enterprisesService.listConstructors().subscribe((data)=>{
       this.construtoras = data
       this.construtura.name = ''
     })

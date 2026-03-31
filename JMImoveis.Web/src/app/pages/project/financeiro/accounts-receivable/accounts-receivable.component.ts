@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { PageChangedEvent } from 'ngx-bootstrap/pagination';
+import { AdminAccessService } from 'src/app/core/services/admin-access.service';
 import { AccountsReceivableService } from 'src/app/core/services/accounts-receivable.service';
-import { ApiService } from 'src/app/core/services/api.service';
 import { Filial } from 'src/app/models/ContaBancaria';
 import { exportToExcel } from 'src/app/shared/utils/excel-export';
 
@@ -96,13 +96,13 @@ export class AccountsReceivableComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private arService: AccountsReceivableService,
-    private service: ApiService
+    private adminAccessService: AdminAccessService
   ) {}
 
   ngOnInit(): void {
     const today = this.toDateInput(new Date());
 
-    this.service.getFiliais().subscribe((data) => {
+    this.adminAccessService.listBranches().subscribe((data) => {
       this.branches = data;
     });
 

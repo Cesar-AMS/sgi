@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BACKEND_API_URL } from './backend-api-url';
+import { ContaReceberDto } from 'src/app/models/ContaBancaria';
 
 export interface AccountsReceivableRow {
   id: number;
@@ -21,6 +22,7 @@ export interface AccountsReceivableRow {
 @Injectable({ providedIn: 'root' })
 export class AccountsReceivableService {
   private readonly baseUrl = `${BACKEND_API_URL}api/accounts-receivable`;
+  private readonly legacyReceivablesUrl = `${BACKEND_API_URL}api/Receivables`;
 
   constructor(private http: HttpClient) { }
 
@@ -53,6 +55,28 @@ export class AccountsReceivableService {
 
   create(payload: any) {
     return this.http.post(`${this.baseUrl}`, payload);
+  }
+
+  listByPeriod(dtini: string, dtfim: string, typeFilter: string, categoriaFilter: string): Observable<ContaReceberDto[]> {
+    const params = new HttpParams()
+      .set('de', dtini)
+      .set('ate', dtfim)
+      .set('typeFilter', typeFilter)
+      .set('categoriaFilter', categoriaFilter);
+
+    return this.http.get<ContaReceberDto[]>(`${this.legacyReceivablesUrl}/periodo`, { params });
+  }
+
+  createLegacy(payload: any) {
+    return this.http.post(this.legacyReceivablesUrl, payload);
+  }
+
+  updateLegacy(id: number, payload: any) {
+    return this.http.patch(`${this.legacyReceivablesUrl}/${id}`, payload);
+  }
+
+  markAsReceived(id: number, body: { receivedDate: string; accountId: number | null; amount: number; }) {
+    return this.http.post(`${this.legacyReceivablesUrl}/${id}/pay`, body);
   }
 
   private toParams(query: any): HttpParams {
