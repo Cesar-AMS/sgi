@@ -4,6 +4,8 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <NuGetAudit>false</NuGetAudit>
     <UserSecretsId>f40bd04b-b5ae-4698-b07a-cf1cacd2ae3c</UserSecretsId>
   </PropertyGroup>
 

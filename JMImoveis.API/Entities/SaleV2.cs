@@ -11,16 +11,16 @@
         public int ParcelsStart { get; set; }                   // parcels_start
         public decimal RealtorComission { get; set; }           // realtor_comission
         public decimal RealtorComissionRemaining { get; set; }  // realtor_comission_remaining
-        public string RealtorComissionStatus { get; set; }      // realtor_comission_status
+        public string RealtorComissionStatus { get; set; } = string.Empty;      // realtor_comission_status
         public decimal ManagerComission { get; set; }           // manager_comission
         public decimal ManagerComissionRemaining { get; set; }  // manager_comission_remaining
-        public string ManagerComissionStatus { get; set; }      // manager_comission_status
+        public string ManagerComissionStatus { get; set; } = string.Empty;      // manager_comission_status
         public bool? GenerateNotification { get; set; } = false;       // generate_notification
         public DateTime? NotificatedDate { get; set; }          // notificated_date
         public decimal? NetEarnings { get; set; }                // net_earnings
         public decimal? GrossEarnings { get; set; }              // gross_earnings
         public string? ContractPath { get; set; }                // contract_path
-        public string Status { get; set; }                      // status
+        public string Status { get; set; } = string.Empty;                      // status
         public long BranchId { get; set; }                      // branch_id
         public long EnterpriseId { get; set; }                  // enterprise_id
         public long UnitId { get; set; }                        // unit_id

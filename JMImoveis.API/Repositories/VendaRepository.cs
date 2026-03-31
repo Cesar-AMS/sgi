@@ -397,7 +397,7 @@ namespace JMImoveisAPI.Repositories
             return await conn.QueryAsync<VendasV2>(sql);
         }
 
-        public async Task<IEnumerable<VendasV2>> GetAllByDateAsync(string startAt = null, string finishAt = null, int enterpriseId = 0, int filialId = 0, int clienteId = 0, string status = "ABC", int managerId = 0)
+        public async Task<IEnumerable<VendasV2>> GetAllByDateAsync(string? startAt = null, string? finishAt = null, int enterpriseId = 0, int filialId = 0, int clienteId = 0, string status = "ABC", int managerId = 0)
         {
             DateTime? startDate = null;
             DateTime? finishDate = null;
@@ -741,7 +741,7 @@ namespace JMImoveisAPI.Repositories
             var sale = await gr.ReadSingleOrDefaultAsync<VendasV2>();
             if (sale is null) return null;
 
-            var acts = (await gr.ReadAsync<Acts>()).ToList();
+            var acts = (await gr.ReadAsync<Acts>()).Cast<Acts?>().ToList();
 
             var receivablesInst = (await gr.ReadAsync<_ReceivableInstallView>()).ToList();
 
@@ -757,6 +757,7 @@ namespace JMImoveisAPI.Repositories
                                             Obs = x.Obs,
                                             Status = x.Status
                                         })
+                                        .Cast<Installaments?>()
                                         .ToList();
 
             var intermediarias = receivablesInst
@@ -770,6 +771,7 @@ namespace JMImoveisAPI.Repositories
                     Obs = x.Obs,
                     Status = x.Status
                 })
+                .Cast<Installaments?>()
                 .ToList();
 
             // Corretor
@@ -781,7 +783,7 @@ namespace JMImoveisAPI.Repositories
                 DtPayment = x.DtPayment,
                 Obs = x.Obs,
                 Status = x.Status
-            }).ToList();
+            }).Cast<Installaments?>().ToList();
 
             // Gerente
             var gerente = (await gr.ReadAsync<_PayableInstallView>()).Select(x => new Installaments
@@ -792,7 +794,7 @@ namespace JMImoveisAPI.Repositories
                 DtPayment = x.DtPayment,
                 Obs = x.Obs,
                 Status = x.Status
-            }).ToList();
+            }).Cast<Installaments?>().ToList();
 
             // Preenche o objeto final
             sale.Acts = acts;

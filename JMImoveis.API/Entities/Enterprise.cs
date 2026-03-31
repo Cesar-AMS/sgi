@@ -21,7 +21,7 @@
         public int? Number { get; set; }
         public decimal? Value { get; set; }
         public string? Size { get; set; }
-        public string Dormitories { get; set; }
+        public string Dormitories { get; set; } = string.Empty;
         public int? Commission { get; set; }
         public int Active { get; set; }
     }

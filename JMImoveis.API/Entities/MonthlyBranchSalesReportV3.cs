@@ -20,13 +20,13 @@
         public long SaleId { get; set; }
         public long UserId { get; set; }
 
-        public string Category { get; set; }
-        public string Description { get; set; }
+        public string Category { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
 
         public DateTime DueDate { get; set; }
         public DateTime? PayDate { get; set; }
 
-        public string Status { get; set; }     // WAITING / PAID
+        public string Status { get; set; } = string.Empty;     // WAITING / PAID
         public decimal Amount { get; set; }
         public decimal PendingAmount { get; set; }
     }
@@ -34,7 +34,7 @@
     public class UserCategoryMonthlyPayablesSummaryV3
     {
         public long UserId { get; set; }
-        public string Category { get; set; }
+        public string Category { get; set; } = string.Empty;
 
         public int Year { get; set; }
         public int Month { get; set; }

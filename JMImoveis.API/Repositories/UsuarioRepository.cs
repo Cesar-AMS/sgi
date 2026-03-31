@@ -231,7 +231,7 @@ namespace JMImoveisAPI.Repositories
             var sqlDeleteJob = $"delete from user_roles T0 where T0.user_id = {entity.Id}";
             await conn.ExecuteAsync(sqlDeleteJob);
 
-            if (entity.JobpositionId.Any())
+            if (entity.JobpositionId != null && entity.JobpositionId.Any())
             {
                 var sqlInsert = "";
 

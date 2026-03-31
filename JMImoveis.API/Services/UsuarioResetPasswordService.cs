@@ -17,6 +17,7 @@ namespace JMImoveisAPI.Services
         {
             var user = await _usuarioRepository.GetByEmailAsync(email);
             if (user == null) return false;
+            if (!user.Id.HasValue) return false;
 
             string novaSenha = Guid.NewGuid().ToString("N")[..8];
 

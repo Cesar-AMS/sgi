@@ -80,7 +80,7 @@ namespace JMImoveisAPI.Entities
     public class CreateLeadScheduleRequest
     {
         public int LeadId { get; set; }
-        public string NameClient { get; set; }
+        public string NameClient { get; set; } = string.Empty;
         public int UserId { get; set; }
         public DateTime ScheduledAt { get; set; }
         public string? Note { get; set; }
@@ -94,7 +94,7 @@ namespace JMImoveisAPI.Entities
         public DateTime ScheduledAt { get; set; } // dataHoraISO
 
         public string? Note { get; set; } // observacao
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -103,7 +103,7 @@ namespace JMImoveisAPI.Entities
         public int? CoordenadorId { get; set; }
         public int? GerenteId { get; set; }
 
-        public string NameClient { get; set; }
+        public string NameClient { get; set; } = string.Empty;
 
         public bool Compareceu { get; set; }
         public bool VirouVenda { get; set; }
@@ -127,10 +127,10 @@ namespace JMImoveisAPI.Entities
         public int Id { get; set; }
         public int? LeadId { get; set; }
         public int VendedorId { get; set; }          // vendedorId
-        public string NomeCliente { get; set; }   // nomeCliente
+        public string NomeCliente { get; set; } = string.Empty;   // nomeCliente
         public DateTime DataHoraISO { get; set; }
         public string? Observacao { get; set; }        // observacao
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
         public bool Compareceu { get; set; }
         public bool VirouVenda { get; set; }
         public DateTime CreatedAt { get; set; }

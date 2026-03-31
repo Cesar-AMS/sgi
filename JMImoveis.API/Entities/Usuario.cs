@@ -33,10 +33,10 @@ namespace JMImoveisAPI.Entities
     public class UsuarioDTO
     {
         public int Id { get; set; }
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public string Nome { get; set; }
-        public string Cargo { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string Nome { get; set; } = string.Empty;
+        public string Cargo { get; set; } = string.Empty;
         public bool Status { get; set; }
     }
 

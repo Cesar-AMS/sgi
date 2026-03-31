@@ -90,22 +90,17 @@ Ela existe para transformar a consolidacao feita ate aqui em uma base:
 
 ---
 
-## 9. Proximo passo recomendado
-O primeiro movimento desta fase deve ser uma revisao transversal curta do que ainda esta desalinhado entre:
+## 9. Ponto de chegada atual
+Neste momento:
 
-- menu
-- rotas
-- services oficiais
-- compatibilidades legadas
-- documentacao principal
-- warnings de backend de baixo risco
-
-Depois disso, a equipe pode escolher a proxima fase operacional com foco explicito.
+- o frontend da Fase 2 ja pode ser tratado como bom o suficiente neste escopo transversal
+- o `ApiService` perdeu os residuos mais importantes em Empreendimentos, Financeiro e no nucleo administrativo
+- o backend hygiene de baixo risco chegou a build limpo no ambiente local
 
 ---
 
 ## 10. Atualizacao incremental desta fase
-Os primeiros cortes da Fase 2 ja executados foram:
+Os cortes ja executados na Fase 2 foram:
 
 - migracao de [construtora.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/empreendimentos/construtora/construtora.component.ts) para `EnterprisesService`
 - migracao de [contas-receber.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-receber/contas-receber.component.ts) para `AccountsReceivableService` no fluxo principal
@@ -113,23 +108,24 @@ Os primeiros cortes da Fase 2 ja executados foram:
 - retirada do uso residual de `ApiService` em [accounts-receivable.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/accounts-receivable/accounts-receivable.component.ts), com lookup de filiais migrado para `AdminAccessService`
 - retirada do apoio residual de construtora em [cadastro.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/empreendimentos/cadastro/cadastro.component.ts), com criacao e recarga passando por `EnterprisesService`
 - validacao de [accounts-payable.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/accounts-payable/accounts-payable.component.ts), confirmando que a tela ja nao depende de `ApiService`
-- migracao do bloco de formas de pagamento em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
-- migracao do bloco de categorias em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
-- migracao do bloco de centro de custo em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
-- migracao do bloco de plano de contas em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
+- migracao dos blocos de formas de pagamento, categorias, centro de custo e plano de contas em [gerais.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/configuracoes/gerais/gerais.component.ts) para `AdminAccessService`
 - migracao de [centro-custo.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/centro-custo/centro-custo.component.ts) para `CostCenterAnalysisService`
 - migracao de [contas-contabeis.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/financeiro/contas-contabeis/contas-contabeis.component.ts) para `AccountAnalysisService`, com lookups em `AdminAccessService`
+- blocos sucessivos de backend hygiene de baixo risco em services, controllers, repositories e entidades simples, incluindo [UsuarioAuthService.cs](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.API/Services/UsuarioAuthService.cs), [FinancialService.cs](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.API/Services/FinancialService.cs), [ReceivableRepository.cs](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.API/Repositories/ReceivableRepository.cs), [VendaRepository.cs](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.API/Repositories/VendaRepository.cs), [Venda.cs](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.API/Entities/Venda.cs) e [SaleV2.cs](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.API/Entities/SaleV2.cs)
+- fechamento do ruido estrutural de build em [JMImoveis.API.csproj](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.API/JMImoveis.API.csproj), deixando o build local em `0 warnings` e `0 errors`
 
 Leitura pratica desta atualizacao:
-- o `ApiService` ja perdeu usos indevidos importantes em Empreendimentos e Financeiro
-- os services oficiais dos dominios ficaram mais coerentes com o caminho real das telas
-- os lookups auxiliares ainda permanecem no `ApiService`, de forma controlada, para evitar abrir refatoracao grande
+- o `ApiService` perdeu os usos indevidos mais importantes no frontend
+- os services oficiais ficaram mais coerentes com o caminho real das telas
+- os lookups auxiliares permaneceram controlados, sem abrir refatoracao grande
+- o backend hygiene reduziu os warnings do build de `84` para `0` no ambiente local, sem mudar contratos HTTP nem abrir refatoracao estrutural
+- o frontend da Fase 2 ja pode ser tratado como suficiente e pausado com seguranca
 
 ---
 
 ## 11. Proximo corte recomendado desta fase
 O proximo corte mais coerente agora e um destes:
 
-1. decidir se vale mais um corte em `gerais.component.ts` ou se o componente ja esta bom o suficiente para a Fase 2
-2. revisar se o frontend da Fase 2 ja esta maduro o suficiente para virar o foco para backend hygiene
-3. mudar o foco para backend hygiene de baixo risco, se a equipe quiser variar a frente tecnica sem abrir novo dominio
+1. encerrar formalmente a Fase 2 como suficiente
+2. so depois abrir uma nova fase com prioridade explicita, em vez de seguir empilhando cortes pequenos
+3. quando fizer sentido, tratar separadamente upgrade de runtime e politica de auditoria de pacotes

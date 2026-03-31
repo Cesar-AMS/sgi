@@ -4,17 +4,17 @@ namespace JMImoveisAPI.Entities
 {
     public class FinancialHistoryItemV2
     {
-        public string Kind { get; set; }           // "RECEIVE" ou "PAY"
+        public string Kind { get; set; } = string.Empty;           // "RECEIVE" ou "PAY"
         public long Id { get; set; }
         public long SaleId { get; set; }
         public long? UserId { get; set; }
         public DateTime DueDate { get; set; }
         public DateTime? PayDate { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public decimal PendingAmount { get; set; }
-        public string Category { get; set; }
-        public string Description { get; set; }
+        public string Category { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
     }
 
     public class AccountsPayableQuery

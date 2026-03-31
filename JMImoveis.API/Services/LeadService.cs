@@ -16,8 +16,8 @@ namespace JMImoveisAPI.Services
         public Task<IEnumerable<Lead>> GetAllByFiltersAsync(LeadFilter filter)
             => _leadRepository.GetAllByFilters(filter);
 
-        public Task<Lead?> GetByIdAsync(int id)
-            => _leadRepository.GetLeadById(id);
+        public async Task<Lead?> GetByIdAsync(int id)
+            => await _leadRepository.GetLeadById(id);
 
         public Task CreateLeadAsync(Lead lead)
             => _leadRepository.CreateLead(lead);

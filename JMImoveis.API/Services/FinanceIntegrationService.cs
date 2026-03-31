@@ -56,7 +56,7 @@ namespace JMImoveisAPI.Services
                     int n = 1;
                     foreach (var act in sale.Acts)
                     {
-                        if (act?.Value is null) continue;
+                        if (act == null || act.Value is null) continue;
 
                         receivables.Add(new Receivable
                         {
@@ -67,7 +67,7 @@ namespace JMImoveisAPI.Services
                             CompetenceDate = act.Date ?? sale.SelledAt ?? now,
                             DueDate = act.Date ?? sale.SelledAt ?? now,
                             Received = false,
-                            ReceivedDate = act?.Status == "PAID" ? act.Date: null,
+                            ReceivedDate = act.Status == "PAID" ? act.Date : null,
                             CategoryId = opt.CategoryActs,
                             AccountId = 1,
                             ClientId = opt.ClientId ?? sale.CustomerId,

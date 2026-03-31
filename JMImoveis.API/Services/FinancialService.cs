@@ -38,6 +38,11 @@ namespace JMImoveisAPI.Services
             if (sale == null)
                 throw new Exception($"Venda {saleId} não encontrada.");
 
+            if (!sale.Id.HasValue)
+                throw new Exception($"Venda {saleId} sem identificador válido.");
+
+            var saleIdValue = sale.Id.Value;
+
             // 2) Buscar parcelas da venda
             var parcels = (await conn.QueryAsync<ParcelV2>(
                 @"SELECT id, `number`, value, `date`, observations, source_type, source_id, status, `type`
@@ -58,18 +63,18 @@ namespace JMImoveisAPI.Services
             {
                 receivables.Add(new AccountReceivableV2
                 {
-                    SaleId = sale.Id.Value,
+                    SaleId = saleIdValue,
                     UserId = null, // imobiliária (pode ser branch_id se quiser)
                     CreateDate = now,
                     DueDate = sale.SelledAt.Date,
                     PayDate = null,
-                    Description = $"Entrada (Ato) - Venda {sale.Id}",
+                    Description = $"Entrada (Ato) - Venda {saleIdValue}",
                     Status = "WAITING",
                     Amount = sale.StartValue,
                     PendingAmount = sale.StartValue,
                     Category = "ATO",
                     ParcelNumber = null,
-                    Observations = null
+                    Observations = string.Empty
                 });
             }
 
@@ -80,12 +85,12 @@ namespace JMImoveisAPI.Services
 
                 receivables.Add(new AccountReceivableV2
                 {
-                    SaleId = sale.Id.Value,
+                    SaleId = saleIdValue,
                     UserId = null, // imobiliária
                     CreateDate = now,
                     DueDate = p.Date.Date,
                     PayDate = isPaid ? p.Date.Date : null,
-                    Description = $"Parcela {p.Number} - Venda {sale.Id}",
+                    Description = $"Parcela {p.Number} - Venda {saleIdValue}",
                     Status = isPaid ? "PAID" : "WAITING",
                     Amount = p.Value,
                     PendingAmount = isPaid ? 0 : p.Value,
@@ -104,17 +109,17 @@ namespace JMImoveisAPI.Services
             {
                 payables.Add(new AccountPayableV2
                 {
-                    SaleId = sale.Id.Value,
+                    SaleId = saleIdValue,
                     UserId = sale.EnterpriseId, // ou construtora_id quando você tiver
                     CreateDate = now,
                     DueDate = dueDateCommissions,
                     PayDate = null,
-                    Description = $"Repasse Construtora - Venda {sale.Id}",
+                    Description = $"Repasse Construtora - Venda {saleIdValue}",
                     Status = "WAITING", // assume que ainda não foi pago
                     Amount = sale.ValueToConstructor,
                     PendingAmount = sale.ValueToConstructor,
                     Category = "CONSTRUTORA",
-                    Observations = null
+                    Observations = string.Empty
                 });
             }
 
@@ -125,17 +130,17 @@ namespace JMImoveisAPI.Services
 
                 payables.Add(new AccountPayableV2
                 {
-                    SaleId = sale.Id.Value,
+                    SaleId = saleIdValue,
                     UserId = sale.RealtorId,
                     CreateDate = now,
                     DueDate = dueDateCommissions,
                     PayDate = isPaid ? dueDateCommissions : null,
-                    Description = $"Comissão Corretor - Venda {sale.Id}",
+                    Description = $"Comissão Corretor - Venda {saleIdValue}",
                     Status = isPaid ? "PAID" : "WAITING",
                     Amount = sale.RealtorComission,
                     PendingAmount = isPaid ? 0 : sale.RealtorComission,
                     Category = "COMISSAO_CORRETOR",
-                    Observations = null
+                    Observations = string.Empty
                 });
             }
             // 2b) Comissão Corretor 2
@@ -145,17 +150,17 @@ namespace JMImoveisAPI.Services
 
                 payables.Add(new AccountPayableV2
                 {
-                    SaleId = sale.Id.Value,
+                    SaleId = saleIdValue,
                     UserId = sale.RealtorIdTwo.Value,
                     CreateDate = now,
                     DueDate = dueDateCommissions,
                     PayDate = isPaidTwo ? dueDateCommissions : null,
-                    Description = $"Comissão Corretor 2 - Venda {sale.Id}",
+                    Description = $"Comissão Corretor 2 - Venda {saleIdValue}",
                     Status = isPaidTwo ? "PAID" : "WAITING",
                     Amount = sale.RealtorComissionTwo.Value,
                     PendingAmount = isPaidTwo ? 0 : sale.RealtorComissionTwo.Value,
                     Category = "COMISSAO_CORRETOR",  // mesma categoria, muda só o UserId
-                    Observations = null
+                    Observations = string.Empty
                 });
             }
 
@@ -166,17 +171,17 @@ namespace JMImoveisAPI.Services
 
                 payables.Add(new AccountPayableV2
                 {
-                    SaleId = sale.Id.Value,
+                    SaleId = saleIdValue,
                     UserId = sale.ManagerId.Value,
                     CreateDate = now,
                     DueDate = dueDateCommissions,
                     PayDate = isPaid ? dueDateCommissions : null,
-                    Description = $"Comissão Gerente - Venda {sale.Id}",
+                    Description = $"Comissão Gerente - Venda {saleIdValue}",
                     Status = isPaid ? "PAID" : "WAITING",
                     Amount = sale.ManagerComission,
                     PendingAmount = isPaid ? 0 : sale.ManagerComission,
                     Category = "COMISSAO_GERENTE",
-                    Observations = null
+                    Observations = string.Empty
                 });
             }
 
@@ -187,17 +192,17 @@ namespace JMImoveisAPI.Services
 
                 payables.Add(new AccountPayableV2
                 {
-                    SaleId = sale.Id.Value,
+                    SaleId = saleIdValue,
                     UserId = sale.ManagerId.Value,    // aqui você pode ter um ManagerIdTwo separado no futuro se quiser
                     CreateDate = now,
                     DueDate = dueDateCommissions,
                     PayDate = isPaidTwo ? dueDateCommissions : null,
-                    Description = $"Comissão Gerente 2 - Venda {sale.Id}",
+                    Description = $"Comissão Gerente 2 - Venda {saleIdValue}",
                     Status = isPaidTwo ? "PAID" : "WAITING",
                     Amount = sale.ManagerComissionTwo.Value,
                     PendingAmount = isPaidTwo ? 0 : sale.ManagerComissionTwo.Value,
                     Category = "COMISSAO_GERENTE",
-                    Observations = null
+                    Observations = string.Empty
                 });
             }
 
@@ -209,17 +214,17 @@ namespace JMImoveisAPI.Services
 
                 payables.Add(new AccountPayableV2
                 {
-                    SaleId = sale.Id.Value,
+                    SaleId = saleIdValue,
                     UserId = sale.CoordenatorId.Value,
                     CreateDate = now,
                     DueDate = dueDateCommissions,
                     PayDate = isPaid ? dueDateCommissions : null,
-                    Description = $"Comissão Coordenador - Venda {sale.Id}",
+                    Description = $"Comissão Coordenador - Venda {saleIdValue}",
                     Status = isPaid ? "PAID" : "WAITING",
                     Amount = sale.CoordenatorComission.Value,
                     PendingAmount = isPaid ? 0 : sale.CoordenatorComission.Value,
                     Category = "COMISSAO_COORDENADOR",
-                    Observations = null
+                    Observations = string.Empty
                 });
             }
 
@@ -230,17 +235,17 @@ namespace JMImoveisAPI.Services
 
                 payables.Add(new AccountPayableV2
                 {
-                    SaleId = sale.Id.Value,
+                    SaleId = saleIdValue,
                     UserId = sale.CoordenatorIdTwo.Value,
                     CreateDate = now,
                     DueDate = dueDateCommissions,
                     PayDate = isPaidTwo ? dueDateCommissions : null,
-                    Description = $"Comissão Coordenador 2 - Venda {sale.Id}",
+                    Description = $"Comissão Coordenador 2 - Venda {saleIdValue}",
                     Status = isPaidTwo ? "PAID" : "WAITING",
                     Amount = sale.CoordenatorComissionTwo.Value,
                     PendingAmount = isPaidTwo ? 0 : sale.CoordenatorComissionTwo.Value,
                     Category = "COMISSAO_COORDENADOR",
-                    Observations = null
+                    Observations = string.Empty
                 });
             }
 
@@ -252,17 +257,17 @@ namespace JMImoveisAPI.Services
 
                 payables.Add(new AccountPayableV2
                 {
-                    SaleId = sale.Id.Value,
+                    SaleId = saleIdValue,
                     UserId = sale.BranchId,  // aqui você pode trocar para um financial_id quando existir
                     CreateDate = now,
                     DueDate = dueDateCommissions,
                     PayDate = isPaid ? dueDateCommissions : null,
-                    Description = $"Comissão Financeiro - Venda {sale.Id}",
+                    Description = $"Comissão Financeiro - Venda {saleIdValue}",
                     Status = isPaid ? "PAID" : "WAITING",
                     Amount = sale.FinancialComission.Value,
                     PendingAmount = isPaid ? 0 : sale.FinancialComission.Value,
                     Category = "COMISSAO_FINANCEIRO",
-                    Observations = null
+                    Observations = string.Empty
                 });
             }
 

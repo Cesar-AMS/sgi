@@ -31,6 +31,9 @@ namespace JMImoveisAPI.Services
             if (!BCrypt.Net.BCrypt.Verify(password, hash))
                 return (null, null);
 
+            if (!user.Id.HasValue)
+                return (null, null);
+
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
 
@@ -38,8 +41,8 @@ namespace JMImoveisAPI.Services
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.Value.ToString()),
+                    new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
                 }),
                 Expires = DateTime.UtcNow.AddHours(8),
                 SigningCredentials = new SigningCredentials(
@@ -49,10 +52,10 @@ namespace JMImoveisAPI.Services
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return (tokenHandler.WriteToken(token), user.Id);
+            return (tokenHandler.WriteToken(token), user.Id.Value);
         }
 
-        private static string NormalizeBcryptHash(string hash)
+        private static string? NormalizeBcryptHash(string? hash)
         {
             if (string.IsNullOrWhiteSpace(hash)) return hash;
 

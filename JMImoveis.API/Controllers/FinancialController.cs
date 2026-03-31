@@ -37,7 +37,9 @@ namespace JMImoveisAPI.Controllers
             if (request == null || request.Sale == null)
                 return BadRequest("Dados da venda são obrigatórios.");
 
-            var saleId = await _financialService.CreateSaleWithFinancialAsync(request.Sale, request.Parcels, request.CustomerIds);
+            var parcels = request.Parcels.Where(p => p is not null).Select(p => p!).ToList();
+
+            var saleId = await _financialService.CreateSaleWithFinancialAsync(request.Sale, parcels, request.CustomerIds);
 
             return Ok();
         }

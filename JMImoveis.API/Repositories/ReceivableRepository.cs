@@ -242,8 +242,16 @@ namespace JMImoveisAPI.Repositories
                 int parcelas = seed.Parcelas.GetValueOrDefault(1);
                 bool gerarParcelas = seed.Recurrencing == true && parcelas > 1;
 
+                if (!seed.Amount.HasValue)
+                    throw new ArgumentException("Amount deve ser informado", nameof(seed));
+
+                if (!seed.DueDate.HasValue)
+                    throw new ArgumentException("DueDate deve ser informado", nameof(seed));
+
                 // se for parcelado e valor total está em Amount → valor por parcela:
-                decimal valorParcela = (decimal)(gerarParcelas ? decimal.Round(seed.Amount.Value / parcelas, 2) : seed.Amount);
+                decimal valorParcela = gerarParcelas
+                    ? decimal.Round(seed.Amount.Value / parcelas, 2)
+                    : seed.Amount.Value;
 
                 // helper de insert
                 const string ins = @"INSERT INTO receivables
@@ -284,10 +292,10 @@ namespace JMImoveisAPI.Repositories
                     const string upFirst = @"UPDATE receivables SET series_id=@sid WHERE id=@id;";
                     await con.ExecuteAsync(upFirst, new { sid = firstId, id = firstId }, tx);
 
-                    var due = seed.DueDate;
+                    var due = seed.DueDate.Value;
                     for (int i = 2; i <= parcelas; i++)
                     {
-                        due = NextDate(due.Value, seed.Periodic ?? "MONTHLY", 1);
+                        due = NextDate(due, seed.Periodic ?? "MONTHLY", 1);
                         var id = await con.ExecuteScalarAsync<int>(ins, new
                         {
                             SeriesId = firstId,
