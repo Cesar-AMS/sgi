@@ -688,6 +688,32 @@ Proximo corte recomendado:
 - pausar Clientes backend se nao houver necessidade operacional imediata
 - ou voltar apenas para um ajuste pequeno e pontual, caso surja demanda real
 
+## 8.6 Atualizacao incremental - Empreendimentos no backend
+O dominio de Empreendimentos avancou tambem no backend, sem mudanca de contrato HTTP.
+
+Caminho oficial atual no backend para o recorte:
+- `EmpreendimentoController -> IEmpreendimentoService -> EmpreendimentoService`
+- `IEmpreendimentoRepository -> EmpreendimentoRepository`
+
+Fluxos ja cobertos:
+- listar empreendimentos
+- buscar empreendimento por id
+- listar unidades por empreendimento
+- listar unidades ativas por empreendimento
+- lookup por construtora
+- criar empreendimento
+- atualizar empreendimento
+- soft delete e hard delete
+
+Divida assumida:
+- `ConstrutoraController` e `ApartamentController` ainda seguem sem camada de service
+- o dominio ainda carrega inconsistencias de nomenclatura
+- ainda existem queries interpoladas em partes do repository
+
+Proximo corte recomendado:
+- documentar o recorte atual como suficiente antes de abrir outro subfluxo
+- ou seguir com `Construtora` no mesmo padrao, se houver necessidade operacional clara
+
 # 9. Resumo executivo
 O backlog inicial do projeto foi estruturado para seguir o fluxo real da empresa e reduzir o risco de construir funcionalidades desconectadas da operação.
 

@@ -6,6 +6,7 @@ Este documento registra o estado atual de consolidacao do dominio **Empreendimen
 O objetivo e documentar:
 - o que ja foi consolidado
 - qual e o caminho oficial no frontend
+- qual e o caminho oficial no backend
 - o que ainda permanece como compatibilidade
 - quais pendencias ainda existem
 - qual deve ser o proximo passo quando Empreendimentos voltar a ser priorizado
@@ -53,40 +54,66 @@ Por isso:
 - o subfluxo de Construtora dentro de `CadastroComponent` ainda usa `ApiService`
 - nao houve mudanca de contrato HTTP
 - nao houve mudanca de rota
-- nao houve mudanca no backend
 
 ---
 
-## 5. Estado atual da consolidacao
+## 5. Caminho oficial atual no backend
+O caminho oficial atual de Empreendimentos no backend e:
+
+- controller oficial: `EmpreendimentoController`
+- service oficial: `IEmpreendimentoService -> EmpreendimentoService`
+- repository oficial: `IEmpreendimentoRepository -> EmpreendimentoRepository`
+
+Responsabilidades ja cobertas nesse caminho:
+- listar empreendimentos
+- buscar empreendimento por id
+- listar unidades por empreendimento
+- listar unidades ativas por empreendimento
+- lookup por construtora
+- criar empreendimento
+- atualizar empreendimento
+- soft delete e hard delete
+
+Os contratos HTTP e rotas atuais foram preservados nesse recorte.
+
+---
+
+## 6. Estado atual da consolidacao
 Pela regua adotada no projeto, Empreendimentos esta assim neste momento:
 
 - `1 caminho oficial`
   - atendido no frontend por `CadastroComponent -> EnterprisesService`
+  - atendido no backend por `EmpreendimentoController -> IEmpreendimentoService -> EmpreendimentoService`
 - `fluxo principal funcionando`
   - atendido para listagem, criacao e edicao do empreendimento
+  - atendido no backend para consulta, manutencao e operacoes centrais do recorte
 - `responsabilidades principais separadas`
   - atendido de forma inicial, com a tela oficial deixando de depender do `ApiService` no nucleo do fluxo
+  - atendido no backend com controller, service e repository separados para o subfluxo central
 - `divida restante documentada`
   - atendido neste documento
 
 ---
 
-## 6. Divida restante assumida
+## 7. Divida restante assumida
 Permanece como divida conhecida, mas nao bloqueante neste recorte:
 
 - `ConstrutoraComponent` ainda nao foi consolidado no mesmo service oficial
 - `AdminEmpreendimentoComponent` ainda segue fora do recorte principal
 - `EspelhoComponent` mistura unidades com fluxo comercial e ainda nao deve ser tratado como caminho oficial de Empreendimentos
 - `ApiService` ainda contem metodos de empreendimentos e construtoras por compatibilidade
-- o backend de Empreendimentos ainda nao foi consolidado com service de aplicacao dedicado
+- `ConstrutoraController` e `ApartamentController` ainda seguem em `Controller -> Repository`
+- o backend ainda possui inconsistencias de nomenclatura como `Apartament`
+- ainda existem queries interpoladas em partes do repository de Empreendimentos e Unidades
 
 ---
 
-## 7. Proximo passo recomendado
+## 8. Proximo passo recomendado
 O proximo passo seguro quando Empreendimentos voltar a ser priorizado e um destes:
 
-1. consolidar `ConstrutoraComponent` no mesmo caminho oficial, por meio de `EnterprisesService` ou de um `BuildersService`
-2. ou encerrar Empreendimentos como bom o suficiente neste escopo atual e seguir para outro dominio mais prioritario
+1. consolidar `Construtora` no backend no mesmo padrao, com `IConstrutoraService -> ConstrutoraService`
+2. consolidar `ConstrutoraComponent` no frontend no mesmo caminho oficial, por meio de `EnterprisesService` ou de um `BuildersService`
+3. ou encerrar Empreendimentos como bom o suficiente neste escopo atual e seguir para outro dominio mais prioritario
 
 O melhor criterio para decidir e:
 - se o uso operacional principal estiver concentrado em cadastro de empreendimento, o recorte atual pode ser pausado
