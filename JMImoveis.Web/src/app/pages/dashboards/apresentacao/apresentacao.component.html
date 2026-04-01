@@ -9,7 +9,7 @@
 
       <label *ngIf="gerentes.length">
         Gerente:
-        <select [ngModel]="gerentes[gerenteIndex]?.gerenteId" (ngModelChange)="setGerenteById($event)">
+        <select [ngModel]="gerentes[gerenteIndex].gerenteId" (ngModelChange)="setGerenteById($event)">
           <option *ngFor="let g of gerentes" [value]="g.gerenteId">{{ g.gerenteNome }}</option>
         </select>
       </label>

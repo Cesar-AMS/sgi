@@ -3,6 +3,14 @@
     <div class="col-12">
       <div class="page-title-box d-sm-flex align-items-center justify-content-between">
         <h4 class="mb-sm-0">Analise de Perfil e Credito</h4>
+        <div class="d-flex gap-2 mt-3 mt-sm-0">
+          <a class="btn btn-outline-secondary btn-sm" [routerLink]="['/jm/vendas/edit', saleId]">
+            Voltar para venda
+          </a>
+          <a class="btn btn-outline-dark btn-sm" [routerLink]="['/jm/contracts', saleId]">
+            Ir para contrato
+          </a>
+        </div>
       </div>
     </div>
   </div>

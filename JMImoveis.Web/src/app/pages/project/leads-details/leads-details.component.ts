@@ -268,6 +268,21 @@ export class LeadDetailsComponent implements OnInit {
     window.location.href = `mailto:${this.lead.email}`;
   }
 
+  openSaleFlow(): void {
+    if (!this.lead) return;
+
+    this.router.navigate(['/jm/vendas/new'], {
+      queryParams: {
+        leadId: this.lead.id,
+        nome: this.lead.nome ?? '',
+        telefone: this.lead.telefone ?? '',
+        email: this.lead.email ?? '',
+        origem: this.lead.fonte ?? '',
+        vendedor: this.lead.vendedor ?? '',
+      },
+    });
+  }
+
   // ---- Atividades ----
 
   startAddActivity(): void {

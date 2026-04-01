@@ -43,6 +43,14 @@ export class VendasNewComponent implements OnInit {
   saving = false;
   statusSaving = false;
   closing = false;
+  leadContext: {
+    leadId: number | null;
+    nome: string;
+    telefone: string;
+    email: string;
+    origem: string;
+    vendedor: string;
+  } | null = null;
 
   currencyOptions = {
   prefix: 'R$ ',
@@ -195,7 +203,10 @@ export class VendasNewComponent implements OnInit {
       this.isEdit = true;
       this.saleId = +idParam;
       this.loadSale(this.saleId);
+      return;
     }
+
+    this.applyLeadContextFromRoute();
   }
 
   private buildForm(): void {
@@ -678,5 +689,39 @@ export class VendasNewComponent implements OnInit {
 
   get title(): string {
     return this.isEdit ? 'Editar Venda' : 'Nova Venda';
+  }
+
+  private applyLeadContextFromRoute(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const leadId = Number(params.get('leadId'));
+    const vendedor = params.get('vendedor');
+
+    if (!leadId) {
+      this.leadContext = null;
+      return;
+    }
+
+    this.leadContext = {
+      leadId,
+      nome: params.get('nome') ?? '',
+      telefone: params.get('telefone') ?? '',
+      email: params.get('email') ?? '',
+      origem: params.get('origem') ?? '',
+      vendedor: vendedor ?? '',
+    };
+
+    const realtorId = this.tryParseNumericId(vendedor);
+    if (realtorId) {
+      this.form.patchValue({ realtorId });
+    }
+  }
+
+  private tryParseNumericId(value: string | null): number | null {
+    if (!value) {
+      return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
 }

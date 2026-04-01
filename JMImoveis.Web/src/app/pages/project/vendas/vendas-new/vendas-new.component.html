@@ -7,6 +7,37 @@
 
   <form [formGroup]="form">
 
+    <div class="alert alert-info border-0 shadow-sm mb-4" *ngIf="leadContext && !isEdit">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <h6 class="mb-2">Contexto vindo de Atendimento / Leads</h6>
+          <div class="small text-muted">
+            Esta venda foi aberta a partir de um lead. Os dados abaixo ficam como contexto de leitura para apoiar o preenchimento comercial.
+          </div>
+        </div>
+        <span class="badge bg-primary-subtle text-primary">Lead #{{ leadContext.leadId }}</span>
+      </div>
+
+      <div class="row g-3 mt-2">
+        <div class="col-md-4">
+          <label class="form-label mb-1">Nome</label>
+          <input type="text" class="form-control" [value]="leadContext.nome" readonly>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1">Telefone</label>
+          <input type="text" class="form-control" [value]="leadContext.telefone" readonly>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1">Email</label>
+          <input type="text" class="form-control" [value]="leadContext.email" readonly>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label mb-1">Origem</label>
+          <input type="text" class="form-control" [value]="leadContext.origem" readonly>
+        </div>
+      </div>
+    </div>
+
     <!-- ÁREA CAPTURADA NO PDF -->
     <div #pdfArea class="pdf-page">
 

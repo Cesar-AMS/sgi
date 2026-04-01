@@ -58,6 +58,7 @@
               "apexcharts",
               "ev-emitter/ev-emitter",
               "can-use-dom",
+              "core-js",
               "moment",
               "@ckeditor/ckeditor5-build-classic",
               "lottie-web",
@@ -65,7 +66,13 @@
               "polylabel",
               "dropzone",
               "prismjs",
-              "lodash"
+              "lodash",
+              "bootstrap/dist/js/bootstrap.bundle.min.js",
+              "html2canvas",
+              "file-saver",
+              "canvg",
+              "raf",
+              "rgbcolor"
             ]
           },
           "configurations": {

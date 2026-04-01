@@ -88,3 +88,6 @@ Desktop.ini
 # Coverage reports
 **/coverage/
 **/coverage.json
+
+# Local project context for ChatGPT tabs
+docs/99-contexto-chatgpt-local.md

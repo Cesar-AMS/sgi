@@ -21,6 +21,7 @@ export class LeadSummarySectionComponent {
   @Output() emailRequested = new EventEmitter<void>();
   @Output() editToggled = new EventEmitter<void>();
   @Output() infoSubmitted = new EventEmitter<void>();
+  @Output() saleRequested = new EventEmitter<void>();
 
   selectNameSale(idVendedor: unknown): string {
     if (idVendedor === null || idVendedor === undefined || idVendedor === '') {

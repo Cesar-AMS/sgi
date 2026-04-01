@@ -112,21 +112,32 @@
                                 <td>{{ venda.coordenatorId }}</td>
                                 <td>{{ venda.gerente }}</td>
                                 <td class="acoes">
-                                    <ul class="d-flex gap-2 list-unstyled mb-0">
-                                        <li><a [routerLink]="'/jm/credit-analysis/' + venda.id"
-                                                class="btn btn-subtle-info btn-icon btn-sm" title="Analise de credito"><i
-                                                    class="ph-shield-check"></i></a> </li>
-                                        <li><a [routerLink]="'/jm/contracts/' + venda.id"
-                                                class="btn btn-subtle-dark btn-icon btn-sm" title="Contrato"><i
-                                                    class="ph-file-text"></i></a> </li>
-                                        <li><a [routerLink]="'/jm/constructor-transfer/' + venda.id"
-                                                class="btn btn-subtle-warning btn-icon btn-sm" title="Repasse"><i
-                                                    class="ph-currency-circle-dollar"></i></a> </li>
-                                        <li><a [routerLink]="'/vendas/edit/' + venda.id"
-                                                class="btn btn-subtle-secondary btn-icon btn-sm"><i
-                                                    class="ph-pencil"></i></a> </li>
-
-                                    </ul>
+                                    <div class="d-flex flex-column gap-2">
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <a [routerLink]="'/jm/credit-analysis/' + venda.id"
+                                                class="btn btn-subtle-info btn-sm"
+                                                title="Abrir analise de credito da venda">
+                                                <i class="ph-shield-check me-1"></i> Analise
+                                            </a>
+                                            <a [routerLink]="'/jm/contracts/' + venda.id"
+                                                class="btn btn-subtle-dark btn-sm"
+                                                title="Abrir contrato da venda">
+                                                <i class="ph-file-text me-1"></i> Contrato
+                                            </a>
+                                            <a [routerLink]="'/jm/constructor-transfer/' + venda.id"
+                                                class="btn btn-subtle-warning btn-sm"
+                                                title="Abrir repasse da construtora">
+                                                <i class="ph-currency-circle-dollar me-1"></i> Repasse
+                                            </a>
+                                        </div>
+                                        <div>
+                                            <a [routerLink]="'/vendas/edit/' + venda.id"
+                                                class="btn btn-subtle-secondary btn-sm"
+                                                title="Abrir venda">
+                                                <i class="ph-pencil me-1"></i> Abrir venda
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -524,7 +535,7 @@
                                             </div>
                                         </div>
 
-                                        @if(objetoCriacao?.acts && objetoCriacao.acts.length > 0) {
+                                        @if(objetoCriacao.acts && objetoCriacao.acts.length > 0) {
                                         <div class="table-responsive mt-4">
                                             <table class="table table-sm align-middle">
                                                 <thead class="table-light bg bg-primary p-2">
@@ -721,9 +732,9 @@
                                                     class="btn mt-4 btn-secondary">Adicionar intermediária</button>
                                             </div>
 
-                                            @if(objetoCriacao?.intermediarias && objetoCriacao.intermediarias.length) {
+                                            @if(objetoCriacao.intermediarias && objetoCriacao.intermediarias.length) {
                                             <div class="row mt-3"
-                                                *ngIf="objetoCriacao?.intermediarias && objetoCriacao.intermediarias.length > 0 ">
+                                                *ngIf="objetoCriacao.intermediarias && objetoCriacao.intermediarias.length > 0 ">
                                                 <table class="table table-striped">
                                                     <thead>
                                                         <tr>
