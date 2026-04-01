@@ -37,7 +37,7 @@
                 <li class="nav-item">
                     @if(hasItems(item)){
                         <!-- 'has-arrow': !item.badge, -->
-                    <a href="javascript:void(0);" class="nav-link menu-link" data-bs-toggle="collapse"  [attr.data-menu-id]="item.id" [ngClass]="{'has-dropdown': item.badge,'show': item.isOpen}" aria-expanded="false" (click)="toggleItem($event,item)">
+                    <a href="javascript:void(0);" class="nav-link menu-link" data-bs-toggle="collapse"  [attr.data-menu-id]="item.id" [ngClass]="{'has-dropdown': item.badge,'show': item.isOpen, 'menu-disabled': isDisabled(item)}" aria-expanded="false" (click)="toggleItem($event,item)">
                         <i class="{{ item.icon }}"></i>
                         <span> {{ item.label | translate }}</span>
                         @if(item.badge){<span class="badge badge-pill bg-danger">{{item.badge | translate}}</span>}
@@ -47,53 +47,84 @@
                             @for(subitem of item.subItems; track $index){
                             <li class="nav-item">
                                 @if(hasItems(subitem)){
-                                <a class="nav-link" href="javascript:void(0);" [attr.data-parent]="subitem.parentId" data-bs-toggle="collapse" aria-expanded="false" (click)="toggleSubItem($event)">
+                                <a class="nav-link" href="javascript:void(0);" [attr.data-parent]="subitem.parentId" data-bs-toggle="collapse" aria-expanded="false" [ngClass]="{'menu-disabled': isDisabled(subitem)}" (click)="toggleSubItem($event)">
                                     {{ subitem.label | translate}}
+                                    @if(subitem.badge){<span class="badge badge-pill bg-secondary ms-2">{{subitem.badge | translate}}</span>}
                                 </a>
                                 <div class="collapse menu-dropdown sub-menu">
                                     <ul class="nav nav-sm flex-column" aria-expanded="false">
                                         @for(subSubitem of subitem.subItems; track $index){
                                         <li class="nav-item">
                                             @if(hasItems(subSubitem)){
-                                            <a class="nav-link" href="javascript:void(0);" [attr.data-parent]="subSubitem.parentId" data-bs-toggle="collapse" aria-expanded="false" (click)="toggleExtraSubItem($event)">
+                                            <a class="nav-link" href="javascript:void(0);" [attr.data-parent]="subSubitem.parentId" data-bs-toggle="collapse" aria-expanded="false" [ngClass]="{'menu-disabled': isDisabled(subSubitem)}" (click)="toggleExtraSubItem($event)">
                                                 {{ subSubitem.label | translate}}
+                                                @if(subSubitem.badge){<span class="badge badge-pill bg-secondary ms-2">{{subSubitem.badge | translate}}</span>}
                                             </a>
                                             <div class="collapse menu-dropdown extra-sub-menu">
                                                 <ul class="nav nav-sm flex-column" aria-expanded="false">
                                                     @for(subSubitem1 of subSubitem.subItems; track $index){
                                                     <li class="nav-item">
+                                                        @if(isDisabled(subSubitem1)){
+                                                        <a href="javascript:void(0);" [attr.data-parent]="subSubitem1.parentId" class="nav-link menu-disabled" [attr.aria-disabled]="true" (click)="blockNavigation($event)">
+                                                            {{ subSubitem1.label | translate }}
+                                                            @if(subSubitem1.badge){<span class="badge badge-pill bg-secondary ms-2">{{subSubitem1.badge | translate}}</span>}
+                                                        </a>
+                                                        }@else {
                                                         <a [attr.data-parent]="subSubitem1.parentId" [routerLink]="subSubitem1.link" class="nav-link" (click)="updateActive($event)">
                                                             {{ subSubitem1.label | translate }}
                                                         </a>
+                                                        }
                                                     </li>
                                                     }
                                                 </ul>
                                             </div>
                                             }@else {
+                                            @if(isDisabled(subSubitem)){
+                                            <a href="javascript:void(0);" class="nav-link menu-disabled" [attr.data-parent]="subSubitem.parentId" [attr.aria-disabled]="true" (click)="blockNavigation($event)" aria-expanded="false">
+                                                {{ subSubitem.label | translate}}
+                                                @if(subSubitem.badge){<span class="badge badge-pill bg-secondary ms-2">{{subSubitem.badge | translate}}</span>}
+                                            </a>
+                                            }@else {
                                             <a [routerLink]="subSubitem.link" class="nav-link" [attr.data-parent]="subSubitem.parentId" (click)="updateActive($event)" aria-expanded="false">
                                                 {{ subSubitem.label | translate}}
                                             </a>
+                                            }
                                             }
                                         </li>
                                         }
                                     </ul>
                                 </div>
                                 }@else {
+                                @if(isDisabled(subitem)){
+                                <a href="javascript:void(0);" class="nav-link menu-disabled" [attr.data-parent]="subitem.parentId" [attr.aria-disabled]="true" (click)="blockNavigation($event)">
+                                    {{ subitem.label | translate}}
+                                    @if(subitem.badge){<span class="badge badge-pill bg-secondary ms-2">{{subitem.badge | translate}}</span>}
+                                </a>
+                                }@else {
                                 <a [routerLink]="subitem.link" class="nav-link" [attr.data-parent]="subitem.parentId" (click)="updateActive($event)">
                                     {{ subitem.label | translate}}
                                     <span class="badge badge-pill bg-success" *ngIf="subitem.isNew">New</span>
                                 </a>
+                                }
                                 }
                             </li>
                             }
                         </ul>
                     </div>
                     }@else {
+                    @if(isDisabled(item)){
+                    <a href="javascript:void(0);" class="side-nav-link-ref nav-link menu-link menu-disabled" [attr.aria-disabled]="true" (click)="blockNavigation($event)">
+                        @if(item.icon){<i class="bx {{ item.icon }} icon nav-icon" class=""></i>}
+                        <span class=""> {{ item.label | translate }} </span>
+                        @if(item.badge){<span class="badge badge-pill bg-secondary">{{item.badge | translate}}</span>}
+                    </a>
+                    }@else {
                     <a [routerLink]="item.link" class="side-nav-link-ref nav-link menu-link" (click)="toggleParentItem($event,item)">
                         @if(item.icon){<i class="bx {{ item.icon }} icon nav-icon" class=""></i>}
                         <span class=""> {{ item.label | translate }} </span>
-                        <span class="badge badge-pill bg-secondary">{{item.badge | translate}}</span>
+                        @if(item.badge){<span class="badge badge-pill bg-secondary">{{item.badge | translate}}</span>}
                     </a>
+                    }
                     }
                 </li>
                 }

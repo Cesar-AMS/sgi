@@ -12,4 +12,6 @@ export interface MenuItem {
     permissionKey?: string;
     permissionKeys?: string[];
     isNew?: boolean;
+    disabled?: boolean;
+    alwaysVisible?: boolean;
 }

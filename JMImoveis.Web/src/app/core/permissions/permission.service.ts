@@ -340,7 +340,7 @@ export class PermissionService {
         }
 
         const itemPermissions = this.resolveItemPermissions(item);
-        const hasAccess = this.hasAnyPermission(itemPermissions);
+        const hasAccess = item.alwaysVisible || this.hasAnyPermission(itemPermissions);
 
         if (hasAccess || (filteredSubItems && filteredSubItems.length > 0)) {
           return {

@@ -3,3 +3,12 @@
     color: blue;
     font-weight: bold;
   }
+
+.menu-disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.menu-disabled:hover {
+  text-decoration: none;
+}

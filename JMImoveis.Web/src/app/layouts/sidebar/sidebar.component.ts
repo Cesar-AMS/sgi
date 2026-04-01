@@ -283,6 +283,15 @@ export class SidebarComponent {
     return Array.isArray(item?.subItems) && item.subItems.length > 0;
   }
 
+  isDisabled(item: MenuItem | undefined | null): boolean {
+    return !!item?.disabled;
+  }
+
+  blockNavigation(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   toggleMobileMenu(event: any) {
     var sidebarsize = document.documentElement.getAttribute('data-sidebar-size');
     if (sidebarsize == 'sm-hover-active') {
