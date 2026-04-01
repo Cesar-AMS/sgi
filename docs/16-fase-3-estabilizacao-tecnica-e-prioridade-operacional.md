@@ -83,7 +83,7 @@ Ao entrar nesta fase:
 ---
 
 ## 8. Dominio escolhido
-O dominio escolhido para abrir a Fase 3 e:
+O primeiro dominio escolhido para abrir a Fase 3 foi:
 
 - Analise de Perfil e Credito
 
@@ -93,9 +93,9 @@ Justificativa:
 - cria base de decisao comercial antes da abertura de contrato
 - reduz o risco de abrir contrato cedo demais sem trilha minima de elegibilidade
 
-Ordem recomendada:
-- Fase 3: Analise de Perfil e Credito
-- fase seguinte: Contratos e Repasse
+Sequencia recomendada dentro da fase:
+- primeiro recorte: Analise de Perfil e Credito
+- segundo recorte: Contratos e Repasse
 
 Importante:
 - o dominio nao deve ser aberto inteiro
@@ -103,8 +103,8 @@ Importante:
 
 ---
 
-## 9. Recorte inicial recomendado
-O recorte inicial recomendado para abrir o dominio e:
+## 9. Primeiro recorte entregue
+O primeiro recorte entregue na Fase 3 foi:
 
 - vinculo com oportunidade
 - cadastro da analise de perfil
@@ -116,7 +116,7 @@ O recorte inicial recomendado para abrir o dominio e:
   - aprovado
   - reprovado
 
-Esse recorte ja e suficiente para:
+Esse recorte ja foi tratado como bom o suficiente para:
 - abrir caminho oficial
 - criar uso real
 - conectar atendimento e vendas
@@ -124,7 +124,7 @@ Esse recorte ja e suficiente para:
 
 ---
 
-## 10. Proximo passo recomendado
+## 10. Estado atual do primeiro recorte
 O recorte minimo ja foi mapeado e o esqueleto oficial ja foi aberto.
 
 Estado atual da abertura:
@@ -144,6 +144,59 @@ Estado atual da abertura:
 8. navegacao operacional tambem aberta a partir da visao geral de Vendas
 9. a tela ja exibe contexto de leitura da oportunidade, resumo comercial e metadados da propria analise
 
-Proximo passo recomendado:
-- decidir se o primeiro recorte ja esta bom o suficiente
-- ou aplicar apenas uma regra pequena de dominio que aumente valor real sem crescer muito o escopo
+Leitura pratica:
+- o primeiro recorte de Credito ja pode ser tratado como suficiente nesta etapa
+- o proximo movimento da Fase 3 deve abrir o segundo recorte operacional
+
+---
+
+## 11. Segundo recorte entregue
+O segundo recorte entregue na Fase 3 foi:
+
+- Contract
+
+Estado atual desse segundo recorte:
+- rota frontend oficial: `/jm/contracts/:saleId`
+- componente oficial: `ContractComponent`
+- service oficial no frontend: `ContractService`
+- trilha oficial no backend:
+  - `ContractController`
+  - `IContractService`
+  - `ContractService`
+  - `IContractRepository`
+  - `ContractRepository`
+- entidade oficial: `Contract`
+- navegacao inicial aberta a partir da tela de venda e da visao geral de Vendas
+- unicidade canonicamente ancorada por `saleId`
+
+Leitura pratica:
+- o primeiro recorte de Contract ja pode ser tratado como bom o suficiente nesta etapa
+- o dominio deve ficar pausado ate existir necessidade operacional clara de assinatura, arquivo real ou workflow juridico mais profundo
+
+---
+
+## 12. Terceiro recorte entregue
+O terceiro recorte entregue na Fase 3 foi:
+
+- Repasse
+
+Estado atual desse terceiro recorte:
+- rota frontend oficial: `/jm/constructor-transfer/:saleId`
+- componente oficial: `ConstructorTransferComponent`
+- service oficial no frontend: `ConstructorTransferService`
+- trilha oficial no backend:
+  - `ConstructorTransferController`
+  - `IConstructorTransferService`
+  - `ConstructorTransferService`
+  - `IConstructorTransferRepository`
+  - `ConstructorTransferRepository`
+- entidade oficial: `ConstructorTransfer`
+- navegacao inicial aberta a partir da tela de venda e da visao geral de Vendas
+- unicidade ancorada por `saleId`
+- valor base reaproveitado a partir de `valueToConstructor`
+
+Leitura pratica:
+- Credito ja esta bom o suficiente
+- Contract ja esta bom o suficiente
+- Repasse ja esta muito perto de bom o suficiente neste primeiro corte
+- o proximo movimento da Fase 3 nao precisa abrir nova trilha antes de decidir se este terceiro recorte ja pode ser pausado

@@ -1,0 +1,70 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+        <h4 class="mb-sm-0">Contrato</h4>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="!loading; else loadingTemplate">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="mb-4">
+            <div class="small text-muted">Venda vinculada</div>
+            <div class="fw-semibold">Sale ID: {{ saleId }}</div>
+            <div class="row g-3 mt-1" *ngIf="saleContextRows.length > 0">
+              <div class="col-md-3 col-sm-6" *ngFor="let row of saleContextRows">
+                <div class="border rounded p-2 h-100 bg-light-subtle">
+                  <div class="small text-muted">{{ row.label }}</div>
+                  <div class="fw-semibold">{{ row.value }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Numero do contrato</label>
+              <input class="form-control" [(ngModel)]="contract.number" name="number">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Status</label>
+              <select class="form-select" [(ngModel)]="contract.status" name="status">
+                <option *ngFor="let option of statusOptions" [ngValue]="option.value">{{ option.label }}</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Caminho ou referencia do arquivo</label>
+              <input class="form-control" [(ngModel)]="contract.path" name="path">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Observacoes</label>
+              <textarea class="form-control" rows="4" [(ngModel)]="contract.observations" name="observations"></textarea>
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary" (click)="save()" [disabled]="saving">
+              {{ saving ? 'Salvando...' : 'Salvar contrato' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #loadingTemplate>
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">Carregando contrato...</div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</div>

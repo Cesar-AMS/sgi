@@ -4,6 +4,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { ClientListComponent } from './clientes/client-list/client-list.component';
 import { ComparecimentosComponent } from './comparecimentos/comparecimentos.component';
 import { GeraisComponent } from './configuracoes/gerais/gerais.component';
+import { ContractComponent } from './contract/contract.component';
+import { ConstructorTransferComponent } from './constructor-transfer/constructor-transfer.component';
 import { CreditAnalysisComponent } from './credit-analysis/credit-analysis.component';
 import { DashboardHomeComponent } from './dashboard/dashboard-home.component';
 import { AdminEmpreendimentoComponent } from './empreendimentos/admin-empreendimento/admin-empreendimento.component';
@@ -74,6 +76,14 @@ const routes: Routes = [
   {
     path: 'credit-analysis/:saleId',
     component: CreditAnalysisComponent,
+  },
+  {
+    path: 'contracts/:saleId',
+    component: ContractComponent,
+  },
+  {
+    path: 'constructor-transfer/:saleId',
+    component: ConstructorTransferComponent,
   },
   {
     path: 'financeiro/centro-custo',

@@ -1,0 +1,111 @@
+<div class="constructor-transfer-page" *ngIf="!loading; else loadingTpl">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-1">Repasse</h4>
+      <p class="text-muted mb-0">Acompanhamento minimo do repasse da construtora vinculado a venda.</p>
+    </div>
+    <a class="btn btn-outline-secondary btn-sm" [routerLink]="['/jm/vendas/edit', saleId]">
+      Voltar para venda
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Contexto da venda</h5>
+
+          <div class="context-grid" *ngIf="saleContextRows.length; else noSaleContextTpl">
+            <div class="context-row" *ngFor="let item of saleContextRows">
+              <span class="context-label">{{ item.label }}</span>
+              <span class="context-value">{{ item.value }}</span>
+            </div>
+          </div>
+
+          <ng-template #noSaleContextTpl>
+            <p class="text-muted mb-0">Nao foi possivel carregar o contexto da venda.</p>
+          </ng-template>
+
+          <hr>
+
+          <h6 class="mb-3">Construtora</h6>
+          <div class="context-grid">
+            <div class="context-row">
+              <span class="context-label">ID</span>
+              <span class="context-value">{{ constructorData?.id ?? transfer.constructorId ?? '-' }}</span>
+            </div>
+            <div class="context-row">
+              <span class="context-label">Nome</span>
+              <span class="context-value">{{ constructorData?.name || enterprise?.constructor || '-' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Dados do repasse</h5>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Valor do repasse</label>
+              <input
+                type="number"
+                class="form-control"
+                [(ngModel)]="transfer.amount"
+                name="transferAmount"
+                min="0">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Data planejada</label>
+              <input
+                type="date"
+                class="form-control"
+                [(ngModel)]="transfer.plannedDate"
+                name="transferPlannedDate">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Status</label>
+              <select
+                class="form-select"
+                [(ngModel)]="transfer.status"
+                name="transferStatus">
+                <option *ngFor="let item of statusOptions" [value]="item.value">{{ item.label }}</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Sale ID</label>
+              <input type="text" class="form-control" [value]="saleId" readonly>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Observacoes</label>
+              <textarea
+                class="form-control"
+                rows="4"
+                [(ngModel)]="transfer.observations"
+                name="transferObservations"></textarea>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mt-4">
+            <button class="btn btn-primary" type="button" (click)="save()" [disabled]="saving">
+              {{ saving ? 'Salvando...' : 'Salvar repasse' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="d-flex justify-content-center py-5">
+    <div class="spinner-border" role="status"></div>
+  </div>
+</ng-template>

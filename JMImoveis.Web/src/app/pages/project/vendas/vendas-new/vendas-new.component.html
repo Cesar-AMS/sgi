@@ -37,6 +37,20 @@
             [routerLink]="['/jm/credit-analysis', saleId]">
             <i class="bi bi-shield-check"></i> Analise de Credito
           </button>
+          <button
+            *ngIf="isEdit && saleId"
+            class="btn btn-outline-dark btn-sm"
+            type="button"
+            [routerLink]="['/jm/contracts', saleId]">
+            <i class="bi bi-file-earmark-text"></i> Contrato
+          </button>
+          <button
+            *ngIf="isEdit && saleId"
+            class="btn btn-outline-warning btn-sm"
+            type="button"
+            [routerLink]="['/jm/constructor-transfer', saleId]">
+            <i class="bi bi-cash-stack"></i> Repasse
+          </button>
           <button class="btn btn-outline-success btn-sm" type="button" (click)="closeSale()"
             [disabled]="closing || !isEdit">
             <i class="bi bi-check2-square"></i>
