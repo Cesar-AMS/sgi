@@ -30,7 +30,7 @@ namespace JMImoveisAPI.Services
             return _creditAnalysisRepository.GetBySaleIdAsync(saleId);
         }
 
-        public Task<int> CreateAsync(CreditAnalysis entity)
+        public Task<CreditAnalysis> CreateAsync(CreditAnalysis entity)
         {
             NormalizeAndValidate(entity);
 

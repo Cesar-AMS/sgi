@@ -4,7 +4,7 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { CreditAnalysisService } from 'src/app/core/services/credit-analysis.service';
 import { CustomersService } from 'src/app/core/services/customers.service';
 import { SalesService } from 'src/app/core/services/sales.service';
-import { Cliente } from 'src/app/models/ContaBancaria';
+import { Cliente, Sales } from 'src/app/models/ContaBancaria';
 import { CreditAnalysis } from 'src/app/models/credit-analysis.model';
 
 @Component({
@@ -23,7 +23,7 @@ export class CreditAnalysisComponent implements OnInit {
   saleId!: number;
   loading = false;
   saving = false;
-  sale: any = null;
+  sale: Sales | null = null;
   customer: Cliente | null = null;
   analysis: CreditAnalysis = this.createEmptyAnalysis();
 
@@ -135,5 +135,48 @@ export class CreditAnalysisComponent implements OnInit {
       analystUserId: null,
       analystName: '',
     };
+  }
+
+  get saleContextRows(): Array<{ label: string; value: string | number | null | undefined }> {
+    if (!this.sale) {
+      return [];
+    }
+
+    return [
+      { label: 'Venda', value: this.sale.id },
+      { label: 'Status', value: this.sale.status },
+      { label: 'Filial', value: this.sale.branchName },
+      { label: 'Empreendimento', value: this.sale.enterpriseName },
+      { label: 'Unidade', value: this.sale.unitName },
+      { label: 'Corretor', value: this.sale.corretor },
+      { label: 'Gerente', value: this.sale.gerente },
+      { label: 'Contrato', value: this.sale.contractNumber },
+    ].filter((item) => item.value !== null && item.value !== undefined && item.value !== '');
+  }
+
+  get commercialContextRows(): Array<{ label: string; value: string | number | null | undefined; type?: 'currency' | 'date' }> {
+    if (!this.sale) {
+      return [];
+    }
+
+    const rows: Array<{ label: string; value: string | number | null | undefined; type?: 'currency' | 'date' }> = [
+      { label: 'Data da venda', value: this.sale.selledAt, type: 'date' },
+      { label: 'Valor da unidade', value: this.sale.unitValue, type: 'currency' },
+      { label: 'Valor do ato', value: this.sale.startValue, type: 'currency' },
+      { label: 'Comissao imobiliaria', value: this.sale.valueToRealstate, type: 'currency' },
+      { label: 'Receita liquida', value: this.sale.netEarnings, type: 'currency' },
+    ];
+
+    return rows.filter((item) => item.value !== null && item.value !== undefined && item.value !== '');
+  }
+
+  get analysisMetaRows(): Array<{ label: string; value: string | null | undefined; type?: 'date' }> {
+    const rows: Array<{ label: string; value: string | null | undefined; type?: 'date' }> = [
+      { label: 'Analista', value: this.analysis.analystName || 'Nao informado' },
+      { label: 'Criada em', value: this.analysis.createdAt, type: 'date' },
+      { label: 'Atualizada em', value: this.analysis.updatedAt, type: 'date' },
+    ];
+
+    return rows.filter((item) => item.value !== null && item.value !== undefined && item.value !== '');
   }
 }

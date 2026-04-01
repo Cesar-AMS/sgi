@@ -2,7 +2,7 @@
   <div class="row">
     <div class="col-12">
       <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-        <h4 class="mb-sm-0">Análise de Perfil e Crédito</h4>
+        <h4 class="mb-sm-0">Analise de Perfil e Credito</h4>
       </div>
     </div>
   </div>
@@ -14,8 +14,36 @@
           <div class="mb-4">
             <div class="small text-muted">Oportunidade vinculada</div>
             <div class="fw-semibold">Sale ID: {{ saleId }}</div>
-            <div class="small text-muted" *ngIf="sale?.status">Status da oportunidade: {{ sale.status }}</div>
-            <div class="small text-muted" *ngIf="sale?.contractNumber">Contrato: {{ sale.contractNumber }}</div>
+            <div class="row g-3 mt-1" *ngIf="saleContextRows.length > 0">
+              <div class="col-md-3 col-sm-6" *ngFor="let row of saleContextRows">
+                <div class="border rounded p-2 h-100 bg-light-subtle">
+                  <div class="small text-muted">{{ row.label }}</div>
+                  <div class="fw-semibold">{{ row.value }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-4" *ngIf="commercialContextRows.length > 0">
+            <div class="small text-muted">Resumo comercial</div>
+            <div class="row g-3 mt-1">
+              <div class="col-md-3 col-sm-6" *ngFor="let row of commercialContextRows">
+                <div class="border rounded p-2 h-100">
+                  <div class="small text-muted">{{ row.label }}</div>
+                  <div class="fw-semibold" *ngIf="row.type === 'currency'; else nonCurrencyValue">
+                    {{ row.value | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                  </div>
+                  <ng-template #nonCurrencyValue>
+                    <div class="fw-semibold" *ngIf="row.type === 'date'; else plainSummaryValue">
+                      {{ row.value | date:'dd/MM/yyyy' }}
+                    </div>
+                  </ng-template>
+                  <ng-template #plainSummaryValue>
+                    <div class="fw-semibold">{{ row.value }}</div>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="mb-4">
@@ -25,26 +53,38 @@
               <div class="text-muted">Nenhum cliente vinculado automaticamente.</div>
             </ng-template>
             <div class="small text-muted" *ngIf="customer?.cpfCnpj">CPF/CNPJ: {{ customer?.cpfCnpj }}</div>
-            <div class="small text-muted" *ngIf="customer?.profession">Profissão: {{ customer?.profession }}</div>
+            <div class="small text-muted" *ngIf="customer?.profession">Profissao: {{ customer?.profession }}</div>
             <div class="small text-muted" *ngIf="customer?.income">Renda: {{ customer?.income }}</div>
           </div>
 
+          <div class="mb-4" *ngIf="analysisMetaRows.length > 0">
+            <div class="small text-muted">Metadados da analise</div>
+            <div class="row g-3 mt-1">
+              <div class="col-md-4 col-sm-6" *ngFor="let row of analysisMetaRows">
+                <div class="border rounded p-2 h-100 bg-light-subtle">
+                  <div class="small text-muted">{{ row.label }}</div>
+                  <div class="fw-semibold" *ngIf="row.type === 'date'; else plainMetaValue">
+                    {{ row.value | date:'dd/MM/yyyy HH:mm' }}
+                  </div>
+                  <ng-template #plainMetaValue>
+                    <div class="fw-semibold">{{ row.value }}</div>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="row g-3">
-            <div class="col-md-4">
+            <div class="col-md-6">
               <label class="form-label">Status</label>
               <select class="form-select" [(ngModel)]="analysis.status" name="status">
                 <option *ngFor="let option of statusOptions" [ngValue]="option.value">{{ option.label }}</option>
               </select>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-6">
               <label class="form-label">Customer ID</label>
               <input class="form-control" type="number" [(ngModel)]="analysis.customerId" name="customerId" readonly>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Analista</label>
-              <input class="form-control" [(ngModel)]="analysis.analystName" name="analystName">
             </div>
 
             <div class="col-12">
@@ -53,19 +93,19 @@
             </div>
 
             <div class="col-12">
-              <label class="form-label">Restrições</label>
+              <label class="form-label">Restricoes</label>
               <textarea class="form-control" rows="4" [(ngModel)]="analysis.restrictions" name="restrictions"></textarea>
             </div>
 
             <div class="col-12">
-              <label class="form-label">Observações</label>
+              <label class="form-label">Observacoes</label>
               <textarea class="form-control" rows="4" [(ngModel)]="analysis.observations" name="observations"></textarea>
             </div>
           </div>
 
           <div class="mt-4 d-flex gap-2">
             <button class="btn btn-primary" (click)="save()" [disabled]="saving">
-              {{ saving ? 'Salvando...' : 'Salvar análise' }}
+              {{ saving ? 'Salvando...' : 'Salvar analise' }}
             </button>
           </div>
         </div>
@@ -77,7 +117,7 @@
     <div class="row">
       <div class="col-12">
         <div class="card">
-          <div class="card-body">Carregando análise...</div>
+          <div class="card-body">Carregando analise...</div>
         </div>
       </div>
     </div>

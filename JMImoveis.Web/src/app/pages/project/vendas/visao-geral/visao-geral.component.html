@@ -113,6 +113,9 @@
                                 <td>{{ venda.gerente }}</td>
                                 <td class="acoes">
                                     <ul class="d-flex gap-2 list-unstyled mb-0">
+                                        <li><a [routerLink]="'/jm/credit-analysis/' + venda.id"
+                                                class="btn btn-subtle-info btn-icon btn-sm" title="Analise de credito"><i
+                                                    class="ph-shield-check"></i></a> </li>
                                         <li><a [routerLink]="'/vendas/edit/' + venda.id"
                                                 class="btn btn-subtle-secondary btn-icon btn-sm"><i
                                                     class="ph-pencil"></i></a> </li>

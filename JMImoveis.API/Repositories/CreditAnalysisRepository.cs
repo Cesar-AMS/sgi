@@ -38,7 +38,7 @@ namespace JMImoveisAPI.Repositories
             return await conn.QueryFirstOrDefaultAsync<CreditAnalysis>(sql, new { saleId });
         }
 
-        public async Task<int> CreateAsync(CreditAnalysis entity)
+        public async Task<CreditAnalysis> CreateAsync(CreditAnalysis entity)
         {
             await using var conn = await _context.OpenConnectionAsync();
             await EnsureTableAsync(conn);
@@ -61,7 +61,15 @@ namespace JMImoveisAPI.Repositories
 
                 SELECT LAST_INSERT_ID();";
 
-            return await conn.ExecuteScalarAsync<int>(sql, entity);
+            await conn.ExecuteScalarAsync<int>(sql, entity);
+
+            var saved = await GetBySaleIdAsync(entity.SaleId);
+            if (saved == null)
+            {
+                throw new InvalidOperationException("Nao foi possivel persistir a analise de credito.");
+            }
+
+            return saved;
         }
 
         public async Task<bool> UpdateAsync(CreditAnalysis entity)

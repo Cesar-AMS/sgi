@@ -34,9 +34,8 @@ namespace JMImoveisAPI.Controllers
         {
             try
             {
-                var id = await _creditAnalysisService.CreateAsync(item);
-                item.Id = id;
-                return CreatedAtAction(nameof(GetBySaleId), new { saleId = item.SaleId }, item);
+                var saved = await _creditAnalysisService.CreateAsync(item);
+                return CreatedAtAction(nameof(GetBySaleId), new { saleId = saved.SaleId }, saved);
             }
             catch (ArgumentException ex)
             {

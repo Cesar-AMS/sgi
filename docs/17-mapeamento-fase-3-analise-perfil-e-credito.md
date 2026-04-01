@@ -29,6 +29,9 @@ Estado atual apos a abertura do esqueleto:
 - service dedicado
 - controller dedicado
 - persistencia dedicada
+- cliente carregado automaticamente a partir da oportunidade
+- contexto de venda exibido em modo leitura
+- navegacao operacional aberta em Vendas
 
 ---
 
@@ -82,6 +85,8 @@ Primeira versao da tela:
 - formulario da analise
 - historico simples do parecer atual
 - navegacao oficial a partir da tela de venda
+- contexto comercial em modo leitura
+- metadados simples da propria analise
 
 Motivo:
 - evita inchar [vendas-new.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/vendas/vendas-new/vendas-new.component.ts)
@@ -104,6 +109,7 @@ O `SalesService` pode continuar apenas como apoio para carregar a oportunidade.
 Status atual:
 - service ja aberto no frontend
 - cliente principal da oportunidade ja e carregado automaticamente
+- a tela ja exibe resumo comercial sem virar edicao de venda
 
 ---
 
@@ -182,6 +188,6 @@ Esse recorte ja permite uso real sem tentar abrir Credito inteiro de uma vez.
 ## 11. Proximo passo recomendado
 Com esse mapeamento e o esqueleto prontos, o proximo passo correto e:
 
-1. decidir se a tela deve mostrar mais contexto da oportunidade
-2. melhorar o uso real do parecer e do status
-3. avaliar se a navegacao tambem deve aparecer na visao geral de Vendas
+1. decidir se o primeiro recorte ja pode ser tratado como bom o suficiente
+2. ou aplicar uma validacao pequena de dominio que agregue valor real
+3. manter fora qualquer ampliacao grande de workflow, anexos ou integracoes externas

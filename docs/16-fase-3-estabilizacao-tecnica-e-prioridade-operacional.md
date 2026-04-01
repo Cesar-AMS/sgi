@@ -141,6 +141,9 @@ Estado atual da abertura:
 5. entidade oficial: `CreditAnalysis`
 6. cliente principal carregado automaticamente a partir da oportunidade
 7. navegacao oficial aberta a partir da tela de venda
+8. navegacao operacional tambem aberta a partir da visao geral de Vendas
+9. a tela ja exibe contexto de leitura da oportunidade, resumo comercial e metadados da propria analise
 
 Proximo passo recomendado:
-- enriquecer o primeiro fluxo de uso real sem ampliar demais o escopo inicial
+- decidir se o primeiro recorte ja esta bom o suficiente
+- ou aplicar apenas uma regra pequena de dominio que aumente valor real sem crescer muito o escopo
