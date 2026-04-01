@@ -14,22 +14,21 @@ Este documento existe para responder:
 ---
 
 ## 2. Leitura objetiva do estado atual
-Hoje nao existe um dominio real de Analise de Perfil e Credito implementado no sistema.
+No inicio do mapeamento, nao existia um dominio real de Analise de Perfil e Credito implementado no sistema.
 
-Nao ha:
+Os sinais encontrados eram apenas indiretos:
+- `score` em [crm.model.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/store/CRM/crm.model.ts)
+- `perfilRenda` em dados de Empreendimentos
+- mencoes textuais a analise em propostas e espelho
+
+Por isso, a Fase 3 abriu um fluxo novo, mas com recorte pequeno e ponto de ancoragem real no sistema.
+
+Estado atual apos a abertura do esqueleto:
 - rota dedicada
 - tela dedicada
 - service dedicado
 - controller dedicado
 - persistencia dedicada
-
-Os sinais encontrados sao apenas indiretos:
-- `score` em [crm.model.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/store/CRM/crm.model.ts)
-- `perfilRenda` em dados de Empreendimentos
-- menções textuais a "analise" em propostas e espelho
-
-Portanto, a Fase 3 nao vai consolidar um fluxo existente.
-Ela vai abrir um fluxo novo, mas com recorte pequeno e ponto de ancoragem real no sistema.
 
 ---
 
@@ -75,13 +74,14 @@ Observacao importante:
 A recomendacao mais segura e abrir uma tela oficial propria, em vez de tentar enfiar toda a analise dentro da tela de venda.
 
 Tela oficial inicial recomendada:
-- rota nova vinculada a vendas, algo na linha de `/jm/vendas/analise/:saleId`
+- rota oficial: `/jm/credit-analysis/:saleId`
 
 Primeira versao da tela:
-- cabeçalho da oportunidade
+- cabecalho da oportunidade
 - dados basicos do cliente
 - formulario da analise
 - historico simples do parecer atual
+- navegacao oficial a partir da tela de venda
 
 Motivo:
 - evita inchar [vendas-new.component.ts](/c:/Users/Giovana/OneDrive/Área%20de%20Trabalho/producao/JM/JMImoveis.Web/src/app/pages/project/vendas/vendas-new/vendas-new.component.ts)
@@ -101,6 +101,10 @@ Responsabilidades iniciais:
 
 O `SalesService` pode continuar apenas como apoio para carregar a oportunidade.
 
+Status atual:
+- service ja aberto no frontend
+- cliente principal da oportunidade ja e carregado automaticamente
+
 ---
 
 ## 7. Trilha oficial recomendada no backend
@@ -111,9 +115,12 @@ Trilha oficial inicial recomendada:
 - `CreditAnalysisService`
 - `ICreditAnalysisRepository`
 - `CreditAnalysisRepository`
-- entidade propria, algo como `CreditAnalysis`
+- entidade propria: `CreditAnalysis`
 
 Essa trilha deve ficar separada de `Venda`, mas vinculada a ela por `saleId`.
+
+Status atual:
+- trilha backend minima ja aberta
 
 ---
 
@@ -173,8 +180,8 @@ Esse recorte ja permite uso real sem tentar abrir Credito inteiro de uma vez.
 ---
 
 ## 11. Proximo passo recomendado
-Com esse mapeamento pronto, o proximo passo correto e:
+Com esse mapeamento e o esqueleto prontos, o proximo passo correto e:
 
-1. definir o nome oficial da rota, da entidade e do service
-2. abrir primeiro a trilha backend minima
-3. depois abrir a tela oficial no frontend
+1. decidir se a tela deve mostrar mais contexto da oportunidade
+2. melhorar o uso real do parecer e do status
+3. avaliar se a navegacao tambem deve aparecer na visao geral de Vendas

@@ -125,13 +125,22 @@ Esse recorte ja e suficiente para:
 ---
 
 ## 10. Proximo passo recomendado
-Antes de escrever codigo, mapear o recorte minimo fim a fim de Analise de Perfil e Credito no sistema atual.
+O recorte minimo ja foi mapeado e o esqueleto oficial ja foi aberto.
 
-Esse mapeamento deve responder:
+Estado atual da abertura:
 
-1. onde a oportunidade sera vinculada
-2. qual sera a tela oficial inicial
-3. qual service oficial sera aberto
-4. qual trilha oficial do backend sera criada
-5. quais campos entram no primeiro recorte
-6. o que fica explicitamente fora nesta abertura inicial
+1. rota frontend oficial: `/jm/credit-analysis/:saleId`
+2. componente oficial: `CreditAnalysisComponent`
+3. service oficial no frontend: `CreditAnalysisService`
+4. trilha oficial no backend:
+   - `CreditAnalysisController`
+   - `ICreditAnalysisService`
+   - `CreditAnalysisService`
+   - `ICreditAnalysisRepository`
+   - `CreditAnalysisRepository`
+5. entidade oficial: `CreditAnalysis`
+6. cliente principal carregado automaticamente a partir da oportunidade
+7. navegacao oficial aberta a partir da tela de venda
+
+Proximo passo recomendado:
+- enriquecer o primeiro fluxo de uso real sem ampliar demais o escopo inicial

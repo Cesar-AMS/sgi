@@ -18,6 +18,17 @@
             <div class="small text-muted" *ngIf="sale?.contractNumber">Contrato: {{ sale.contractNumber }}</div>
           </div>
 
+          <div class="mb-4">
+            <div class="small text-muted">Cliente vinculado</div>
+            <div class="fw-semibold" *ngIf="customer; else noCustomer">{{ customer.name }}</div>
+            <ng-template #noCustomer>
+              <div class="text-muted">Nenhum cliente vinculado automaticamente.</div>
+            </ng-template>
+            <div class="small text-muted" *ngIf="customer?.cpfCnpj">CPF/CNPJ: {{ customer?.cpfCnpj }}</div>
+            <div class="small text-muted" *ngIf="customer?.profession">Profissão: {{ customer?.profession }}</div>
+            <div class="small text-muted" *ngIf="customer?.income">Renda: {{ customer?.income }}</div>
+          </div>
+
           <div class="row g-3">
             <div class="col-md-4">
               <label class="form-label">Status</label>
@@ -28,7 +39,7 @@
 
             <div class="col-md-4">
               <label class="form-label">Customer ID</label>
-              <input class="form-control" type="number" [(ngModel)]="analysis.customerId" name="customerId">
+              <input class="form-control" type="number" [(ngModel)]="analysis.customerId" name="customerId" readonly>
             </div>
 
             <div class="col-md-4">

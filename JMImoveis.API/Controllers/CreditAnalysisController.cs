@@ -18,23 +18,44 @@ namespace JMImoveisAPI.Controllers
         [HttpGet("sale/{saleId}")]
         public async Task<IActionResult> GetBySaleId(int saleId)
         {
-            var result = await _creditAnalysisService.GetBySaleIdAsync(saleId);
-            return result == null ? NotFound() : Ok(result);
+            try
+            {
+                var result = await _creditAnalysisService.GetBySaleIdAsync(saleId);
+                return result == null ? NotFound() : Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> Create(CreditAnalysis item)
         {
-            var id = await _creditAnalysisService.CreateAsync(item);
-            item.Id = id;
-            return CreatedAtAction(nameof(GetBySaleId), new { saleId = item.SaleId }, item);
+            try
+            {
+                var id = await _creditAnalysisService.CreateAsync(item);
+                item.Id = id;
+                return CreatedAtAction(nameof(GetBySaleId), new { saleId = item.SaleId }, item);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut]
         public async Task<IActionResult> Update(CreditAnalysis item)
         {
-            var updated = await _creditAnalysisService.UpdateAsync(item);
-            return updated ? Ok() : NotFound();
+            try
+            {
+                var updated = await _creditAnalysisService.UpdateAsync(item);
+                return updated ? Ok() : NotFound();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

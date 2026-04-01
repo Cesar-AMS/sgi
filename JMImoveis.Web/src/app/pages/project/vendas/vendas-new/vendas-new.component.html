@@ -30,6 +30,13 @@
           </button>
           <button class="btn btn-outline-secondary btn-sm" routerLink="/jm/vendas/visao-geral">
             <i class="bi bi-box-arrow-left"></i> Voltar</button>
+          <button
+            *ngIf="isEdit && saleId"
+            class="btn btn-outline-info btn-sm"
+            type="button"
+            [routerLink]="['/jm/credit-analysis', saleId]">
+            <i class="bi bi-shield-check"></i> Analise de Credito
+          </button>
           <button class="btn btn-outline-success btn-sm" type="button" (click)="closeSale()"
             [disabled]="closing || !isEdit">
             <i class="bi bi-check2-square"></i>
