@@ -40,7 +40,7 @@
         public long? CorretorId { get; set; }
         public long? GerenteId { get; set; }
 
-        public string Status { get; set; } = "OPEN"; // ou usar ProposalStatus e converter para string no repo
+        public string Status { get; set; } = ProposalStatus.RASCUNHO.ToString();
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -56,25 +56,25 @@
         public ulong ProposalId { get; set; }
         public int Qtde { get; set; }
         public string? Descricao { get; set; }
-        public DateTime Vencimento { get; set; } // vindo "yyyy-MM-dd"
+        public DateTime Vencimento { get; set; }
         public decimal ValorParcela { get; set; }
-        public decimal ValorTotal { get; set; }   // redundância
+        public decimal ValorTotal { get; set; }
     }
 
     public enum ProposalStatus
     {
-        OPEN,
-        APPROVED,
-        REJECTED,
-        CANCELLED
+        RASCUNHO,
+        EM_ANALISE,
+        APROVADO,
+        REPROVADO,
+        CANCELADO
     }
 
-    // DTOs de entrada (alinhados ao seu TypeScript)
     public sealed class CondicaoDto
     {
         public int Qtde { get; set; }
         public string? Descricao { get; set; }
-        public string Vencimento { get; set; } = ""; // yyyy-MM-dd
+        public string Vencimento { get; set; } = "";
         public decimal ValorParcela { get; set; }
         public decimal ValorTotal { get; set; }
     }
@@ -87,7 +87,7 @@
         public bool EngCaixa { get; set; }
 
         public string ClienteName { get; set; } = "";
-        public string? DateNascimento { get; set; }           // yyyy-MM-dd
+        public string? DateNascimento { get; set; }
         public string CnpjCPF { get; set; } = "";
         public string? Rg { get; set; }
         public string? EmailCliente { get; set; }
@@ -98,7 +98,7 @@
         public string? Renda { get; set; }
 
         public string? ClienteNameSecondary { get; set; }
-        public string? DataNascimentoSecondary { get; set; }   // yyyy-MM-dd
+        public string? DataNascimentoSecondary { get; set; }
         public string? CnpjCPFSecondary { get; set; }
         public string? RgSecondary { get; set; }
         public string? EmailClienteSecondary { get; set; }
@@ -119,11 +119,8 @@
         public string CorretorID { get; set; } = "";
         public string GerenteID { get; set; } = "";
         public List<CondicaoDto> Condicao { get; set; } = new();
-
-        // opcionalmente permitir cliente definir status inicial
         public string? Status { get; set; }
     }
-
 
     public class ParcelDto
     {
@@ -132,8 +129,8 @@
         public decimal Value { get; set; }
         public DateTime Date { get; set; }
         public string? Observations { get; set; }
-        public string Status { get; set; } = "WAITING"; // WAITING | PAID
-        public string Type { get; set; } = "DEFAULT";   // ACT | DEFAULT | INTERMEDIARY
+        public string Status { get; set; } = "WAITING";
+        public string Type { get; set; } = "DEFAULT";
         public DateTime? PaidDate { get; set; }
     }
 }

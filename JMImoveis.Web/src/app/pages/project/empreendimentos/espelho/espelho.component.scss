@@ -1,4 +1,4 @@
-.table-responsive {
+﻿.table-responsive {
   overflow-x: auto;
 }
 
@@ -26,7 +26,7 @@ table td {
   top: -10000px; /* bem fora da tela */
   left: -10000px;
   display: block !important; /* importante pra sobrescrever o display:none */
-  z-index: -9999; /* bem atrás de tudo */
+  z-index: -9999; /* bem atrÃ¡s de tudo */
 }
 
 .dot { width: 12px; height: 12px; }
@@ -79,18 +79,18 @@ table td {
 .tile .num { font-size: 18px; }
 .tile .m2  { font-size: 12px; opacity: .9; }
 
-/* cores por status – conforme sua legenda */
+/* cores por status â€“ conforme sua legenda */
 .tile.disp { background: #e9fbe9; color: #0f6a0f; border-color: #c8f1c8; }      /* verde */
 .tile.res  { background: #fff3cd; color: #8a6d3b; border-color: #ffe49a; }      /* amarelo */
 .tile.vend { background: #f87171; color: #fff; border-color: #ef4444; }          /* vermelho */
 
-/* Tamanho e margens da página */
+/* Tamanho e margens da pÃ¡gina */
 @page {
   size: A4 portrait;         /* use 'landscape' se quiser horizontal */
   margin: 12mm;              /* ajuste conforme precisar */
 }
 
-/* Regras que valem só na impressão */
+/* Regras que valem sÃ³ na impressÃ£o */
 @media print {
   html, body {
     height: 297mm;
@@ -99,10 +99,10 @@ table td {
     print-color-adjust: exact;
   }
 
-  /* Oculta elementos não necessários */
+  /* Oculta elementos nÃ£o necessÃ¡rios */
   .no-print { display: none !important; }
 
-  /* Área principal ajustada pra A4 */
+  /* Ãrea principal ajustada pra A4 */
   .print-area {
     width: 100%;
     max-width: 186mm; /* 210 - (2 * 12mm de margem) */
@@ -112,7 +112,7 @@ table td {
   /* Evitar quebras no meio de blocos importantes */
   .no-break { page-break-inside: avoid; break-inside: avoid; }
 
-  /* Forçar quebra de página onde quiser */
+  /* ForÃ§ar quebra de pÃ¡gina onde quiser */
   .page-break { page-break-after: always; break-after: page; }
 }
 
@@ -129,22 +129,22 @@ table td {
     margin: 10mm; /* ajuste fino */
   }
 
-  /* área imprimível (já com margem descontada) */
+  /* Ã¡rea imprimÃ­vel (jÃ¡ com margem descontada) */
   .print-area {
     width: 190mm;       /* 210 - 2*10mm */
     max-width: 190mm;
     min-height: 277mm;  /* 297 - 2*10mm */
     height: 277mm;
-    overflow: hidden;   /* NÃO deixa passar para outra página */
+    overflow: hidden;   /* NÃƒO deixa passar para outra pÃ¡gina */
   }
 
-  /* reduz espaçamentos que estouram página */
+  /* reduz espaÃ§amentos que estouram pÃ¡gina */
   .print-area .mt-4 { margin-top: 8px !important; }
   .print-area .pt-2 { padding-top: 6px !important; }
   .print-area .my-3 { margin-top: 8px !important; margin-bottom: 8px !important; }
   .print-area .my-2 { margin-top: 6px !important; margin-bottom: 6px !important; }
 
-  /* tira linhas extras que ocupam espaço */
+  /* tira linhas extras que ocupam espaÃ§o */
   .print-area hr { margin: 8px 0 !important; }
 
   /* tabela mais compacta */
@@ -154,3 +154,98 @@ table td {
     font-size: 11px !important;
   }
 }
+
+
+.compact-form-section {
+  margin-top: 0.25rem !important;
+  padding-top: 0.25rem !important;
+}
+
+.compact-form-body {
+  --bs-gutter-x: 1rem;
+}
+
+.compact-form-group {
+  margin-top: 0.25rem !important;
+}
+
+.compact-form-row {
+  --bs-gutter-x: 1rem;
+  --bs-gutter-y: 0.75rem;
+}
+
+.compact-form-group .form-label {
+  display: inline-block;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.compact-form-group .form-control,
+.compact-form-group .form-select,
+.compact-form-group .input-group,
+.compact-form-group .input-group .form-control,
+.compact-form-group .input-group-text {
+  min-height: 38px;
+}
+
+.compact-form-group .form-control,
+.compact-form-group .form-select,
+.compact-form-group .input-group {
+  margin-bottom: 8px;
+}
+
+.compact-input-group .input-group-text {
+  display: inline-flex;
+  align-items: center;
+}
+
+.compact-form-group .row + .row {
+  margin-top: 0.25rem !important;
+}
+
+
+.compact-action-btn {
+  min-height: 38px;
+  height: 38px;
+  padding: 0.375rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.compact-action-btn i {
+  line-height: 1;
+}
+
+
+.espelho-header-bar {
+  padding-top: 34px;
+}
+
+.espelho-close-btn {
+  top: 0 !important;
+  transform: translateY(-16px);
+}
+
+.espelho-corner-top-left {
+  left: 20px !important;
+  top: 24px !important;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  width: 382px;
+  height: 91px;
+}
+
+.espelho-corner-top-left svg {
+  display: block;
+}
+
+
+
+
+
+
+
+

@@ -902,7 +902,7 @@ namespace JMImoveisAPI.Repositories
             }
             if (!string.IsNullOrWhiteSpace(status))
             {
-                sql += " AND T0.status = @status ";
+                sql += " AND UPPER(T0.status) = @status ";
                 dp.Add("@status", status);
             }
             if (user.HasValue)
@@ -922,5 +922,28 @@ namespace JMImoveisAPI.Repositories
             var list = await conn.QueryAsync<Proposal>(new CommandDefinition(sql, dp, cancellationToken: ct));
             return list;
         }
+        public async Task<bool> UpdateProposalStatusAsync(long id, string expectedStatus, string nextStatus, CancellationToken ct)
+        {
+            const string sql = @"UPDATE jmoficial.proposals
+                                 SET status = @nextStatus,
+                                     updated_at = UTC_TIMESTAMP()
+                                 WHERE id = @id
+                                   AND deleted_at IS NULL
+                                   AND UPPER(status) = @expectedStatus;";
+
+            using var conn = await _context.OpenConnectionAsync();
+            var affected = await conn.ExecuteAsync(new CommandDefinition(
+                sql,
+                new
+                {
+                    id,
+                    expectedStatus = expectedStatus.ToUpperInvariant(),
+                    nextStatus = nextStatus.ToUpperInvariant()
+                },
+                cancellationToken: ct));
+
+            return affected > 0;
+        }
     }
 }
+

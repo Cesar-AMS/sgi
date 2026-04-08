@@ -1,4 +1,4 @@
-using JMImoveisAPI.Entities;
+﻿using JMImoveisAPI.Entities;
 using System.Globalization;
 
 namespace JMImoveisAPI.Interfaces
@@ -16,14 +16,13 @@ namespace JMImoveisAPI.Interfaces
 
         Task<VendasV2?> GetSaleFullAsync(int saleId, FinanceMappingOptions map);
 
-        //Proposta
-
+        // Propostas
         Task<long> CreateAsync(Proposal proposal, IEnumerable<ProposalCondition> conds, CancellationToken ct);
         Task<Proposal?> GetByIdAsync(long id, CancellationToken ct);
         Task<IEnumerable<Proposal>> ListAsync(DateTime? de, DateTime? ate, string? status, int? user, int? gerente, int? corretor, CancellationToken ct);
+        Task<bool> UpdateProposalStatusAsync(long id, string expectedStatus, string nextStatus, CancellationToken ct);
 
         Task<List<int>> GetCustomerIdsBySaleIdAsync(int saleId);
         Task<List<ParcelDto>> GetParcelsBySaleIdAsync(int saleId);
-
     }
 }

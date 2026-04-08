@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+﻿import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ModalVendaComponent } from '../../modal-venda/modal-venda.component';
 import { Apartamento } from 'src/app/core/data/empreendimento';
 import html2canvas from 'html2canvas';
@@ -10,8 +10,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { ModalDirective } from 'ngx-bootstrap/modal';
-import * as moment from 'moment';
+import moment from 'moment';
 import { PropostaReserva } from 'src/app/models/proposta-reserva';
+
 
 export interface Comprador {
   nome: string;
@@ -35,7 +36,7 @@ function dataPorExtenso(cidade = 'São Paulo', data = new Date()): string {
   return `${cidade}, ${texto}.`;
 }
 
-  const formatBRL = (v: number | string) =>
+const formatBRL = (v: number | string) =>
   new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
@@ -93,14 +94,24 @@ export class EspelhoComponent implements OnInit {
   @ViewChild('meuModal', { static: false }) meuModal!: ModalVendaComponent;
   @ViewChild('modalReserva', { static: false }) modalReserva!: ModalDirective;
 
-@ViewChild('areaA4Ref', { static: false }) areaA4Ref!: ElementRef;
+  @ViewChild('areaA4Ref', { static: false }) areaA4Ref!: ElementRef;
 
 
-   grupos: GrupoBloco[] = [];
+  grupos: GrupoBloco[] = [];
   construtora: Construtoras[] = [];
   empreendimentos: Empreendimento[] = [];
   condicoes: Condicao[] = [];
   filiais: Filial[] = [];
+  unidadeSelecionada: string = '';
+  mostrarSegundoProponente: boolean = false;
+  cep2: string = '';
+  rua2: string = '';
+  nro2: string = '';
+  comp2: string = '';
+  bairro2: string = '';
+  cidade2: string = '';
+  estado2: string = '';
+  mesmoEndereco: boolean = true;
   today = new Date();
   // bread crumb items
   breadCrumbItems!: Array<{}>;
@@ -120,19 +131,19 @@ export class EspelhoComponent implements OnInit {
   shippingRate = 65.0;
   discountRate = 0.30;
   proposta: PropostaReserva = {
-  id:0, empreendimentoID: '', unidadeID: '',
-  engCaixa: false, vlrUnidade: 0,
-  clienteName: '', dateNascimento: '', cnpjCpf: '', rg: '', emailCliente: '',
-  phoneOne: '', phoneTwo: '', estadoCivil: '', profissao: '', renda: '',
-  clienteNameSecondary: '', dataNascimentoSecondary: '', cnpjCPFSecondary: '',
-  rgSecondary: '', emailClienteSecondary: '', phoneOneSecondary: '',
-  phoneTwoSecondary: '', estadoCivilSecondary: '', profissaoSecondary: '',
-  rendaSecondary: '',
-  cep: '', rua: '', nro: '', comp: '', bairro: '', cidade: '', estado: '',
-  corretorID: '', gerenteID: '',
-  status: 'OPEN', createdAt: '',
-  condicao: []
-};
+    id: 0, empreendimentoID: '', unidadeID: '',
+    engCaixa: false, vlrUnidade: 0,
+    clienteName: '', dateNascimento: '', cnpjCpf: '', rg: '', emailCliente: '',
+    phoneOne: '', phoneTwo: '', estadoCivil: '', profissao: '', renda: '',
+    clienteNameSecondary: '', dataNascimentoSecondary: '', cnpjCPFSecondary: '',
+    rgSecondary: '', emailClienteSecondary: '', phoneOneSecondary: '',
+    phoneTwoSecondary: '', estadoCivilSecondary: '', profissaoSecondary: '',
+    rendaSecondary: '',
+    cep: '', rua: '', nro: '', comp: '', bairro: '', cidade: '', estado: '',
+    corretorID: '', gerenteID: '',
+    status: 'RASCUNHO', createdAt: '',
+    condicao: []
+  };
 
 
   userForm!: UntypedFormGroup;
@@ -146,7 +157,7 @@ export class EspelhoComponent implements OnInit {
   @ViewChild('pdfContent', { static: false }) pdfContent!: ElementRef;
 
 
-    constructor(private route: ActivatedRoute, private formBuilder: UntypedFormBuilder, public router: Router, private service: ApiService, private proposalsService: ProposalsService, public toast: ToastrService) {
+  constructor(private route: ActivatedRoute, private formBuilder: UntypedFormBuilder, public router: Router, private service: ApiService, private proposalsService: ProposalsService, public toast: ToastrService) {
     this.userForm = this.formBuilder.group({
       productName: ['', [Validators.required]],
       rate: ['', [Validators.required]],
@@ -155,10 +166,10 @@ export class EspelhoComponent implements OnInit {
     })
   }
 
-  
+
   ngOnInit() {
 
-     
+
     this.service.getConstrutora().subscribe((data) => {
       this.construtora = data
     })
@@ -170,7 +181,7 @@ export class EspelhoComponent implements OnInit {
   }
 
 
-   groupUnits() {
+  groupUnits() {
     const byBloco = new Map<string, Map<number, Apartamento[]>>();
 
     for (const ap of this.apartamentos) {
@@ -184,7 +195,7 @@ export class EspelhoComponent implements OnInit {
       mapAndar.get(andar)!.push(ap);
     }
 
-    // transforma em array e ordena: bloco A→Z, andar 1→N, número crescente
+    // transforma em array e ordena: bloco AZ, andar 1N, número crescente
     this.listagem = Array.from(byBloco.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([bloco, floors]) => ({
@@ -203,46 +214,98 @@ export class EspelhoComponent implements OnInit {
     return a.localeCompare(b, 'pt-BR', { numeric: true, sensitivity: 'base' });
   }
 
-  changeEmpreendimento(){
+  changeEmpreendimento() {
     this.apartamentos = []
-    this.service.getApartamentEspelho(this.empreendimentoFilter).subscribe((data)=>{
+    this.service.getApartamentEspelho(this.empreendimentoFilter).subscribe((data) => {
       this.apartamentos = data
       this.proposta.empreendimentoID = this.empreendimentoFilter
-    this.grupos = this.groupByBlocoAndAndar(data);
+      this.grupos = this.groupByBlocoAndAndar(data);
 
     })
   }
 
 
-  changeEnterprise(){
-    this.service.getEmpreendimentosBYConstrutor(this.construtorFilter).subscribe((data)=>{
+  changeEnterprise() {
+    this.service.getEmpreendimentosBYConstrutor(this.construtorFilter).subscribe((data) => {
       this.empreendimentos = data
     })
 
     this.apartamentos = []
   }
-  
+
 
   salvar() {
-  if (!this.proposta.clienteName || !this.proposta.cnpjCpf) {
-    alert('Preencha Nome e CPF do 1º comprador!');
-    return;
+    if (!this.proposta.clienteName || !this.proposta.cnpjCpf) {
+      alert('Preencha Nome e CPF do 1º comprador!');
+      return;
+    }
+    console.log(this.proposta);
   }
-  console.log(this.proposta);
-}
 
-  cep(){
+  cep() {
 
-    var cep = this.proposta.cep.replace('-','')
+    var cep = this.proposta.cep.replace('-', '')
 
-    this.service.getVIACEP(cep).subscribe((data)=>
-    {
+    this.service.getVIACEP(cep).subscribe((data) => {
       this.proposta.rua = data.logradouro
       this.proposta.bairro = data.bairro
       this.proposta.cidade = data.localidade
-      this.proposta.estado = data.estado
+      this.proposta.estado = data.uf
     })
 
+  }
+
+  copiarEndereco() {
+  if (this.mesmoEndereco) {
+    this.cep2 = this.proposta.cep;
+    this.rua2 = this.proposta.rua;
+    this.nro2 = this.proposta.nro;
+    this.comp2 = this.proposta.comp;
+    this.bairro2 = this.proposta.bairro;
+    this.cidade2 = this.proposta.cidade;
+    this.estado2 = this.proposta.estado;
+  }
+}
+
+buscarCep2() {
+  let cep = this.cep2.replace('-', '');
+  this.service.getVIACEP(cep).subscribe((data) => {
+    this.rua2 = data.logradouro;
+    this.bairro2 = data.bairro;
+    this.cidade2 = data.localidade;
+    this.estado2 = data.uf;
+  });
+}
+
+  resetarEstadoSegundoProponente() {
+    this.mostrarSegundoProponente = false;
+    this.mesmoEndereco = true;
+    this.copiarEndereco();
+  }
+
+  fecharModalReserva() {
+    this.resetarEstadoSegundoProponente();
+    this.modalReserva.hide();
+  }
+  atualizarRenda(event: Event, campo: 'renda' | 'rendaSecondary' = 'renda') {
+    const input = event.target as HTMLInputElement;
+    const valor = input.value ?? '';
+    const numeros = valor.replace(/\D/g, '');
+    const valorNumerico = parseFloat(numeros) / 100;
+
+    if (!isNaN(valorNumerico)) {
+      if (campo === 'renda') {
+        this.proposta.renda = valorNumerico.toString();
+      } else {
+        this.proposta.rendaSecondary = valorNumerico.toString();
+      }
+    } else {
+      if (campo === 'renda') {
+        this.proposta.renda = '';
+      } else {
+        this.proposta.rendaSecondary = '';
+      }
+    }
   }
 
   reservaById(ap: Apartamento) {
@@ -273,41 +336,50 @@ export class EspelhoComponent implements OnInit {
     return andar === 1 ? 'Térreo' : andar - 1;
   }
 
-  saveUser(){
+  saveUser() {
     if (!this.isPropostaValida()) {
-    this.toast.warning('Preencha todos os campos obrigatórios da proposta.');
-    return;
-  }
+      this.toast.warning('Preencha todos os campos obrigatórios da proposta.');
+      return;
+    }
 
-    this.proposalsService.create(this.proposta).subscribe(()=>{
-      this.toast.success('Proposta criada com sucesso')
-    })
+    // Adiciona o status para enviar para análise
+    this.proposta.status = 'AGUARDANDO_ANALISE';
+
+    this.proposalsService.create(this.proposta).subscribe(() => {
+      this.toast.success('Proposta criada com sucesso! Enviada para análise.');
+
+      // Fecha o modal após salvar
+      this.modalReserva.hide();
+
+    }, (erro) => {
+      this.toast.error('Erro ao salvar proposta: ' + erro.message);
+    });
   }
 
   isPropostaValida(): boolean {
 
-  if (!this.proposta.clienteName) return false;
-  if (!this.proposta.cnpjCpf) return false;
-  if (!this.proposta.phoneOne) return false;
-  if (!this.proposta.emailCliente) return false;
+    if (!this.proposta.clienteName) return false;
+    if (!this.proposta.cnpjCpf) return false;
+    if (!this.proposta.phoneOne) return false;
+    if (!this.proposta.emailCliente) return false;
 
-  if (!this.proposta.cep) return false;
-  if (!this.proposta.rua) return false;
-  if (!this.proposta.nro) return false;
-  if (!this.proposta.bairro) return false;
-  if (!this.proposta.cidade) return false;
-  if (!this.proposta.estado) return false;
+    if (!this.proposta.cep) return false;
+    if (!this.proposta.rua) return false;
+    if (!this.proposta.nro) return false;
+    if (!this.proposta.bairro) return false;
+    if (!this.proposta.cidade) return false;
+    if (!this.proposta.estado) return false;
 
-  if (this.proposta.engCaixa === null || this.proposta.engCaixa === undefined)
-    return false;
+    if (this.proposta.engCaixa === null || this.proposta.engCaixa === undefined)
+      return false;
 
-  if (!this.proposta.condicao || this.proposta.condicao.length === 0)
-    return false;
+    if (!this.proposta.condicao || this.proposta.condicao.length === 0)
+      return false;
 
-  return true;
-}
+    return true;
+  }
 
-  
+
 
   padronizarColunas(torre: any) {
     const max = Math.max(
@@ -321,9 +393,11 @@ export class EspelhoComponent implements OnInit {
     return torre;
   }
 
-  setUnit(id: number, amount: number){
+  setUnit(id: number, amount: number, descricaoUnidade: string) {
     this.proposta.unidadeID = id.toString()
     this.proposta.vlrUnidade = amount
+    this.unidadeSelecionada = descricaoUnidade
+    this.resetarEstadoSegundoProponente()
     this.modalReserva.hide()
   }
 
@@ -357,8 +431,8 @@ export class EspelhoComponent implements OnInit {
     });
   }
 
-  vlrTotal(){
-   return this.proposta.condicao.reduce((acc, c) => acc + (Number(c?.valorTotal) || 0), 0);
+  vlrTotal() {
+    return this.proposta.condicao.reduce((acc, c) => acc + (Number(c?.valorTotal) || 0), 0);
   }
 
   remover(i: number): void {
@@ -383,57 +457,57 @@ export class EspelhoComponent implements OnInit {
   }
 
   downloadPropostaPDF() {
-  const element = this.areaA4Ref?.nativeElement as HTMLElement;
+    const element = this.areaA4Ref?.nativeElement as HTMLElement;
 
-  if (!element) {
-    this.toast.error('Não foi possível localizar a área do PDF.');
-    return;
-  }
-
-  // garante fundo branco no PDF (evita transparência)
-  const originalBg = element.style.backgroundColor;
-  element.style.backgroundColor = '#ffffff';
-
-  // espera 1 tick para garantir que o modal terminou de renderizar
-  setTimeout(async () => {
-    try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();   // 210mm
-      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
-
-      // dimensões da imagem no PDF mantendo proporção
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      // primeira página
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      const nome = `proposta_${this.proposta?.id || 'novo'}.pdf`;
-      pdf.save(nome);
-
-    } catch (e) {
-      console.error(e);
-      this.toast.error('Erro ao gerar PDF da proposta.');
-    } finally {
-      element.style.backgroundColor = originalBg;
+    if (!element) {
+      this.toast.error('Não foi possível localizar a área do PDF.');
+      return;
     }
-  }, 100);
-}
+
+    // garante fundo branco no PDF (evita transparência)
+    const originalBg = element.style.backgroundColor;
+    element.style.backgroundColor = '#ffffff';
+
+    // espera 1 tick para garantir que o modal terminou de renderizar
+    setTimeout(async () => {
+      try {
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          windowWidth: element.scrollWidth,
+          windowHeight: element.scrollHeight
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();   // 210mm
+        const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
+
+        // dimensões da imagem no PDF mantendo proporção
+        const imgWidth = pdfWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        // primeira página
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+
+        const nome = `proposta_${this.proposta?.id || 'novo'}.pdf`;
+        pdf.save(nome);
+
+      } catch (e) {
+        console.error(e);
+        this.toast.error('Erro ao gerar PDF da proposta.');
+      } finally {
+        element.style.backgroundColor = originalBg;
+      }
+    }, 100);
+  }
 
 
   // Se precisar enviar ao backend:
@@ -448,7 +522,7 @@ export class EspelhoComponent implements OnInit {
     }));
   }
 
-   private toNum(v: any): number {
+  private toNum(v: any): number {
     return typeof v === 'number' ? v : parseInt(String(v).replace(/[^\d-]/g, ''), 10) || 0;
   }
 
@@ -456,7 +530,7 @@ export class EspelhoComponent implements OnInit {
     const blocos = new Map<string, Map<number, Apartamento[]>>();
 
     for (const u of items) {
-      const bloco = u.bloco?.toString().trim() || '—';
+      const bloco = u.bloco?.toString().trim() || '';
       const andar = this.toNum(u.andar);
       const numero = this.toNum(u.numero);
       // normaliza para ordenar a vitrine
@@ -489,24 +563,24 @@ export class EspelhoComponent implements OnInit {
     const x = (s || '').toUpperCase();
     return {
       disp: x === 'AVAILABLE' || x === 'DISPONÍVEL',
-      res:  x === 'RESERVED'  || x === 'RESERVADO',
-      vend: x === 'SELL'      || x === 'VENDIDO'
+      res: x === 'RESERVED' || x === 'RESERVADO',
+      vend: x === 'SELL' || x === 'VENDIDO'
     };
   }
 
   trackBloco(_: number, b: GrupoBloco) { return b.bloco; }
   trackAndar(_: number, a: GrupoAndar) { return a.andar; }
-  trackUnidade(_: number, u: Apartamento)   { return u.id ?? `${u.bloco}-${u.andar}-${u.numero}`; }
+  trackUnidade(_: number, u: Apartamento) { return u.id ?? `${u.bloco}-${u.andar}-${u.numero}`; }
 
   print(elementId: string) {
-  const conteudo = document.getElementById(elementId);
-  if (!conteudo) return;
+    const conteudo = document.getElementById(elementId);
+    if (!conteudo) return;
 
-  const janela = window.open('', '_blank', 'noopener,noreferrer,width=800,height=600');
-  if (!janela) return;
+    const janela = window.open('', '_blank', 'noopener,noreferrer,width=800,height=600');
+    if (!janela) return;
 
-  // Copie estilos globais básicos + suas classes de impressão
-  const css = `
+    // Copie estilos globais básicos + suas classes de impressão
+    const css = `
     <style>
       @page { size: A4 portrait; margin: 12mm; }
       @media print {
@@ -521,8 +595,8 @@ export class EspelhoComponent implements OnInit {
     </style>
   `;
 
-  janela.document.open();
-  janela.document.write(`
+    janela.document.open();
+    janela.document.write(`
     <html>
       <head>
         <meta charset="utf-8">
@@ -536,7 +610,9 @@ export class EspelhoComponent implements OnInit {
       </body>
     </html>
   `);
-  janela.document.close();
-}
+    janela.document.close();
+  }
 
 }
+
+
