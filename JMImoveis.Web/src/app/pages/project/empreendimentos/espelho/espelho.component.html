@@ -1,4 +1,5 @@
-﻿<div class="card">
+﻿<ng-container *ngIf="modo === 'criacao'">
+<div class="card">
   <div class="row g-2 align-items-end p-3">
     <!-- Select 1 -->
     <div class="col-12 col-md-4 col-lg-3">
@@ -100,7 +101,9 @@
 
 
 
-<div bsModal #modalReserva="bs-modal" class="modal fade" id="modalReserva" (onHidden)="resetarEstadoSegundoProponente()">
+</ng-container>
+
+<div bsModal #modalReserva="bs-modal" class="modal fade" id="modalReserva" (onHidden)="handleModalHidden()">
   <div class="modal-dialog modal-xl modal-dialog-centered custom-modal" role="document">
     <div class="modal-content">
       <div class="card-body p-1">
@@ -141,13 +144,18 @@
                             (click)="fecharModalReserva()"></button>
                           <div class="row g-2 align-items-end pe-lg-4">
                             <div class="col-12 col-lg-6">
-                              <label class="form-label text-white mb-1 ms-2"
-                                for="inp-empreendimento">Empreendimento</label>
-                              <select id="inp-empreendimento" class="form-control form-control-sm" disabled
-                                [(ngModel)]="proposta.empreendimentoID" name="empreendimentoID">
-                                <option *ngFor="let e of empreendimentos" [value]="e.id">{{ e.name }}</option>
-                              </select>
-                            </div>
+  <label class="form-label text-white mb-1 ms-2" for="inp-empreendimento">Empreendimento</label>
+  <ng-container *ngIf="modo === 'criacao'; else empreendimentoVisualizacao">
+    <select id="inp-empreendimento" class="form-control form-control-sm" disabled
+      [(ngModel)]="proposta.empreendimentoID" name="empreendimentoID">
+      <option *ngFor="let e of empreendimentos" [value]="e.id">{{ e.name }}</option>
+    </select>
+  </ng-container>
+  <ng-template #empreendimentoVisualizacao>
+    <input id="inp-empreendimento" type="text" class="form-control form-control-sm"
+      [value]="proposta.enterPriseName" disabled>
+  </ng-template>
+</div>
 
                             <div class="col-12 col-md-6 col-lg-2">
                               <label class="form-label mb-1">Unidade</label>
@@ -183,7 +191,7 @@
                                   <div class="col-12 col-md-6">
                                     <label for="c1-nome" class="form-label">Nome Cliente Completo <span
                                         class="text-danger">*</span></label>
-                                    <input class="form-control" id="c1-nome" [(ngModel)]="proposta.clienteName"
+                                    <input class="form-control" id="c1-nome" [(ngModel)]="proposta.clienteName" [disabled]="camposDesabilitados()"
                                       name="clienteName" />
                                   </div>
 
@@ -191,7 +199,7 @@
                                     <label for="c1-nasc" class="form-label">Data de Nascimento <span
                                         class="text-danger">*</span></label>
                                     <input type="date" id="c1-nasc" name="dateNascimento" class="form-control"
-                                      autocomplete="bday" [(ngModel)]="proposta.dateNascimento">
+                                      autocomplete="bday" [(ngModel)]="proposta.dateNascimento" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-6 col-md-3">
@@ -199,7 +207,7 @@
                                         class="text-danger">*</span></label>
                                     <input type="text" id="c1-cpfcnpj" name="cnpjCPF" class="form-control"
                                       placeholder="Informe o cpf/cnpj" inputmode="numeric" autocomplete="off"
-                                      [(ngModel)]="proposta.cnpjCpf">
+                                      [(ngModel)]="proposta.cnpjCpf" [disabled]="camposDesabilitados()">
                                   </div>
                                 </div>
 
@@ -207,7 +215,7 @@
                                   <div class="col-6 col-md-3">
                                     <label for="c1-rg" class="form-label">RG</label>
                                     <input type="text" id="c1-rg" name="rg" class="form-control"
-                                      placeholder="Informe o RG" autocomplete="off" [(ngModel)]="proposta.rg">
+                                      placeholder="Informe o RG" autocomplete="off" [(ngModel)]="proposta.rg" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-12 col-md-6">
@@ -215,7 +223,7 @@
                                         class="text-danger">*</span></label>
                                     <input type="email" id="c1-email" name="emailCliente" class="form-control"
                                       placeholder="Informe o e-mail" autocomplete="email"
-                                      [(ngModel)]="proposta.emailCliente">
+                                      [(ngModel)]="proposta.emailCliente" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-6 col-md-3">
@@ -223,7 +231,7 @@
                                         class="text-danger">*</span></label>
                                     <input type="tel" id="c1-tel1" class="form-control" placeholder="(11) 98765-4321"
                                       inputmode="tel" autocomplete="tel" name="phoneone"
-                                      [(ngModel)]="proposta.phoneOne">
+                                      [(ngModel)]="proposta.phoneOne" [disabled]="camposDesabilitados()">
                                   </div>
                                 </div>
 
@@ -232,20 +240,20 @@
                                     <label for="c1-tel2" class="form-label">Telefone secundario</label>
                                     <input type="tel" id="c1-tel2" class="form-control" placeholder="Se existir"
                                       inputmode="tel" autocomplete="tel" name="phonetwo"
-                                      [(ngModel)]="proposta.phoneTwo">
+                                      [(ngModel)]="proposta.phoneTwo" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-6 col-md-3">
                                     <label for="c1-civil" class="form-label">Estado civil</label>
                                     <input type="text" id="c1-civil" class="form-control" placeholder="CASADO"
-                                      autocomplete="off" name="estadoCivil" [(ngModel)]="proposta.estadoCivil">
+                                      autocomplete="off" name="estadoCivil" [(ngModel)]="proposta.estadoCivil" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-6 col-md-3">
                                     <label for="c1-prof" class="form-label">Profissão</label>
                                     <input type="text" id="c1-prof" class="form-control"
                                       placeholder="AUX. ADMINISTRATIVO" autocomplete="organization-title"
-                                      name="profissao" [(ngModel)]="proposta.profissao">
+                                      name="profissao" [(ngModel)]="proposta.profissao" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-6 col-md-3">
@@ -253,7 +261,7 @@
                                     <input type="text" id="c1-renda" class="form-control" placeholder="R$ 2.500,00"
                                       inputmode="decimal" autocomplete="off" name="renda"
                                       [value]="proposta.renda | currency:'BRL':'symbol-narrow':'1.2-2'"
-                                      (input)="atualizarRenda($event, 'renda')">
+                                      (input)="atualizarRenda($event, 'renda')" [disabled]="camposDesabilitados()">
                                   </div>
                                 </div>
                               </div>
@@ -270,9 +278,9 @@
                                     <div class="input-group compact-input-group">
                                       <input type="text" class="form-control" placeholder="00000-000"
                                         aria-label="Input group example" aria-describedby="btnGroupAddon" id="end-cep"
-                                        name="cep" [(ngModel)]="proposta.cep">
+                                        name="cep" [(ngModel)]="proposta.cep" [disabled]="camposDesabilitados()">
                                       <button type="button" class="btn btn-primary compact-action-btn"
-                                        id="btnGroupAddon" (click)="cep()">Buscar CEP</button>
+                                        id="btnGroupAddon" (click)="cep()" [disabled]="camposDesabilitados()">Buscar CEP</button>
                                     </div>
                                   </div>
                                 </div>
@@ -282,21 +290,21 @@
                                     <label for="end-logradouro" class="form-label">Endereço</label>
                                     <input type="text" id="end-logradouro" name="rua" class="form-control"
                                       placeholder="Digite o nome da rua" autocomplete="address-line1" required
-                                      [(ngModel)]="proposta.rua">
+                                      [(ngModel)]="proposta.rua" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-6 col-md-3">
                                     <label for="end-num" class="form-label">N° do endereço</label>
                                     <input type="text" id="end-num" name="nro" class="form-control"
                                       placeholder="123 ou 18A" autocomplete="address-line2" required
-                                      [(ngModel)]="proposta.nro">
+                                      [(ngModel)]="proposta.nro" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-6 col-md-3">
                                     <label for="end-comp" class="form-label">Complemento</label>
                                     <input type="text" id="end-comp" name="comp" class="form-control"
                                       placeholder="Apartamento, bloco, casa..." autocomplete="address-line2"
-                                      [(ngModel)]="proposta.comp">
+                                      [(ngModel)]="proposta.comp" [disabled]="camposDesabilitados()">
                                   </div>
                                 </div>
 
@@ -305,28 +313,28 @@
                                     <label for="end-bairro" class="form-label">Bairro</label>
                                     <input type="text" id="end-bairro" name="bairro" class="form-control"
                                       placeholder="Digite o nome do bairro" autocomplete="address-level3" required
-                                      [(ngModel)]="proposta.bairro">
+                                      [(ngModel)]="proposta.bairro" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-12 col-md-4">
                                     <label for="end-cidade" class="form-label">Cidade</label>
                                     <input type="text" id="end-cidade" class="form-control"
                                       placeholder="Digite o nome da cidade" autocomplete="address-level2" required
-                                      name="cidade" [(ngModel)]="proposta.cidade">
+                                      name="cidade" [(ngModel)]="proposta.cidade" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-12 col-md-4">
                                     <label for="end-uf" class="form-label">Estado</label>
                                     <input type="text" id="end-uf" name="estado" class="form-control"
                                       placeholder="UF (Ex: SP)" maxlength="2" style="text-transform: uppercase;"
-                                      autocomplete="address-level1" required [(ngModel)]="proposta.estado">
+                                      autocomplete="address-level1" required [(ngModel)]="proposta.estado" [disabled]="camposDesabilitados()">
                                   </div>
                                 </div>
                               </div>
                               <!-- Checkbox para mostrar/esconder 2º proponente -->
                               <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" id="chkSegundoProponente"
-                                  [(ngModel)]="mostrarSegundoProponente">
+                                  [(ngModel)]="mostrarSegundoProponente" [disabled]="camposDesabilitados()">
                                 <label class="form-check-label" for="chkSegundoProponente">
                                   Adicionar 2º Proponente
                                 </label>
@@ -340,20 +348,20 @@
                                 <div class="row g-2 compact-form-row">
                                   <div class="col-12 col-md-6">
                                     <label for="c2-nome" class="form-label">Nome Cliente</label>
-                                    <input class="form-control" id="c2-nome" [(ngModel)]="proposta.clienteNameSecondary"
+                                    <input class="form-control" id="c2-nome" [(ngModel)]="proposta.clienteNameSecondary" [disabled]="camposDesabilitados()"
                                       name="clienteNameSecondary" />
                                   </div>
 
                                   <div class="col-6 col-md-3">
                                     <label for="c2-nasc" class="form-label">Data de Nascimento</label>
                                     <input type="date" id="c2-nasc" class="form-control" autocomplete="bday"
-                                      [(ngModel)]="proposta.dataNascimentoSecondary" name="dataNascimentoSecondary">
+                                      [(ngModel)]="proposta.dataNascimentoSecondary" name="dataNascimentoSecondary" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-6 col-md-3">
                                     <label for="c2-cpf" class="form-label">CPF/CNPJ</label>
                                     <input type="text" id="c2-cpf" class="form-control" placeholder="Informe o cpf/cnpj"
-                                      inputmode="numeric" autocomplete="off" [(ngModel)]="proposta.cnpjCPFSecondary"
+                                      inputmode="numeric" autocomplete="off" [(ngModel)]="proposta.cnpjCPFSecondary" [disabled]="camposDesabilitados()"
                                       name="cnpjCPFSecondary">
                                   </div>
                                 </div>
@@ -362,20 +370,20 @@
                                   <div class="col-6 col-md-3">
                                     <label for="c2-rg" class="form-label">RG</label>
                                     <input type="text" id="c2-rg" class="form-control" placeholder="Informe o RG"
-                                      autocomplete="off" [(ngModel)]="proposta.rgSecondary" name="rgSecondary">
+                                      autocomplete="off" [(ngModel)]="proposta.rgSecondary" name="rgSecondary" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-12 col-md-6">
                                     <label for="c2-email" class="form-label">E-mail</label>
                                     <input type="email" id="c2-email" class="form-control"
                                       placeholder="Informe o e-mail" autocomplete="email"
-                                      [(ngModel)]="proposta.emailClienteSecondary" name="emailClienteSecondary">
+                                      [(ngModel)]="proposta.emailClienteSecondary" name="emailClienteSecondary" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-6 col-md-3">
                                     <label for="c2-tel1" class="form-label">Telefone</label>
                                     <input type="tel" id="c2-tel1" class="form-control" placeholder="(11) 98765-4321"
-                                      inputmode="tel" autocomplete="tel" [(ngModel)]="proposta.phoneOneSecondary"
+                                      inputmode="tel" autocomplete="tel" [(ngModel)]="proposta.phoneOneSecondary" [disabled]="camposDesabilitados()"
                                       name="phoneOneSecondary">
                                   </div>
                                 </div>
@@ -384,14 +392,14 @@
                                   <div class="col-6 col-md-3">
                                     <label for="c2-tel2" class="form-label">Telefone secundario</label>
                                     <input type="tel" id="c2-tel2" class="form-control" placeholder="Se existir"
-                                      inputmode="tel" autocomplete="tel" [(ngModel)]="proposta.phoneTwoSecondary"
+                                      inputmode="tel" autocomplete="tel" [(ngModel)]="proposta.phoneTwoSecondary" [disabled]="camposDesabilitados()"
                                       name="phoneTwoSecondary">
                                   </div>
 
                                   <div class="col-6 col-md-3">
                                     <label for="c2-civil" class="form-label">Estado civil</label>
                                     <input type="text" id="c2-civil" class="form-control" placeholder="CASADO"
-                                      autocomplete="off" [(ngModel)]="proposta.estadoCivilSecondary"
+                                      autocomplete="off" [(ngModel)]="proposta.estadoCivilSecondary" [disabled]="camposDesabilitados()"
                                       name="estadoCivilSecondary">
                                   </div>
 
@@ -399,7 +407,7 @@
                                     <label for="c2-prof" class="form-label">Profissão</label>
                                     <input type="text" id="c2-prof" class="form-control"
                                       placeholder="AUX. ADMINISTRATIVO" autocomplete="organization-title"
-                                      [(ngModel)]="proposta.profissaoSecondary" name="profissaoSecondary">
+                                      [(ngModel)]="proposta.profissaoSecondary" name="profissaoSecondary" [disabled]="camposDesabilitados()">
                                   </div>
 
                                   <div class="col-6 col-md-3">
@@ -407,7 +415,7 @@
                                     <input type="text" id="c2-renda" class="form-control" placeholder="R$ 2.500,00"
                                       inputmode="decimal" autocomplete="off" name="rendaSecondary"
                                       [value]="proposta.rendaSecondary | currency:'BRL':'symbol-narrow':'1.2-2'"
-                                      (input)="atualizarRenda($event, 'rendaSecondary')">
+                                      (input)="atualizarRenda($event, 'rendaSecondary')" [disabled]="camposDesabilitados()">
                                   </div>
                                 </div>
                                 <!-- Endereço do 2º Proponente -->
@@ -418,7 +426,7 @@
 
                                   <div class="form-check mb-2">
                                     <input class="form-check-input" type="checkbox" id="mesmoEnderecoCheck"
-                                      [(ngModel)]="mesmoEndereco" (change)="copiarEndereco()">
+                                      [(ngModel)]="mesmoEndereco" (change)="copiarEndereco()" [disabled]="camposDesabilitados()">
                                     <label class="form-check-label" for="mesmoEnderecoCheck">
                                       Mesmo endereço do 1º Proponente
                                     </label>
@@ -429,8 +437,8 @@
                                       <label class="form-label">CEP</label>
                                       <div class="input-group compact-input-group">
                                         <input type="text" class="form-control" [(ngModel)]="cep2"
-                                          [disabled]="mesmoEndereco" placeholder="00000-000">
-                                        <button type="button" class="btn btn-primary compact-action-btn" [disabled]="mesmoEndereco"
+                                          [disabled]="camposDesabilitados() || mesmoEndereco" placeholder="00000-000">
+                                        <button type="button" class="btn btn-primary compact-action-btn" [disabled]="camposDesabilitados() || mesmoEndereco"
                                           (click)="buscarCep2()">Buscar CEP</button>
                                       </div>
                                     </div>
@@ -440,19 +448,19 @@
                                     <div class="col-12 col-md-6">
                                       <label class="form-label">Endereço</label>
                                       <input type="text" class="form-control" [(ngModel)]="rua2"
-                                        [disabled]="mesmoEndereco">
+                                        [disabled]="camposDesabilitados() || mesmoEndereco">
                                     </div>
 
                                     <div class="col-6 col-md-3">
                                       <label class="form-label">Número</label>
                                       <input type="text" class="form-control" [(ngModel)]="nro2"
-                                        [disabled]="mesmoEndereco">
+                                        [disabled]="camposDesabilitados() || mesmoEndereco">
                                     </div>
 
                                     <div class="col-6 col-md-3">
                                       <label class="form-label">Complemento</label>
                                       <input type="text" class="form-control" [(ngModel)]="comp2"
-                                        [disabled]="mesmoEndereco">
+                                        [disabled]="camposDesabilitados() || mesmoEndereco">
                                     </div>
                                   </div>
 
@@ -460,19 +468,19 @@
                                     <div class="col-12 col-md-4">
                                       <label class="form-label">Bairro</label>
                                       <input type="text" class="form-control" [(ngModel)]="bairro2"
-                                        [disabled]="mesmoEndereco">
+                                        [disabled]="camposDesabilitados() || mesmoEndereco">
                                     </div>
 
                                     <div class="col-12 col-md-4">
                                       <label class="form-label">Cidade</label>
                                       <input type="text" class="form-control" [(ngModel)]="cidade2"
-                                        [disabled]="mesmoEndereco">
+                                        [disabled]="camposDesabilitados() || mesmoEndereco">
                                     </div>
 
                                     <div class="col-12 col-md-4">
                                       <label class="form-label">Estado</label>
                                       <input type="text" class="form-control" [(ngModel)]="estado2"
-                                        [disabled]="mesmoEndereco" maxlength="2" style="text-transform: uppercase;">
+                                        [disabled]="camposDesabilitados() || mesmoEndereco" maxlength="2" style="text-transform: uppercase;">
                                     </div>
                                   </div>
                                 </div>
@@ -496,13 +504,13 @@
                                       class="text-danger">*</span></label>
                                   <div class="d-flex gap-3">
                                     <div class="form-check mb-0">
-                                      <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa"
+                                      <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa" [disabled]="camposDesabilitados()"
                                         name="engCaixa" [value]="true" id="engSim">
                                       <label class="form-check-label" for="engSim">Sim</label>
                                     </div>
 
                                     <div class="form-check mb-0">
-                                      <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa"
+                                      <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa" [disabled]="camposDesabilitados()"
                                         name="engCaixa" [value]="false" id="engNao">
                                       <label class="form-check-label" for="engNao">Nâo</label>
                                     </div>
@@ -567,15 +575,48 @@
                               </div>
 
                               <div class="hstack gap-2 flex-wrap justify-content-end d-print-none position-relative"
-                                style="z-index: 2;">
-                                <button type="button" class="btn btn-success compact-action-btn" (click)="saveUser()">
-                                  <i class="ri-printer-line align-bottom me-1"></i> Salvar
-                                </button>
-                                <a href="javascript:void(0);" class="btn btn-primary compact-action-btn"
-                                  (click)="downloadPropostaPDF()">
-                                  <i class="ri-download-2-line align-bottom me-1"></i> Download
-                                </a>
-                              </div>
+  style="z-index: 2;">
+  <button type="button" class="btn btn-outline-secondary compact-action-btn"
+    *ngIf="modo === 'visualizacao' && !editando"
+    (click)="iniciarEdicao()"
+    [disabled]="savingProposal || loadingProposta">
+    <i class="ri-edit-line align-bottom me-1"></i> Editar
+  </button>
+
+  <button type="button" class="btn btn-success compact-action-btn"
+    *ngIf="modo === 'criacao' || editando"
+    (click)="saveUser()"
+    [disabled]="savingProposal || loadingProposta">
+    <i class="ri-save-line align-bottom me-1"></i>
+    {{ modo === 'visualizacao' ? 'Salvar alterações' : 'Salvar' }}
+  </button>
+
+  <button type="button" class="btn btn-outline-danger compact-action-btn"
+    *ngIf="modo === 'visualizacao' && editando"
+    (click)="cancelarEdicao()"
+    [disabled]="savingProposal || loadingProposta">
+    <i class="ri-close-line align-bottom me-1"></i> Cancelar
+  </button>
+
+  <button type="button" class="btn btn-success compact-action-btn"
+    *ngIf="modo === 'visualizacao'"
+    (click)="approveSelected()"
+    [disabled]="savingProposal || loadingProposta">
+    <i class="ri-checkbox-circle-line align-bottom me-1"></i> Aprovar
+  </button>
+
+  <button type="button" class="btn btn-danger compact-action-btn"
+    *ngIf="modo === 'visualizacao'"
+    (click)="reprovarProposta()"
+    [disabled]="savingProposal || loadingProposta">
+    <i class="ri-close-circle-line align-bottom me-1"></i> Reprovar
+  </button>
+
+  <a href="javascript:void(0);" class="btn btn-primary compact-action-btn"
+    (click)="downloadPropostaPDF()">
+    <i class="ri-download-2-line align-bottom me-1"></i> Download
+  </a>
+</div>
                             </div>
                           </div>
                         </div>
@@ -594,6 +635,16 @@
           </div>
         </div>
       </div>
+
+
+
+
+
+
+
+
+
+
 
 
 

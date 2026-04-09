@@ -835,7 +835,6 @@ namespace JMImoveisAPI.Repositories
                                         VALUES
                                         (@ProposalId, @Qtde, @Descricao, @Vencimento, @ValorParcela, @ValorTotal);";
 
-            string updateApp = "UPDATE jmoficial.units T0 SET T0.status = 'RESERVED' where id =  @UnidadeId";
 
             using var conn = await _context.OpenConnectionAsync();
             using var tx = await conn.BeginTransactionAsync(ct);
@@ -852,10 +851,90 @@ namespace JMImoveisAPI.Repositories
                         sqlInsertCond, c, tx, cancellationToken: ct));
                 }
 
-                await conn.ExecuteScalarAsync<int>(new CommandDefinition(updateApp, proposal, tx, cancellationToken: ct));
 
                 await tx.CommitAsync(ct);
                 return (long)newId;
+            }
+            catch
+            {
+                await tx.RollbackAsync(ct);
+                throw;
+            }
+        }
+        public async Task<bool> UpdateProposalAsync(Proposal proposal, IEnumerable<ProposalCondition> conds, CancellationToken ct)
+        {
+            const string sqlUpdateProposal = @"UPDATE jmoficial.proposals
+                                              SET empreendimento_id = @EmpreendimentoId,
+                                                  unidade_id = @UnidadeId,
+                                                  vlr_unidade = @VlrUnidade,
+                                                  eng_caixa = @EngCaixa,
+                                                  cliente_name = @ClienteName,
+                                                  date_nascimento = @DateNascimento,
+                                                  cnpj_cpf = @CnpjCpf,
+                                                  rg = @Rg,
+                                                  email_cliente = @EmailCliente,
+                                                  phone_one = @PhoneOne,
+                                                  phone_two = @PhoneTwo,
+                                                  estado_civil = @EstadoCivil,
+                                                  profissao = @Profissao,
+                                                  renda = @Renda,
+                                                  cliente_name_secondary = @ClienteNameSecondary,
+                                                  data_nascimento_secondary = @DataNascimentoSecondary,
+                                                  cnpj_cpf_secondary = @CnpjCpfSecondary,
+                                                  rg_secondary = @RgSecondary,
+                                                  email_cliente_secondary = @EmailClienteSecondary,
+                                                  phone_one_secondary = @PhoneOneSecondary,
+                                                  phone_two_secondary = @PhoneTwoSecondary,
+                                                  estado_civil_secondary = @EstadoCivilSecondary,
+                                                  profissao_secondary = @ProfissaoSecondary,
+                                                  renda_secondary = @RendaSecondary,
+                                                  cep = @Cep,
+                                                  rua = @Rua,
+                                                  nro = @Nro,
+                                                  comp = @Comp,
+                                                  bairro = @Bairro,
+                                                  cidade = @Cidade,
+                                                  estado = @Estado,
+                                                  corretor_id = @CorretorId,
+                                                  gerente_id = @GerenteId,
+                                                  status = @Status,
+                                                  updated_at = UTC_TIMESTAMP()
+                                              WHERE id = @Id
+                                                AND deleted_at IS NULL;";
+
+            const string sqlDeleteConds = @"DELETE FROM jmoficial.proposal_conditions WHERE proposal_id = @Id;";
+
+            const string sqlInsertCond = @"INSERT INTO jmoficial.proposal_conditions
+                                           (proposal_id, qtde, descricao, vencimento, valor_parcela, valor_total)
+                                           VALUES
+                                           (@ProposalId, @Qtde, @Descricao, @Vencimento, @ValorParcela, @ValorTotal);";
+
+            using var conn = await _context.OpenConnectionAsync();
+            using var tx = await conn.BeginTransactionAsync(ct);
+
+            try
+            {
+                var affected = await conn.ExecuteAsync(new CommandDefinition(
+                    sqlUpdateProposal, proposal, tx, cancellationToken: ct));
+
+                if (affected == 0)
+                {
+                    await tx.RollbackAsync(ct);
+                    return false;
+                }
+
+                await conn.ExecuteAsync(new CommandDefinition(
+                    sqlDeleteConds, new { proposal.Id }, tx, cancellationToken: ct));
+
+                foreach (var c in conds)
+                {
+                    c.ProposalId = (ulong)proposal.Id;
+                    await conn.ExecuteAsync(new CommandDefinition(
+                        sqlInsertCond, c, tx, cancellationToken: ct));
+                }
+
+                await tx.CommitAsync(ct);
+                return true;
             }
             catch
             {
@@ -922,6 +1001,21 @@ namespace JMImoveisAPI.Repositories
             var list = await conn.QueryAsync<Proposal>(new CommandDefinition(sql, dp, cancellationToken: ct));
             return list;
         }
+        public async Task<bool> UpdateUnitStatusAsync(long unitId, string nextStatus, CancellationToken ct)
+        {
+            const string sql = @"UPDATE jmoficial.units
+                                 SET status = @nextStatus,
+                                     updated_at = UTC_TIMESTAMP()
+                                 WHERE id = @unitId;";
+
+            using var conn = await _context.OpenConnectionAsync();
+            var affected = await conn.ExecuteAsync(new CommandDefinition(
+                sql,
+                new { unitId, nextStatus = nextStatus.ToUpperInvariant() },
+                cancellationToken: ct));
+
+            return affected > 0;
+        }
         public async Task<bool> UpdateProposalStatusAsync(long id, string expectedStatus, string nextStatus, CancellationToken ct)
         {
             const string sql = @"UPDATE jmoficial.proposals
@@ -946,4 +1040,6 @@ namespace JMImoveisAPI.Repositories
         }
     }
 }
+
+
 

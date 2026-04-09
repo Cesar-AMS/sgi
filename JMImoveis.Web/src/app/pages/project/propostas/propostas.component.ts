@@ -1,11 +1,11 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+﻿import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { BsModalRef, ModalDirective } from 'ngx-bootstrap/modal';
 import { ApiService } from 'src/app/core/services/api.service';
 import { ProposalsService } from 'src/app/core/services/proposals.service';
 import { PropostaReserva } from 'src/app/models/proposta-reserva';
 import { Condicao } from '../empreendimentos/espelho/espelho.component';
-import * as moment from 'moment';
+import moment from 'moment';
 import { ToastrService } from 'ngx-toastr';
 import { Apartamento } from 'src/app/core/data/empreendimento';
 import { Empreendimento } from 'src/app/models/ContaBancaria';
@@ -13,49 +13,43 @@ import { PageChangedEvent } from 'ngx-bootstrap/pagination';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+export type PropostaStatus = 'RASCUNHO' | 'EM_ANALISE' | 'APROVADO' | 'REPROVADO';
+
 @Component({
   selector: 'app-propostas',
   templateUrl: './propostas.component.html',
   styleUrls: ['./propostas.component.scss']
 })
 export class PropostasComponent implements OnInit {
-
   form!: FormGroup;
   loading = false;
   items: PropostaReserva[] = [];
-
   pagedItems: PropostaReserva[] = [];
   totalItems = 0;
-
   page = 1;
   itemsPerPage = 50;
   perPageOptions = [50, 100, 150];
 
-  // bsModal via diretiva
   @ViewChild('detailTpl', { static: false }) modalReserva!: ModalDirective;
+  @ViewChild('areaA4Ref', { static: false }) areaA4Ref!: ElementRef<HTMLElement>;
 
-  // modal
-  modalRef?: BsModalRef; // se não for usar mais, pode remover
+  modalRef?: BsModalRef;
   proposta: PropostaReserva = {} as PropostaReserva;
+  selectedProposalId?: number;
   approving = false;
   empreendimentos: Empreendimento[] = [];
-
-  // NOVO: listas para filtros
   gerentes: any[] = [];
   corretores: any[] = [];
-
-  construtorFilter: string = '';
+  construtorFilter = '';
   apartamentos: Apartamento[] = [];
-
   today = new Date();
-
 
   constructor(
     private fb: FormBuilder,
     private toast: ToastrService,
     private svc: ApiService,
     private proposalsService: ProposalsService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     const hoje = new Date();
@@ -65,82 +59,58 @@ export class PropostasComponent implements OnInit {
     this.form = this.fb.group({
       de: [de],
       ate: [ate],
-      status: ['ALL'],      // ALL | OPEN | APPROVED | REJECTED | CANCELLED
-      gerente: [''],        // filtro gerente
-      corretor: ['']        // filtro corretor
+      status: ['ALL'],
+      gerente: [''],
+      corretor: ['']
     });
-
-    // Se tiver endpoints pra popular gerentes/corretores, chama aqui:
-    // this.loadGerentes();
-    // this.loadCorretores();
 
     this.buscar();
   }
 
-  @ViewChild('areaA4Ref', { static: false }) areaA4Ref!: ElementRef<HTMLElement>;
-
   async downloadA4PrimeiraFolha() {
-  const el = this.areaA4Ref?.nativeElement;
+    const el = this.areaA4Ref?.nativeElement;
 
-  if (!el) {
-    this.toast.error('Não foi possível localizar a área do PDF.');
-    return;
+    if (!el) {
+      this.toast.error('Nao foi possivel localizar a area do PDF.');
+      return;
+    }
+
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+    const contentW = pageW - margin * 2;
+    const contentH = pageH - margin * 2;
+
+    await new Promise(r => setTimeout(r, 150));
+
+    const scale = 2;
+    const pxPerMm = (el.scrollWidth * scale) / contentW;
+    const captureHeightPx = Math.floor(contentH * pxPerMm);
+    const finalCaptureHeight = Math.min(captureHeightPx, el.scrollHeight * scale);
+
+    const canvas = await html2canvas(el, {
+      backgroundColor: '#ffffff',
+      scale,
+      useCORS: true,
+      allowTaint: true,
+      windowWidth: el.scrollWidth,
+      windowHeight: el.scrollHeight,
+      height: finalCaptureHeight / scale,
+      y: 0
+    });
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const imgH = (canvas.height * contentW) / canvas.width;
+
+    pdf.addImage(imgData, 'JPEG', margin, margin, contentW, imgH);
+    pdf.save(`proposta_${this.proposta?.enterPriseName || 'novo'}_${this.proposta?.clienteName ?? 'novo'}.pdf`);
   }
 
-  // A4 em mm (jsPDF) com margem
-  const pdf = new jsPDF('p', 'mm', 'a4');
-  const pageW = pdf.internal.pageSize.getWidth();   // 210
-  const pageH = pdf.internal.pageSize.getHeight();  // 297
-
-  const margin = 10; // mm
-  const contentW = pageW - margin * 2;
-  const contentH = pageH - margin * 2;
-
-  // Espera o modal/render terminar
-  await new Promise(r => setTimeout(r, 150));
-
-  // Captura em alta qualidade
-  const scale = 2;
-
-  // Converte mm -> px baseado na largura real do elemento capturado
-  // (mantém proporção fiel ao A4)
-  const pxPerMm = (el.scrollWidth * scale) / contentW;
-  const captureHeightPx = Math.floor(contentH * pxPerMm); // altura de 1 página A4 (útil)
-
-  // Importante: se o conteúdo for menor que 1 página, não inventa altura
-  const finalCaptureHeight = Math.min(captureHeightPx, el.scrollHeight * scale);
-
-  // Captura SOMENTE a primeira "folha" (topo do modal)
-  const canvas = await html2canvas(el, {
-    backgroundColor: '#ffffff',
-    scale,
-    useCORS: true,
-    allowTaint: true,
-    windowWidth: el.scrollWidth,
-    windowHeight: el.scrollHeight,
-    // recorta apenas o topo (1 página)
-    height: finalCaptureHeight / scale, // em CSS px
-    y: 0
-  });
-
-  const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-  // Renderiza a imagem dentro da área útil do A4
-  // Calcula a altura em mm mantendo proporção
-  const imgH = (canvas.height * contentW) / canvas.width;
-
-  pdf.addImage(imgData, 'JPEG', margin, margin, contentW, imgH);
-
-  pdf.save(`proposta_${this.proposta?.enterPriseName || 'novo'}_${this.proposta?.clienteName ?? 'novo'}.pdf`);
-}
-
-  
   private updatePagedItems(): void {
     this.totalItems = this.items?.length || 0;
-
     const start = (this.page - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
-
     this.pagedItems = (this.items || []).slice(start, end);
   }
 
@@ -177,10 +147,12 @@ export class PropostasComponent implements OnInit {
     this.loading = true;
     const { de, ate, status, gerente, corretor } = this.form.value;
 
-    // Ajuste: passa também gerente e corretor para o backend filtrar
     this.proposalsService.list({ de, ate, status, gerente, corretor }).subscribe({
       next: res => {
-        this.items = res || [];
+        this.items = (res || []).map(item => ({
+          ...item,
+          status: this.normalizeStatus(item.status)
+        }));
         this.page = 1;
         this.updatePagedItems();
       },
@@ -189,50 +161,113 @@ export class PropostasComponent implements OnInit {
     });
   }
 
-  // Agora abre APENAS o modal clicado, usando a diretiva @ViewChild
   openModal(id: number) {
-    this.proposalsService.getById(id).subscribe({
-      next: p => {
-
-        p.condicao.forEach(its =>{
-          its.vencimento = moment(its.vencimento).format('YYYY-MM-DD')
-        })
-        
-        this.proposta = p;
-
-        this.proposta.dateNascimento = moment(this.proposta.dateNascimento).format('YYYY-MM-DD')
-
-        if (this.proposta && !this.proposta.condicao) {
-        
-          this.proposta.condicao = [];
-        }
-       
-        this.modalReserva.show();
-      },
-      error: err => console.error(err)
-    });
+    this.selectedProposalId = id;
   }
 
-  approveSelected() {
-    if (!this.proposta || this.proposta.status === 'APPROVED') return;
+  fecharVisualizacao(): void {
+    this.selectedProposalId = undefined;
+  }
+
+  canEnviarParaAnalise(): boolean {
+    return this.normalizeStatus(this.proposta?.status) === 'RASCUNHO';
+  }
+
+  canApprove(): boolean {
+    return this.normalizeStatus(this.proposta?.status) === 'EM_ANALISE';
+  }
+
+  canReprovar(): boolean {
+    return this.normalizeStatus(this.proposta?.status) === 'EM_ANALISE';
+  }
+
+  enviarParaAnalise(): void {
+    if (!this.proposta?.id || !this.canEnviarParaAnalise()) return;
+
     this.approving = true;
-    this.proposalsService.approve(this.proposta.id).subscribe({
+    this.proposalsService.enviarParaAnalise(this.proposta.id).subscribe({
       next: () => {
-        this.proposta!.status = 'APPROVED';
+        this.proposta.status = 'EM_ANALISE';
+        this.toast.success('Proposta enviada para analise');
+        this.modalReserva.hide();
         this.buscar();
       },
-      error: err => console.error(err),
+      error: (err) => {
+        console.error(err);
+        this.toast.error(err.error?.message || 'Erro ao enviar proposta');
+      },
       complete: () => this.approving = false
     });
   }
 
+  approveSelected() {
+    if (!this.proposta?.id || !this.canApprove()) return;
+
+    this.approving = true;
+    this.proposalsService.approve(this.proposta.id).subscribe({
+      next: () => {
+        this.proposta.status = 'APROVADO';
+        this.toast.success('Proposta aprovada');
+        this.modalReserva.hide();
+        this.buscar();
+      },
+      error: err => {
+        console.error(err);
+        this.toast.error(err.error?.message || 'Erro ao aprovar proposta');
+      },
+      complete: () => this.approving = false
+    });
+  }
+
+  reprovarProposta(): void {
+    if (!this.proposta?.id || !this.canReprovar()) return;
+
+    this.approving = true;
+    this.proposalsService.reprovar(this.proposta.id).subscribe({
+      next: () => {
+        this.proposta.status = 'REPROVADO';
+        this.toast.success('Proposta reprovada');
+        this.modalReserva.hide();
+        this.buscar();
+      },
+      error: (err) => {
+        console.error(err);
+        this.toast.error(err.error?.message || 'Erro ao reprovar proposta');
+      },
+      complete: () => this.approving = false
+    });
+  }
+
+  private normalizeStatus(status?: string | null): PropostaStatus {
+    const normalized = (status || '').trim().toUpperCase();
+
+    switch (normalized) {
+      case 'OPEN':
+      case 'RESERVED':
+      case 'RASCUNHO':
+        return 'RASCUNHO';
+      case 'IN_ANALYSIS':
+      case 'IN_ANALISE':
+      case 'EM_ANALISE':
+        return 'EM_ANALISE';
+      case 'APPROVED':
+      case 'APROVADO':
+        return 'APROVADO';
+      case 'REJECTED':
+      case 'REPROVADO':
+        return 'REPROVADO';
+      default:
+        return 'RASCUNHO';
+    }
+  }
+
   badgeClass(status: string) {
-    const s = (status || '').toUpperCase();
+    const s = this.normalizeStatus(status);
     return {
-      'bg-secondary': s === 'OPEN',
-      'bg-success': s === 'APPROVED',
-      'bg-warning': s === 'RESERVED' || s === 'REJECTED',
-      'bg-danger': s === 'CANCELLED' || s === 'SELL'
+      'bg-secondary': s === 'RASCUNHO',
+      'bg-warning text-dark': s === 'EM_ANALISE',
+      'bg-success': s === 'APROVADO',
+      'bg-danger': s === 'REPROVADO'
     };
   }
 
@@ -291,11 +326,17 @@ export class PropostasComponent implements OnInit {
   }
 
   saveUser() {
-    console.log('proposta', this.proposta);
+    this.proposta.status = 'RASCUNHO';
 
-    this.proposalsService.create(this.proposta).subscribe(() => {
-      this.toast.success('Proposta criada com sucesso');
-      this.buscar();
+    this.proposalsService.create(this.proposta).subscribe({
+      next: () => {
+        this.toast.success('Proposta criada com sucesso');
+        this.buscar();
+      },
+      error: err => {
+        console.error(err);
+        this.toast.error(err.error?.message || 'Erro ao salvar proposta');
+      }
     });
   }
 
@@ -304,18 +345,16 @@ export class PropostasComponent implements OnInit {
       const conteudo = document.getElementById(elementId);
 
       if (!conteudo) {
-        console.error("Área de impressão não encontrada:", elementId);
-        this.toast.error("Erro ao localizar conteúdo para impressão.");
+        console.error('Area de impressao nao encontrada:', elementId);
+        this.toast.error('Erro ao localizar conteudo para impressao.');
         return;
       }
 
       const html = conteudo.innerHTML;
-
-      // cria nova janela
       const janela = window.open('', '_blank');
 
       if (!janela) {
-        this.toast.error("O navegador bloqueou a janela de impressão.");
+        this.toast.error('O navegador bloqueou a janela de impressao.');
         return;
       }
 
@@ -363,8 +402,6 @@ export class PropostasComponent implements OnInit {
     }, 200);
   }
 
-
-  // Exportar relatório da lista (Excel/CSV simples)
   exportar() {
     if (!this.items?.length) {
       this.toast.info('Nenhuma proposta para exportar.');
@@ -379,7 +416,7 @@ export class PropostasComponent implements OnInit {
         p.unidadeID,
         p.clienteName,
         (p.vlrUnidade ?? 0).toString().replace('.', ','),
-        p.status,
+        this.normalizeStatus(p.status),
         new Date(p.createdAt).toLocaleString('pt-BR')
       ].join(';'))
     ];
@@ -396,3 +433,5 @@ export class PropostasComponent implements OnInit {
     window.URL.revokeObjectURL(url);
   }
 }
+
+

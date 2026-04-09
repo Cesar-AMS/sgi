@@ -1,4 +1,4 @@
-﻿import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+﻿import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ModalVendaComponent } from '../../modal-venda/modal-venda.component';
 import { Apartamento } from 'src/app/core/data/empreendimento';
 import html2canvas from 'html2canvas';
@@ -89,13 +89,17 @@ type GrupoBloco = { bloco: string; andares: GrupoAndar[] };
   styleUrl: './espelho.component.scss',
 })
 
-export class EspelhoComponent implements OnInit {
+export class EspelhoComponent implements OnInit, OnChanges {
 
   @ViewChild('meuModal', { static: false }) meuModal!: ModalVendaComponent;
   @ViewChild('modalReserva', { static: false }) modalReserva!: ModalDirective;
 
   @ViewChild('areaA4Ref', { static: false }) areaA4Ref!: ElementRef;
 
+  @Input() modo: 'criacao' | 'visualizacao' = 'criacao';
+  @Input() propostaId?: number;
+  @Output() propostaAtualizada = new EventEmitter<void>();
+  @Output() fechado = new EventEmitter<void>();
 
   grupos: GrupoBloco[] = [];
   construtora: Construtoras[] = [];
@@ -153,6 +157,9 @@ export class EspelhoComponent implements OnInit {
   visuDispo: boolean = true;
 
   apartamentos: Apartamento[] = [];
+  loadingProposta = false;
+  savingProposal = false;
+  editando = false;
 
   @ViewChild('pdfContent', { static: false }) pdfContent!: ElementRef;
 
@@ -168,16 +175,22 @@ export class EspelhoComponent implements OnInit {
 
 
   ngOnInit() {
+    if (this.modo === 'criacao') {
+      this.service.getConstrutora().subscribe((data) => {
+        this.construtora = data;
+      });
 
+      this.service.getFiliais().subscribe((data) => {
+        this.filiais = data;
+      });
+    }
 
-    this.service.getConstrutora().subscribe((data) => {
-      this.construtora = data
-    })
+  }
 
-    this.service.getFiliais().subscribe((data) => {
-      this.filiais = data;
-    });
-
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['propostaId'] && this.modo === 'visualizacao' && this.propostaId) {
+      this.carregarProposta(this.propostaId);
+    }
   }
 
 
@@ -256,31 +269,39 @@ export class EspelhoComponent implements OnInit {
   }
 
   copiarEndereco() {
-  if (this.mesmoEndereco) {
-    this.cep2 = this.proposta.cep;
-    this.rua2 = this.proposta.rua;
-    this.nro2 = this.proposta.nro;
-    this.comp2 = this.proposta.comp;
-    this.bairro2 = this.proposta.bairro;
-    this.cidade2 = this.proposta.cidade;
-    this.estado2 = this.proposta.estado;
+    if (this.mesmoEndereco) {
+      this.cep2 = this.proposta.cep;
+      this.rua2 = this.proposta.rua;
+      this.nro2 = this.proposta.nro;
+      this.comp2 = this.proposta.comp;
+      this.bairro2 = this.proposta.bairro;
+      this.cidade2 = this.proposta.cidade;
+      this.estado2 = this.proposta.estado;
+    }
   }
-}
 
-buscarCep2() {
-  let cep = this.cep2.replace('-', '');
-  this.service.getVIACEP(cep).subscribe((data) => {
-    this.rua2 = data.logradouro;
-    this.bairro2 = data.bairro;
-    this.cidade2 = data.localidade;
-    this.estado2 = data.uf;
-  });
-}
+  buscarCep2() {
+    let cep = this.cep2.replace('-', '');
+    this.service.getVIACEP(cep).subscribe((data) => {
+      this.rua2 = data.logradouro;
+      this.bairro2 = data.bairro;
+      this.cidade2 = data.localidade;
+      this.estado2 = data.uf;
+    });
+  }
 
   resetarEstadoSegundoProponente() {
     this.mostrarSegundoProponente = false;
     this.mesmoEndereco = true;
     this.copiarEndereco();
+  }
+
+  handleModalHidden() {
+    this.editando = false;
+    this.resetarEstadoSegundoProponente();
+    if (this.modo === 'visualizacao') {
+      this.fechado.emit();
+    }
   }
 
   fecharModalReserva() {
@@ -336,33 +357,214 @@ buscarCep2() {
     return andar === 1 ? 'Térreo' : andar - 1;
   }
 
+  camposDesabilitados(): boolean {
+    return this.modo === 'visualizacao' && !this.editando;
+  }
+
+  iniciarEdicao(): void {
+    if (this.modo !== 'visualizacao') return;
+    this.editando = true;
+  }
+
+  cancelarEdicao(): void {
+    if (this.modo !== 'visualizacao' || !this.proposta?.id) {
+      this.editando = false;
+      return;
+    }
+
+    this.editando = false;
+    this.carregarProposta(this.proposta.id);
+  }
+  canEnviarParaAnalise(): boolean {
+    return this.normalizeStatus(this.proposta?.status) === 'RASCUNHO';
+  }
+
+  canApprove(): boolean {
+    return this.normalizeStatus(this.proposta?.status) === 'EM_ANALISE';
+  }
+
+  canReprovar(): boolean {
+    return this.normalizeStatus(this.proposta?.status) === 'EM_ANALISE';
+  }
+
+  carregarProposta(id: number): void {
+    this.loadingProposta = true;
+    this.proposalsService.getById(id).subscribe({
+      next: (p) => {
+        p.condicao?.forEach(c => {
+          c.vencimento = moment(c.vencimento).format('YYYY-MM-DD');
+        });
+
+        this.proposta = {
+          ...p,
+          status: this.normalizeStatus(p.status)
+        };
+
+        this.proposta.dateNascimento = this.proposta.dateNascimento
+          ? moment(this.proposta.dateNascimento).format('YYYY-MM-DD')
+          : '';
+        this.proposta.dataNascimentoSecondary = this.proposta.dataNascimentoSecondary
+          ? moment(this.proposta.dataNascimentoSecondary).format('YYYY-MM-DD')
+          : '';
+
+        this.unidadeSelecionada = this.proposta.unitName || '';
+        this.mostrarSegundoProponente = !!(
+          this.proposta.clienteNameSecondary ||
+          this.proposta.cnpjCPFSecondary ||
+          this.proposta.emailClienteSecondary ||
+          this.proposta.phoneOneSecondary
+        );
+        this.editando = false;
+
+        if (this.modo === 'visualizacao') {
+          setTimeout(() => this.modalReserva?.show(), 0);
+        }
+      },
+      error: (erro: any) => {
+        console.error(erro);
+        this.toast.error(erro?.error?.message || 'Erro ao carregar proposta');
+      },
+      complete: () => {
+        this.loadingProposta = false;
+      }
+    });
+  }
+
+  enviarParaAnalise(): void {
+    if (!this.proposta?.id || !this.canEnviarParaAnalise()) return;
+
+    this.savingProposal = true;
+    this.proposalsService.enviarParaAnalise(this.proposta.id).subscribe({
+      next: () => {
+        this.proposta.status = 'EM_ANALISE';
+        this.toast.success('Proposta enviada para análise');
+        this.propostaAtualizada.emit();
+      },
+      error: (erro: any) => {
+        console.error(erro);
+        this.toast.error(erro?.error?.message || 'Erro ao enviar proposta');
+      },
+      complete: () => {
+        this.savingProposal = false;
+      }
+    });
+  }
+
+  approveSelected(): void {
+    if (!this.proposta?.id || !this.canApprove()) return;
+
+    this.savingProposal = true;
+    this.proposalsService.approve(this.proposta.id).subscribe({
+      next: () => {
+        this.proposta.status = 'APROVADO';
+        this.toast.success('Proposta aprovada');
+        this.propostaAtualizada.emit();
+      },
+      error: (erro: any) => {
+        console.error(erro);
+        this.toast.error(erro?.error?.message || 'Erro ao aprovar proposta');
+      },
+      complete: () => {
+        this.savingProposal = false;
+      }
+    });
+  }
+
+  reprovarProposta(): void {
+    if (!this.proposta?.id || !this.canReprovar()) return;
+
+    this.savingProposal = true;
+    this.proposalsService.reprovar(this.proposta.id).subscribe({
+      next: () => {
+        this.proposta.status = 'REPROVADO';
+        this.toast.success('Proposta reprovada');
+        this.propostaAtualizada.emit();
+      },
+      error: (erro: any) => {
+        console.error(erro);
+        this.toast.error(erro?.error?.message || 'Erro ao reprovar proposta');
+      },
+      complete: () => {
+        this.savingProposal = false;
+      }
+    });
+  }
+
+  private normalizeStatus(status?: string | null): 'RASCUNHO' | 'EM_ANALISE' | 'APROVADO' | 'REPROVADO' {
+    const normalized = (status || '').trim().toUpperCase();
+
+    switch (normalized) {
+      case 'OPEN':
+      case 'RESERVED':
+      case 'RASCUNHO':
+        return 'RASCUNHO';
+      case 'IN_ANALYSIS':
+      case 'IN_ANALISE':
+      case 'EM_ANALISE':
+        return 'EM_ANALISE';
+      case 'APPROVED':
+      case 'APROVADO':
+        return 'APROVADO';
+      case 'REJECTED':
+      case 'REPROVADO':
+        return 'REPROVADO';
+      default:
+        return 'RASCUNHO';
+    }
+  }
+
   saveUser() {
+    if (this.modo === 'visualizacao' && !this.editando) {
+      return;
+    }
+
     if (!this.isPropostaValida()) {
       this.toast.warning('Preencha todos os campos obrigatórios da proposta.');
       return;
     }
 
-    // Adiciona o status para enviar para análise
-    this.proposta.status = 'AGUARDANDO_ANALISE';
+    this.savingProposal = true;
+    this.proposta.status = this.normalizeStatus(this.proposta.status);
 
-    this.proposalsService.create(this.proposta).subscribe(() => {
-      this.toast.success('Proposta criada com sucesso! Enviada para análise.');
+    const request$ = this.modo === 'visualizacao' && this.proposta.id
+      ? this.proposalsService.update(this.proposta.id, this.proposta)
+      : this.proposalsService.create({ ...this.proposta, status: 'RASCUNHO' });
 
-      // Fecha o modal após salvar
-      this.modalReserva.hide();
-
-    }, (erro) => {
-      this.toast.error('Erro ao salvar proposta: ' + erro.message);
+    request$.subscribe({
+      next: () => {
+        if (this.modo === 'visualizacao' && this.proposta.id) {
+          this.editando = false;
+          this.toast.success('Proposta atualizada com sucesso!');
+          this.propostaAtualizada.emit();
+        } else {
+          this.toast.success('Proposta criada com sucesso! Salva como rascunho.');
+          this.fecharModalReserva();
+        }
+      },
+      error: (erro: any) => {
+        console.error(erro);
+        this.toast.error(erro?.error?.message || ('Erro ao salvar proposta: ' + erro.message));
+      },
+      complete: () => {
+        this.savingProposal = false;
+      }
     });
   }
 
   isPropostaValida(): boolean {
 
+    // 1º proponente
     if (!this.proposta.clienteName) return false;
     if (!this.proposta.cnpjCpf) return false;
     if (!this.proposta.phoneOne) return false;
     if (!this.proposta.emailCliente) return false;
 
+    // Empreendimento e Unidade (NOVO)
+    if (!this.proposta.empreendimentoID) return false;
+    if (!this.proposta.unidadeID) return false;
+    if (!this.proposta.vlrUnidade || this.proposta.vlrUnidade <= 0) return false;
+
+    // Endereço
     if (!this.proposta.cep) return false;
     if (!this.proposta.rua) return false;
     if (!this.proposta.nro) return false;
@@ -370,11 +572,17 @@ buscarCep2() {
     if (!this.proposta.cidade) return false;
     if (!this.proposta.estado) return false;
 
-    if (this.proposta.engCaixa === null || this.proposta.engCaixa === undefined)
-      return false;
+    // Engenharia Caixa
+    if (this.proposta.engCaixa === null || this.proposta.engCaixa === undefined) return false;
 
-    if (!this.proposta.condicao || this.proposta.condicao.length === 0)
-      return false;
+    // Condições
+    if (!this.proposta.condicao || this.proposta.condicao.length === 0) return false;
+
+    // 2º proponente (se estiver visível) - NOVO
+    if (this.mostrarSegundoProponente) {
+      if (!this.proposta.clienteNameSecondary) return false;
+      if (!this.proposta.cnpjCPFSecondary) return false;
+    }
 
     return true;
   }
@@ -614,5 +822,15 @@ buscarCep2() {
   }
 
 }
+
+
+
+
+
+
+
+
+
+
 
 

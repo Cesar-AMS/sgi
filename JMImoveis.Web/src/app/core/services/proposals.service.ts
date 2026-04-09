@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BACKEND_API_URL } from './backend-api-url';
@@ -52,6 +52,24 @@ export class ProposalsService {
     return this.http.post(this.proposalsUrl, body, { headers });
   }
 
+
+  update(id: number, body: PropostaReserva | unknown) {
+    const headers = {
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    };
+
+    return this.http.put(`${this.proposalsUrl}/${id}`, body, { headers });
+  }
+  enviarParaAnalise(id: number) {
+    const headers = {
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    };
+
+    return this.http.post(`${this.proposalsUrl}/${id}/enviar-para-analise`, null, {
+      headers,
+    });
+  }
+
   approve(id: number) {
     const headers = {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -61,4 +79,16 @@ export class ProposalsService {
       headers,
     });
   }
+
+  reprovar(id: number) {
+    const headers = {
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    };
+
+    return this.http.post(`${this.proposalsUrl}/${id}/reprovar`, null, {
+      headers,
+    });
+  }
 }
+
+

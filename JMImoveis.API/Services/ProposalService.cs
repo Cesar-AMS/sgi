@@ -11,58 +11,26 @@ namespace JMImoveisAPI.Services
 
         public async Task<long> CreateAsync(PropostaReservaDto dto, CancellationToken ct)
         {
-            static DateTime? ParseDate(string? s)
-                => string.IsNullOrWhiteSpace(s) ? null : DateTime.Parse(s);
-
-            var proposal = new Proposal
-            {
-                EmpreendimentoId = long.Parse(dto.EmpreendimentoID),
-                UnidadeId = long.Parse(dto.UnidadeID),
-                VlrUnidade = dto.VlrUnidade,
-                EngCaixa = dto.EngCaixa,
-                ClienteName = dto.ClienteName,
-                DateNascimento = ParseDate(dto.DateNascimento),
-                CnpjCpf = dto.CnpjCPF,
-                Rg = dto.Rg,
-                EmailCliente = dto.EmailCliente,
-                PhoneOne = dto.Phoneone,
-                PhoneTwo = dto.Phonetwo,
-                EstadoCivil = dto.Estadocivil,
-                Profissao = dto.Profissao,
-                Renda = dto.Renda,
-                ClienteNameSecondary = dto.ClienteNameSecondary,
-                DataNascimentoSecondary = ParseDate(dto.DataNascimentoSecondary),
-                CnpjCpfSecondary = dto.CnpjCPFSecondary,
-                RgSecondary = dto.RgSecondary,
-                EmailClienteSecondary = dto.EmailClienteSecondary,
-                PhoneOneSecondary = dto.PhoneoneSecondary,
-                PhoneTwoSecondary = dto.PhonetwoSecondary,
-                EstadoCivilSecondary = dto.EstadocivilSecondary,
-                ProfissaoSecondary = dto.ProfissaoSecondary,
-                RendaSecondary = dto.RendaSecondary,
-                Cep = dto.Cep,
-                Rua = dto.Rua,
-                Nro = dto.Nro,
-                Comp = dto.Comp,
-                Bairro = dto.Bairro,
-                Cidade = dto.Cidade,
-                Estado = dto.Estado,
-                CorretorId = long.TryParse(dto.CorretorID, out var corretorId) ? corretorId : null,
-                GerenteId = long.TryParse(dto.GerenteID, out var gerenteId) ? gerenteId : null,
-                Status = NormalizeStatus(dto.Status)
-            };
-
-            var conds = (dto.Condicao ?? new())
-                .Select(c => new ProposalCondition
-                {
-                    Qtde = c.Qtde,
-                    Descricao = c.Descricao,
-                    Vencimento = DateTime.Parse(c.Vencimento),
-                    ValorParcela = c.ValorParcela,
-                    ValorTotal = c.ValorTotal
-                });
-
+            var proposal = MapProposal(dto);
+            var conds = MapConditions(dto);
             return await _repo.CreateAsync(proposal, conds, ct);
+        }
+
+        public async Task<bool> UpdateAsync(long id, PropostaReservaDto dto, CancellationToken ct)
+        {
+            var existing = await _repo.GetByIdAsync(id, ct);
+            if (existing is null)
+            {
+                return false;
+            }
+
+            var proposal = MapProposal(dto);
+            proposal.Id = (ulong)id;
+            proposal.CreatedAt = existing.CreatedAt;
+            proposal.Status = NormalizeStatus(string.IsNullOrWhiteSpace(dto.Status) ? existing.Status : dto.Status);
+
+            var conds = MapConditions(dto);
+            return await _repo.UpdateProposalAsync(proposal, conds, ct);
         }
 
         public async Task<Proposal?> GetByIdAsync(long id, CancellationToken ct)
@@ -118,8 +86,75 @@ namespace JMImoveisAPI.Services
                 return (false, "INVALID_STATUS", proposal);
             }
 
+            if (nextStatus == ProposalStatus.APROVADO)
+            {
+                await _repo.UpdateUnitStatusAsync(proposal.UnidadeId, "RESERVED", ct);
+            }
+            else if (nextStatus == ProposalStatus.REPROVADO)
+            {
+                await _repo.UpdateUnitStatusAsync(proposal.UnidadeId, "OPEN", ct);
+            }
+
             proposal.Status = nextStatus.ToString();
             return (true, null, proposal);
+        }
+
+        private static Proposal MapProposal(PropostaReservaDto dto)
+        {
+            static DateTime? ParseDate(string? s)
+                => string.IsNullOrWhiteSpace(s) ? null : DateTime.Parse(s);
+
+            return new Proposal
+            {
+                EmpreendimentoId = long.Parse(dto.EmpreendimentoID),
+                UnidadeId = long.Parse(dto.UnidadeID),
+                VlrUnidade = dto.VlrUnidade,
+                EngCaixa = dto.EngCaixa,
+                ClienteName = dto.ClienteName,
+                DateNascimento = ParseDate(dto.DateNascimento),
+                CnpjCpf = dto.CnpjCPF,
+                Rg = dto.Rg,
+                EmailCliente = dto.EmailCliente,
+                PhoneOne = dto.Phoneone,
+                PhoneTwo = dto.Phonetwo,
+                EstadoCivil = dto.Estadocivil,
+                Profissao = dto.Profissao,
+                Renda = dto.Renda,
+                ClienteNameSecondary = dto.ClienteNameSecondary,
+                DataNascimentoSecondary = ParseDate(dto.DataNascimentoSecondary),
+                CnpjCpfSecondary = dto.CnpjCPFSecondary,
+                RgSecondary = dto.RgSecondary,
+                EmailClienteSecondary = dto.EmailClienteSecondary,
+                PhoneOneSecondary = dto.PhoneoneSecondary,
+                PhoneTwoSecondary = dto.PhonetwoSecondary,
+                EstadoCivilSecondary = dto.EstadocivilSecondary,
+                ProfissaoSecondary = dto.ProfissaoSecondary,
+                RendaSecondary = dto.RendaSecondary,
+                Cep = dto.Cep,
+                Rua = dto.Rua,
+                Nro = dto.Nro,
+                Comp = dto.Comp,
+                Bairro = dto.Bairro,
+                Cidade = dto.Cidade,
+                Estado = dto.Estado,
+                CorretorId = long.TryParse(dto.CorretorID, out var corretorId) ? corretorId : null,
+                GerenteId = long.TryParse(dto.GerenteID, out var gerenteId) ? gerenteId : null,
+                Status = NormalizeStatus(dto.Status)
+            };
+        }
+
+        private static IEnumerable<ProposalCondition> MapConditions(PropostaReservaDto dto)
+        {
+            return (dto.Condicao ?? new())
+                .Select(c => new ProposalCondition
+                {
+                    Qtde = c.Qtde,
+                    Descricao = c.Descricao,
+                    Vencimento = DateTime.Parse(c.Vencimento),
+                    ValorParcela = c.ValorParcela,
+                    ValorTotal = c.ValorTotal
+                })
+                .ToList();
         }
 
         private static string NormalizeFilterStatus(string? status)
@@ -150,3 +185,5 @@ namespace JMImoveisAPI.Services
         }
     }
 }
+
+

@@ -22,6 +22,23 @@ public sealed class PropostasController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id }, new { id });
     }
 
+    [HttpPut("{id:long}")]
+    public async Task<IActionResult> Update([FromRoute] long id, [FromBody] PropostaReservaDto dto, CancellationToken ct)
+    {
+        if (dto is null)
+        {
+            return BadRequest("Payload inválido.");
+        }
+
+        var updated = await _svc.UpdateAsync(id, dto, ct);
+        if (!updated)
+        {
+            return NotFound(new { message = "Proposta não encontrada" });
+        }
+
+        return Ok(new { message = "Proposta atualizada com sucesso" });
+    }
+
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] string? de, [FromQuery] string? ate, [FromQuery] string? status, [FromQuery] int? user, int? gerente, int? corretor, CancellationToken ct)
     {
