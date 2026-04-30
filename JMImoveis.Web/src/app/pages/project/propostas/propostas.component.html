@@ -14,7 +14,6 @@
   </div>
 
   <div class="card-body">
-    <!-- Filtros -->
     <form [formGroup]="form" class="row g-2 align-items-end mb-2">
       <div class="col-md-2">
         <label class="form-label">De</label>
@@ -30,31 +29,58 @@
         <label class="form-label">Status</label>
         <select class="form-select" formControlName="status">
           <option value="ALL">Todos</option>
-          <option value="RASCUNHO">Rascunho</option>
           <option value="EM_ANALISE">Em análise</option>
           <option value="APROVADO">Aprovado</option>
           <option value="REPROVADO">Reprovado</option>
         </select>
       </div>
 
-      <!-- NOVO: filtro de Gerente -->
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label class="form-label">Gerente</label>
         <select class="form-select" formControlName="gerente">
           <option value="">Todos</option>
           <option *ngFor="let g of gerentes" [value]="g.id">
-            {{ g.nome }}
+            {{ g.name || g.nome }}
           </option>
         </select>
       </div>
 
-      <!-- NOVO: filtro de Corretor -->
-      <div class="col-md-3">
+      <div class="col-md-2">
+        <label class="form-label">Coordenador</label>
+        <select class="form-select" formControlName="coordenador">
+          <option value="">Todos</option>
+          <option *ngFor="let c of todosCoordenadores" [value]="c.id">
+            {{ c.name || c.nome }}
+          </option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
         <label class="form-label">Vendedor</label>
         <select class="form-select" formControlName="corretor">
           <option value="">Todos</option>
           <option *ngFor="let c of corretores" [value]="c.id">
-            {{ c.nome }}
+            {{ c.name || c.nome }}
+          </option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Construtora</label>
+        <select class="form-select" formControlName="construtora" (change)="onConstrutoraFiltroChange()">
+          <option value="">Todas</option>
+          <option *ngFor="let c of construtoras" [value]="c.id">
+            {{ c.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Empreendimento</label>
+        <select class="form-select" formControlName="empreendimento">
+          <option value="">Todos</option>
+          <option *ngFor="let e of empreendimentos" [value]="e.id">
+            {{ e.name }}
           </option>
         </select>
       </div>
@@ -72,27 +98,28 @@
       </div>
     </form>
 
-    <!-- Tabela -->
     <div class="table-responsive mt-3">
       <table class="table table-hover table-sm align-middle">
         <thead class="table-light">
           <tr>
             <th>ID</th>
-            <th>Empreendimento</th>
-            <th>Unidade</th>
+            <th>Vendedor</th>
             <th>Cliente</th>
-            <th>Valor</th>
+            <th>Unidade</th>
+            <th>Empreendimento</th>
+            <th>Valor (R$)</th>
             <th>Status</th>
-            <th>Criada em</th>
+            <th>Data Envio</th>
             <th class="text-end">Ações</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let p of pagedItems">
             <td>{{ p.id }}</td>
-            <td>{{ p.enterPriseName }}</td>
-            <td>{{ p.unitName }}</td>
+            <td>{{ p.corretorNome || '-' }}</td>
             <td>{{ p.clienteName }}</td>
+            <td>{{ p.unitName }}</td>
+            <td>{{ p.enterPriseName }}</td>
             <td>{{ p.vlrUnidade | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
             <td>
               <span class="badge" [ngClass]="badgeClass(p.status)">
@@ -109,7 +136,7 @@
 
           <tr *ngIf="!loading && totalItems === 0">
 
-            <td colspan="8" class="text-center text-muted py-4">
+            <td colspan="9" class="text-center text-muted py-4">
               Nenhuma proposta encontrada
             </td>
           </tr>
@@ -137,10 +164,471 @@
     </div>
   </div>
 </div>
-<app-espelho
-  *ngIf="selectedProposalId"
-  [modo]="'visualizacao'"
-  [propostaId]="selectedProposalId"
-  (propostaAtualizada)="buscar()"
-  (fechado)="fecharVisualizacao()">
-</app-espelho>
+<div bsModal #detailTpl="bs-modal" class="modal fade" id="detailTpl" (onHidden)="fecharFicha()">
+  <div class="modal-dialog modal-xl modal-dialog-centered custom-modal" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Ficha de Proposta</h5>
+        <button type="button" class="btn-close" (click)="fecharFicha()"></button>
+      </div>
+
+      <div class="modal-body">
+        <div id="areaA4" #areaA4Ref class="print-area">
+          <div class="form-section proposal-summary">
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label">Empreendimento</label>
+              <input class="form-control" [(ngModel)]="proposta.enterPriseName" name="empreendimentoID" disabled />
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Unidade</label>
+              <input class="form-control" [(ngModel)]="proposta.unitName" name="unitNameOnly" disabled />
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Valor Unidade (R$)</label>
+              <input disabled type="text" class="form-control" name="vendda.vlrUnit"
+                [value]="proposta.vlrUnidade | currency:'BRL':'symbol-narrow':'1.2-2'" />
+            </div>
+          </div>
+          </div>
+
+          <div class="form-section">
+            <h6 class="card-title mb-3">Dados Cadastrais do 1 Proponente</h6>
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <label for="c1-nome" class="form-label">Nome Cliente Completo <span class="text-danger">*</span></label>
+                <input class="form-control" id="c1-nome" [(ngModel)]="proposta.clienteName" name="clienteName" />
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c1-nasc" class="form-label">Data de Nascimento <span class="text-danger">*</span></label>
+                <input type="date" id="c1-nasc" name="dateNascimento" class="form-control" autocomplete="bday"
+                  [(ngModel)]="proposta.dateNascimento">
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c1-cpfcnpj" class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
+                <input type="text" id="c1-cpfcnpj" name="cnpjCPF" class="form-control"
+                  placeholder="Informe o cpf/cnpj" inputmode="numeric" autocomplete="off"
+                  [(ngModel)]="proposta.cnpjCpf">
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-3">
+                <label for="c1-rg" class="form-label">RG</label>
+                <input type="text" id="c1-rg" name="rg" class="form-control" placeholder="Informe o RG"
+                  autocomplete="off" [(ngModel)]="proposta.rg">
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="c1-email" class="form-label">E-mail</label>
+                <input type="email" id="c1-email" name="emailCliente" class="form-control"
+                  placeholder="Informe o e-mail" autocomplete="email" [(ngModel)]="proposta.emailCliente">
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c1-tel1" class="form-label">Telefone <span class="text-danger">*</span></label>
+                <input type="tel" id="c1-tel1" class="form-control" placeholder="(11) 98765-4321"
+                  inputmode="tel" autocomplete="tel" name="phoneOne" [(ngModel)]="proposta.phoneOne">
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12 col-md-3">
+                <label for="c1-tel2" class="form-label">Telefone secundario</label>
+                <input type="tel" id="c1-tel2" class="form-control" placeholder="Se existir" inputmode="tel"
+                  autocomplete="tel" name="phoneTwo" [(ngModel)]="proposta.phoneTwo">
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c1-civil" class="form-label">Estado civil</label>
+                <input type="text" id="c1-civil" class="form-control" placeholder="CASADO" autocomplete="off"
+                  name="estadoCivil" [(ngModel)]="proposta.estadoCivil">
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c1-prof" class="form-label">Profissao</label>
+                <input type="text" id="c1-prof" class="form-control" placeholder="AUX. ADMINISTRATIVO"
+                  autocomplete="organization-title" name="profissao" [(ngModel)]="proposta.profissao">
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c1-renda" class="form-label">Renda</label>
+                <input type="text" id="c1-renda" class="form-control" placeholder="R$ 2.500,00"
+                  inputmode="decimal" autocomplete="off" name="renda" [(ngModel)]="proposta.renda">
+              </div>
+            </div>
+          </div>
+
+          <hr class="mt-4">
+
+          <div class="mt-3 form-section">
+            <h6 class="card-title mb-3">Endereço do 1º Proponente</h6>
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-3">
+                <label for="end-cep" class="form-label">CEP</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" placeholder="00000-000" id="end-cep" name="cep"
+                    [(ngModel)]="proposta.cep" (ngModelChange)="copiarEndereco()">
+                  <button type="button" class="input-group-text btn btn-primary" id="btnGroupAddon"
+                    (click)="cep()">Buscar CEP</button>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="end-logradouro" class="form-label">Endereco</label>
+                <input type="text" id="end-logradouro" name="rua" class="form-control"
+                  placeholder="Digite o nome da rua" autocomplete="address-line1" required
+                  [(ngModel)]="proposta.rua" (ngModelChange)="copiarEndereco()">
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="end-num" class="form-label">N do endereco</label>
+                <input type="text" id="end-num" name="nro" class="form-control" placeholder="123 ou 18A"
+                  autocomplete="address-line2" required [(ngModel)]="proposta.nro"
+                  (ngModelChange)="copiarEndereco()">
+              </div>
+              <div class="col-6 col-md-3">
+                <label for="end-comp" class="form-label">Complemento</label>
+                <input type="text" id="end-comp" name="comp" class="form-control"
+                  placeholder="Apartamento, bloco, casa..." autocomplete="address-line2"
+                  [(ngModel)]="proposta.comp" (ngModelChange)="copiarEndereco()">
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <label for="end-bairro" class="form-label">Bairro</label>
+                <input type="text" id="end-bairro" name="bairro" class="form-control"
+                  placeholder="Digite o nome do bairro" autocomplete="address-level3" required
+                  [(ngModel)]="proposta.bairro" (ngModelChange)="copiarEndereco()">
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="end-cidade" class="form-label">Cidade</label>
+                <input type="text" id="end-cidade" class="form-control" placeholder="Digite o nome da cidade"
+                  autocomplete="address-level2" required name="cidade" [(ngModel)]="proposta.cidade"
+                  (ngModelChange)="copiarEndereco()">
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="end-uf" class="form-label">Estado</label>
+                <input type="text" id="end-uf" name="estado" class="form-control" placeholder="UF (Ex: SP)"
+                  maxlength="2" style="text-transform: uppercase;" autocomplete="address-level1" required
+                  [(ngModel)]="proposta.estado" (ngModelChange)="copiarEndereco()">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-check mt-4">
+            <input class="form-check-input" type="checkbox" id="mostrarSegundoProponente"
+              name="mostrarSegundoProponente" [(ngModel)]="mostrarSegundoProponente">
+            <label class="form-check-label" for="mostrarSegundoProponente">
+              Adicionar 2º Proponente
+            </label>
+          </div>
+
+          <div class="mt-3 form-section" *ngIf="mostrarSegundoProponente">
+            <h6 class="card-title mb-3">Dados Cadastrais do 2 Proponente</h6>
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <label for="c2-nome" class="form-label">Nome Cliente</label>
+                <input class="form-control" id="c2-nome" [(ngModel)]="proposta.clienteNameSecondary"
+                  name="clienteNameSecondary" />
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c2-nasc" class="form-label">Data de Nascimento</label>
+                <input type="date" id="c2-nasc" class="form-control" autocomplete="bday"
+                  [(ngModel)]="proposta.dataNascimentoSecondary" name="dataNascimentoSecondary">
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c2-cpf" class="form-label">CPF/CNPJ</label>
+                <input type="text" id="c2-cpf" class="form-control" placeholder="Informe o cpf/cnpj"
+                  inputmode="numeric" autocomplete="off" [(ngModel)]="proposta.cnpjCPFSecondary"
+                  name="cnpjCPFSecondary">
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-3">
+                <label for="c2-rg" class="form-label">RG</label>
+                <input type="text" id="c2-rg" class="form-control" placeholder="Informe o RG" autocomplete="off"
+                  [(ngModel)]="proposta.rgSecondary" name="rgSecondary">
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="c2-email" class="form-label">E-mail</label>
+                <input type="email" id="c2-email" class="form-control" placeholder="Informe o e-mail"
+                  autocomplete="email" [(ngModel)]="proposta.emailClienteSecondary" name="emailClienteSecondary">
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c2-tel1" class="form-label">Telefone</label>
+                <input type="tel" id="c2-tel1" class="form-control" placeholder="(11) 98765-4321"
+                  inputmode="tel" autocomplete="tel" [(ngModel)]="proposta.phoneOneSecondary"
+                  name="phoneoneSecondary">
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12 col-md-3">
+                <label for="c2-tel2" class="form-label">Telefone secundario</label>
+                <input type="tel" id="c2-tel2" class="form-control" placeholder="Se existir" inputmode="tel"
+                  autocomplete="tel" [(ngModel)]="proposta.phoneTwoSecondary" name="phonetwoSecondary">
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c2-civil" class="form-label">Estado civil</label>
+                <input type="text" id="c2-civil" class="form-control" placeholder="CASADO" autocomplete="off"
+                  [(ngModel)]="proposta.estadoCivilSecondary" name="estadoCivilSecondary">
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c2-prof" class="form-label">Profissao</label>
+                <input type="text" id="c2-prof" class="form-control" placeholder="AUX. ADMINISTRATIVO"
+                  autocomplete="organization-title" [(ngModel)]="proposta.profissaoSecondary"
+                  name="profissaoSecondary">
+              </div>
+              <div class="col-12 col-md-3">
+                <label for="c2-renda" class="form-label">Renda</label>
+                <input type="text" id="c2-renda" class="form-control" placeholder="R$ 2.500,00"
+                  inputmode="decimal" autocomplete="off" [(ngModel)]="proposta.rendaSecondary"
+                  name="rendaSecondary">
+              </div>
+            </div>
+
+            <div class="form-section mt-3">
+              <h6 class="card-title mb-3">Endereço do 2º Proponente</h6>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="mesmoEnderecoCheck" name="mesmoEndereco"
+                  [(ngModel)]="mesmoEndereco" (ngModelChange)="copiarEndereco()">
+                <label class="form-check-label" for="mesmoEnderecoCheck">
+                  Mesmo endereço do 1º Proponente
+                </label>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-12 col-md-3">
+                  <label for="end2-cep" class="form-label">CEP</label>
+                  <div class="input-group">
+                    <input type="text" class="form-control" placeholder="00000-000" id="end2-cep" name="cep2"
+                      [(ngModel)]="endereco2.cep" [disabled]="mesmoEndereco">
+                    <button type="button" class="input-group-text btn btn-primary" (click)="buscarCep2()"
+                      [disabled]="mesmoEndereco">Buscar CEP</button>
+                  </div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label for="end2-logradouro" class="form-label">Endereco</label>
+                  <input type="text" id="end2-logradouro" name="rua2" class="form-control"
+                    placeholder="Digite o nome da rua" autocomplete="address-line1" [(ngModel)]="endereco2.rua"
+                    [disabled]="mesmoEndereco">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label for="end2-num" class="form-label">N do endereco</label>
+                  <input type="text" id="end2-num" name="nro2" class="form-control" placeholder="123 ou 18A"
+                    autocomplete="address-line2" [(ngModel)]="endereco2.nro" [disabled]="mesmoEndereco">
+                </div>
+                <div class="col-6 col-md-3">
+                  <label for="end2-comp" class="form-label">Complemento</label>
+                  <input type="text" id="end2-comp" name="comp2" class="form-control"
+                    placeholder="Apartamento, bloco, casa..." autocomplete="address-line2"
+                    [(ngModel)]="endereco2.comp" [disabled]="mesmoEndereco">
+                </div>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-12 col-md-4">
+                  <label for="end2-bairro" class="form-label">Bairro</label>
+                  <input type="text" id="end2-bairro" name="bairro2" class="form-control"
+                    placeholder="Digite o nome do bairro" autocomplete="address-level3"
+                    [(ngModel)]="endereco2.bairro" [disabled]="mesmoEndereco">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label for="end2-cidade" class="form-label">Cidade</label>
+                  <input type="text" id="end2-cidade" class="form-control" placeholder="Digite o nome da cidade"
+                    autocomplete="address-level2" name="cidade2" [(ngModel)]="endereco2.cidade"
+                    [disabled]="mesmoEndereco">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label for="end2-uf" class="form-label">Estado</label>
+                  <input type="text" id="end2-uf" name="estado2" class="form-control" placeholder="UF (Ex: SP)"
+                    maxlength="2" style="text-transform: uppercase;" autocomplete="address-level1"
+                    [(ngModel)]="endereco2.estado" [disabled]="mesmoEndereco">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="mt-4">
+
+          <div class="mt-3 form-section payment-section">
+            <h6 class="card-title">Condicoes da Proposta
+              <small class="bg bg-danger ps-2 pe-2 text-white rounded float-end">
+                Falta {{proposta.vlrUnidade - vlrTotal() | currency:'BRL':'symbol':'1.2-2':'pt-BR'}} para completar o valor da venda
+              </small>
+            </h6>
+          </div>
+
+          <div class="table-responsive mt-2">
+            <table class="invoice-table table table-borderless table-nowrap mb-0">
+              <thead class="align-middle">
+                <tr class="table-light">
+                  <th scope="col" class="text-nowrap">Qtde</th>
+                  <th scope="col" class="text-nowrap">Descricao (Mensais, Anuais etc.)</th>
+                  <th scope="col" class="text-nowrap">Vencimento</th>
+                  <th scope="col" class="text-nowrap">Valor Parcela (R$)</th>
+                  <th scope="col" class="text-nowrap">Valor Total (R$)</th>
+                  <th scope="col" class="text-nowrap"></th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr *ngFor="let c of proposta.condicao; let i = index; trackBy: track" class="p-2 border">
+                  <td class="border">
+                    <input type="number" class="form-control form-control-sm border-0" [(ngModel)]="c.qtde"
+                      name="qtde{{i}}" min="1" step="1" (ngModelChange)="recalc(i)" />
+                  </td>
+                  <td class="border">
+                    <input type="text" class="form-control form-control-sm border-0" [(ngModel)]="c.descricao"
+                      name="desc{{i}}" />
+                  </td>
+                  <td class="border">
+                    <input type="date" class="form-control form-control-sm border-0" [(ngModel)]="c.vencimento"
+                      name="venc{{i}}" />
+                  </td>
+                  <td class="border">
+                    <input type="number" class="form-control form-control-sm border-0" [(ngModel)]="c.valorParcela"
+                      name="valor{{i}}" min="0" step="0.01" inputmode="decimal" (ngModelChange)="recalc(i)" />
+                  </td>
+                  <td class="text-end fw-semibold border">
+                    {{ c.valorTotal | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+                  </td>
+                  <td class="text-center border pt-1 pb-1 ps-0 pe-0">
+                    <button type="button" class="btn btn-sm btn-outline-danger p-1" (click)="remover(i)">&times;</button>
+                  </td>
+                </tr>
+
+                <tr *ngIf="proposta?.condicao?.length === 0">
+                  <td colspan="6" class="text-center text-muted py-4">Nenhuma condicao adicionada</td>
+                </tr>
+                <tr>
+                  <td colspan="5">
+                    <a href="javascript:void(0)" id="add-item"
+                      class="btn btn-subtle-secondary fw-medium float-end mt-4 mb-4" (click)="adicionar()">
+                      <i class="ri-add-fill me-1 align-bottom"></i> Adicionar condicao
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-2 mb-2">
+            <div class="alert alert-danger p-2 ps-4" role="alert">
+              *Esta proposta somente tera validade apos a aprovacao do incorporador e analise quanto ao valor de financimento, se for o caso.<br>
+              *O imovel sera reservado ate analise da incorporadora.
+            </div>
+          </div>
+
+          <div class="row g-3 align-items-center form-section proposal-confirmation">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Engenharia da Caixa paga pelo cliente? <span class="text-danger">*</span></label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa" name="engCaixa"
+                    value="sim" id="engSim">
+                  <label class="form-check-label" for="engSim">Sim</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa" name="engCaixa"
+                    value="nao" id="engNao">
+                  <label class="form-check-label" for="engNao">Nao</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 pt-2 pt-md-0 text-start text-md-end">
+              <p class="mb-0">{{ 'Sao Paulo' }}, {{ today | date:"dd 'de' MMMM 'de' yyyy":undefined:'pt-BR' }}.</p>
+            </div>
+          </div>
+
+          <!-- Rodapé - Equipe e Assinaturas -->
+          <div class="row mt-4 pt-3 border-top form-section team-section">
+            <div class="col-12">
+              <h6 class="card-title mb-3">Equipe</h6>
+            </div>
+
+            <div class="col-12">
+              <div class="row g-3">
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold">Gerente</label>
+                  <select class="form-select" name="gerenteID" [(ngModel)]="proposta.gerenteID"
+                    (change)="onGerenteChange()">
+                    <option value="">Selecione</option>
+                    <option *ngFor="let g of gerentes" [value]="g.id">{{ g.name }}</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold">Coordenador</label>
+                  <select class="form-select" name="coordenadorID" [(ngModel)]="proposta.coordenadorID"
+                    (change)="onCoordenadorChange()">
+                    <option value="">Selecione</option>
+                    <option *ngFor="let c of coordenadores" [value]="c.id">{{ c.name }}</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold">Vendedor</label>
+                  <select class="form-select" name="corretorID" [(ngModel)]="proposta.corretorID"
+                    (change)="onCorretorChange()">
+                    <option value="">Selecione</option>
+                    <option *ngFor="let v of vendedores" [value]="v.id">{{ v.name }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 mt-4">
+              <h6 class="card-title mb-3">Assinaturas</h6>
+            </div>
+
+            <div class="col-12">
+              <div class="row g-4 align-items-end">
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold">Assinatura Proponente 1</label>
+                  <div class="signature-line">
+                    &nbsp;
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold">Assinatura Proponente 2</label>
+                  <div class="signature-line">
+                    &nbsp;
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hstack gap-2 flex-wrap justify-content-end d-print-none my-4">
+          <button type="button" class="btn btn-light" (click)="fecharFicha()">
+            Voltar ao espelho
+          </button>
+
+          <button type="button" class="btn btn-outline-primary" (click)="enviarParaAnalise()"
+            *ngIf="canEnviarParaAnalise()" [disabled]="approving">
+            <i class="ri-send-plane-line align-bottom me-1"></i> Enviar para analise
+          </button>
+
+          <button type="button" class="btn btn-success" (click)="approveSelected()" *ngIf="canApprove()"
+            [disabled]="approving">
+            <i class="ri-checkbox-circle-line align-bottom me-1"></i> Aprovar
+          </button>
+
+          <button type="button" class="btn btn-danger" (click)="reprovarProposta()" *ngIf="canReprovar()"
+            [disabled]="approving">
+            <i class="ri-close-circle-line align-bottom me-1"></i> Reprovar
+          </button>
+
+          <button type="button" class="btn btn-primary" (click)="downloadA4PrimeiraFolha()">
+            <i class="ri-download-2-line align-bottom me-1"></i> Download
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

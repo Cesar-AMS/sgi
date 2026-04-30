@@ -1,0 +1,151 @@
+.cadastros-container {
+    padding: 20px;
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+
+        h2 {
+            margin: 0;
+        }
+
+        .btn-novo {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+
+            &:hover {
+                background-color: #0056b3;
+            }
+        }
+    }
+
+    .filtros {
+        background: #f5f5f5;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+
+        .filtro-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            label {
+                font-weight: bold;
+            }
+
+            select {
+                padding: 8px;
+                border-radius: 4px;
+                border: 1px solid #ddd;
+                min-width: 250px;
+            }
+        }
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .tabela {
+        width: 100%;
+        border-collapse: collapse;
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #f5f5f5;
+        }
+
+        .status-badge {
+            display: inline-block;
+            min-width: 86px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .status-disponivel {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-reservada {
+            background-color: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .status-vendida {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .acoes {
+            display: flex;
+            gap: 8px;
+
+            button {
+                padding: 4px 8px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+
+                &.btn-editar {
+                    background-color: #ffc107;
+                    color: #333;
+                }
+
+                &.btn-excluir {
+                    background-color: #dc3545;
+                    color: white;
+                }
+            }
+        }
+    }
+
+    .loading,
+    .vazio {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+}
+
+@media (max-width: 768px) {
+    .cadastros-container {
+        .header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .filtros {
+            .filtro-group {
+                align-items: flex-start;
+                flex-direction: column;
+                width: 100%;
+
+                select {
+                    width: 100%;
+                    min-width: 0;
+                }
+            }
+        }
+    }
+}

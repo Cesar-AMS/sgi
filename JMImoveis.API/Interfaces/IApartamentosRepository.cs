@@ -12,5 +12,7 @@ namespace JMImoveisAPI.Interfaces
         Task<bool> UpdateAsync(int id, ApartmentUnit u);
         Task<bool> SoftDeleteAsync(int id);  // marca deleted_at / active = 0
         Task<bool> HardDeleteAsync(int id);  // remove fisicamente
+        Task<IEnumerable<ApartmentUnit>> GetDisponiveisAsync();
+        Task<bool> HasPropostaAtivaAsync(int id);
     }
 }

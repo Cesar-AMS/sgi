@@ -1,0 +1,90 @@
+<div class="cadastros-form-container">
+    <div class="header">
+        <h2>{{ editando ? 'Editar' : 'Nova' }} Unidade</h2>
+        <button class="btn-voltar" type="button" (click)="voltar()">Voltar</button>
+    </div>
+
+    <div class="form-container" *ngIf="!carregando">
+        <form [formGroup]="form" (ngSubmit)="salvar()">
+            <div class="form-group">
+                <label for="numero">Numero *</label>
+                <input
+                    type="text"
+                    id="numero"
+                    formControlName="numero"
+                    class="form-control"
+                    placeholder="Ex: 101, Torre A - 101">
+                <div class="erro" *ngIf="form.get('numero')?.invalid && form.get('numero')?.touched">
+                    Numero e obrigatorio
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="block">Bloco *</label>
+                    <input type="text" id="block" formControlName="block" class="form-control" placeholder="Ex: A">
+                    <div class="erro" *ngIf="form.get('block')?.invalid && form.get('block')?.touched">
+                        Bloco e obrigatorio
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="area">Area</label>
+                    <input type="text" id="area" formControlName="area" class="form-control" placeholder="Ex: 75.5">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="valor">Valor (R$)</label>
+                    <input type="number" id="valor" formControlName="valor" class="form-control" placeholder="Ex: 300000">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="construtora">Construtora</label>
+                <select
+                    id="construtora"
+                    [(ngModel)]="construtoraFiltro"
+                    (change)="onConstrutoraChange()"
+                    class="form-control"
+                    [ngModelOptions]="{ standalone: true }">
+                    <option [ngValue]="0">Todas</option>
+                    <option *ngFor="let c of construtoras" [ngValue]="c.id">
+                        {{ c.nome }}
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="empreendimento">Empreendimento *</label>
+                <select id="empreendimento" formControlName="empreendimentoId" class="form-control">
+                    <option [ngValue]="null">Selecione...</option>
+                    <option *ngFor="let e of empreendimentos" [ngValue]="e.id">
+                        {{ e.nome }}
+                    </option>
+                </select>
+                <div class="erro" *ngIf="form.get('empreendimentoId')?.invalid && form.get('empreendimentoId')?.touched">
+                    Selecione um empreendimento
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="status">Status *</label>
+                <select id="status" formControlName="status" class="form-control">
+                    <option *ngFor="let opt of statusOptions" [value]="opt.value">
+                        {{ opt.label }}
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancelar" (click)="voltar()">Cancelar</button>
+                <button type="submit" class="btn-salvar" [disabled]="form.invalid">Salvar</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="loading" *ngIf="carregando">
+        Carregando...
+    </div>
+</div>

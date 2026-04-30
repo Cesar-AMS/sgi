@@ -1,4 +1,4 @@
-using JMImoveisAPI.Entities;
+﻿using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +32,6 @@ namespace JMImoveisAPI.Controllers
         public async Task<IActionResult> UpdateUserMenu(int userId, [FromBody] List<MenuItemDto> menu)
         {
             await _usuarioService.UpdateMenuAsync(menu, userId);
-
             return Ok();
         }
 
@@ -43,7 +42,6 @@ namespace JMImoveisAPI.Controllers
             var menu = await _usuarioService.GetUserMenuAsync(userId);
             return Ok(menu);
         }
-
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
@@ -56,18 +54,29 @@ namespace JMImoveisAPI.Controllers
         public async Task<IActionResult> GetUsersByRoleAndBranch(int roleId, int branchId, int hidden)
         {
             var result = await _usuarioService.GetUsersByRoleAndBranchAsync(branchId, roleId, hidden);
-
             return result == null ? NotFound() : Ok(result);
         }
 
         [HttpGet("corretores")]
-        public async Task<IActionResult> GetCorretoresAsync()
+        [HttpGet("vendedores")]
+        public async Task<IActionResult> GetCorretoresAsync([FromQuery] int? gerenteId)
         {
             var result = await _usuarioService.GetCorretoresAsync();
-            return result == null ? NotFound() : Ok(result);
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            if (gerenteId.HasValue)
+            {
+                result = result.Where(x => x.ManagerId == gerenteId.Value).ToList();
+            }
+
+            return Ok(result);
         }
 
         [HttpGet("gerente")]
+        [HttpGet("gerentes")]
         public async Task<IActionResult> GetGerente()
         {
             var result = await _usuarioService.GetGerentesAsync();
@@ -75,10 +84,20 @@ namespace JMImoveisAPI.Controllers
         }
 
         [HttpGet("coordenadores")]
-        public async Task<IActionResult> GetCoordenadoresAsync()
+        public async Task<IActionResult> GetCoordenadoresAsync([FromQuery] int? gerenteId)
         {
             var result = await _usuarioService.GetCoordenadoresAsync();
-            return result == null ? NotFound() : Ok(result);
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            if (gerenteId.HasValue)
+            {
+                result = result.Where(x => x.ManagerId == gerenteId.Value).ToList();
+            }
+
+            return Ok(result);
         }
 
         [HttpPost]
@@ -86,9 +105,7 @@ namespace JMImoveisAPI.Controllers
         public async Task<IActionResult> Create(Usuario item)
         {
             await _usuarioService.CreateAsync(item);
-
             return Ok();
-
         }
 
         [HttpPut]

@@ -1,4 +1,4 @@
-using JMImoveisAPI.Entities;
+﻿using JMImoveisAPI.Entities;
 
 namespace JMImoveisAPI.Interfaces
 {
@@ -6,5 +6,7 @@ namespace JMImoveisAPI.Interfaces
     {
         Task<bool> UpdateAsync(VendasV2 item);
         Task<bool> DeleteAsync(int id);
+        Task<(bool Success, string? Error)> RegistrarAtoAsync(int id);
     }
 }
+

@@ -18,6 +18,13 @@ public class JwtMiddleware
 
     public async Task Invoke(HttpContext context)
     {
+        if (HttpMethods.IsGet(context.Request.Method)
+            && context.Request.Path.StartsWithSegments("/api/Construtora", StringComparison.OrdinalIgnoreCase))
+        {
+            await _next(context);
+            return;
+        }
+
         var endpoint = context.GetEndpoint();
         if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() is not null)
         {

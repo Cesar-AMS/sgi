@@ -22,14 +22,14 @@ namespace JMImoveisAPI.Services
             return _construtoraRepository.GetByIdAsync(id);
         }
 
-        public Task<int> CreateAsync(string name)
+        public Task<int> CreateAsync(Constructor entity)
         {
-            return _construtoraRepository.CreateAsync(name);
+            return _construtoraRepository.CreateAsync(entity);
         }
 
-        public Task<bool> UpdateAsync(int id, string name)
+        public Task<bool> UpdateAsync(int id, Constructor entity)
         {
-            return _construtoraRepository.UpdateAsync(id, name);
+            return _construtoraRepository.UpdateAsync(id, entity);
         }
 
         public Task<bool> SoftDeleteAsync(int id)
@@ -40,6 +40,11 @@ namespace JMImoveisAPI.Services
         public Task<bool> HardDeleteAsync(int id)
         {
             return _construtoraRepository.HardDeleteAsync(id);
+        }
+
+        public Task<bool> HasEmpreendimentosAsync(int id)
+        {
+            return _construtoraRepository.HasEmpreendimentosAsync(id);
         }
     }
 }

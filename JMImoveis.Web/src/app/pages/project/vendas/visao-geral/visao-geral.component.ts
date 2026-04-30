@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+﻿import { DecimalPipe } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
 import { ModalDirective } from 'ngx-bootstrap/modal';
 import { Store } from '@ngrx/store';
@@ -71,6 +71,7 @@ export class VisaoGeralComponent {
   perPageOptionsVendas = [50, 100, 150];
 
   hidden: number = 0;
+  registrandoAtoId: number | null = null;
 
   colorTheme: any = 'theme-blue';
   dependent: boolean = false;
@@ -188,7 +189,7 @@ export class VisaoGeralComponent {
 
     this.totalItemsVendas = this.filteredVendas.length;
 
-    // se a página atual ficou inválida após filtro, volta pra 1
+    // se a pÃ¡gina atual ficou invÃ¡lida apÃ³s filtro, volta pra 1
     this.pageVendas = 1;
     this.updatePagedVendas();
   }
@@ -240,6 +241,54 @@ export class VisaoGeralComponent {
   }
 
 
+  getStatusLabel(status: string): string {
+    const normalized = (status || '').trim().toUpperCase();
+
+    if (['RESERVED', 'RESERVADO'].includes(normalized)) return 'Reservado';
+    if (['SELL', 'SOLD', 'VENDIDO'].includes(normalized)) return 'Vendido';
+    if (['OPEN', 'DISPONIVEL', 'DISPONÍVEL'].includes(normalized)) return 'Disponível';
+    if (['FAILED', 'CANCELADO', 'CANCELED'].includes(normalized)) return 'Desistiu';
+    if (['WAITING', 'PENDENTE'].includes(normalized)) return 'Pendente';
+
+    return status || '-';
+  }
+
+  getStatusClass(status: string): string {
+    const normalized = (status || '').trim().toUpperCase();
+
+    if (['RESERVED', 'RESERVADO'].includes(normalized)) return 'bg-warning text-dark';
+    if (['SELL', 'SOLD', 'VENDIDO'].includes(normalized)) return 'bg-danger';
+    if (['OPEN', 'DISPONIVEL', 'DISPONÍVEL'].includes(normalized)) return 'bg-success';
+    if (['FAILED', 'CANCELADO', 'CANCELED'].includes(normalized)) return 'bg-secondary';
+    if (['WAITING', 'PENDENTE'].includes(normalized)) return 'bg-info text-dark';
+
+    return 'bg-secondary';
+  }
+
+  podeRegistrarAto(venda: Sales): boolean {
+    const normalized = (venda?.status || '').trim().toUpperCase();
+    return normalized === 'RESERVED' || normalized === 'RESERVADO';
+  }
+
+  registrarAto(vendaId: number): void {
+    if (this.registrandoAtoId === vendaId) {
+      return;
+    }
+
+    this.registrandoAtoId = vendaId;
+    this.salesService.registrarAto(vendaId).subscribe({
+      next: () => {
+        this.toastr.success('Ato registrado com sucesso. A venda foi marcada como vendida.');
+        this.buscarVendas();
+        this.registrandoAtoId = null;
+      },
+      error: (err) => {
+        console.error('Erro ao registrar ato', err);
+        this.toastr.error(err?.error?.message || 'Não foi possível registrar o ato da venda.');
+        this.registrandoAtoId = null;
+      }
+    });
+  }
   dataFinal(): Date | null {
     return this.selectedDateRange && this.selectedDateRange.length > 1
       ? this.selectedDateRange[1]
@@ -281,7 +330,7 @@ export class VisaoGeralComponent {
       'FILIAL': e.branchId,
       'EMPREENDIMENTO': e.enterpriseId,
       'UNIDADE': e.unitId,
-      'VALOR MÓVEL': e.unitValue,
+      'VALOR MÃ“VEL': e.unitValue,
       'CLIENTE': '',
       'CORRETOR': '',
       'GERENTE': e.managerId
@@ -462,7 +511,7 @@ export class VisaoGeralComponent {
   }
 
   exportarPDF() {
-    // se sua API já devolve filtrado, pode usar direto this.listVendas
+    // se sua API jÃ¡ devolve filtrado, pode usar direto this.listVendas
     // se quiser aplicar o mesmo filtro de cliente usado no template:
     const termo = (this.filter?.cliente || '').trim().toLowerCase();
     const vendas = this.listVendas.filter(v =>
@@ -479,7 +528,7 @@ export class VisaoGeralComponent {
     autoTable(doc, {
       head: [[
         'DATA VENDA', 'FILIAL', 'EMPREENDIMENTO', 'UNIDADE',
-        'VALOR MÓVEL', 'CLIENTE', 'CORRETOR', 'GERENTE'
+        'VALOR MÃ“VEL', 'CLIENTE', 'CORRETOR', 'GERENTE'
       ]],
       body: vendas.map(v => [
         this.formatDate(v.selledAt as any),
@@ -561,3 +610,4 @@ export class VisaoGeralComponent {
 
   trackByNroIntermed = (_: number, p: Installments) => p.id;
 }
+

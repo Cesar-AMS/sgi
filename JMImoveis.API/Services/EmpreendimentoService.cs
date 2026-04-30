@@ -61,5 +61,10 @@ namespace JMImoveisAPI.Services
         {
             return _empreendimentoRepository.HardDeleteAsync(id);
         }
+
+        public Task<bool> HasUnidadesAsync(int id)
+        {
+            return _empreendimentoRepository.HasUnidadesAsync(id);
+        }
     }
 }

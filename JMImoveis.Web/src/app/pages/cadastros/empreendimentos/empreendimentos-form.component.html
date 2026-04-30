@@ -1,0 +1,233 @@
+<div class="cadastros-form-container">
+    <div class="header">
+        <h2>{{ editando ? 'Editar' : 'Novo' }} Empreendimento</h2>
+        <button class="btn-voltar" type="button" (click)="voltar()">Voltar</button>
+    </div>
+
+    <div class="form-container" *ngIf="!carregando">
+        <form [formGroup]="form" (ngSubmit)="salvar()">
+            <section class="form-section">
+                <h3>Dados Básicos</h3>
+
+                <div class="form-grid">
+                    <div class="form-group span-6">
+                        <label for="nome">Nome *</label>
+                        <input type="text" id="nome" formControlName="nome" class="form-control"
+                            placeholder="Nome do empreendimento">
+                        <div class="erro" *ngIf="form.get('nome')?.invalid && form.get('nome')?.touched">
+                            Nome é obrigatório (mínimo 3 caracteres)
+                        </div>
+                    </div>
+
+                    <div class="form-group span-6">
+                        <label for="construtora">Construtora *</label>
+                        <select id="construtora" formControlName="construtoraId" class="form-control">
+                            <option [ngValue]="null">Selecione...</option>
+                            <option *ngFor="let c of construtoras" [ngValue]="c.id">
+                                {{ c.nome }}
+                            </option>
+                        </select>
+                        <div class="erro" *ngIf="form.get('construtoraId')?.invalid && form.get('construtoraId')?.touched">
+                            Selecione uma construtora
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3>Contato</h3>
+
+                <div class="form-grid">
+                    <div class="form-group span-4">
+                        <label for="telefone">Telefone</label>
+                        <input type="text" id="telefone" formControlName="telefone" class="form-control"
+                            placeholder="(11) 99999-9999">
+                    </div>
+
+                    <div class="form-group span-8">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" formControlName="email" class="form-control"
+                            placeholder="empreendimento@email.com">
+                        <div class="erro" *ngIf="form.get('email')?.invalid && form.get('email')?.touched">
+                            Informe um email válido
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3>Localização</h3>
+
+                <div class="form-grid">
+                    <div class="form-group span-4">
+                        <label for="cidade">Cidade *</label>
+                        <input type="text" id="cidade" formControlName="cidade" class="form-control"
+                            placeholder="Cidade">
+                        <div class="erro" *ngIf="form.get('cidade')?.invalid && form.get('cidade')?.touched">
+                            Cidade é obrigatória
+                        </div>
+                    </div>
+
+                    <div class="form-group span-2">
+                        <label for="estado">Estado *</label>
+                        <select id="estado" formControlName="estado" class="form-control">
+                            <option value="">UF</option>
+                            <option *ngFor="let uf of ufOptions" [value]="uf">{{ uf }}</option>
+                        </select>
+                        <div class="erro" *ngIf="form.get('estado')?.invalid && form.get('estado')?.touched">
+                            UF obrigatória
+                        </div>
+                    </div>
+
+                    <div class="form-group span-3">
+                        <label for="cep">CEP</label>
+                        <input type="text" id="cep" formControlName="cep" class="form-control"
+                            placeholder="00000-000">
+                    </div>
+
+                    <div class="form-group span-3">
+                        <label for="bairro">Bairro</label>
+                        <input type="text" id="bairro" formControlName="bairro" class="form-control"
+                            placeholder="Bairro">
+                    </div>
+
+                    <div class="form-group span-12">
+                        <label for="endereco">Endereço *</label>
+                        <input type="text" id="endereco" formControlName="endereco" class="form-control"
+                            placeholder="Endereço do empreendimento">
+                        <div class="erro" *ngIf="form.get('endereco')?.invalid && form.get('endereco')?.touched">
+                            Endereço é obrigatório
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3>Características</h3>
+
+                <div class="form-grid">
+                    <div class="form-group span-3">
+                        <label for="tipo">Tipo *</label>
+                        <select id="tipo" formControlName="tipo" class="form-control">
+                            <option *ngFor="let tipo of tipoOptions" [value]="tipo.value">{{ tipo.label }}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group span-3">
+                        <label for="status">Status *</label>
+                        <select id="status" formControlName="status" class="form-control">
+                            <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group span-3">
+                        <label for="numeroTorres">Nº Torres/Blocos</label>
+                        <input type="number" id="numeroTorres" formControlName="numeroTorres" class="form-control"
+                            min="0">
+                    </div>
+
+                    <div class="form-group span-3">
+                        <label for="numeroUnidades">Nº Unidades</label>
+                        <input type="number" id="numeroUnidades" formControlName="numeroUnidades"
+                            class="form-control" min="0">
+                    </div>
+
+                    <div class="form-group span-4">
+                        <label for="areaTotal">Área Total (m²)</label>
+                        <input type="number" id="areaTotal" formControlName="areaTotal" class="form-control"
+                            min="0" step="0.01">
+                    </div>
+
+                    <div class="form-group span-4">
+                        <label for="dataLancamento">Data de Lançamento</label>
+                        <input type="date" id="dataLancamento" formControlName="dataLancamento" class="form-control">
+                    </div>
+
+                    <div class="form-group span-4">
+                        <label for="dataEntregaPrevista">Data de Entrega Prevista</label>
+                        <input type="date" id="dataEntregaPrevista" formControlName="dataEntregaPrevista"
+                            class="form-control">
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3>Incorporação</h3>
+
+                <div class="form-grid">
+                    <div class="form-group span-6">
+                        <label for="incorporador">Incorporador</label>
+                        <input type="text" id="incorporador" formControlName="incorporador" class="form-control"
+                            placeholder="Nome do incorporador">
+                    </div>
+
+                    <div class="form-group span-3">
+                        <label for="cnpjIncorporador">CNPJ Incorporador</label>
+                        <input type="text" id="cnpjIncorporador" formControlName="cnpjIncorporador"
+                            class="form-control" placeholder="00.000.000/0001-00">
+                    </div>
+
+                    <div class="form-group span-3">
+                        <label for="registroCRI">Registro no CRI</label>
+                        <input type="text" id="registroCRI" formControlName="registroCRI" class="form-control"
+                            placeholder="Registro">
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3>Aprovação</h3>
+
+                <div class="form-grid">
+                    <div class="form-group span-4">
+                        <label for="alvaraNumero">Alvará Número</label>
+                        <input type="text" id="alvaraNumero" formControlName="alvaraNumero" class="form-control">
+                    </div>
+
+                    <div class="form-group span-4">
+                        <label for="habitese">Habite-se</label>
+                        <input type="text" id="habitese" formControlName="habitese" class="form-control">
+                    </div>
+
+                    <div class="form-group span-4">
+                        <label for="dataAprovacao">Data Aprovação</label>
+                        <input type="date" id="dataAprovacao" formControlName="dataAprovacao" class="form-control">
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3>Dados Adicionais</h3>
+
+                <div class="form-grid">
+                    <div class="form-group span-12">
+                        <label for="responsavelTecnico">Responsável Técnico</label>
+                        <input type="text" id="responsavelTecnico" formControlName="responsavelTecnico"
+                            class="form-control">
+                    </div>
+
+                    <div class="form-group span-12">
+                        <label for="descricao">Descrição</label>
+                        <textarea id="descricao" formControlName="descricao" class="form-control" rows="4"
+                            placeholder="Informações sobre o empreendimento"></textarea>
+                    </div>
+
+                    <div class="form-group span-12">
+                        <label for="observacoes">Observações</label>
+                        <textarea id="observacoes" formControlName="observacoes" class="form-control" rows="4"
+                            placeholder="Observações internas"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancelar" (click)="voltar()">Cancelar</button>
+                <button type="submit" class="btn-salvar" [disabled]="form.invalid">Salvar</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="loading" *ngIf="carregando">
+        Carregando...
+    </div>
+</div>

@@ -1,4 +1,4 @@
-<div class="row" id="invoiceList">
+﻿<div class="row" id="invoiceList">
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header">
@@ -92,8 +92,9 @@
                                 <th>FILIAL</th>
                                 <th>EMPREENDIMENTO</th>
                                 <th>UNIDADE</th>
-                                <th>VALOR MÓVEL</th>
+                                <th>VALOR MÃ“VEL</th>
                                 <th>CLIENTE</th>
+                                <th>STATUS</th>
                                 <th>VENDEDOR</th>
                                 <th>COORDENADOR</th>
                                 <th>GERENTE</th>
@@ -108,12 +109,25 @@
                                 <td>{{ venda.unitName }}</td>
                                 <td>{{ venda.unitValue | currency:'BRL':'symbol':'1.2-2' }}</td>
                                 <td>{{ venda.cliente }}</td>
+                                <td>
+                                    <span class="badge" [ngClass]="getStatusClass(venda.status)">
+                                        {{ getStatusLabel(venda.status) }}
+                                    </span>
+                                </td>
                                 <td>{{ venda.corretor }}</td>
                                 <td>{{ venda.coordenatorId }}</td>
                                 <td>{{ venda.gerente }}</td>
                                 <td class="acoes">
                                     <div class="d-flex flex-column gap-2">
                                         <div class="d-flex flex-wrap gap-2">
+                                            <button type="button"
+                                                class="btn btn-warning btn-sm"
+                                                *ngIf="podeRegistrarAto(venda)"
+                                                [disabled]="registrandoAtoId === venda.id"
+                                                (click)="registrarAto(venda.id)">
+                                                <i class="ph-hand-coins me-1"></i>
+                                                {{ registrandoAtoId === venda.id ? 'Registrando...' : 'Registrar Ato' }}
+                                            </button>
                                             <a [routerLink]="'/jm/credit-analysis/' + venda.id"
                                                 class="btn btn-subtle-info btn-sm"
                                                 title="Abrir analise de credito da venda">
@@ -145,7 +159,7 @@
                     <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2 p-2"
                         *ngIf="totalItemsVendas > 0">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted small">Itens por página:</span>
+                            <span class="text-muted small">Itens por pÃ¡gina:</span>
 
                             <select class="form-select form-select-sm w-auto" [ngModel]="itemsPerPageVendas"
                                 (ngModelChange)="onItemsPerPageChangeVendas($event)">
@@ -161,7 +175,7 @@
                         <pagination [totalItems]="totalItemsVendas" [(ngModel)]="pageVendas"
                             [itemsPerPage]="itemsPerPageVendas" [boundaryLinks]="true" [directionLinks]="true"
                             [maxSize]="5" (pageChanged)="onPageChangedVendas($event)" previousText="Anterior"
-                            nextText="Próximo" firstText="Primeira" lastText="Última" class="mb-0"></pagination>
+                            nextText="PrÃ³ximo" firstText="Primeira" lastText="Ãšltima" class="mb-0"></pagination>
                     </div>
 
                 </div>
@@ -223,7 +237,7 @@
 
                                     <div
                                         class="hstack d-flex justify-content-between align-items-center bg-light p-2 pb-3 pt-3 m-0 mt-3 mb-3">
-                                        <h6 class="card-title m-0">Imóvel</h6>
+                                        <h6 class="card-title m-0">ImÃ³vel</h6>
                                     </div>
 
                                     <div class="row my-3">
@@ -271,7 +285,7 @@
                                     <div class="mt-3">
                                         <div
                                             class="hstack d-flex justify-content-between align-items-center bg-light p-2 pb-3 pt-3 m-0 mt-3 mb-3">
-                                            <h6 class="card-title m-0">Informações do Cliente
+                                            <h6 class="card-title m-0">InformaÃ§Ãµes do Cliente
 
                                             </h6>
                                             <!--
@@ -321,20 +335,20 @@
                                     <div class="mt-3">
                                         <div
                                             class="hstack d-flex justify-content-between align-items-center bg-light p-2 pb-3 pt-3 m-0 mt-3 mb-3">
-                                            <h6 class="card-title">Comissão imobiliária (%)</h6>
+                                            <h6 class="card-title">ComissÃ£o imobiliÃ¡ria (%)</h6>
                                         </div>
 
                                         <div class="row my-3">
 
                                             <div class="col-lg-4 col-sm-6 col-12">
-                                                <label for="customername-field" class="form-label">Comissão à
-                                                    imobiliária <span class="text-danger">*</span></label>
+                                                <label for="customername-field" class="form-label">ComissÃ£o Ã 
+                                                    imobiliÃ¡ria <span class="text-danger">*</span></label>
                                                 <input disabled type="number" name="venda.percentageToRealstate"
                                                     [value]="objetoCriacao.percentageToRealstate" class="form-control">
                                             </div>
                                             <div class="col-lg-4 col-sm-6 col-12">
-                                                <label for="customername-field" class="form-label">Valor da comissão
-                                                    imobiliária <span class="text-danger">*</span></label>
+                                                <label for="customername-field" class="form-label">Valor da comissÃ£o
+                                                    imobiliÃ¡ria <span class="text-danger">*</span></label>
                                                 <input disabled type="text" class="form-control" name="venda.vlrUnit"
                                                     [value]="objetoCriacao.valueToRealstate | currency:'BRL':'symbol-narrow':'1.2-2'"
                                                     style="font-size: 14px; font-weight: 600px;">
@@ -350,7 +364,7 @@
 
                                     <div class="mt-3">
                                         <div class="hstack  mt-1">
-                                            <h6 class="card-title">Responsáveis da venda</h6>
+                                            <h6 class="card-title">ResponsÃ¡veis da venda</h6>
                                         </div>
 
                                         <div class="row my-3">
@@ -389,7 +403,7 @@
                                                 <input class="form-control" type="file" id="formFile">
                                             </div>
                                             <div class="col-lg-4 col-sm-6 col-12">
-                                                <label class="form-label">N° do contrato</label>
+                                                <label class="form-label">NÂ° do contrato</label>
                                                 <input type="text" name="nContrato" class="form-control"
                                                     [(ngModel)]="objetoCriacao.contractNumber">
                                             </div>
@@ -423,7 +437,7 @@
                                     Anteriro</button>
                                 <button type="button" class="btn btn-success btn-label right ms-auto nexttab nexttab"
                                     data-nexttab="pills-experience-tab" cdkStepperNext><i
-                                        class="ri-arrow-right-line label-icon align-middle fs-16 ms-2"></i>Próximo</button>
+                                        class="ri-arrow-right-line label-icon align-middle fs-16 ms-2"></i>PrÃ³ximo</button>
                             </div>
                         </cdk-step>
 
@@ -442,7 +456,7 @@
 
                                         <div class="container-fluid p-0">
                                             <div class="row gy-2 align-items-center p-1 rounded bg-atos">
-                                                <!-- título -->
+                                                <!-- tÃ­tulo -->
                                                 <div class="col-12 col-md-3">
                                                     <h5 class="m-0 fw-bold text-dark">Ato</h5>
                                                 </div>
@@ -504,7 +518,7 @@
                                                     [(ngModel)]="act.value" class="form-control" required>
                                             </div>
                                             <div class="col-lg-2 col-sm-6 col-12">
-                                                <label for="customername-field" class="form-label">Observação</label>
+                                                <label for="customername-field" class="form-label">ObservaÃ§Ã£o</label>
                                                 <input type="text" id="customername-field" name="act.observations"
                                                     class="form-control" [(ngModel)]="act.observations" required>
                                             </div>
@@ -525,7 +539,7 @@
                                                 <select class="form-control" (change)="recalculate()"
                                                     [(ngModel)]="act.status" name="act.status">
                                                     <option value="PAID">Paga</option>
-                                                    <option value="WAITING">Não Paga</option>
+                                                    <option value="WAITING">NÃ£o Paga</option>
                                                     <option value="DIMMED">Esmaecida</option>
                                                 </select>
                                             </div>
@@ -543,10 +557,10 @@
                                                         <th style="width:5%">#</th>
                                                         <th style="width:10%">Data do ato</th>
                                                         <th style="width:14%">Valor do ato (R$)</th>
-                                                        <th style="width:24%">Observações</th>
+                                                        <th style="width:24%">ObservaÃ§Ãµes</th>
                                                         <th style="width:20%">Forma de pagamento</th>
                                                         <th style="width:12%">Status</th>
-                                                        <th style="width:10%">Ações</th>
+                                                        <th style="width:10%">AÃ§Ãµes</th>
                                                     </tr>
                                                 </thead>
 
@@ -586,7 +600,7 @@
                                                                 (change)="recalculate()" [(ngModel)]="it.status"
                                                                 [name]="i + 'act.status'">
                                                                 <option value="PAID">Paga</option>
-                                                                <option value="WAITING">Não Paga</option>
+                                                                <option value="WAITING">NÃ£o Paga</option>
                                                                 <option value="DIMMED">Esmaecida</option>
                                                             </select>
                                                         </td>
@@ -667,7 +681,7 @@
                                                     <th>Valor (R$)</th>
                                                     <th>Dt Vencimento</th>
                                                     <th>Dt Pagamento</th>
-                                                    <th>Observações</th>
+                                                    <th>ObservaÃ§Ãµes</th>
                                                     <th>Status</th>
                                                 </tr>
                                             </thead>
@@ -698,7 +712,7 @@
                                                             (change)="recalculate()" [(ngModel)]="it.status"
                                                             [ngModelOptions]="{standalone:true}">
                                                             <option value="PAID">Paga</option>
-                                                            <option value="WAITING">Não Paga</option>
+                                                            <option value="WAITING">NÃ£o Paga</option>
                                                             <option value="DIMMED">Esmaecida</option>
                                                         </select>
                                                     </td>
@@ -712,24 +726,24 @@
                                     <div class="mt-3">
                                         <div
                                             class="hstack d-flex justify-content-between align-items-center bg-light p-2 pb-3 pt-3 m-0 mt-3 mb-3">
-                                            <h6 class="card-title">Intermediárias</h6>
+                                            <h6 class="card-title">IntermediÃ¡rias</h6>
                                         </div>
                                         <div class="row my-3">
                                             <div class="col-lg-4 col-sm-6 col-12 mb-3">
                                                 <label for="customername-field" class="form-label">Data de
-                                                    intermediária</label>
+                                                    intermediÃ¡ria</label>
                                                 <input type="date" class="form-control" name="sdasllmkmcdvnjfv"
                                                     [(ngModel)]="objetoCriacao.dtIntermediaria">
                                             </div>
                                             <div class="col-lg-4 col-sm-6 col-12 mb-3">
                                                 <label for="customername-field" class="form-label">Valor da
-                                                    intermediária</label>
+                                                    intermediÃ¡ria</label>
                                                 <input type="number" class="form-control" name="intermds2221209"
                                                     [(ngModel)]="objetoCriacao.vlIntermediaria">
                                             </div>
                                             <div class="col-lg-4 col-sm-6 col-12 mb-3">
                                                 <button [disabled]="disableInputs" (click)="addIntermed()"
-                                                    class="btn mt-4 btn-secondary">Adicionar intermediária</button>
+                                                    class="btn mt-4 btn-secondary">Adicionar intermediÃ¡ria</button>
                                             </div>
 
                                             @if(objetoCriacao.intermediarias && objetoCriacao.intermediarias.length) {
@@ -742,7 +756,7 @@
                                                             <th>Valor (R$)</th>
                                                             <th>Dt Vencimento</th>
                                                             <th>Dt Pagamento</th>
-                                                            <th>Observações</th>
+                                                            <th>ObservaÃ§Ãµes</th>
                                                             <th>Status</th>
                                                         </tr>
                                                     </thead>
@@ -776,7 +790,7 @@
                                                                     (change)="recalculate()" [(ngModel)]="it.status"
                                                                     [ngModelOptions]="{standalone:true}">
                                                                     <option value="PAID">Paga</option>
-                                                                    <option value="WAITING">Não Paga</option>
+                                                                    <option value="WAITING">NÃ£o Paga</option>
                                                                 </select>
                                                             </td>
                                                         </tr>
@@ -800,14 +814,14 @@
                                     Anteriro</button>
                                 <button type="button" class="btn btn-success btn-label right ms-auto nexttab nexttab"
                                     data-nexttab="pills-experience-tab" cdkStepperNext><i
-                                        class="ri-arrow-right-line label-icon align-middle fs-16 ms-2"></i>Próximo</button>
+                                        class="ri-arrow-right-line label-icon align-middle fs-16 ms-2"></i>PrÃ³ximo</button>
                             </div>
                         </cdk-step>
 
                         <cdk-step [optional]="true">
                             <ng-template cdkStepLabel>
                                 <button class="nav-link done" id="steparrow-description-info-tab"
-                                    type="button">Comissão</button>
+                                    type="button">ComissÃ£o</button>
                             </ng-template>
                             @if (cdkStepper.selectedIndex === 2) {
                             <form class="tablelist-form" novalidate autocomplete="off">
@@ -831,18 +845,18 @@
                                             </div>
                                             <div class="col-lg-5 col-sm-6 col-12">
                                                 <button [disabled]="disableInputs"
-                                                    class="btn mt-4 btn-secondary">Verificar se há
+                                                    class="btn mt-4 btn-secondary">Verificar se hÃ¡
                                                     valores a repassar p/
                                                     construtora</button>
                                                 <label for="email-field" class="form-label mt-1"> <span
                                                         class="text-danger">Esta
-                                                        ação substituirá valores
-                                                        pré-preenchidos</span></label>
+                                                        aÃ§Ã£o substituirÃ¡ valores
+                                                        prÃ©-preenchidos</span></label>
                                             </div>
                                         </div>
                                     </div>-->
 
-                                    <!--endereço-->
+                                    <!--endereÃ§o-->
 
                                     <div class="mt-1">
                                         <div class="hstack  mt-1">
@@ -864,7 +878,7 @@
                                             </div>
 
                                             <div class="col-6 ">
-                                                <label for="customername-field" class="form-label">Valor da comissão do
+                                                <label for="customername-field" class="form-label">Valor da comissÃ£o do
                                                     corretor <span class="text-danger">*</span></label>
                                                 <input disabled type="number"
                                                     [(ngModel)]="objetoCriacao.realtorComission" id="customername-field"
@@ -872,14 +886,14 @@
                                             </div>
 
                                             <div class="col-6 ">
-                                                <label for="customername-field" class="form-label">Status da comissão do
+                                                <label for="customername-field" class="form-label">Status da comissÃ£o do
                                                     corretor <span class="text-danger">*</span></label>
                                                 <select class="form-control"
                                                     [(ngModel)]="objetoCriacao.realtorComissionStatus"
                                                     name="productCadsaxastegories">
                                                     <option value="Selecion">Selecione</option>
                                                     <option value="PAID">Paga</option>
-                                                    <option value="WAITING">Não paga</option>
+                                                    <option value="WAITING">NÃ£o paga</option>
 
                                                 </select>
                                             </div>
@@ -916,7 +930,7 @@
                                             </div>
 
                                             <div class="col-6 ">
-                                                <label for="customername-field" class="form-label">Valor da comissão do
+                                                <label for="customername-field" class="form-label">Valor da comissÃ£o do
                                                     gerente <span class="text-danger">*</span></label>
                                                 <input disabled [(ngModel)]="objetoCriacao.managerComission"
                                                     type="number" id="customername-field" name="name"
@@ -924,14 +938,14 @@
                                             </div>
 
                                             <div class="col-6 ">
-                                                <label for="customername-field" class="form-label">Status da comissão do
+                                                <label for="customername-field" class="form-label">Status da comissÃ£o do
                                                     gerente <span class="text-danger">*</span></label>
                                                 <select class="form-control"
                                                     [(ngModel)]="objetoCriacao.managerComissionStatus"
                                                     name="productCategories" id="productCategories">
                                                     <option value="Selecion">Selecione</option>
                                                     <option value="PAID">Paga</option>
-                                                    <option value="WAITING">Não paga</option>
+                                                    <option value="WAITING">NÃ£o paga</option>
 
                                                 </select>
                                             </div>
@@ -967,7 +981,7 @@
 
 
                                             <div class="col-lg-4 col-sm-6 col-12">
-                                                <label for="customername-field" class="form-label">Valor da comissão do
+                                                <label for="customername-field" class="form-label">Valor da comissÃ£o do
                                                     financeiro <span class="text-danger">*</span></label>
                                                 <input type="text" [(ngModel)]="objetoCriacao.financialComission"
                                                     disabled id="customername-field" name="namecomissionfin"
@@ -975,14 +989,14 @@
                                             </div>
 
                                             <div class="col-lg-4 col-sm-6 col-12">
-                                                <label for="customername-field" class="form-label">Status da comissão do
+                                                <label for="customername-field" class="form-label">Status da comissÃ£o do
                                                     financeiro <span class="text-danger">*</span></label>
                                                 <select [(ngModel)]="objetoCriacao.financialComissionStatus"
                                                     class="form-control" name="financialComissionStatus"
                                                     id="productCategories">
                                                     <option value="Selecion">Selecione</option>
                                                     <option value="PAID">Paga</option>
-                                                    <option value="WAITING">Não paga</option>
+                                                    <option value="WAITING">NÃ£o paga</option>
                                                 </select>
                                             </div>
 
@@ -1002,7 +1016,7 @@
                                     Anteriro</button>
                                 <button type="button" class="btn btn-success btn-label right ms-auto nexttab nexttab"
                                     data-nexttab="pills-experience-tab" cdkStepperNext><i
-                                        class="ri-arrow-right-line label-icon align-middle fs-16 ms-2"></i>Próximo</button>
+                                        class="ri-arrow-right-line label-icon align-middle fs-16 ms-2"></i>PrÃ³ximo</button>
                             </div>
                         </cdk-step>
 
@@ -1017,12 +1031,12 @@
                                     <thead>
                                         <tr>
                                             <th>UNIDADE</th>
-                                            <th>COMISSÃO IMOBILIÁRIA</th>
-                                            <th>COMISSÃO CORRETOR</th>
-                                            <th>COMISSÃO GERENTE</th>
-                                            <th>COMISSÃO FINANCEIRO</th>
+                                            <th>COMISSÃƒO IMOBILIÃRIA</th>
+                                            <th>COMISSÃƒO CORRETOR</th>
+                                            <th>COMISSÃƒO GERENTE</th>
+                                            <th>COMISSÃƒO FINANCEIRO</th>
                                             <th>ATO (R$) EM CONTRATO</th>
-                                            <th>RECEITA LÍQUIDA</th>
+                                            <th>RECEITA LÃQUIDA</th>
                                         </tr>
                                     </thead>
 
@@ -1080,3 +1094,5 @@
 
 
 <app-modal-venda #meuModal [dados]="objetoCriacao"></app-modal-venda>
+
+

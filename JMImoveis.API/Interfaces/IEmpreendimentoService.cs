@@ -14,5 +14,6 @@ namespace JMImoveisAPI.Interfaces
         Task<bool> UpdateAsync(int id, Enterprise entity);
         Task<bool> SoftDeleteAsync(int id);
         Task<bool> HardDeleteAsync(int id);
+        Task<bool> HasUnidadesAsync(int id);
     }
 }

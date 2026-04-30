@@ -3,6 +3,8 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClient, HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CdkStepperModule } from '@angular/cdk/stepper';
+import { ModalModule } from 'ngx-bootstrap/modal';
 
 // auth
 import { AngularFireModule } from '@angular/fire/compat';
@@ -49,6 +51,7 @@ import { CustomerEffects } from './store/Customer/customer.effects';
 import { studentsEffects } from './store/students/student.effcts';
 import { CourcesEffects } from './store/Learning-cources/cources.effect';
 import { CommonModule, HashLocationStrategy, LocationStrategy } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { NgxSpinnerModule } from 'ngx-spinner';
 import { SpinnerInterceptor } from './core/helpers/spinner.interceptor';
 import { registerLocaleData } from '@angular/common';
@@ -120,12 +123,16 @@ if (environment.defaultauth === 'firebase') {
         FormsModule,
         NgxSpinnerModule.forRoot({ type: 'ball-spin-clockwise' }) ,
         ReactiveFormsModule,
+        CdkStepperModule,
+        ModalModule.forRoot(),
         AngularFireAuthModule], providers: [
           { provide: HTTP_INTERCEPTORS, useClass: SpinnerInterceptor,  multi: true },
           { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
           { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
           { provide: LocationStrategy, useClass: HashLocationStrategy  },
           { provide: LOCALE_ID, useValue: 'pt-BR' }, 
+          CurrencyPipe,
           provideHttpClient(withInterceptorsFromDi()),
     ] })
 export class AppModule { }
+

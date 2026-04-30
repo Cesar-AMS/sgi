@@ -1,4 +1,4 @@
-// src/app/sales/services/sales.service.ts
+﻿// src/app/sales/services/sales.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -6,7 +6,6 @@ import { Sale } from 'src/app/models/sale.mode';
 import { Parcel } from 'src/app/pages/project/vendas/vendas-new/vendas-new.component';
 import { BACKEND_API_URL } from './backend-api-url';
 import { Sales } from 'src/app/models/ContaBancaria';
-
 
 @Injectable({ providedIn: 'root' })
 export class SalesService {
@@ -44,7 +43,7 @@ export class SalesService {
   }
 
   getById(id: number): Observable<Sale> {
-     var headerToken = {
+    const headerToken = {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     };
 
@@ -52,7 +51,7 @@ export class SalesService {
   }
 
   createWithParcels(sale: Sale, parcels: Parcel[], customerIds: number[]) {
-    var headerToken = {
+    const headerToken = {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     };
     return this.http.post(this.financialSalesUrl, { sale, parcels, customerIds }, { headers: headerToken });
@@ -62,27 +61,22 @@ export class SalesService {
     return this.createWithParcels(sale, parcels, customerIds);
   }
 
-
   getParcelsBySaleId(id: number) {
-     var headerToken = {
+    const headerToken = {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     };
     return this.http.get<Parcel[]>(`${this.salesUrl}/${id}/parcels`, { headers: headerToken });
   }
 
   getCustomerIdsBySaleId(id: number) {
-     var headerToken = {
+    const headerToken = {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     };
     return this.http.get<number[]>(`${this.salesUrl}/${id}/customers`, { headers: headerToken });
   }
 
-  /*create(sale: Sale): Observable<{ saleId: number }> {
-    return this.http.post<{ saleId: number }>(this.baseUrl, { sale, parcels: [] });
-  }*/
-
   update(id: number, sale: Sale): Observable<void> {
-     var headerToken = {
+    const headerToken = {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     };
     return this.http.put<void>(this.salesUrl, sale, { headers: headerToken });
@@ -104,5 +98,13 @@ export class SalesService {
       ...sale,
       status: 'APPROVED',
     });
+  }
+
+  registrarAto(vendaId: number): Observable<{ message: string }> {
+    const headerToken = {
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    };
+
+    return this.http.put<{ message: string }>(`${this.salesUrl}/${vendaId}/registrar-ato`, {}, { headers: headerToken });
   }
 }

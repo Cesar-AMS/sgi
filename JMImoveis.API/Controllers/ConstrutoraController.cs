@@ -1,5 +1,6 @@
 ﻿using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +14,11 @@ namespace JMImoveisAPI.Controllers
         public ConstrutoraController(IConstrutoraService construtoraService) => _construtoraService = construtoraService;
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<Constructor>>> GetAll() => Ok(await _construtoraService.GetAllAsync());
 
         [HttpGet("{id:int}")]
+        [AllowAnonymous]
         public async Task<ActionResult<Constructor>> Get(int id)
         {
             var item = await _construtoraService.GetByIdAsync(id);
@@ -25,21 +28,35 @@ namespace JMImoveisAPI.Controllers
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] Constructor dto)
         {
-            var id = await _construtoraService.CreateAsync(dto.Name);
+            var id = await _construtoraService.CreateAsync(dto);
             return CreatedAtAction(nameof(Get), new { id }, new { id });
         }
 
         [HttpPut("{id:int}")]
         public async Task<ActionResult> Update(int id, [FromBody] Constructor dto)
-            => await _construtoraService.UpdateAsync(id, dto.Name) ? NoContent() : NotFound();
+            => await _construtoraService.UpdateAsync(id, dto) ? NoContent() : NotFound();
 
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> SoftDelete(int id)
-            => await _construtoraService.SoftDeleteAsync(id) ? NoContent() : NotFound();
+        {
+            if (await _construtoraService.HasEmpreendimentosAsync(id))
+            {
+                return BadRequest(new { message = "Nao e possivel excluir construtora com empreendimento vinculado." });
+            }
+
+            return await _construtoraService.SoftDeleteAsync(id) ? NoContent() : NotFound();
+        }
 
         [HttpDelete("{id:int}/hard")]
         public async Task<ActionResult> HardDelete(int id)
-            => await _construtoraService.HardDeleteAsync(id) ? NoContent() : NotFound();
+        {
+            if (await _construtoraService.HasEmpreendimentosAsync(id))
+            {
+                return BadRequest(new { message = "Nao e possivel excluir construtora com empreendimento vinculado." });
+            }
+
+            return await _construtoraService.HardDeleteAsync(id) ? NoContent() : NotFound();
+        }
 
 
     }

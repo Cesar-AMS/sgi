@@ -8,7 +8,7 @@
         public int Number { get; set; }
         public decimal Value { get; set; }
         public string? Income { get; set; }           // ex.: "Permuta"
-        public decimal Size { get; set; }
+        public string? Size { get; set; }
         public int Dormitories { get; set; }          // qtd de quartos
         public string Status { get; set; } = null!;   // OPEN | RESERVED | SELL
         public int EnterpriseId { get; set; }

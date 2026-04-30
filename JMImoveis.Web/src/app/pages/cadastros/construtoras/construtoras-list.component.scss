@@ -1,0 +1,72 @@
+.cadastros-container {
+    padding: 20px;
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+
+        h2 {
+            margin: 0;
+        }
+
+        .btn-novo {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+
+            &:hover {
+                background-color: #0056b3;
+            }
+        }
+    }
+
+    .tabela {
+        width: 100%;
+        border-collapse: collapse;
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f5f5f5;
+        }
+
+        .acoes {
+            display: flex;
+            gap: 8px;
+
+            button {
+                padding: 4px 8px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+
+                &.btn-editar {
+                    background-color: #ffc107;
+                    color: #333;
+                }
+
+                &.btn-excluir {
+                    background-color: #dc3545;
+                    color: white;
+                }
+            }
+        }
+    }
+
+    .loading,
+    .vazio {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+}

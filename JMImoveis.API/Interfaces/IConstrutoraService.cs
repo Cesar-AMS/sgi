@@ -6,9 +6,10 @@ namespace JMImoveisAPI.Interfaces
     {
         Task<IEnumerable<Constructor>> GetAllAsync(bool includeDeleted = false);
         Task<Constructor?> GetByIdAsync(int id);
-        Task<int> CreateAsync(string name);
-        Task<bool> UpdateAsync(int id, string name);
+        Task<int> CreateAsync(Constructor entity);
+        Task<bool> UpdateAsync(int id, Constructor entity);
         Task<bool> SoftDeleteAsync(int id);
         Task<bool> HardDeleteAsync(int id);
+        Task<bool> HasEmpreendimentosAsync(int id);
     }
 }

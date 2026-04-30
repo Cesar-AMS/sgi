@@ -10,7 +10,15 @@ namespace JMImoveisAPI.Controllers
     public class ApartamentController : ControllerBase
     {
         private readonly IApartamentosRepository _repo;
-        public ApartamentController(IApartamentosRepository repo) => _repo = repo;
+        private readonly IEmpreendimentoService _empreendimentoService;
+
+        public ApartamentController(
+            IApartamentosRepository repo,
+            IEmpreendimentoService empreendimentoService)
+        {
+            _repo = repo;
+            _empreendimentoService = empreendimentoService;
+        }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ApartmentUnit>>> GetAll([FromQuery] int enterpriseId)
@@ -19,6 +27,10 @@ namespace JMImoveisAPI.Controllers
         [HttpGet("{id:int}")]
         public async Task<ActionResult<ApartmentUnit>> Get(int id)
             => (await _repo.GetByIdAsync(id)) is { } x ? Ok(x) : NotFound();
+
+        [HttpGet("disponiveis")]
+        public async Task<ActionResult<IEnumerable<ApartmentUnit>>> GetDisponiveis()
+            => Ok(await _repo.GetDisponiveisAsync());
 
         [HttpGet("espelho/{id}")]
         public async Task<ActionResult<ApartmentUnit>> GetEspelho(int id)
@@ -29,6 +41,12 @@ namespace JMImoveisAPI.Controllers
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] ApartmentUnit dto)
         {
+            var empreendimento = await _empreendimentoService.GetByIdAsync(dto.EnterpriseId);
+            if (empreendimento is null || empreendimento.DeletedAt is not null || empreendimento.Hidden)
+            {
+                return BadRequest(new { message = "Empreendimento invalido ou inativo." });
+            }
+
             var id = await _repo.CreateAsync(new ApartmentUnit
             {
                 Floor = dto.Floor,
@@ -65,10 +83,24 @@ namespace JMImoveisAPI.Controllers
 
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> SoftDelete(int id)
-            => await _repo.SoftDeleteAsync(id) ? NoContent() : NotFound();
+        {
+            if (await _repo.HasPropostaAtivaAsync(id))
+            {
+                return BadRequest(new { message = "Nao e possivel excluir unidade com proposta ativa." });
+            }
+
+            return await _repo.SoftDeleteAsync(id) ? NoContent() : NotFound();
+        }
 
         [HttpDelete("{id:int}/hard")]
         public async Task<ActionResult> HardDelete(int id)
-            => await _repo.HardDeleteAsync(id) ? NoContent() : NotFound();
+        {
+            if (await _repo.HasPropostaAtivaAsync(id))
+            {
+                return BadRequest(new { message = "Nao e possivel excluir unidade com proposta ativa." });
+            }
+
+            return await _repo.HardDeleteAsync(id) ? NoContent() : NotFound();
+        }
     }
 }

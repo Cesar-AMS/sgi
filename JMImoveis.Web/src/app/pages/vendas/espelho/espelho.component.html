@@ -1,0 +1,101 @@
+<div class="vendas-container">
+    <h1>Espelho de Vendas</h1>
+
+    <div class="filtros">
+        <div class="filtro-group">
+            <label for="construtora">Construtora:</label>
+            <select id="construtora" [value]="construtoraSelecionada?.id || ''" (change)="onConstrutoraChange($event)">
+                <option value="">Selecione uma construtora</option>
+                <option *ngFor="let c of construtoras" [value]="c.id">
+                    {{ c.nome }}
+                </option>
+            </select>
+        </div>
+
+        <div class="filtro-group" *ngIf="empreendimentos.length > 0">
+            <label for="empreendimento">Empreendimento:</label>
+            <select id="empreendimento" [value]="empreendimentoSelecionado?.id || ''" (change)="onEmpreendimentoChange($event)">
+                <option value="">Todos os empreendimentos</option>
+                <option *ngFor="let e of empreendimentos" [value]="e.id">
+                    {{ e.nome }}
+                </option>
+            </select>
+        </div>
+    </div>
+
+    <div class="loading" *ngIf="carregandoUnidades">
+        Carregando unidades...
+    </div>
+
+    <div class="espelho-grid" *ngIf="!carregandoUnidades && unidadesPorAndar.length > 0">
+        <div class="andar-row" *ngFor="let grupo of unidadesPorAndar">
+            <div class="andar-label">
+                <span class="andar-label-titulo">Andar</span>
+                <span class="andar-label-valor">{{ grupo.label }}</span>
+            </div>
+
+            <div class="cards-grid">
+                <div
+                    class="card"
+                    *ngFor="let unidade of grupo.unidades"
+                    [ngClass]="unidade.statusCor"
+                    (click)="abrirProposta(unidade)">
+                    <div class="card-topo">
+                        <div class="card-numero" [title]="'Apartamento ' + unidade.numero + ' - ' + grupo.label">
+                            Apt {{ unidade.numero }}
+                        </div>
+                    </div>
+
+                    <div class="card-detalhes">
+                        <div class="card-info-item" *ngIf="unidade.area" title="Metros quadrados">
+                            <span class="info-label">m2</span>
+                            <span class="info-value">{{ unidade.area }}</span>
+                        </div>
+
+                        <div class="card-info-item" *ngIf="unidade.dormitorios !== undefined && unidade.dormitorios !== null" title="Dormitorios">
+                            <span class="info-label">Dorm</span>
+                            <span class="info-value">{{ unidade.dormitorios }}</span>
+                        </div>
+
+                        <div class="card-info-item valor" *ngIf="unidade.valor" title="Valor do imovel">
+                            <span class="info-value">{{ unidade.valor | currency:'BRL':'symbol':'1.0-0' }}</span>
+                        </div>
+
+                        <div class="card-info-item his" *ngIf="unidade.perfilRenda" title="Habitacao de Interesse Social">
+                            <span class="info-label">HIS</span>
+                            <span class="info-value">{{ unidade.perfilRenda }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!carregandoUnidades && unidades.length === 0 && construtoraSelecionada">
+        <p>Nenhuma unidade encontrada para a construtora selecionada.</p>
+    </div>
+
+    <div class="legenda">
+        <h4>Legenda:</h4>
+        <div class="legenda-item">
+            <span class="legenda-cor disponivel"></span>
+            <span>Disponivel</span>
+        </div>
+        <div class="legenda-item">
+            <span class="legenda-cor reservada"></span>
+            <span>Reservada</span>
+        </div>
+        <div class="legenda-item">
+            <span class="legenda-cor vendida"></span>
+            <span>Vendida</span>
+        </div>
+    </div>
+
+    <app-propostas
+        *ngIf="fichaProposta"
+        class="ficha-proposta-overlay"
+        [somenteModal]="true"
+        [fichaInicial]="fichaProposta"
+        (fichaFechada)="fecharFichaProposta()">
+    </app-propostas>
+</div>

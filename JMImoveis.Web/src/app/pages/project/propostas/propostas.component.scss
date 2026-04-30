@@ -1,5 +1,90 @@
-#printA4Fix { box-sizing: border-box; }
+#printA4Fix {
+  box-sizing: border-box;
+}
 
 .print-area {
   background: #fff;
+  color: #212529;
+}
+
+.print-area .form-section {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin-bottom: 1rem;
+}
+
+.print-area .card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.print-area .form-label {
+  display: block;
+  min-height: 20px;
+  margin-bottom: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #343a40;
+  text-align: left;
+}
+
+.print-area .form-control,
+.print-area .form-select {
+  min-height: 38px;
+  font-size: 0.9rem;
+}
+
+.print-area .input-group .form-control,
+.print-area .input-group .btn,
+.print-area .input-group .input-group-text {
+  min-height: 38px;
+}
+
+.print-area .table-responsive,
+.print-area table,
+.print-area tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.signature-line {
+  height: 54px;
+  border-bottom: 1px solid #212529;
+}
+
+@media print {
+  .modal-content,
+  .card,
+  .print-area {
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .print-area {
+    padding: 0;
+  }
+
+  .print-area .form-section {
+    margin-bottom: 0.75rem;
+  }
+
+  .print-area .form-control,
+  .print-area .form-select {
+    min-height: 32px;
+    padding: 0.25rem 0.5rem;
+    border-color: #adb5bd;
+  }
+
+  .print-area .form-label {
+    min-height: auto;
+    margin-bottom: 0.2rem;
+    font-size: 0.78rem;
+  }
+
+  .d-print-none,
+  .btn-close,
+  .modal-header {
+    display: none !important;
+  }
 }

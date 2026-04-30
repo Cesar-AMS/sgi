@@ -9,7 +9,15 @@ namespace JMImoveisAPI.Controllers
     public class EmpreendimentoController : ControllerBase
     {
         private readonly IEmpreendimentoService _empreendimentoService;
-        public EmpreendimentoController(IEmpreendimentoService empreendimentoService) => _empreendimentoService = empreendimentoService;
+        private readonly IConstrutoraService _construtoraService;
+
+        public EmpreendimentoController(
+            IEmpreendimentoService empreendimentoService,
+            IConstrutoraService construtoraService)
+        {
+            _empreendimentoService = empreendimentoService;
+            _construtoraService = construtoraService;
+        }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Enterprise>>> GetAll()
@@ -33,13 +41,19 @@ namespace JMImoveisAPI.Controllers
          => Ok(await _empreendimentoService.GetEnterpriseByConstructorAsync(enterpriseId));
 
         [HttpGet("constructor")]
-        public async Task<IActionResult> GetConstructorAsync(int enterpriseId)
-        => Ok(await _empreendimentoService.GetConstructorAsync());
+        public async Task<IActionResult> GetByConstrutoraAsync([FromQuery] int enterpriseId)
+        => Ok(await _empreendimentoService.GetEnterpriseByConstructorAsync(enterpriseId));
 
 
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] Enterprise dto)
         {
+            var construtora = await _construtoraService.GetByIdAsync(dto.ConstructorId);
+            if (construtora is null || construtora.DeletedAt is not null)
+            {
+                return BadRequest(new { message = "Construtora invalida ou inativa." });
+            }
+
             var id = await _empreendimentoService.CreateAsync(new Enterprise
             {
                 Name = dto.Name,
@@ -65,10 +79,24 @@ namespace JMImoveisAPI.Controllers
 
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> SoftDelete(int id)
-            => await _empreendimentoService.SoftDeleteAsync(id) ? NoContent() : NotFound();
+        {
+            if (await _empreendimentoService.HasUnidadesAsync(id))
+            {
+                return BadRequest(new { message = "Nao e possivel excluir empreendimento com unidade vinculada." });
+            }
+
+            return await _empreendimentoService.SoftDeleteAsync(id) ? NoContent() : NotFound();
+        }
 
         [HttpDelete("{id:int}/hard")]
         public async Task<ActionResult> HardDelete(int id)
-            => await _empreendimentoService.HardDeleteAsync(id) ? NoContent() : NotFound();
+        {
+            if (await _empreendimentoService.HasUnidadesAsync(id))
+            {
+                return BadRequest(new { message = "Nao e possivel excluir empreendimento com unidade vinculada." });
+            }
+
+            return await _empreendimentoService.HardDeleteAsync(id) ? NoContent() : NotFound();
+        }
     }
 }

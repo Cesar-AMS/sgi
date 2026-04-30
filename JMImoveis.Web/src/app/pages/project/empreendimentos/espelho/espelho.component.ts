@@ -1,11 +1,13 @@
 ﻿import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { ModalVendaComponent } from '../../modal-venda/modal-venda.component';
 import { Apartamento } from 'src/app/core/data/empreendimento';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { Construtoras, Empreendimento, Filial } from 'src/app/models/ContaBancaria';
+import { Construtoras, Empreendimento, Filial, Usuarios } from 'src/app/models/ContaBancaria';
 import { ApiService } from 'src/app/core/services/api.service';
 import { ProposalsService } from 'src/app/core/services/proposals.service';
+import { AuthUserInfo, AuthenticationService } from 'src/app/core/services/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -108,14 +110,16 @@ export class EspelhoComponent implements OnInit, OnChanges {
   filiais: Filial[] = [];
   unidadeSelecionada: string = '';
   mostrarSegundoProponente: boolean = false;
-  cep2: string = '';
-  rua2: string = '';
-  nro2: string = '';
-  comp2: string = '';
-  bairro2: string = '';
-  cidade2: string = '';
-  estado2: string = '';
   mesmoEndereco: boolean = true;
+  endereco2 = {
+    cep: '',
+    rua: '',
+    nro: '',
+    comp: '',
+    bairro: '',
+    cidade: '',
+    estado: ''
+  };
   today = new Date();
   // bread crumb items
   breadCrumbItems!: Array<{}>;
@@ -126,6 +130,11 @@ export class EspelhoComponent implements OnInit, OnChanges {
   listagem: Grupo[] = [];
   construtorFilter: string = '';
   empreendimentoFilter: string = ''
+  unidadeFilter: string = ''
+  hideConstrutoraSelector = false;
+  hideEmpreendimentoSelector = false;
+  private unidadeIdInicial: number | null = null;
+  private unidadeInicialAplicada = false;
   invoices: any;
   submitted = false;
   InvoicesForm!: UntypedFormGroup;
@@ -144,7 +153,7 @@ export class EspelhoComponent implements OnInit, OnChanges {
     phoneTwoSecondary: '', estadoCivilSecondary: '', profissaoSecondary: '',
     rendaSecondary: '',
     cep: '', rua: '', nro: '', comp: '', bairro: '', cidade: '', estado: '',
-    corretorID: '', gerenteID: '',
+    corretorID: '', corretorNome: '', gerenteID: '', gerenteNome: '', coordenadorID: '', coordenadorNome: '',
     status: 'RASCUNHO', createdAt: '',
     condicao: []
   };
@@ -160,11 +169,16 @@ export class EspelhoComponent implements OnInit, OnChanges {
   loadingProposta = false;
   savingProposal = false;
   editando = false;
+  gerandoPdf = false;
+  gerentes: Usuarios[] = [];
+  vendedoresFiltrados: Usuarios[] = [];
+  coordenadoresFiltrados: Usuarios[] = [];
+  usuarioLogado: AuthUserInfo | null = null;
 
   @ViewChild('pdfContent', { static: false }) pdfContent!: ElementRef;
 
 
-  constructor(private route: ActivatedRoute, private formBuilder: UntypedFormBuilder, public router: Router, private service: ApiService, private proposalsService: ProposalsService, public toast: ToastrService) {
+  constructor(private route: ActivatedRoute, private formBuilder: UntypedFormBuilder, public router: Router, private service: ApiService, private proposalsService: ProposalsService, private authService: AuthenticationService, public toast: ToastrService) {
     this.userForm = this.formBuilder.group({
       productName: ['', [Validators.required]],
       rate: ['', [Validators.required]],
@@ -175,24 +189,215 @@ export class EspelhoComponent implements OnInit, OnChanges {
 
 
   ngOnInit() {
-    if (this.modo === 'criacao') {
-      this.service.getConstrutora().subscribe((data) => {
-        this.construtora = data;
-      });
+    this.carregarDadosEquipe();
 
+    const construtoraIdParam = this.route.snapshot.queryParamMap.get('construtoraId');
+    const empreendimentoIdParam = this.route.snapshot.queryParamMap.get('empreendimentoId');
+    const unidadeIdParam = this.route.snapshot.queryParamMap.get('unidadeId');
+    const construtoraId = Number(construtoraIdParam);
+    const empreendimentoId = Number(empreendimentoIdParam);
+    const unidadeId = Number(unidadeIdParam);
+    const construtoraValida = Number.isFinite(construtoraId) && construtoraId > 0;
+    const empreendimentoValido = Number.isFinite(empreendimentoId) && empreendimentoId > 0;
+    this.unidadeIdInicial = Number.isFinite(unidadeId) && unidadeId > 0 ? unidadeId : null;
+
+    this.hideConstrutoraSelector = construtoraValida || empreendimentoValido;
+    this.hideEmpreendimentoSelector = false;
+
+    const carregarEmpreendimentosDaConstrutora = (constructorId: number) => {
+      if (!(Number.isFinite(constructorId) && constructorId > 0)) {
+        this.hideConstrutoraSelector = false;
+        this.empreendimentos = [];
+        return;
+      }
+
+      this.construtorFilter = String(constructorId);
+      this.service.getEmpreendimentosBYConstrutor(this.construtorFilter).subscribe((empreendimentos) => {
+        const listaFiltrada = empreendimentos ?? [];
+
+        if (listaFiltrada.length > 0) {
+          this.empreendimentos = listaFiltrada;
+
+          if (empreendimentoValido && this.empreendimentos.some(item => Number(item.id) === empreendimentoId)) {
+            this.empreendimentoFilter = String(empreendimentoId);
+          } else if (empreendimentoValido) {
+            this.empreendimentoFilter = '';
+          }
+          return;
+        }
+
+        this.service.getEmpreendimentos().subscribe((todosEmpreendimentos) => {
+          this.empreendimentos = (todosEmpreendimentos ?? []).filter(item => Number(item.constructorId) === constructorId);
+
+          if (empreendimentoValido && this.empreendimentos.some(item => Number(item.id) === empreendimentoId)) {
+            this.empreendimentoFilter = String(empreendimentoId);
+          } else if (empreendimentoValido) {
+            this.empreendimentoFilter = '';
+          }
+        });
+      });
+    };
+
+    if (empreendimentoValido) {
+      this.service.getEmpreendimentosById(empreendimentoId).subscribe({
+        next: (empreendimento) => {
+          const constructorId = Number(empreendimento?.constructorId);
+          carregarEmpreendimentosDaConstrutora(constructorId);
+        },
+        error: () => {
+          this.hideConstrutoraSelector = false;
+          this.empreendimentos = [];
+          this.empreendimentoFilter = '';
+        }
+      });
+    } else if (construtoraValida) {
+      carregarEmpreendimentosDaConstrutora(construtoraId);
+    } else {
+      this.hideConstrutoraSelector = false;
+    }
+
+    this.service.getConstrutora().subscribe((data) => {
+      this.construtora = data;
+    });
+
+    if (this.modo === 'criacao') {
       this.service.getFiliais().subscribe((data) => {
         this.filiais = data;
       });
     }
 
   }
-
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['propostaId'] && this.modo === 'visualizacao' && this.propostaId) {
       this.carregarProposta(this.propostaId);
     }
   }
 
+  private carregarDadosEquipe(): void {
+    this.authService.getUser().subscribe({
+      next: (user) => {
+        this.usuarioLogado = user;
+
+        if (this.authService.isGerente(user)) {
+          const gerenteId = Number(user.gerenteId ?? user.id ?? 0);
+          this.gerentes = gerenteId > 0
+            ? [{ id: gerenteId, name: user.nome, email: user.email ?? '', emailVerifiedAt: '', password: '', rememberToken: '', hidden: false, createdAt: '', updatedAt: '', cpf: '', address: '', cellphone: '', admissionDate: '', token: '', jobpositionId: 3, filial: 0, enterpriseVisibility: false, empregado: false, managerId: user.managerId ?? undefined, coordenatorId: user.coordenatorId ?? undefined, gestorId: user.gestorId ?? undefined }]
+            : [];
+
+          this.proposta.gerenteID = gerenteId > 0 ? gerenteId : '';
+          this.proposta.gerenteNome = user.nome;
+
+          if (gerenteId > 0) {
+            this.carregarEquipeDoGerente(gerenteId, true);
+          }
+          return;
+        }
+
+        this.service.getGerentes().subscribe({
+          next: (gerentes) => {
+            this.gerentes = gerentes ?? [];
+            this.sincronizarEquipeComProposta();
+          },
+          error: () => {
+            this.gerentes = [];
+          }
+        });
+      },
+      error: () => {
+        this.usuarioLogado = this.authService.getUserSnapshot();
+      }
+    });
+  }
+
+  private sincronizarEquipeComProposta(): void {
+    const gerenteId = Number(this.proposta.gerenteID);
+    if (gerenteId > 0) {
+      this.carregarEquipeDoGerente(gerenteId, true);
+    }
+  }
+
+  private carregarEquipeDoGerente(gerenteId: number, preservarSelecao: boolean): void {
+    if (!gerenteId) {
+      this.vendedoresFiltrados = [];
+      this.coordenadoresFiltrados = [];
+      if (!preservarSelecao) {
+        this.proposta.corretorID = '';
+        this.proposta.corretorNome = '';
+        this.proposta.coordenadorID = '';
+        this.proposta.coordenadorNome = '';
+      }
+      return;
+    }
+
+    forkJoin({
+      vendedores: this.service.getVendedoresPorGerente(gerenteId),
+      coordenadores: this.service.getCoordenadoresPorGerente(gerenteId)
+    }).subscribe({
+      next: ({ vendedores, coordenadores }) => {
+        this.vendedoresFiltrados = vendedores ?? [];
+        this.coordenadoresFiltrados = coordenadores ?? [];
+
+        if (!preservarSelecao && !this.vendedoresFiltrados.some(v => Number(v.id) === Number(this.proposta.corretorID))) {
+          this.proposta.corretorID = '';
+          this.proposta.corretorNome = '';
+        }
+
+        if (!preservarSelecao && !this.coordenadoresFiltrados.some(c => Number(c.id) === Number(this.proposta.coordenadorID))) {
+          this.proposta.coordenadorID = '';
+          this.proposta.coordenadorNome = '';
+        }
+
+        this.sincronizarNomesEquipe();
+      },
+      error: () => {
+        this.vendedoresFiltrados = [];
+        this.coordenadoresFiltrados = [];
+      }
+    });
+  }
+
+  onGerenteChange(): void {
+    const gerenteId = Number(this.proposta.gerenteID);
+    const gerente = this.gerentes.find(g => Number(g.id) === gerenteId);
+    this.proposta.gerenteNome = gerente?.name ?? '';
+    this.proposta.corretorID = '';
+    this.proposta.corretorNome = '';
+    this.proposta.coordenadorID = '';
+    this.proposta.coordenadorNome = '';
+    this.carregarEquipeDoGerente(gerenteId, false);
+  }
+
+  onCorretorChange(): void {
+    const corretor = this.vendedoresFiltrados.find(v => Number(v.id) === Number(this.proposta.corretorID));
+    this.proposta.corretorNome = corretor?.name ?? '';
+  }
+
+  onCoordenadorChange(): void {
+    const coordenador = this.coordenadoresFiltrados.find(c => Number(c.id) === Number(this.proposta.coordenadorID));
+    this.proposta.coordenadorNome = coordenador?.name ?? '';
+  }
+
+  private sincronizarNomesEquipe(): void {
+    const gerente = this.gerentes.find(g => Number(g.id) === Number(this.proposta.gerenteID));
+    if (gerente) {
+      this.proposta.gerenteNome = gerente.name;
+    }
+
+    this.onCorretorChange();
+    this.onCoordenadorChange();
+  }
+
+  gerenteDropdownDesabilitado(): boolean {
+    if (this.modo === 'visualizacao' && !this.editando) {
+      return true;
+    }
+
+    return this.authService.isGerente(this.usuarioLogado);
+  }
+
+  equipeDropdownDesabilitada(): boolean {
+    return this.modo === 'visualizacao' && !this.editando;
+  }
 
   groupUnits() {
     const byBloco = new Map<string, Map<number, Apartamento[]>>();
@@ -228,15 +433,48 @@ export class EspelhoComponent implements OnInit, OnChanges {
   }
 
   changeEmpreendimento() {
-    this.apartamentos = []
-    this.service.getApartamentEspelho(this.empreendimentoFilter).subscribe((data) => {
-      this.apartamentos = data
-      this.proposta.empreendimentoID = this.empreendimentoFilter
-      this.grupos = this.groupByBlocoAndAndar(data);
+    this.carregarUnidadesDoEmpreendimento(this.empreendimentoFilter);
+  }
 
+  private carregarUnidadesDoEmpreendimento(empreendimentoId: string | number) {
+    const empreendimentoSelecionado = String(empreendimentoId ?? '');
+
+    this.empreendimentoFilter = empreendimentoSelecionado;
+    this.apartamentos = []
+    this.grupos = []
+    this.unidadeFilter = ''
+    this.unidadeSelecionada = ''
+    this.proposta.unidadeID = ''
+    this.proposta.vlrUnidade = 0
+
+    if (!empreendimentoSelecionado || empreendimentoSelecionado === '0') {
+      this.proposta.empreendimentoID = '';
+      return;
+    }
+
+    this.service.getApartamentEspelho(empreendimentoSelecionado).subscribe((data) => {
+      this.apartamentos = data ?? []
+      this.proposta.empreendimentoID = empreendimentoSelecionado
+      this.grupos = this.groupByBlocoAndAndar(this.apartamentos);
+      this.aplicarUnidadeInicial();
     })
   }
 
+  private aplicarUnidadeInicial(): void {
+    if (this.unidadeInicialAplicada || !this.unidadeIdInicial) {
+      return;
+    }
+
+    const unidade = this.apartamentos.find((item) => Number(item.id) === this.unidadeIdInicial);
+    if (!unidade) {
+      return;
+    }
+
+    this.unidadeInicialAplicada = true;
+    this.unidadeFilter = String(unidade.id);
+    this.setUnit(unidade.id, unidade.valor, String(unidade.numero));
+    setTimeout(() => this.modalReserva?.show());
+  }
 
   changeEnterprise() {
     this.service.getEmpreendimentosBYConstrutor(this.construtorFilter).subscribe((data) => {
@@ -244,9 +482,25 @@ export class EspelhoComponent implements OnInit, OnChanges {
     })
 
     this.apartamentos = []
+    this.grupos = []
+    this.empreendimentoFilter = ''
+    this.unidadeFilter = ''
   }
 
+  onUnidadeChange() {
+    const unidadeId = Number(this.unidadeFilter);
+    const unidadeSelecionada = this.apartamentos.find((item) => Number(item.id) === unidadeId);
 
+    if (!unidadeSelecionada) {
+      return;
+    }
+
+    this.proposta.unidadeID = unidadeSelecionada.id.toString();
+    this.proposta.vlrUnidade = unidadeSelecionada.valor;
+    this.unidadeSelecionada = String(unidadeSelecionada.numero);
+    this.resetarEstadoSegundoProponente();
+    this.modalReserva.show();
+  }
   salvar() {
     if (!this.proposta.clienteName || !this.proposta.cnpjCpf) {
       alert('Preencha Nome e CPF do 1º comprador!');
@@ -264,29 +518,34 @@ export class EspelhoComponent implements OnInit, OnChanges {
       this.proposta.bairro = data.bairro
       this.proposta.cidade = data.localidade
       this.proposta.estado = data.uf
+      this.copiarEndereco();
     })
 
   }
 
   copiarEndereco() {
     if (this.mesmoEndereco) {
-      this.cep2 = this.proposta.cep;
-      this.rua2 = this.proposta.rua;
-      this.nro2 = this.proposta.nro;
-      this.comp2 = this.proposta.comp;
-      this.bairro2 = this.proposta.bairro;
-      this.cidade2 = this.proposta.cidade;
-      this.estado2 = this.proposta.estado;
+      this.endereco2 = {
+        cep: this.proposta.cep || '',
+        rua: this.proposta.rua || '',
+        nro: this.proposta.nro || '',
+        comp: this.proposta.comp || '',
+        bairro: this.proposta.bairro || '',
+        cidade: this.proposta.cidade || '',
+        estado: this.proposta.estado || ''
+      };
     }
   }
 
   buscarCep2() {
-    let cep = this.cep2.replace('-', '');
+    const cep = (this.endereco2.cep || '').replace(/\D/g, '');
+    if (!cep) return;
+
     this.service.getVIACEP(cep).subscribe((data) => {
-      this.rua2 = data.logradouro;
-      this.bairro2 = data.bairro;
-      this.cidade2 = data.localidade;
-      this.estado2 = data.uf;
+      this.endereco2.rua = data.logradouro;
+      this.endereco2.bairro = data.bairro;
+      this.endereco2.cidade = data.localidade;
+      this.endereco2.estado = data.uf;
     });
   }
 
@@ -415,6 +674,7 @@ export class EspelhoComponent implements OnInit, OnChanges {
           this.proposta.phoneOneSecondary
         );
         this.editando = false;
+        this.sincronizarEquipeComProposta();
 
         if (this.modo === 'visualizacao') {
           setTimeout(() => this.modalReserva?.show(), 0);
@@ -518,6 +778,8 @@ export class EspelhoComponent implements OnInit, OnChanges {
       return;
     }
 
+    this.sincronizarNomesEquipe();
+
     if (!this.isPropostaValida()) {
       this.toast.warning('Preencha todos os campos obrigatórios da proposta.');
       return;
@@ -577,6 +839,10 @@ export class EspelhoComponent implements OnInit, OnChanges {
 
     // Condições
     if (!this.proposta.condicao || this.proposta.condicao.length === 0) return false;
+
+    if (!this.proposta.gerenteID) return false;
+    if (!this.proposta.corretorID) return false;
+    if (!this.proposta.coordenadorID) return false;
 
     // 2º proponente (se estiver visível) - NOVO
     if (this.mostrarSegundoProponente) {
@@ -639,6 +905,49 @@ export class EspelhoComponent implements OnInit, OnChanges {
     });
   }
 
+  sugerirVencimento(c: Condicao, i: number): void {
+    if (c?.descricao !== 'Mensal') {
+      return;
+    }
+
+    c.vencimento = this.proximoVencimentoMensal();
+    this.recalc(i);
+  }
+
+  validarVencimento(c: Condicao, i: number): void {
+    if (!c || c.descricao !== 'Mensal' || !c.vencimento) {
+      return;
+    }
+
+    const data = moment(c.vencimento, 'YYYY-MM-DD', true);
+    const dia = data.date();
+
+    if (!data.isValid() || ![10, 20, 30].includes(dia)) {
+      this.toast.warning('Para parcelas mensais, o vencimento deve ser dia 10, 20 ou 30.');
+      c.vencimento = this.proximoVencimentoMensal();
+      this.recalc(i);
+    }
+  }
+
+  private proximoVencimentoMensal(): string {
+    const hoje = moment();
+    const proximoMes = hoje.clone().add(1, 'month').startOf('month');
+
+    let diaSugerido = 30;
+
+    if (hoje.date() <= 10) {
+      diaSugerido = 10;
+    } else if (hoje.date() <= 20) {
+      diaSugerido = 20;
+    }
+
+    const diasPermitidos = [10, 20, 30].filter(dia => dia <= proximoMes.daysInMonth());
+    const diaFinal = diasPermitidos.includes(diaSugerido)
+      ? diaSugerido
+      : diasPermitidos[diasPermitidos.length - 1];
+
+    return proximoMes.clone().date(diaFinal).format('YYYY-MM-DD');
+  }
   vlrTotal() {
     return this.proposta.condicao.reduce((acc, c) => acc + (Number(c?.valorTotal) || 0), 0);
   }
@@ -675,6 +984,7 @@ export class EspelhoComponent implements OnInit, OnChanges {
     // garante fundo branco no PDF (evita transparência)
     const originalBg = element.style.backgroundColor;
     element.style.backgroundColor = '#ffffff';
+    this.gerandoPdf = true;
 
     // espera 1 tick para garantir que o modal terminou de renderizar
     setTimeout(async () => {
@@ -712,6 +1022,7 @@ export class EspelhoComponent implements OnInit, OnChanges {
         console.error(e);
         this.toast.error('Erro ao gerar PDF da proposta.');
       } finally {
+        this.gerandoPdf = false;
         element.style.backgroundColor = originalBg;
       }
     }, 100);
@@ -770,9 +1081,9 @@ export class EspelhoComponent implements OnInit, OnChanges {
   statusClass(s?: string) {
     const x = (s || '').toUpperCase();
     return {
-      disp: x === 'AVAILABLE' || x === 'DISPONÍVEL',
+      disp: x === 'AVAILABLE' || x === 'OPEN' || x === 'DISPONIVEL' || x === 'DISPONÍVEL',
       res: x === 'RESERVED' || x === 'RESERVADO',
-      vend: x === 'SELL' || x === 'VENDIDO'
+      vend: x === 'SELL' || x === 'SOLD' || x === 'VENDIDO'
     };
   }
 
@@ -822,6 +1133,31 @@ export class EspelhoComponent implements OnInit, OnChanges {
   }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

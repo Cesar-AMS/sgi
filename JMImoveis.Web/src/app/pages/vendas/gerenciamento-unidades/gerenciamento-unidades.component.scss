@@ -1,0 +1,190 @@
+.gerenciamento-container {
+    padding: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+
+    h1 {
+        margin: 0;
+        font-size: 24px;
+    }
+
+    p {
+        margin: 4px 0 0;
+        color: #666;
+    }
+}
+
+.filtros,
+.form-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.filtros {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.filtro-group,
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+        font-weight: 600;
+        color: #333;
+    }
+
+    input,
+    select {
+        min-height: 38px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 8px 10px;
+    }
+}
+
+.form-card h2 {
+    margin: 0 0 16px;
+    font-size: 18px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(140px, 1fr));
+    gap: 16px;
+}
+
+.form-wide {
+    grid-column: span 2;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+button {
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-small {
+    min-height: 36px;
+    padding: 8px 14px;
+}
+
+.btn-primary {
+    background: #0d6efd;
+    color: #fff;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: #fff;
+}
+
+.btn-small {
+    background: #f3f4f6;
+    color: #111827;
+    white-space: nowrap;
+}
+
+.btn-small.danger {
+    background: #dc3545;
+    color: #fff;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+th,
+td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+    vertical-align: middle;
+}
+
+th {
+    background: #f9fafb;
+    font-weight: 700;
+}
+
+.acoes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.acoes-header {
+    text-align: center;
+}
+
+.status-badge {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-weight: 700;
+    color: #111;
+}
+
+.status-disponivel {
+    background: #d1fae5;
+}
+
+.status-reservada {
+    background: #fef3c7;
+}
+
+.status-vendida {
+    background: #fee2e2;
+}
+
+.loading,
+.empty-state {
+    text-align: center;
+    padding: 32px;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .header,
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filtros,
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-wide {
+        grid-column: span 1;
+    }
+}

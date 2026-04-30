@@ -6,12 +6,48 @@ namespace JMImoveisAPI.Services
     public class ProposalService : IProposalService
     {
         private readonly IVendaRepository _repo;
+        private readonly IClienteRepository _clienteRepository;
+        private readonly IVendaCriacaoService _vendaCriacaoService;
 
-        public ProposalService(IVendaRepository repo) => _repo = repo;
+        public ProposalService(
+            IVendaRepository repo,
+            IClienteRepository clienteRepository,
+            IVendaCriacaoService vendaCriacaoService)
+        {
+            _repo = repo;
+            _clienteRepository = clienteRepository;
+            _vendaCriacaoService = vendaCriacaoService;
+        }
 
         public async Task<long> CreateAsync(PropostaReservaDto dto, CancellationToken ct)
         {
+            if (dto is null)
+            {
+                throw new ArgumentException("Payload invalido.");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.UnidadeID) ||
+                string.IsNullOrWhiteSpace(dto.ClienteName) ||
+                string.IsNullOrWhiteSpace(dto.CnpjCPF) ||
+                dto.VlrUnidade <= 0)
+            {
+                throw new ArgumentException("Unidade, cliente, CPF/CNPJ e valor da oferta sao obrigatorios.");
+            }
+
             var proposal = MapProposal(dto);
+
+            var unitStatus = await _repo.GetUnitStatusAsync(proposal.UnidadeId, ct);
+            if (!string.Equals((unitStatus ?? string.Empty).Trim(), "OPEN", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Unidade indisponivel para proposta.");
+            }
+
+            if (await _repo.HasActiveProposalForUnitAsync(proposal.UnidadeId, ct))
+            {
+                throw new InvalidOperationException("Ja existe proposta ativa para esta unidade.");
+            }
+
+            proposal.Status = ProposalStatus.EM_ANALISE.ToString();
             var conds = MapConditions(dto);
             return await _repo.CreateAsync(proposal, conds, ct);
         }
@@ -44,9 +80,9 @@ namespace JMImoveisAPI.Services
             return proposal;
         }
 
-        public async Task<IEnumerable<Proposal>> ListAsync(DateTime? de, DateTime? ate, string? status, int? user, int? gerente, int? corretor, CancellationToken ct)
+        public async Task<IEnumerable<Proposal>> ListAsync(DateTime? de, DateTime? ate, string? status, int? user, int? gerente, int? coordenador, int? corretor, int? construtora, int? empreendimento, CancellationToken ct)
         {
-            var proposals = await _repo.ListAsync(de, ate, NormalizeFilterStatus(status), user, gerente, corretor, ct);
+            var proposals = await _repo.ListAsync(de, ate, NormalizeFilterStatus(status), user, gerente, coordenador, corretor, construtora, empreendimento, ct);
             foreach (var proposal in proposals)
             {
                 proposal.Status = NormalizeStatus(proposal.Status);
@@ -86,18 +122,244 @@ namespace JMImoveisAPI.Services
                 return (false, "INVALID_STATUS", proposal);
             }
 
-            if (nextStatus == ProposalStatus.APROVADO)
+            try
             {
-                await _repo.UpdateUnitStatusAsync(proposal.UnidadeId, "RESERVED", ct);
+                if (nextStatus == ProposalStatus.APROVADO)
+                {
+                    await _repo.UpdateUnitStatusAsync(proposal.UnidadeId, "SELL", ct);
+                    await CriarVendaDaPropostaAsync(proposal);
+                }
+                else if (nextStatus == ProposalStatus.REPROVADO)
+                {
+                    await _repo.UpdateUnitStatusAsync(proposal.UnidadeId, "OPEN", ct);
+                }
             }
-            else if (nextStatus == ProposalStatus.REPROVADO)
+            catch
             {
-                await _repo.UpdateUnitStatusAsync(proposal.UnidadeId, "OPEN", ct);
+                if (nextStatus == ProposalStatus.APROVADO)
+                {
+                    await _repo.UpdateUnitStatusAsync(proposal.UnidadeId, "OPEN", ct);
+                }
+
+                await _repo.UpdateProposalStatusAsync(id, nextStatus.ToString(), expectedStatus.ToString(), ct);
+                proposal.Status = currentStatus;
+                return (false, "SALE_CREATE_FAILED", proposal);
             }
 
             proposal.Status = nextStatus.ToString();
             return (true, null, proposal);
         }
+
+        private async Task CriarVendaDaPropostaAsync(Proposal proposal)
+        {
+            var customerId = await GarantirClienteAsync(proposal);
+            var sale = MapSaleFromProposal(proposal, customerId);
+            await _vendaCriacaoService.CreateAsync(sale);
+        }
+
+        private async Task<int?> GarantirClienteAsync(Proposal proposal)
+        {
+            var termos = (proposal.ClienteName ?? string.Empty).Trim();
+            var cpf = SomenteDigitos(proposal.CnpjCpf);
+
+            if (!string.IsNullOrWhiteSpace(termos))
+            {
+                var candidatos = await _clienteRepository.GetByTerms(termos);
+                var existente = candidatos
+                    .Where(c => c is not null)
+                    .FirstOrDefault(c =>
+                        (!string.IsNullOrWhiteSpace(c!.CpfCnpj) && SomenteDigitos(c.CpfCnpj) == cpf) ||
+                        string.Equals((c!.Name ?? string.Empty).Trim(), termos, StringComparison.OrdinalIgnoreCase));
+
+                if (existente?.Id > 0)
+                {
+                    return existente.Id;
+                }
+            }
+
+            var cliente = new Cliente
+            {
+                Name = string.IsNullOrWhiteSpace(proposal.ClienteName) ? "Cliente da Proposta" : proposal.ClienteName,
+                CpfCnpj = proposal.CnpjCpf,
+                Email = proposal.EmailCliente,
+                Cellphone = proposal.PhoneOne,
+                Cellphone2 = proposal.PhoneTwo,
+                Cep = proposal.Cep,
+                Address = proposal.Rua,
+                AddressNumber = proposal.Nro,
+                Complement = proposal.Comp,
+                Neighborhood = proposal.Bairro,
+                City = proposal.Cidade,
+                State = proposal.Estado,
+                Profession = proposal.Profissao,
+                Income = proposal.Renda
+            };
+
+            return await _clienteRepository.CreateAsync(cliente);
+        }
+
+        private static VendasV2 MapSaleFromProposal(Proposal proposal, int? customerId)
+        {
+            var parcelasStart = proposal.Condicao
+                .OrderBy(c => c.Vencimento)
+                .Select(c => (DateTime?)c.Vencimento)
+                .FirstOrDefault();
+
+            return new VendasV2
+            {
+                Status = "RESERVED",
+                UnitValue = proposal.VlrUnidade,
+                StartValue = CalcularValorEntrada(proposal),
+                ValueToConstructor = proposal.VlrUnidade,
+                PercentageToRealtor = 0,
+                PercentageToManager = 0,
+                ParcelsStart = parcelasStart,
+                RealtorComission = 0,
+                RealtorComissionRemaining = 0,
+                RealtorComissionStatus = "WAITING",
+                ManagerComission = 0,
+                ManagerComissionRemaining = 0,
+                ManagerComissionStatus = "WAITING",
+                GenerateNotification = false,
+                NetEarnings = proposal.VlrUnidade,
+                GrossEarnings = proposal.VlrUnidade,
+                BranchId = 1,
+                EnterpriseId = checked((int)proposal.EmpreendimentoId),
+                UnitId = checked((int)proposal.UnidadeId),
+                RealtorId = proposal.CorretorId.HasValue ? checked((int)proposal.CorretorId.Value) : null,
+                ManagerId = proposal.GerenteId.HasValue ? checked((int)proposal.GerenteId.Value) : null,
+                PaymentTypesId = 1,
+                SelledAt = DateTime.Now,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
+                ValueToRealstate = proposal.VlrUnidade,
+                PercentageToRealstate = 0,
+                PercentageToFinancial = 0,
+                FinancialComission = 0,
+                FinancialComissionStatus = "WAITING",
+                PercentageToTax = 0,
+                TaxComission = 0,
+                TaxComissionStatus = "PAID",
+                ContractNumber = $"PROP-{proposal.Id}",
+                CustomerId = customerId,
+                Cliente = proposal.ClienteName,
+                EmailCustomer = proposal.EmailCliente,
+                PhoneCustomer = proposal.PhoneOne,
+                CpfCnpj = proposal.CnpjCpf,
+                EnterpriseName = proposal.EnterPriseName,
+                UnitName = proposal.UnitName,
+                Acts = BuildActs(proposal.Condicao),
+                Intermediarias = BuildIntermediarias(proposal.Condicao),
+                Parcelas = BuildParcelas(proposal.Condicao)
+            };
+        }
+
+        private static decimal CalcularValorEntrada(Proposal proposal)
+        {
+            return proposal.Condicao
+                .Where(c => EhEntrada(c.Descricao) || EhAto(c.Descricao))
+                .Sum(c => c.ValorTotal > 0 ? c.ValorTotal : c.ValorParcela * c.Qtde);
+        }
+
+        private static List<Acts?>? BuildActs(IEnumerable<ProposalCondition> condicoes)
+        {
+            var result = new List<Acts?>();
+            var sequence = 1;
+
+            foreach (var condicao in condicoes.Where(c => EhAto(c.Descricao)))
+            {
+                foreach (var parcela in ExpandCondition(condicao))
+                {
+                    result.Add(new Acts
+                    {
+                        Parcel = sequence++,
+                        Value = parcela.Valor,
+                        Date = parcela.DueDate,
+                        Observations = condicao.Descricao,
+                        Status = "WAITING"
+                    });
+                }
+            }
+
+            return result.Count > 0 ? result : null;
+        }
+
+        private static List<Installaments?>? BuildIntermediarias(IEnumerable<ProposalCondition> condicoes)
+        {
+            var result = new List<Installaments?>();
+            var sequence = 1;
+
+            foreach (var condicao in condicoes.Where(c => EhEntrada(c.Descricao) || EhSinal(c.Descricao)))
+            {
+                foreach (var parcela in ExpandCondition(condicao))
+                {
+                    result.Add(new Installaments
+                    {
+                        Id = sequence++,
+                        VlrInstallament = parcela.Valor,
+                        DueDate = parcela.DueDate.ToString("yyyy-MM-dd"),
+                        Obs = condicao.Descricao,
+                        Status = "WAITING"
+                    });
+                }
+            }
+
+            return result.Count > 0 ? result : null;
+        }
+
+        private static List<Installaments?>? BuildParcelas(IEnumerable<ProposalCondition> condicoes)
+        {
+            var result = new List<Installaments?>();
+            var sequence = 1;
+
+            foreach (var condicao in condicoes.Where(c => !EhAto(c.Descricao) && !EhEntrada(c.Descricao) && !EhSinal(c.Descricao)))
+            {
+                foreach (var parcela in ExpandCondition(condicao))
+                {
+                    result.Add(new Installaments
+                    {
+                        Id = sequence++,
+                        VlrInstallament = parcela.Valor,
+                        DueDate = parcela.DueDate.ToString("yyyy-MM-dd"),
+                        Obs = condicao.Descricao,
+                        Status = "WAITING"
+                    });
+                }
+            }
+
+            return result.Count > 0 ? result : null;
+        }
+
+        private static IEnumerable<(DateTime DueDate, decimal Valor)> ExpandCondition(ProposalCondition condicao)
+        {
+            var quantidade = Math.Max(condicao.Qtde, 1);
+            for (var index = 0; index < quantidade; index++)
+            {
+                yield return (CalcularVencimento(condicao, index), condicao.ValorParcela);
+            }
+        }
+
+        private static DateTime CalcularVencimento(ProposalCondition condicao, int index)
+        {
+            var descricao = (condicao.Descricao ?? string.Empty).Trim().ToUpperInvariant();
+            return descricao switch
+            {
+                "ANUAL" => condicao.Vencimento.AddYears(index),
+                _ => condicao.Vencimento.AddMonths(index)
+            };
+        }
+
+        private static bool EhAto(string? descricao)
+            => string.Equals((descricao ?? string.Empty).Trim(), "Ato", StringComparison.OrdinalIgnoreCase);
+
+        private static bool EhEntrada(string? descricao)
+            => string.Equals((descricao ?? string.Empty).Trim(), "Entrada", StringComparison.OrdinalIgnoreCase);
+
+        private static bool EhSinal(string? descricao)
+            => string.Equals((descricao ?? string.Empty).Trim(), "Sinal", StringComparison.OrdinalIgnoreCase);
+
+        private static string SomenteDigitos(string? valor)
+            => new string((valor ?? string.Empty).Where(char.IsDigit).ToArray());
 
         private static Proposal MapProposal(PropostaReservaDto dto)
         {
@@ -139,6 +401,7 @@ namespace JMImoveisAPI.Services
                 Estado = dto.Estado,
                 CorretorId = long.TryParse(dto.CorretorID, out var corretorId) ? corretorId : null,
                 GerenteId = long.TryParse(dto.GerenteID, out var gerenteId) ? gerenteId : null,
+                CoordenadorId = long.TryParse(dto.CoordenadorID, out var coordenadorId) ? coordenadorId : null,
                 Status = NormalizeStatus(dto.Status)
             };
         }

@@ -1,5 +1,7 @@
 ﻿import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
+import { EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BsModalRef, ModalDirective } from 'ngx-bootstrap/modal';
 import { ApiService } from 'src/app/core/services/api.service';
 import { ProposalsService } from 'src/app/core/services/proposals.service';
@@ -8,19 +10,42 @@ import { Condicao } from '../empreendimentos/espelho/espelho.component';
 import moment from 'moment';
 import { ToastrService } from 'ngx-toastr';
 import { Apartamento } from 'src/app/core/data/empreendimento';
-import { Empreendimento } from 'src/app/models/ContaBancaria';
+import { Construtoras, Empreendimento } from 'src/app/models/ContaBancaria';
 import { PageChangedEvent } from 'ngx-bootstrap/pagination';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 export type PropostaStatus = 'RASCUNHO' | 'EM_ANALISE' | 'APROVADO' | 'REPROVADO';
 
+export interface FichaPropostaInicial {
+  unidadeId: number;
+  unidadeNumero?: string;
+  empreendimentoId?: number;
+  valor?: number;
+}
+
+interface Usuario {
+  id: number;
+  name?: string;
+  nome?: string;
+  gerenteId?: number;
+  managerId?: number;
+  gestorId?: number;
+  coordenadorId?: number;
+  coordenatorId?: number;
+  email?: string;
+}
+
 @Component({
   selector: 'app-propostas',
   templateUrl: './propostas.component.html',
   styleUrls: ['./propostas.component.scss']
 })
-export class PropostasComponent implements OnInit {
+export class PropostasComponent implements OnInit, OnChanges {
+  @Input() fichaInicial?: FichaPropostaInicial | null;
+  @Input() somenteModal = false;
+  @Output() fichaFechada = new EventEmitter<void>();
+
   form!: FormGroup;
   loading = false;
   items: PropostaReserva[] = [];
@@ -34,37 +59,314 @@ export class PropostasComponent implements OnInit {
   @ViewChild('areaA4Ref', { static: false }) areaA4Ref!: ElementRef<HTMLElement>;
 
   modalRef?: BsModalRef;
-  proposta: PropostaReserva = {} as PropostaReserva;
+  proposta: PropostaReserva = this.criarPropostaVazia();
   selectedProposalId?: number;
   approving = false;
+  construtoras: Construtoras[] = [];
   empreendimentos: Empreendimento[] = [];
-  gerentes: any[] = [];
-  corretores: any[] = [];
+  gerentes: Usuario[] = [];
+  corretores: Usuario[] = [];
+  coordenadores: Usuario[] = [];
+  vendedores: Usuario[] = [];
+  todosCoordenadores: Usuario[] = [];
+  todosVendedores: Usuario[] = [];
   construtorFilter = '';
   apartamentos: Apartamento[] = [];
   today = new Date();
+  voltarAoEspelho = false;
+  assinatura1: string | null = null;
+  assinatura2: string | null = null;
+  mostrarSegundoProponente = false;
+  mesmoEndereco = true;
+  endereco2 = {
+    cep: '',
+    rua: '',
+    nro: '',
+    comp: '',
+    bairro: '',
+    cidade: '',
+    estado: ''
+  };
 
   constructor(
     private fb: FormBuilder,
+    private route: ActivatedRoute,
+    private router: Router,
     private toast: ToastrService,
     private svc: ApiService,
     private proposalsService: ProposalsService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
-    const hoje = new Date();
-    const de = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0, 10);
-    const ate = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().slice(0, 10);
-
     this.form = this.fb.group({
-      de: [de],
-      ate: [ate],
-      status: ['ALL'],
+      de: [''],
+      ate: [''],
+      status: ['EM_ANALISE'],
       gerente: [''],
-      corretor: ['']
+      coordenador: [''],
+      corretor: [''],
+      construtora: [''],
+      empreendimento: ['']
     });
 
-    this.buscar();
+    if (!this.somenteModal) {
+      this.buscar();
+      this.abrirFichaPorQueryParams();
+    }
+
+    this.carregarEquipe();
+    this.carregarConstrutorasFiltro();
+    this.carregarEmpreendimentosFiltro();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['fichaInicial'] && this.fichaInicial) {
+      this.abrirFichaInicial(this.fichaInicial);
+    }
+  }
+
+  private abrirFichaPorQueryParams(): void {
+    const unidadeId = Number(this.route.snapshot.queryParamMap.get('unidadeId'));
+    const unidadeNumero = this.route.snapshot.queryParamMap.get('unidadeNumero');
+    const empreendimentoId = Number(this.route.snapshot.queryParamMap.get('empreendimentoId'));
+    const valor = Number(this.route.snapshot.queryParamMap.get('valor'));
+    this.voltarAoEspelho = this.route.snapshot.queryParamMap.get('origem') === 'espelho';
+
+    if (!Number.isFinite(unidadeId) || unidadeId <= 0) {
+      return;
+    }
+
+    this.proposta = {
+      ...this.proposta,
+      unidadeID: String(unidadeId),
+      unitName: unidadeNumero || String(unidadeId),
+      empreendimentoID: Number.isFinite(empreendimentoId) && empreendimentoId > 0 ? String(empreendimentoId) : '',
+      vlrUnidade: Number.isFinite(valor) ? valor : 0,
+      status: 'RASCUNHO',
+      condicao: this.proposta?.condicao ?? []
+    } as PropostaReserva;
+    this.resetarSegundoProponente();
+
+    setTimeout(() => this.modalReserva?.show());
+  }
+
+  private abrirFichaInicial(ficha: FichaPropostaInicial): void {
+    this.proposta = {
+      ...this.criarPropostaVazia(),
+      unidadeID: String(ficha.unidadeId),
+      unitName: ficha.unidadeNumero || String(ficha.unidadeId),
+      empreendimentoID: ficha.empreendimentoId ? String(ficha.empreendimentoId) : '',
+      vlrUnidade: ficha.valor ?? 0,
+      status: 'RASCUNHO',
+      condicao: []
+    };
+    this.resetarSegundoProponente();
+
+    setTimeout(() => this.modalReserva?.show());
+  }
+
+  private carregarEquipe(): void {
+    this.carregarGerentes();
+    this.carregarTodosCoordenadores();
+    this.carregarTodosVendedores();
+  }
+
+  carregarConstrutorasFiltro(): void {
+    this.svc.getConstrutora().subscribe({
+      next: (data) => this.construtoras = data ?? [],
+      error: () => this.construtoras = []
+    });
+  }
+
+  carregarEmpreendimentosFiltro(): void {
+    const construtoraId = this.form?.get('construtora')?.value;
+
+    if (construtoraId) {
+      this.svc.getEmpreendimentosBYConstrutor(construtoraId).subscribe({
+        next: (data) => this.empreendimentos = data ?? [],
+        error: () => this.empreendimentos = []
+      });
+      return;
+    }
+
+    this.svc.getEmpreendimentos().subscribe({
+      next: (data) => this.empreendimentos = data ?? [],
+      error: () => this.empreendimentos = []
+    });
+  }
+
+  onConstrutoraFiltroChange(): void {
+    this.form.patchValue({ empreendimento: '' });
+    this.carregarEmpreendimentosFiltro();
+  }
+
+  carregarGerentes(): void {
+    this.svc.getGerentes().subscribe({
+      next: (data) => this.gerentes = data ?? [],
+      error: () => this.gerentes = []
+    });
+  }
+
+  carregarTodosCoordenadores(): void {
+    this.svc.getCoordenadores().subscribe({
+      next: (data) => {
+        this.todosCoordenadores = data ?? [];
+        this.aplicarFiltroCoordenadores(false);
+      },
+      error: () => {
+        this.todosCoordenadores = [];
+        this.coordenadores = [];
+      }
+    });
+  }
+
+  carregarTodosVendedores(): void {
+    this.svc.getCorretores().subscribe({
+      next: (data) => {
+        this.todosVendedores = data ?? [];
+        this.corretores = data ?? [];
+        this.aplicarFiltroVendedores(false);
+      },
+      error: () => {
+        this.todosVendedores = [];
+        this.corretores = [];
+        this.vendedores = [];
+      }
+    });
+  }
+
+  onGerenteChange(): void {
+    const gerente = this.gerentes.find(g => Number(g.id) === Number(this.proposta.gerenteID));
+    this.proposta.gerenteNome = this.nomeUsuario(gerente);
+    this.proposta.coordenadorID = '';
+    this.proposta.coordenadorNome = '';
+    this.proposta.corretorID = '';
+    this.proposta.corretorNome = '';
+    this.aplicarFiltroCoordenadores(false);
+    this.vendedores = [];
+  }
+
+  onCoordenadorChange(): void {
+    const coordenador = this.coordenadores.find(c => Number(c.id) === Number(this.proposta.coordenadorID));
+    this.proposta.coordenadorNome = this.nomeUsuario(coordenador);
+    this.proposta.corretorID = '';
+    this.proposta.corretorNome = '';
+    this.aplicarFiltroVendedores(false);
+  }
+
+  onCorretorChange(): void {
+    const vendedor = this.vendedores.find(v => Number(v.id) === Number(this.proposta.corretorID));
+    this.proposta.corretorNome = this.nomeUsuario(vendedor);
+  }
+
+  private aplicarFiltroCoordenadores(preservarSelecao: boolean): void {
+    const gerenteId = Number(this.proposta.gerenteID);
+    if (!gerenteId) {
+      this.coordenadores = [];
+      if (!preservarSelecao) {
+        this.proposta.coordenadorID = '';
+      }
+      return;
+    }
+
+    this.coordenadores = this.todosCoordenadores.filter(c => this.usuarioGerenteId(c) === gerenteId);
+
+    if (!preservarSelecao && !this.coordenadores.some(c => Number(c.id) === Number(this.proposta.coordenadorID))) {
+      this.proposta.coordenadorID = '';
+      this.proposta.coordenadorNome = '';
+    }
+  }
+
+  private aplicarFiltroVendedores(preservarSelecao: boolean): void {
+    const coordenadorId = Number(this.proposta.coordenadorID);
+    if (!coordenadorId) {
+      this.vendedores = [];
+      if (!preservarSelecao) {
+        this.proposta.corretorID = '';
+      }
+      return;
+    }
+
+    this.vendedores = this.todosVendedores.filter(v => this.usuarioCoordenadorId(v) === coordenadorId);
+
+    if (!preservarSelecao && !this.vendedores.some(v => Number(v.id) === Number(this.proposta.corretorID))) {
+      this.proposta.corretorID = '';
+      this.proposta.corretorNome = '';
+    }
+  }
+
+  private usuarioGerenteId(usuario: Usuario): number {
+    return Number(usuario.gerenteId ?? usuario.managerId ?? usuario.gestorId ?? 0);
+  }
+
+  private usuarioCoordenadorId(usuario: Usuario): number {
+    return Number(usuario.coordenadorId ?? usuario.coordenatorId ?? 0);
+  }
+
+  private nomeUsuario(usuario?: Usuario): string {
+    return usuario?.name || usuario?.nome || '';
+  }
+
+  assinarProponente1(): void {
+    this.toast.info('Assinatura do Proponente 1 ainda nao implementada.');
+  }
+
+  assinarProponente2(): void {
+    this.toast.info('Assinatura do Proponente 2 ainda nao implementada.');
+  }
+
+  fecharFicha(): void {
+    this.modalReserva?.hide();
+
+    if (this.voltarAoEspelho) {
+      this.router.navigate(['/jm/vendas']);
+      return;
+    }
+
+    this.fichaFechada.emit();
+  }
+
+  private criarPropostaVazia(): PropostaReserva {
+    return {
+      id: 0,
+      empreendimentoID: '',
+      unidadeID: '',
+      vlrUnidade: 0,
+      engCaixa: false,
+      clienteName: '',
+      dateNascimento: '',
+      cnpjCpf: '',
+      rg: '',
+      emailCliente: '',
+      phoneOne: '',
+      phoneTwo: '',
+      estadoCivil: '',
+      profissao: '',
+      renda: '',
+      clienteNameSecondary: '',
+      dataNascimentoSecondary: '',
+      cnpjCPFSecondary: '',
+      rgSecondary: '',
+      emailClienteSecondary: '',
+      phoneOneSecondary: '',
+      phoneTwoSecondary: '',
+      estadoCivilSecondary: '',
+      profissaoSecondary: '',
+      rendaSecondary: '',
+      createdAt: '',
+      cep: '',
+      rua: '',
+      nro: '',
+      comp: '',
+      bairro: '',
+      cidade: '',
+      estado: '',
+      corretorID: '',
+      gerenteID: '',
+      coordenadorID: '',
+      status: 'RASCUNHO',
+      condicao: []
+    };
   }
 
   async downloadA4PrimeiraFolha() {
@@ -142,13 +444,17 @@ export class PropostasComponent implements OnInit {
 
     this.apartamentos = [];
   }
-
   buscar() {
     this.loading = true;
-    const { de, ate, status, gerente, corretor } = this.form.value;
+    const filtros = this.cleanFilters(this.form.value);
 
-    this.proposalsService.list({ de, ate, status, gerente, corretor }).subscribe({
+    console.log('📊 Filtros enviados:', filtros);  // ← ADICIONE
+
+    this.proposalsService.listarComFiltros(filtros).subscribe({
       next: res => {
+        console.log('📦 Dados recebidos da API:', res);  // ← ADICIONE
+        console.log('📏 Quantidade de propostas:', res?.length);  // ← ADICIONE
+
         this.items = (res || []).map(item => ({
           ...item,
           status: this.normalizeStatus(item.status)
@@ -156,13 +462,48 @@ export class PropostasComponent implements OnInit {
         this.page = 1;
         this.updatePagedItems();
       },
-      error: err => console.error(err),
+      error: err => console.error('❌ Erro na requisição:', err),
       complete: () => this.loading = false
     });
   }
 
+  private cleanFilters(filtros: any): any {
+    return Object.entries(filtros || {}).reduce((acc: any, [key, value]) => {
+      if (value === null || value === undefined || value === '' || value === 'ALL') {
+        return acc;
+      }
+
+      acc[key] = value;
+      return acc;
+    }, {});
+  }
+
   openModal(id: number) {
-    this.selectedProposalId = id;
+    this.proposalsService.getById(id).subscribe({
+      next: (proposta) => {
+        this.proposta = {
+          ...this.criarPropostaVazia(),
+          ...proposta,
+          status: this.normalizeStatus(proposta.status),
+          condicao: proposta.condicao ?? []
+        };
+        this.mostrarSegundoProponente = !!(
+          this.proposta.clienteNameSecondary ||
+          this.proposta.cnpjCPFSecondary ||
+          this.proposta.emailClienteSecondary ||
+          this.proposta.phoneOneSecondary
+        );
+        this.mesmoEndereco = true;
+        this.copiarEndereco();
+        this.aplicarFiltroCoordenadores(true);
+        this.aplicarFiltroVendedores(true);
+        this.modalReserva.show();
+      },
+      error: (err) => {
+        console.error(err);
+        this.toast.error(err.error?.message || 'Erro ao carregar proposta');
+      }
+    });
   }
 
   fecharVisualizacao(): void {
@@ -264,7 +605,7 @@ export class PropostasComponent implements OnInit {
   badgeClass(status: string) {
     const s = this.normalizeStatus(status);
     return {
-      'bg-secondary': s === 'RASCUNHO',
+      'bg-danger-subtle text-danger': s === 'RASCUNHO',
       'bg-warning text-dark': s === 'EM_ANALISE',
       'bg-success': s === 'APROVADO',
       'bg-danger': s === 'REPROVADO'
@@ -279,8 +620,45 @@ export class PropostasComponent implements OnInit {
       this.proposta.rua = data.logradouro;
       this.proposta.bairro = data.bairro;
       this.proposta.cidade = data.localidade;
-      this.proposta.estado = data.estado;
+      this.proposta.estado = data.estado || data.uf;
+      this.copiarEndereco();
     });
+  }
+
+  copiarEndereco(): void {
+    if (!this.mesmoEndereco) {
+      return;
+    }
+
+    this.endereco2 = {
+      cep: this.proposta.cep || '',
+      rua: this.proposta.rua || '',
+      nro: this.proposta.nro || '',
+      comp: this.proposta.comp || '',
+      bairro: this.proposta.bairro || '',
+      cidade: this.proposta.cidade || '',
+      estado: this.proposta.estado || ''
+    };
+  }
+
+  buscarCep2(): void {
+    const cep = (this.endereco2.cep || '').replace(/\D/g, '');
+    if (!cep) {
+      return;
+    }
+
+    this.svc.getVIACEP(cep).subscribe((data) => {
+      this.endereco2.rua = data.logradouro;
+      this.endereco2.bairro = data.bairro;
+      this.endereco2.cidade = data.localidade;
+      this.endereco2.estado = data.estado || data.uf;
+    });
+  }
+
+  private resetarSegundoProponente(): void {
+    this.mostrarSegundoProponente = false;
+    this.mesmoEndereco = true;
+    this.copiarEndereco();
   }
 
   vlrTotal() {
@@ -326,11 +704,11 @@ export class PropostasComponent implements OnInit {
   }
 
   saveUser() {
-    this.proposta.status = 'RASCUNHO';
+    this.proposta.status = 'EM_ANALISE';
 
     this.proposalsService.create(this.proposta).subscribe({
       next: () => {
-        this.toast.success('Proposta criada com sucesso');
+        this.toast.success('Proposta enviada para analise');
         this.buscar();
       },
       error: err => {

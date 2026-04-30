@@ -1,0 +1,152 @@
+<div class="gerenciamento-container">
+    <div class="header">
+        <div>
+            <h1>Gerenciamento de Unidades</h1>
+            <p>Cadastre, edite e altere a disponibilidade das unidades.</p>
+        </div>
+
+        <button type="button" class="btn-novo" (click)="novaUnidade()">
+            + Nova Unidade
+        </button>
+    </div>
+
+    <div class="filtros">
+        <div class="filtro-group">
+            <label for="construtora">Construtora:</label>
+            <select id="construtora" [(ngModel)]="construtoraFiltro" (change)="onConstrutoraChange()">
+                <option [ngValue]="0">Todas</option>
+                <option *ngFor="let c of construtoras" [ngValue]="c.id">
+                    {{ c.nome }}
+                </option>
+            </select>
+        </div>
+
+        <div class="filtro-group">
+            <label for="empreendimento">Empreendimento:</label>
+            <select id="empreendimento" [(ngModel)]="empreendimentoFiltro" (change)="filtrar()">
+                <option [ngValue]="0">Todos</option>
+                <option *ngFor="let e of empreendimentos" [ngValue]="e.id">
+                    {{ e.nome }}
+                </option>
+            </select>
+        </div>
+
+    </div>
+
+    <form class="form-card" *ngIf="mostrarFormulario" (ngSubmit)="salvar()">
+        <div class="form-header">
+            <h2>{{ form.id ? 'Editar Unidade' : 'Nova Unidade' }}</h2>
+        </div>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="numero">Numero *</label>
+                <input id="numero" name="numero" type="text" [(ngModel)]="form.numero" required>
+            </div>
+
+            <div class="form-group">
+                <label for="andar">Andar</label>
+                <input id="andar" name="andar" type="number" [(ngModel)]="form.andar">
+                <small>0 = Terreo, -1 = Subsolo</small>
+            </div>
+
+            <div class="form-group">
+                <label for="area">Area</label>
+                <input id="area" name="area" type="number" [(ngModel)]="form.area">
+            </div>
+
+            <div class="form-group">
+                <label for="dormitorios">Dormitorios</label>
+                <input id="dormitorios" name="dormitorios" type="number" min="0" [(ngModel)]="form.dormitorios">
+            </div>
+
+            <div class="form-group">
+                <label for="valor">Valor</label>
+                <input id="valor" name="valor" type="number" [(ngModel)]="form.valor">
+            </div>
+
+            <div class="form-group">
+                <label for="perfilRenda">HIS / Perfil</label>
+                <select id="perfilRenda" name="perfilRenda" [(ngModel)]="form.perfilRenda">
+                    <option *ngFor="let perfil of perfilRendaOptions" [ngValue]="perfil.value">
+                        {{ perfil.label }}
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="form-status">Status</label>
+                <select id="form-status" name="status" [(ngModel)]="form.status">
+                    <option *ngFor="let status of statusOptions" [ngValue]="status.value">
+                        {{ status.label }}
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group form-wide">
+                <label for="form-empreendimento">Empreendimento *</label>
+                <select id="form-empreendimento" name="empreendimentoId" [(ngModel)]="form.empreendimentoId" required>
+                    <option [ngValue]="null">Selecione</option>
+                    <option *ngFor="let e of empreendimentos" [ngValue]="e.id">
+                        {{ e.nome }}
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="cancelar()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="salvando">
+                {{ salvando ? 'Salvando...' : 'Salvar' }}
+            </button>
+        </div>
+    </form>
+
+    <div class="loading" *ngIf="carregando">
+        Carregando unidades...
+    </div>
+
+    <div class="table-wrapper" *ngIf="!carregando && unidades.length > 0">
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Numero</th>
+                    <th>Andar</th>
+                    <th>Area</th>
+                    <th>Dorm.</th>
+                    <th>Valor</th>
+                    <th>HIS</th>
+                    <th>Status</th>
+                    <th>Empreendimento</th>
+                    <th class="acoes-header">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let unidade of unidades">
+                    <td>{{ unidade.id }}</td>
+                    <td>{{ unidade.numero }}</td>
+                    <td>{{ unidade.andar ?? '-' }}</td>
+                    <td>{{ unidade.area || '-' }}</td>
+                    <td>{{ unidade.dormitorios ?? '-' }}</td>
+                    <td>{{ unidade.valor | currency:'BRL' }}</td>
+                    <td>{{ unidade.perfilRenda || '-' }}</td>
+                    <td>
+                        <span class="status-badge" [ngClass]="unidade.statusCor">
+                            {{ unidade.statusTexto }}
+                        </span>
+                    </td>
+                    <td>{{ nomeEmpreendimento(unidade.empreendimentoId) }}</td>
+                    <td class="acoes">
+                        <button type="button" class="btn-editar" (click)="editarUnidade(unidade)">Editar</button>
+                        <button type="button" class="btn-excluir" (click)="excluirUnidade(unidade)">Excluir</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="empty-state" *ngIf="!carregando && unidades.length === 0">
+        Nenhuma unidade encontrada.
+    </div>
+</div>

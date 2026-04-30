@@ -39,6 +39,7 @@
 
         public long? CorretorId { get; set; }
         public long? GerenteId { get; set; }
+        public long? CoordenadorId { get; set; }
 
         public string Status { get; set; } = ProposalStatus.RASCUNHO.ToString();
 
@@ -47,6 +48,7 @@
         public DateTime? DeletedAt { get; set; }
         public string? EnterPriseName { get; set; }
         public string? UnitName { get; set; }
+        public string? CorretorNome { get; set; }
         public List<ProposalCondition> Condicao { get; set; } = new();
     }
 
@@ -118,6 +120,7 @@
 
         public string CorretorID { get; set; } = "";
         public string GerenteID { get; set; } = "";
+        public string CoordenadorID { get; set; } = "";
         public List<CondicaoDto> Condicao { get; set; } = new();
         public string? Status { get; set; }
     }
@@ -134,3 +137,4 @@
         public DateTime? PaidDate { get; set; }
     }
 }
+

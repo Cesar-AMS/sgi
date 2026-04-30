@@ -1,0 +1,332 @@
+.vendas-container {
+    --espelho-card-height: 106px;
+    --espelho-card-gap: 4px;
+
+    padding: 14px;
+    max-width: 100%;
+    margin: 0 auto;
+
+    h1 {
+        margin-bottom: 14px;
+        color: #333;
+        font-size: 1.35rem;
+    }
+}
+
+.filtros {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 8px;
+
+    .filtro-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
+
+        label {
+            font-weight: bold;
+            color: #555;
+            font-size: 0.82rem;
+        }
+
+        select {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+    }
+}
+
+.espelho-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espelho-card-gap);
+    margin-bottom: 18px;
+}
+
+.andar-row {
+    display: grid;
+    grid-template-columns: 62px 1fr;
+    gap: var(--espelho-card-gap);
+    align-items: start;
+}
+
+.andar-label {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: var(--espelho-card-height);
+    min-height: var(--espelho-card-height);
+    padding: 6px 5px;
+    border: 1px solid #9ca3af;
+    border-radius: 7px;
+    background: #cbd5e1;
+    color: #111827;
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-align: center;
+    line-height: 1.1;
+    box-shadow: 0 1px 4px rgba(17, 24, 39, 0.12);
+
+    .andar-label-titulo {
+        display: block;
+        font-size: 0.5rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: uppercase;
+        opacity: 0.82;
+    }
+
+    .andar-label-valor {
+        display: block;
+        margin-top: 3px;
+        font-size: 0.82rem;
+        font-weight: 900;
+    }
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    column-gap: var(--espelho-card-gap);
+    row-gap: var(--espelho-card-gap);
+    align-items: start;
+}
+
+.card-status-texto {
+    display: inline-block;
+    max-width: 54px;
+    border-radius: 999px;
+    padding: 2px 5px;
+    text-align: center;
+    font-size: 0.5rem;
+    font-weight: 800;
+    line-height: 1.15;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    height: var(--espelho-card-height);
+    min-height: var(--espelho-card-height);
+    margin: 0;
+    overflow: hidden;
+    border-radius: 6px;
+    padding: 6px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
+    }
+
+    .card-topo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+    }
+
+    .card-numero {
+        min-width: 0;
+        width: 100%;
+        color: #1f2933;
+        font-size: 0.78rem;
+        font-weight: 800;
+        line-height: 1.1;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .card-detalhes {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3px;
+        min-width: 0;
+        color: #344054;
+        line-height: 1.1;
+    }
+
+    .card-info-item {
+        min-width: 0;
+        padding: 2px 3px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.52);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+
+        .info-label,
+        .info-value {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .info-label {
+            color: #667085;
+            font-size: 0.48rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            color: #1f2933;
+            font-size: 0.6rem;
+            font-weight: 800;
+        }
+
+        &.valor,
+        &.his {
+            grid-column: span 2;
+        }
+
+        &.his {
+            .info-value {
+                font-size: 0.64rem;
+            }
+        }
+
+        &.valor {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.68);
+
+            .info-value {
+                font-size: 0.66rem;
+            }
+        }
+    }
+
+    .card-status {
+        display: none;
+    }
+
+
+    &.status-disponivel {
+        background-color: #b7e4bd;
+        border: 1px solid #168a2f;
+
+        .card-status-texto {
+            background-color: #168a2f;
+            color: #ffffff;
+        }
+    }
+
+    &.status-reservada {
+        background-color: #ffd27a;
+        border: 1px solid #c77700;
+
+        .card-status-texto {
+            background-color: #c77700;
+            color: #ffffff;
+        }
+    }
+
+    &.status-vendida {
+        background-color: #f7a6ad;
+        border: 1px solid #c0182a;
+
+        .card-status-texto {
+            background-color: #c0182a;
+            color: #ffffff;
+        }
+    }
+}
+
+@media (max-width: 640px) {
+    .vendas-container {
+        padding: 14px;
+    }
+
+    .filtros {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    }
+
+    .andar-row {
+        grid-template-columns: 52px 1fr;
+    }
+
+    .andar-label {
+        font-size: 0.68rem;
+        padding: 5px 4px;
+    }
+}
+
+.loading,
+.empty-state {
+    text-align: center;
+    padding: 60px;
+    color: #666;
+    font-size: 16px;
+}
+
+.legenda {
+    margin-top: 18px;
+    padding: 12px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+
+    h4 {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .legenda-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+
+        .legenda-cor {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+
+            &.disponivel {
+                background-color: #4caf50;
+            }
+
+            &.reservada {
+                background-color: #ffc107;
+            }
+
+            &.vendida {
+                background-color: #f44336;
+            }
+        }
+    }
+}
+
+:host ::ng-deep app-propostas.ficha-proposta-overlay>.card.shadow-sm {
+    display: none;
+}

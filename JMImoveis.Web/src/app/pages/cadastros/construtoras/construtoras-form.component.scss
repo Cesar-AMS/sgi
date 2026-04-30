@@ -1,0 +1,196 @@
+.cadastros-form-container {
+    padding: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+
+        h2 {
+            margin: 0;
+        }
+
+        .btn-voltar {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            font-size: 16px;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    .form-container {
+        background: #fff;
+        padding: 24px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        .form-section {
+            padding-bottom: 22px;
+            margin-bottom: 22px;
+            border-bottom: 1px solid #e9ecef;
+
+            h3 {
+                margin: 0 0 16px;
+                font-size: 16px;
+                font-weight: 700;
+                color: #2f3a45;
+            }
+
+            &:last-of-type {
+                margin-bottom: 0;
+            }
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .span-3 {
+            grid-column: span 3;
+        }
+
+        .span-4 {
+            grid-column: span 4;
+        }
+
+        .span-6 {
+            grid-column: span 6;
+        }
+
+        .span-12 {
+            grid-column: span 12;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+
+            label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: bold;
+            }
+
+            .form-control {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 14px;
+                min-height: 42px;
+
+                &:focus {
+                    outline: none;
+                    border-color: #007bff;
+                }
+            }
+
+            textarea.form-control {
+                min-height: 110px;
+                resize: vertical;
+            }
+
+            .erro {
+                color: #dc3545;
+                font-size: 12px;
+                margin-top: 4px;
+            }
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+
+            button {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+
+                &.btn-cancelar {
+                    background-color: #6c757d;
+                    color: white;
+
+                    &:hover {
+                        background-color: #5a6268;
+                    }
+                }
+
+                &.btn-salvar {
+                    background-color: #007bff;
+                    color: white;
+
+                    &:hover {
+                        background-color: #0056b3;
+                    }
+
+                    &:disabled {
+                        background-color: #6c757d;
+                        cursor: not-allowed;
+                    }
+                }
+            }
+        }
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+}
+
+@media (max-width: 992px) {
+    .cadastros-form-container {
+        .form-container {
+            .span-3,
+            .span-4,
+            .span-6 {
+                grid-column: span 6;
+            }
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .cadastros-form-container {
+        padding: 12px;
+
+        .header {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-container {
+            padding: 16px;
+
+            .span-3,
+            .span-4,
+            .span-6,
+            .span-12 {
+                grid-column: span 12;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+
+                button {
+                    width: 100%;
+                }
+            }
+        }
+    }
+}

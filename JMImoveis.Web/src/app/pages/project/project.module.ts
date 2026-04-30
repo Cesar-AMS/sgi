@@ -39,7 +39,6 @@ import { LeadVisitsSectionComponent } from './leads-details/components/lead-visi
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
 import { LeadsComponent } from './leads/leads.component';
 import { ModalVendaComponent } from './modal-venda/modal-venda.component';
-import { PropostasComponent } from './propostas/propostas.component';
 import { VisitasComponent } from './visitas/visitas.component';
 import { FluxoCaixaComponent } from './financeiro/fluxo-caixa/fluxo-caixa.component';
 import { ProjecaoComponent } from './financeiro/projecao/projecao.component';
@@ -49,7 +48,7 @@ import { ControleUniformeComponent } from './rh/controle-uniforme/controle-unifo
 import { FeriasComponent } from './rh/ferias/ferias.component';
 import { FolhaPagamentosComponent } from './rh/folha-pagamentos/folha-pagamentos.component';
 import { CorretorComponent } from './vendas/corretor/corretor.component';
-import { PropostaComponent } from './vendas/proposta/proposta.component';
+import { PropostaComponent } from '../vendas/proposta/proposta.component';
 import { DesistenciasComponent } from './vendas/desistencias/desistencias.component';
 import { VendasNewComponent } from './vendas/vendas-new/vendas-new.component';
 import { ViewCorretorComponent } from './vendas/view-corretor/view-corretor.component';
@@ -69,7 +68,6 @@ import { VisaoGeralComponent } from './vendas/visao-geral/visao-geral.component'
     LeadActivitiesSectionComponent,
     LeadAgendaSectionComponent,
     LeadVisitsSectionComponent,
-    PropostasComponent,
     ClientListComponent,
     PropostaComponent,
     AdminEmpreendimentoComponent,
@@ -120,3 +118,5 @@ import { VisaoGeralComponent } from './vendas/visao-geral/visao-geral.component'
   exports: [ModalVendaComponent],
 })
 export class ProjectModule {}
+
+

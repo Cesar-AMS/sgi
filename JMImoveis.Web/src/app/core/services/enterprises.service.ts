@@ -3,18 +3,21 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BACKEND_API_URL } from './backend-api-url';
 import { Construtoras, Empreendimento } from 'src/app/models/ContaBancaria';
+import { SessionService } from '../session/session.service';
 
 @Injectable({ providedIn: 'root' })
 export class EnterprisesService {
   private readonly enterpriseUrl = `${BACKEND_API_URL}api/Empreendimento`;
   private readonly constructorUrl = `${BACKEND_API_URL}api/Construtora`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private sessionService: SessionService
+  ) {}
 
-  private get authHeaders() {
-    return {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    };
+  private get authHeaders(): Record<string, string> {
+    const token = this.sessionService.getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
   listEnterprises(): Observable<Empreendimento[]> {

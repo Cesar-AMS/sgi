@@ -58,10 +58,15 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<IEnumerable<Enterprise>> GetAllAsync()
         {
-            const string sql = @"SELECT T0.id, T0.name, T0.address, T1.name AS ""Constructor"" , T0.created_at 
-                                    FROM enterprises T0 
-                                    INNER JOIN constructors T1 ON T0.constructor_id = T1.id 
-                                    WHERE T0.hidden = 0;";
+            const string sql = @"SELECT T0.id,
+                                        T0.name,
+                                        T0.address,
+                                        T0.constructor_id AS ""ConstructorId"",
+                                        T1.name AS ""Constructor"",
+                                        T0.created_at AS ""CreatedAt""
+                                 FROM enterprises T0
+                                 INNER JOIN constructors T1 ON T0.constructor_id = T1.id
+                                 WHERE T0.hidden = 0;";
 
             await using var con = await _ctx.OpenConnectionAsync();
             return await con.QueryAsync<Enterprise>(sql);
@@ -69,7 +74,14 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<Enterprise?> GetByIdAsync(int id)
         {
-            const string sql = @"SELECT id, name, address, constructor_id, created_at, updated_at, deleted_at, hidden
+            const string sql = @"SELECT id,
+                                        name,
+                                        address,
+                                        constructor_id AS ""ConstructorId"",
+                                        created_at AS ""CreatedAt"",
+                                        updated_at AS ""UpdatedAt"",
+                                        deleted_at AS ""DeletedAt"",
+                                        hidden
                                 FROM enterprises
                                 WHERE id = @id;";
 
@@ -87,7 +99,14 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<IEnumerable<Enterprise?>> GetEnterpriseByConstructorAsync(int id)
         {
-            string sql = @$"select id, name  from jm.enterprises t0 where t0.constructor_id ={id};";
+            const string sql = @"SELECT id,
+                                        name,
+                                        address,
+                                        constructor_id AS ""ConstructorId"",
+                                        created_at AS ""CreatedAt""
+                                 FROM jmoficial.enterprises
+                                 WHERE constructor_id = @id
+                                   AND hidden = 0;";
 
             await using var con = await _ctx.OpenConnectionAsync();
             return await con.QueryAsync<Enterprise>(sql, new { id });
@@ -112,6 +131,18 @@ namespace JMImoveisAPI.Repositories
             return rows > 0;
         }
 
+        public async Task<bool> HasUnidadesAsync(int id)
+        {
+            const string sql = @"SELECT COUNT(1)
+                                 FROM jmoficial.units
+                                 WHERE enterprise_id = @id
+                                   AND deleted_at IS NULL
+                                   AND active = 1;";
+
+            await using var con = await _ctx.OpenConnectionAsync();
+            return await con.ExecuteScalarAsync<int>(sql, new { id }) > 0;
+        }
+
         public async Task<bool> UpdateAsync(int id, Enterprise entity)
         {
             const string upd = @"UPDATE enterprises
@@ -129,3 +160,5 @@ namespace JMImoveisAPI.Repositories
         }
     }
 }
+
+

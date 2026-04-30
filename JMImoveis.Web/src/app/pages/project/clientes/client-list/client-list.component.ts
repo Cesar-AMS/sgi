@@ -9,6 +9,7 @@ import { ExportExcelService } from 'src/app/shared/export-excel.service';
 import { finalize, of } from 'rxjs';
 import { catchError, concatMap, switchMap, tap } from 'rxjs/operators';
 import { CustomersService } from 'src/app/core/services/customers.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-client-list',
@@ -40,7 +41,8 @@ export class ClientListComponent {
     private customersService: CustomersService,
     private http: HttpClient,
     public toast: ToastrService,
-    private excel: ExportExcelService
+    private excel: ExportExcelService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -299,45 +301,21 @@ export class ClientListComponent {
     this.dependente = {} as Cliente;
   }
 
+  novoCliente(): void {
+    this.router.navigate(['/jm/cadastros/clientes/novo']);
+  }
+
+  editarCliente(id: number): void {
+    this.router.navigate(['/jm/cadastros/clientes/editar', id]);
+  }
 
   openModalEditClient(id: number) {
-    this.typeSalvarClient = 'edit';
-    this.textTitleModal = 'Editar Cliente'
-    this.loading = true;
-
-    this.customersService.getById(id).pipe(
-      tap((d: Cliente) => {
-        this.cliente = d;
-      }),
-      switchMap(() => this.customersService.getDependentsByCustomerId(id)),
-      tap((dep: Cliente | null) => {
-        if (dep && dep?.id) {
-          this.dependent = true;
-          this.dependente = dep;
-        } else {
-          this.dependent = false;
-          this.dependente = {} as Cliente;
-        }
-
-        this.disableInputs = false;
-        this.showModal?.show();
-      }),
-      catchError(() => {
-        this.toast.error('Erro ao carregar cliente/dependente.', 'Erro!', { timeOut: 3000 });
-        return of(null);
-      }),
-      finalize(() => (this.loading = false))
-    ).subscribe();
+    this.editarCliente(id);
   }
 
 
   openModalNewClient() {
-    this.typeSalvarClient = 'new';
-    this.textTitleModal = 'Novo cliente'
-
-    this.cliente = {} as Cliente;
-    this.disableInputs = false;
-    this.showModal?.show();
+    this.novoCliente();
   }
 
 

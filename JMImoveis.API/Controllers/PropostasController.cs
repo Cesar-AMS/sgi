@@ -1,14 +1,20 @@
 ﻿using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
 public sealed class PropostasController : ControllerBase
 {
     private readonly IProposalService _svc;
+    private readonly IUsuarioService _usuarioService;
 
-    public PropostasController(IProposalService svc) => _svc = svc;
+    public PropostasController(IProposalService svc, IUsuarioService usuarioService)
+    {
+        _svc = svc;
+        _usuarioService = usuarioService;
+    }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] PropostaReservaDto dto, CancellationToken ct)
@@ -18,8 +24,19 @@ public sealed class PropostasController : ControllerBase
             return BadRequest("Payload inválido.");
         }
 
-        var id = await _svc.CreateAsync(dto, ct);
-        return CreatedAtAction(nameof(GetById), new { id }, new { id });
+        try
+        {
+            var id = await _svc.CreateAsync(dto, ct);
+            return CreatedAtAction(nameof(GetById), new { id }, new { id });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id:long}")]
@@ -40,7 +57,7 @@ public sealed class PropostasController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] string? de, [FromQuery] string? ate, [FromQuery] string? status, [FromQuery] int? user, int? gerente, int? corretor, CancellationToken ct)
+    public async Task<IActionResult> List([FromQuery] string? de, [FromQuery] string? ate, [FromQuery] string? status, [FromQuery] int? user, int? gerente, int? coordenador, int? corretor, int? construtora, int? empreendimento, CancellationToken ct)
     {
         DateTime? dtDe = string.IsNullOrWhiteSpace(de) ? null : DateTime.Parse(de);
         DateTime? dtAte = string.IsNullOrWhiteSpace(ate) ? null : DateTime.Parse(ate);
@@ -50,7 +67,7 @@ public sealed class PropostasController : ControllerBase
             dtAte = dtAte.Value.Date.AddDays(1);
         }
 
-        var list = await _svc.ListAsync(dtDe, dtAte, status, user, gerente, corretor, ct);
+        var list = await _svc.ListAsync(dtDe, dtAte, status, user, gerente, coordenador, corretor, construtora, empreendimento, ct);
         return Ok(list);
     }
 
@@ -81,6 +98,11 @@ public sealed class PropostasController : ControllerBase
     [HttpPatch("{id:long}/aprovar")]
     public async Task<IActionResult> Aprovar([FromRoute] long id, CancellationToken ct)
     {
+        if (!await UsuarioPodeValidarAsync())
+        {
+            return Forbid();
+        }
+
         var result = await _svc.AprovarAsync(id, ct);
         if (result.Error == "NOT_FOUND")
         {
@@ -98,6 +120,11 @@ public sealed class PropostasController : ControllerBase
     [HttpPost("{id:long}/reprovar")]
     public async Task<IActionResult> ReprovarProposta([FromRoute] long id, CancellationToken ct)
     {
+        if (!await UsuarioPodeValidarAsync())
+        {
+            return Forbid();
+        }
+
         var result = await _svc.ReprovarAsync(id, ct);
         if (result.Error == "NOT_FOUND")
         {
@@ -110,5 +137,17 @@ public sealed class PropostasController : ControllerBase
         }
 
         return Ok(new { message = "Proposta reprovada com sucesso", status = result.Proposal!.Status });
+    }
+
+    private async Task<bool> UsuarioPodeValidarAsync()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return false;
+        }
+
+        var user = await _usuarioService.GetByIdAsync(userId);
+        return user?.JobpositionId?.Any(id => id == 3 || id == 11) == true;
     }
 }

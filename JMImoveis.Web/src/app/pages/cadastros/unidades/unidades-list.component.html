@@ -1,0 +1,72 @@
+<div class="cadastros-container">
+    <div class="header">
+        <h2>Unidades</h2>
+        <button class="btn-novo" type="button" (click)="novaUnidade()">
+            + Nova Unidade
+        </button>
+    </div>
+
+    <div class="filtros">
+        <div class="filtro-group">
+            <label for="construtora">Construtora:</label>
+            <select id="construtora" [(ngModel)]="construtoraFiltro" (change)="onConstrutoraChange()">
+                <option [ngValue]="0">Todas</option>
+                <option *ngFor="let c of construtoras" [ngValue]="c.id">
+                    {{ c.nome }}
+                </option>
+            </select>
+        </div>
+
+        <div class="filtro-group">
+            <label for="empreendimento">Empreendimento:</label>
+            <select id="empreendimento" [(ngModel)]="empreendimentoFiltro" (change)="filtrar()">
+                <option [ngValue]="0">Todos</option>
+                <option *ngFor="let e of empreendimentos" [ngValue]="e.id">
+                    {{ e.nome }}
+                </option>
+            </select>
+        </div>
+    </div>
+
+    <div class="loading" *ngIf="carregando">
+        Carregando...
+    </div>
+
+    <div class="table-wrapper" *ngIf="!carregando && unidades.length > 0">
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Numero</th>
+                    <th>Area</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Empreendimento</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let item of unidades">
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.numero }}</td>
+                    <td>{{ item.area || '-' }}</td>
+                    <td>{{ item.valor | currency:'BRL':'symbol':'1.0-0' }}</td>
+                    <td>
+                        <span class="status-badge" [ngClass]="obterStatusClasse(item.status)">
+                            {{ obterStatusTexto(item.status) }}
+                        </span>
+                    </td>
+                    <td>{{ obterNomeEmpreendimento(item.empreendimentoId) }}</td>
+                    <td class="acoes">
+                        <button class="btn-editar" type="button" (click)="editarUnidade(item.id)">Editar</button>
+                        <button class="btn-excluir" type="button" (click)="excluirUnidade(item.id, item.numero)">Excluir</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="vazio" *ngIf="!carregando && unidades.length === 0">
+        <p>Nenhuma unidade cadastrada.</p>
+    </div>
+</div>

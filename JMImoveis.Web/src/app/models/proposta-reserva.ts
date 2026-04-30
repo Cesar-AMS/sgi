@@ -1,4 +1,4 @@
-import { Condicao } from "../pages/project/empreendimentos/espelho/espelho.component";
+﻿import { Condicao } from "../pages/project/empreendimentos/espelho/espelho.component";
 
 export interface PropostaReserva
 {
@@ -37,10 +37,12 @@ export interface PropostaReserva
   bairro: string;
   cidade: string;
   estado: string;
-
   corretorID: number | string;
+  corretorNome?: string;
   gerenteID: number | string;
+  gerenteNome?: string;
+  coordenadorID: number | string;
+  coordenadorNome?: string;
   status: string;
   condicao: Condicao[]
 }
-

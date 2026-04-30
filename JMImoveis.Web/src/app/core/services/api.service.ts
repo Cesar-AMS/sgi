@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { GlobalComponent } from '../../global-component';
 import { BACKEND_API_URL } from './backend-api-url';
 import { ProposalsService } from './proposals.service';
+import { SessionService } from '../session/session.service';
 import {
   AccountBank,
   AccountPlains,
@@ -60,8 +61,14 @@ export class ApiService {
 
   constructor(
     private http: HttpClient,
-    private proposalsService: ProposalsService
+    private proposalsService: ProposalsService,
+    private sessionService: SessionService
   ) { }
+
+  private getAuthHeaders(): { Authorization?: string } {
+    const token = this.sessionService.getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
 
   getVIACEP(cep: string) {
     return this.http.get<ViaCEP>(`https://viacep.com.br/ws/${cep}/json/`);
@@ -207,7 +214,7 @@ export class ApiService {
     });
   }
 
-  listPropostas(params: { de?: string; ate?: string; gerente: number, corretor: number, status?: string }): Observable<PropostaReserva[]> {
+  listPropostas(params: { de?: string; ate?: string; gerente?: number | string, coordenador?: number | string, corretor?: number | string, construtora?: number | string, empreendimento?: number | string, status?: string }): Observable<PropostaReserva[]> {
     // Compatibilidade temporaria: manter ApiService como fachada legada
     // enquanto consumidores antigos sao migrados para ProposalsService.
     return this.proposalsService.list(params);
@@ -221,7 +228,7 @@ export class ApiService {
     return this.proposalsService.create(body);
   }
 
-  // suposição: endpoint para aprovar (implemente no .NET como PATCH/PUT)
+  // suposiÃ§Ã£o: endpoint para aprovar (implemente no .NET como PATCH/PUT)
   approveProposta(id: number) {
     return this.proposalsService.approve(id);
   }
@@ -718,7 +725,7 @@ export class ApiService {
     });
   }
 
-  //Cria usuário
+  //Cria usuÃ¡rio
   postUsuarios(obj: any) {
     var headerToken = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
     return this.http.post(API_URL + 'api/Usuario', obj, { headers: headerToken })
@@ -774,25 +781,23 @@ export class ApiService {
 
   //Pega todos os cargos
   getConstrutora() {
-    var headerToken = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    var headerToken = this.getAuthHeaders();
     return this.http.get<Construtoras[]>(API_URL + `api/Construtora`, { headers: headerToken })
   }
 
   putConstrutora(obj: any, id: number) {
-    const headerToken = {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    };
+    const headerToken = this.getAuthHeaders();
     return this.http.put(API_URL + `api/Construtora/${id}`, obj, { headers: headerToken });
   }
 
   getEmpreendimentosBYConstrutor(id: any) {
-    var headerToken = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    var headerToken = this.getAuthHeaders();
     return this.http.get<Empreendimento[]>(API_URL + `api/Empreendimento/per-enterprise/${id}`, { headers: headerToken })
   }
 
   //Cria Construtora
   postConstrutora(obj: any) {
-    var headerToken = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    var headerToken = this.getAuthHeaders();
     return this.http.post(API_URL + 'api/Construtora', obj, { headers: headerToken })
   }
 
@@ -844,14 +849,24 @@ export class ApiService {
     return this.http.get<Usuarios[]>(API_URL + `api/Usuario/corretores`, { headers: headerToken })
   }
 
+  getVendedoresPorGerente(gerenteId: number) {
+    var headerToken = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    return this.http.get<Usuarios[]>(API_URL + `api/Usuario/vendedores?gerenteId=${gerenteId}`, { headers: headerToken })
+  }
+
   getGerentes() {
     var headerToken = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
-    return this.http.get<Usuarios[]>(API_URL + `api/Usuario/gerente`, { headers: headerToken })
+    return this.http.get<Usuarios[]>(API_URL + `api/Usuario/gerentes`, { headers: headerToken })
   }
 
   getCoordenadores() {
     var headerToken = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
     return this.http.get<Usuarios[]>(API_URL + `api/Usuario/coordenadores`, { headers: headerToken })
+  }
+
+  getCoordenadoresPorGerente(gerenteId: number) {
+    var headerToken = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    return this.http.get<Usuarios[]>(API_URL + `api/Usuario/coordenadores?gerenteId=${gerenteId}`, { headers: headerToken })
   }
 
   getActivitiesByLead(leadId: number): Observable<LeadActivity[]> {
@@ -919,3 +934,5 @@ export class ApiService {
     return this.http.post(API_URL + 'api/Receivables', obj, { headers: headerToken })
   }
 }
+
+

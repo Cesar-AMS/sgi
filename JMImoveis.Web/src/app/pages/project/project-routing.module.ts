@@ -21,7 +21,6 @@ import { FluxoCaixaComponent } from './financeiro/fluxo-caixa/fluxo-caixa.compon
 import { ProjecaoComponent } from './financeiro/projecao/projecao.component';
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
 import { LeadsComponent } from './leads/leads.component';
-import { PropostasComponent } from './propostas/propostas.component';
 import { ControleFuncionariosComponent } from './rh/controle-funcionarios/controle-funcionarios.component';
 import { ControleFaltasComponent } from './rh/controle-faltas/controle-faltas.component';
 import { ControleUniformeComponent } from './rh/controle-uniforme/controle-uniforme.component';
@@ -61,17 +60,16 @@ const routes: Routes = [
     component: ViewCorretorComponent,
   },
   {
-    path: 'vendas/propostas',
-    component: PropostasComponent,
-  },
-  {
-    path: 'vendas/proposta',
-    redirectTo: 'vendas/propostas',
-    pathMatch: 'full',
-  },
-  {
     path: 'vendas/desistencias',
     component: DesistenciasComponent,
+  },
+  {
+    path: 'vendas',
+    loadChildren: () => import('../vendas/vendas.module').then(m => m.VendasModule),
+  },
+  {
+    path: 'cadastros',
+    loadChildren: () => import('../cadastros/cadastros.module').then(m => m.CadastrosModule),
   },
   {
     path: 'credit-analysis/:saleId',
@@ -204,3 +202,4 @@ const routes: Routes = [
   exports: [RouterModule],
 })
 export class ProjectRoutingModule {}
+

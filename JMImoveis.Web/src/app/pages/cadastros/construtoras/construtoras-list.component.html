@@ -1,0 +1,40 @@
+<div class="cadastros-container">
+    <div class="header">
+        <h2>Construtoras</h2>
+        <button class="btn-novo" (click)="novaConstrutora()">
+            + Nova Construtora
+        </button>
+    </div>
+
+    <div class="loading" *ngIf="carregando">
+        Carregando...
+    </div>
+
+    <table class="tabela" *ngIf="!carregando && construtoras.length > 0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Endereço</th>
+                <th>Data Criação</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let item of construtoras">
+                <td>{{ item.id }}</td>
+                <td>{{ item.nome }}</td>
+                <td>{{ item.endereco || '-' }}</td>
+                <td>{{ item.dataCriacao | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="acoes">
+                    <button class="btn-editar" (click)="editarConstrutora(item.id)">✏️ Editar</button>
+                    <button class="btn-excluir" (click)="excluirConstrutora(item.id, item.nome)">🗑️ Excluir</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="vazio" *ngIf="!carregando && construtoras.length === 0">
+        <p>Nenhuma construtora cadastrada.</p>
+    </div>
+</div>

@@ -1,4 +1,4 @@
-using JMImoveisAPI.Entities;
+﻿using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -75,7 +75,7 @@ namespace JMImoveisAPI.Controllers
             CancellationToken ct)
         {
             var (isValid, result) = await _vendaConsultaService.GetDashboardCorretorAsync(year, month, managerId, ct);
-            if (!isValid) return BadRequest("ParÃ¢metros invÃ¡lidos.");
+            if (!isValid) return BadRequest("Parâmetros inválidos.");
 
             return Ok(result);
         }
@@ -85,7 +85,7 @@ namespace JMImoveisAPI.Controllers
         {
             var (isValid, result) = await _vendaConsultaService.GetDashboardAsync(year, month, ct);
             if (!isValid)
-                return BadRequest("ParÃ¢metros invÃ¡lidos: year e month");
+                return BadRequest("Parâmetros inválidos: year e month");
 
             return Ok(result);
         }
@@ -95,6 +95,28 @@ namespace JMImoveisAPI.Controllers
         {
             var updated = await _vendaGestaoService.UpdateAsync(item);
             return updated ? Ok() : NotFound();
+        }
+
+        [HttpPut("{id:int}/registrar-ato")]
+        public async Task<IActionResult> RegistrarAto(int id)
+        {
+            var result = await _vendaGestaoService.RegistrarAtoAsync(id);
+            if (result.Success)
+            {
+                return Ok(new { message = "Ato registrado com sucesso" });
+            }
+
+            if (result.Error == "SALE_NOT_FOUND")
+            {
+                return NotFound(new { message = "Venda não encontrada" });
+            }
+
+            if (result.Error == "INVALID_STATUS")
+            {
+                return BadRequest(new { message = "Apenas vendas reservadas podem registrar ato" });
+            }
+
+            return BadRequest(new { message = "Não foi possível registrar o ato da venda" });
         }
 
         [HttpDelete("{id}")]

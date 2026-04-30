@@ -58,6 +58,32 @@ namespace JMImoveisAPI.Repositories
             return await con.QuerySingleOrDefaultAsync<ApartmentUnit>(sql, new { id });
         }
 
+        public async Task<IEnumerable<ApartmentUnit>> GetDisponiveisAsync()
+        {
+            const string sql = @"SELECT id, floor, block, number, value, income, size, dormitories,
+                                    status, enterprise_id, created_at, updated_at, deleted_at, active
+                                 FROM jmoficial.units
+                                 WHERE UPPER(status) = 'OPEN'
+                                   AND active = 1
+                                   AND deleted_at IS NULL
+                                 ORDER BY enterprise_id, block, floor DESC, number;";
+
+            await using var con = await _ctx.OpenConnectionAsync();
+            return await con.QueryAsync<ApartmentUnit>(sql);
+        }
+
+        public async Task<bool> HasPropostaAtivaAsync(int id)
+        {
+            const string sql = @"SELECT COUNT(1)
+                                 FROM jmoficial.proposals
+                                 WHERE unidade_id = @id
+                                   AND deleted_at IS NULL
+                                   AND UPPER(status) <> 'RASCUNHO';";
+
+            await using var con = await _ctx.OpenConnectionAsync();
+            return await con.ExecuteScalarAsync<int>(sql, new { id }) > 0;
+        }
+
         public async Task<bool> HardDeleteAsync(int id)
         {
             const string del = "DELETE FROM jmoficial.units WHERE id = @id;";
