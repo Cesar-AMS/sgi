@@ -174,6 +174,7 @@
 
       <div class="modal-body">
         <div id="areaA4" #areaA4Ref class="print-area">
+          <fieldset class="proposal-fieldset" [disabled]="proposta.id && !editandoProposta">
           <div class="form-section proposal-summary">
           <div class="row g-3 mb-3">
             <div class="col-12 col-md-4">
@@ -494,7 +495,8 @@
                     {{ c.valorTotal | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
                   </td>
                   <td class="text-center border pt-1 pb-1 ps-0 pe-0">
-                    <button type="button" class="btn btn-sm btn-outline-danger p-1" (click)="remover(i)">&times;</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger p-1" (click)="remover(i)"
+                      [disabled]="proposta.id && !editandoProposta">&times;</button>
                   </td>
                 </tr>
 
@@ -504,7 +506,8 @@
                 <tr>
                   <td colspan="5">
                     <a href="javascript:void(0)" id="add-item"
-                      class="btn btn-subtle-secondary fw-medium float-end mt-4 mb-4" (click)="adicionar()">
+                      class="btn btn-subtle-secondary fw-medium float-end mt-4 mb-4"
+                      *ngIf="!proposta.id || editandoProposta" (click)="adicionar()">
                       <i class="ri-add-fill me-1 align-bottom"></i> Adicionar condicao
                     </a>
                   </td>
@@ -601,25 +604,43 @@
               </div>
             </div>
           </div>
+          </fieldset>
         </div>
 
         <div class="hstack gap-2 flex-wrap justify-content-end d-print-none my-4">
-          <button type="button" class="btn btn-light" (click)="fecharFicha()">
-            Voltar ao espelho
+          <button type="button" class="btn btn-warning" (click)="habilitarEdicaoProposta()"
+            *ngIf="proposta.id && !editandoProposta" [disabled]="approving || salvandoEdicao">
+            <i class="ri-edit-line align-bottom me-1"></i> Editar
+          </button>
+
+          <button type="button" class="btn btn-secondary" (click)="cancelarEdicaoProposta()"
+            *ngIf="proposta.id && editandoProposta" [disabled]="salvandoEdicao">
+            Cancelar edição
+          </button>
+
+          <button type="button" class="btn btn-primary" (click)="salvarEdicaoProposta()"
+            *ngIf="proposta.id && editandoProposta" [disabled]="salvandoEdicao">
+            <span *ngIf="!salvandoEdicao">
+              <i class="ri-save-line align-bottom me-1"></i> Salvar alterações
+            </span>
+            <span *ngIf="salvandoEdicao">
+              <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              Salvando...
+            </span>
           </button>
 
           <button type="button" class="btn btn-outline-primary" (click)="enviarParaAnalise()"
-            *ngIf="canEnviarParaAnalise()" [disabled]="approving">
+            *ngIf="canEnviarParaAnalise()" [disabled]="approving || salvandoEdicao">
             <i class="ri-send-plane-line align-bottom me-1"></i> Enviar para analise
           </button>
 
           <button type="button" class="btn btn-success" (click)="approveSelected()" *ngIf="canApprove()"
-            [disabled]="approving">
+            [disabled]="approving || salvandoEdicao">
             <i class="ri-checkbox-circle-line align-bottom me-1"></i> Aprovar
           </button>
 
           <button type="button" class="btn btn-danger" (click)="reprovarProposta()" *ngIf="canReprovar()"
-            [disabled]="approving">
+            [disabled]="approving || salvandoEdicao">
             <i class="ri-close-circle-line align-bottom me-1"></i> Reprovar
           </button>
 

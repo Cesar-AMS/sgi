@@ -1,13 +1,14 @@
 .cadastros-form-container {
     padding: 20px;
-    max-width: 1100px;
+    width: 100%;
+    max-width: 1320px;
     margin: 0 auto;
 
     .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 30px;
+        margin-bottom: 18px;
 
         h2 {
             margin: 0;
@@ -28,23 +29,24 @@
 
     .form-container {
         background: #fff;
-        padding: 24px;
+        padding: 20px;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
         .form-section {
-            padding-bottom: 22px;
-            margin-bottom: 22px;
-            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid #eef0f3;
 
             h3 {
-                margin: 0 0 16px;
+                margin: 0 0 12px;
                 font-size: 16px;
                 font-weight: 700;
                 color: #2f3a45;
             }
 
             &:last-of-type {
+                border-bottom: 0;
                 margin-bottom: 0;
             }
         }
@@ -52,7 +54,8 @@
         .form-grid {
             display: grid;
             grid-template-columns: repeat(12, minmax(0, 1fr));
-            gap: 16px;
+            column-gap: 16px;
+            row-gap: 12px;
         }
 
         .span-3 {
@@ -76,17 +79,17 @@
 
             label {
                 display: block;
-                margin-bottom: 8px;
+                margin-bottom: 6px;
                 font-weight: bold;
             }
 
             .form-control {
                 width: 100%;
-                padding: 10px;
+                padding: 8px 10px;
                 border: 1px solid #ddd;
                 border-radius: 4px;
                 font-size: 14px;
-                min-height: 42px;
+                min-height: 38px;
 
                 &:focus {
                     outline: none;
@@ -95,7 +98,7 @@
             }
 
             textarea.form-control {
-                min-height: 110px;
+                min-height: 72px;
                 resize: vertical;
             }
 
@@ -110,7 +113,7 @@
             display: flex;
             justify-content: flex-end;
             gap: 12px;
-            margin-top: 24px;
+            margin-top: 18px;
 
             button {
                 padding: 10px 20px;

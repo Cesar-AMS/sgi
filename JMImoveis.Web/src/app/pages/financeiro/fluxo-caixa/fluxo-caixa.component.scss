@@ -1,0 +1,302 @@
+.fluxo-caixa-container {
+  padding: 20px;
+}
+
+.fluxo-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+
+  h2 {
+    color: #1f2937;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  p {
+    color: #6b7280;
+    margin: 6px 0 0;
+  }
+}
+
+.filtros {
+  display: flex;
+  gap: 10px;
+
+  .form-select {
+    min-width: 150px;
+  }
+}
+
+.resumo-cards {
+  align-items: stretch;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #6b7280;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 102px;
+  padding: 16px;
+
+  span {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  strong {
+    color: #111827;
+    font-size: 22px;
+  }
+
+  small {
+    color: #6b7280;
+    margin-top: 4px;
+  }
+
+  &.entradas {
+    border-left-color: #198754;
+  }
+
+  &.saidas {
+    border-left-color: #dc3545;
+  }
+
+  &.saldo.positivo {
+    border-left-color: #198754;
+  }
+
+  &.saldo.negativo {
+    border-left-color: #dc3545;
+  }
+}
+
+.fluxo-grid {
+  align-items: stretch;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 20px;
+}
+
+.fluxo-card,
+.extrato-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+  padding: 18px;
+}
+
+.fluxo-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 360px;
+
+  h3 {
+    color: #1f2937;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+  }
+}
+
+.card-title-row {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+
+  h3 {
+    color: #1f2937;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  span {
+    color: #6b7280;
+    font-size: 12px;
+  }
+}
+
+.group-line,
+.movimento-item {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.group-line {
+  background: #f8fafc;
+  border-radius: 6px;
+  color: #374151;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+}
+
+.movimento-item {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 11px 0;
+
+  strong {
+    color: #1f2937;
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  span {
+    color: #6b7280;
+    display: block;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+}
+
+.entrada-value,
+.saida-value {
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.entrada-value,
+.entrada-text {
+  color: #198754;
+}
+
+.saida-value,
+.saida-text {
+  color: #dc3545;
+}
+
+.saldo-card {
+  justify-content: space-between;
+  text-align: center;
+
+  .saldo-value {
+    font-size: 34px;
+    font-weight: 800;
+    margin: 24px 0 6px;
+  }
+
+  p {
+    color: #6b7280;
+    margin-bottom: 24px;
+  }
+
+  &.positivo .saldo-value {
+    color: #198754;
+  }
+
+  &.negativo .saldo-value {
+    color: #dc3545;
+  }
+}
+
+.chart-box {
+  border-top: 1px solid #e5e7eb;
+  margin-top: auto;
+  padding-top: 18px;
+  text-align: left;
+}
+
+.chart-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 76px 1fr;
+  margin-bottom: 12px;
+
+  span {
+    color: #4b5563;
+    font-size: 13px;
+  }
+}
+
+.bar-track {
+  background: #eef2f7;
+  border-radius: 999px;
+  height: 12px;
+  overflow: hidden;
+}
+
+.bar {
+  border-radius: 999px;
+  height: 100%;
+}
+
+.entradas-bar {
+  background: #198754;
+}
+
+.saidas-bar {
+  background: #dc3545;
+}
+
+.empty-state,
+.empty-row {
+  color: #6b7280;
+}
+
+.empty-state {
+  padding: 22px 0;
+  text-align: center;
+}
+
+.fluxo-table {
+  margin-bottom: 0;
+
+  th {
+    background: #f8fafc;
+    color: #374151;
+    font-weight: 700;
+  }
+
+  th,
+  td {
+    border-bottom: 1px solid #edf2f7;
+    padding: 12px;
+    vertical-align: middle;
+  }
+
+  tfoot th {
+    background: #f1f5f9;
+  }
+}
+
+@media (max-width: 1200px) {
+  .fluxo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .fluxo-header,
+  .filtros {
+    flex-direction: column;
+  }
+
+  .resumo-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros .form-select {
+    width: 100%;
+  }
+}

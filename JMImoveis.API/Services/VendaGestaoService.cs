@@ -6,15 +6,25 @@ namespace JMImoveisAPI.Services
     public class VendaGestaoService : IVendaGestaoService
     {
         private readonly IVendaRepository _vendaRepository;
+        private readonly IFinancialService _financialService;
 
-        public VendaGestaoService(IVendaRepository vendaRepository)
+        public VendaGestaoService(
+            IVendaRepository vendaRepository,
+            IFinancialService financialService)
         {
             _vendaRepository = vendaRepository;
+            _financialService = financialService;
         }
 
         public async Task<bool> UpdateAsync(VendasV2 item)
         {
-            return await _vendaRepository.UpdateAsync(item);
+            var updated = await _vendaRepository.UpdateAsync(item);
+            if (updated && IsApprovedSaleStatus(item.Status))
+            {
+                await _financialService.GenerateAccountsForSaleAsync(item.Id);
+            }
+
+            return updated;
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -49,7 +59,15 @@ namespace JMImoveisAPI.Services
                 return (false, "UNIT_STATUS_UPDATE_FAILED");
             }
 
+            await _financialService.GenerateAccountsForSaleAsync(id);
+
             return (true, null);
+        }
+
+        private static bool IsApprovedSaleStatus(string? status)
+        {
+            var normalized = (status ?? string.Empty).Trim().ToUpperInvariant();
+            return normalized is "APROVADO" or "APPROVED" or "SELL" or "SOLD" or "VENDIDO";
         }
     }
 }

@@ -1,0 +1,122 @@
+<div class="dre-container">
+  <div class="dre-header">
+    <div>
+      <h2>DRE - Demonstrativo de Resultados</h2>
+      <p>Resumo de receitas, despesas e resultado liquido do periodo.</p>
+    </div>
+
+    <div class="filtros">
+      <select class="form-select" [(ngModel)]="mesSelecionado" (change)="onChangePeriodo()">
+        <option *ngFor="let mes of meses" [ngValue]="mes.value">{{ mes.label }}</option>
+      </select>
+
+      <select class="form-select" [(ngModel)]="anoSelecionado" (change)="onChangePeriodo()">
+        <option *ngFor="let ano of anos" [ngValue]="ano">{{ ano }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="mensagemErro">
+    {{ mensagemErro }}
+  </div>
+
+  <div class="dre-summary">
+    <div class="summary-card receitas">
+      <span>Receitas</span>
+      <strong>{{ totalReceitas | currency:'BRL' }}</strong>
+    </div>
+    <div class="summary-card despesas">
+      <span>Despesas</span>
+      <strong>{{ totalDespesas | currency:'BRL' }}</strong>
+    </div>
+    <div class="summary-card resultado" [class.positivo]="resultadoLiquido >= 0" [class.negativo]="resultadoLiquido < 0">
+      <span>Resultado liquido</span>
+      <strong>{{ resultadoLiquido | currency:'BRL' }}</strong>
+    </div>
+  </div>
+
+  <div class="dre-grid">
+    <section class="dre-card">
+      <div class="card-title-row">
+        <h3>Receitas</h3>
+        <span *ngIf="carregandoReceitas">Carregando...</span>
+      </div>
+
+      <div class="group-line">
+        <span>Vendas realizadas no periodo</span>
+        <strong>{{ totalReceitas | currency:'BRL' }}</strong>
+      </div>
+
+      <div class="empty-state" *ngIf="!carregandoReceitas && !receitas.length">
+        Nenhuma venda aprovada encontrada no periodo.
+      </div>
+
+      <div class="dre-item" *ngFor="let receita of receitas">
+        <div>
+          <strong>{{ receita.descricao }}</strong>
+          <span>{{ receita.detalhe }}</span>
+        </div>
+        <div class="item-value">{{ receita.valor | currency:'BRL' }}</div>
+      </div>
+
+      <div class="dre-total">
+        <strong>Total de Receitas</strong>
+        <strong>{{ totalReceitas | currency:'BRL' }}</strong>
+      </div>
+    </section>
+
+    <section class="dre-card">
+      <div class="card-title-row">
+        <h3>Despesas</h3>
+        <span *ngIf="carregandoDespesas">Carregando...</span>
+      </div>
+
+      <div class="group-line">
+        <span>Comissoes no periodo</span>
+        <strong>{{ totalComissoes | currency:'BRL' }}</strong>
+      </div>
+      <div class="group-line">
+        <span>Outras despesas</span>
+        <strong>{{ totalOutrasDespesas | currency:'BRL' }}</strong>
+      </div>
+
+      <div class="empty-state" *ngIf="!carregandoDespesas && !despesas.length">
+        Nenhuma conta a pagar encontrada no periodo.
+      </div>
+
+      <div class="dre-item" *ngFor="let despesa of despesas">
+        <div>
+          <strong>{{ despesa.descricao }}</strong>
+          <span>{{ despesa.detalhe }}</span>
+        </div>
+        <div class="item-value">{{ despesa.valor | currency:'BRL' }}</div>
+      </div>
+
+      <div class="dre-total">
+        <strong>Total de Despesas</strong>
+        <strong>{{ totalDespesas | currency:'BRL' }}</strong>
+      </div>
+    </section>
+
+    <section class="dre-card resultado-card" [class.positivo]="resultadoLiquido >= 0" [class.negativo]="resultadoLiquido < 0">
+      <h3>Resultado liquido</h3>
+      <div class="resultado-value">{{ resultadoLiquido | currency:'BRL' }}</div>
+      <p>{{ resultadoLiquido >= 0 ? 'Lucro no periodo' : 'Prejuizo no periodo' }}</p>
+
+      <div class="chart-box">
+        <div class="chart-row">
+          <span>Receitas</span>
+          <div class="bar-track">
+            <div class="bar receitas-bar" [style.width.%]="receitasPercentual"></div>
+          </div>
+        </div>
+        <div class="chart-row">
+          <span>Despesas</span>
+          <div class="bar-track">
+            <div class="bar despesas-bar" [style.width.%]="despesasPercentual"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

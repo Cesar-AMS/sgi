@@ -1,0 +1,151 @@
+<div class="comissoes-container">
+  <div class="page-header">
+    <div>
+      <h2>Comissões</h2>
+      <p>Gestão de comissões geradas pelo Comercial e configuração de percentuais por vendedor.</p>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-warning">
+    {{ errorMessage }}
+  </div>
+
+  <tabset>
+    <tab heading="Lista de Comissões">
+      <div class="tab-panel">
+        <div class="filtros">
+          <select class="form-select" [(ngModel)]="filtro.vendedorId">
+            <option value="">Todos os vendedores</option>
+            <option *ngFor="let v of vendedores" [value]="v.id">{{ v.name }}</option>
+          </select>
+
+          <input class="form-control" type="month" [(ngModel)]="filtro.periodo">
+
+          <select class="form-select" [(ngModel)]="filtro.status">
+            <option value="">Todos</option>
+            <option value="PROJECAO">Projeção</option>
+            <option value="PENDENTE">Pendente</option>
+            <option value="PAGO">Pago</option>
+          </select>
+
+          <button class="btn btn-primary" type="button" (click)="buscar()" [disabled]="loading">
+            <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+            Buscar
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Vendedor</th>
+                <th>Venda</th>
+                <th>Categoria</th>
+                <th class="text-end">Valor</th>
+                <th>Status</th>
+                <th>Data Prevista</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of comissoes">
+                <td>{{ item.vendedorNome }}</td>
+                <td>{{ item.vendaId || '-' }}</td>
+                <td>{{ item.categoria || '-' }}</td>
+                <td class="text-end">{{ item.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getStatusClass(item.status)">
+                    {{ getStatusLabel(item.status) }}
+                  </span>
+                </td>
+                <td>{{ item.dataPrevista | date:'dd/MM/yyyy' }}</td>
+                <td class="text-end">
+                  <button
+                    class="btn btn-sm btn-success"
+                    type="button"
+                    *ngIf="getStatusLabel(item.status) !== 'Pago'"
+                    [disabled]="payingId === item.id"
+                    (click)="registrarPagamento(item.id)">
+                    <span *ngIf="payingId === item.id" class="spinner-border spinner-border-sm me-1"></span>
+                    Pagar
+                  </button>
+                </td>
+              </tr>
+
+              <tr *ngIf="!loading && comissoes.length === 0">
+                <td colspan="7" class="empty">Nenhuma comissão encontrada.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="resumo">
+          <span>Total: <strong>{{ total | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong></span>
+          <span>Pago: <strong>{{ totalPago | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong></span>
+          <span>Pendente: <strong>{{ totalPendente | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong></span>
+        </div>
+      </div>
+    </tab>
+
+    <tab heading="Configuração de Percentuais">
+      <div class="tab-panel">
+        <div class="toolbar">
+          <button class="btn btn-success" type="button" (click)="novoPercentual()">+ Novo Percentual</button>
+        </div>
+
+        <div class="percentual-form" *ngIf="showPercentualForm">
+          <select class="form-select" [(ngModel)]="percentualForm.vendedorId">
+            <option value="">Selecione o vendedor</option>
+            <option *ngFor="let v of vendedores" [value]="v.id">{{ v.name }}</option>
+          </select>
+
+          <div class="input-group">
+            <input class="form-control" type="number" min="0" step="0.01" [(ngModel)]="percentualForm.percentual">
+            <span class="input-group-text">%</span>
+          </div>
+
+          <select class="form-select" [(ngModel)]="percentualForm.tipoUnidade">
+            <option value="PADRAO">Padrão</option>
+            <option value="UNIDADE">Unidade</option>
+            <option value="EMPREENDIMENTO">Empreendimento</option>
+          </select>
+
+          <button class="btn btn-primary" type="button" (click)="salvarPercentual()" [disabled]="savingPercentual || !percentualForm.vendedorId">
+            <span *ngIf="savingPercentual" class="spinner-border spinner-border-sm me-1"></span>
+            Salvar
+          </button>
+          <button class="btn btn-outline-secondary" type="button" (click)="cancelarPercentual()">Cancelar</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Vendedor</th>
+                <th>Percentual</th>
+                <th>Tipo Unidade</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of percentuais">
+                <td>{{ item.vendedorNome }}</td>
+                <td>{{ item.percentual }}%</td>
+                <td>{{ item.tipoUnidade }}</td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-primary" type="button" (click)="editarPercentual(item.id)">
+                    Editar
+                  </button>
+                </td>
+              </tr>
+
+              <tr *ngIf="percentuais.length === 0">
+                <td colspan="4" class="empty">Nenhum vendedor encontrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </tab>
+  </tabset>
+</div>

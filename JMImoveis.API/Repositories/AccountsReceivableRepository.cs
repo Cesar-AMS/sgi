@@ -114,6 +114,10 @@ namespace JMImoveisAPI.Repositories
             // e COUNT(*) (total de títulos)
             var sql = $@"
             SELECT
+              -- Projecao (PROJECAO)
+              (SELECT COUNT(1) FROM jmoficial.accounts_receivable ar {whereSql} AND ar.status = 'PROJECAO') AS ProjectionTotal,
+              (SELECT IFNULL(SUM(ar.amount),0) FROM jmoficial.accounts_receivable ar {whereSql} AND ar.status = 'PROJECAO') AS ProjectionValue,
+
               -- Em aberto (WAITING)
               (SELECT COUNT(1) FROM jmoficial.accounts_receivable ar {whereSql} AND ar.status = 'WAITING') AS OpenTotal,
               (SELECT IFNULL(SUM(ar.amount),0) FROM jmoficial.accounts_receivable ar {whereSql} AND ar.status = 'WAITING') AS OpenValue,

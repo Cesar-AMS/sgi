@@ -6,7 +6,7 @@ import { AccountsReceivableService } from 'src/app/core/services/accounts-receiv
 import { Filial } from 'src/app/models/ContaBancaria';
 import { exportToExcel } from 'src/app/shared/utils/excel-export';
 
-type ArStatus = 'WAITING' | 'PAID' | 'CANCELLED';
+type ArStatus = 'WAITING' | 'PAID' | 'CANCELLED' | 'PROJECAO';
 
 type SettleFormModel = {
   paid_value: FormControl<number | null>;
@@ -39,6 +39,9 @@ interface PagedResult<T> {
 }
 
 interface SummaryCards {
+  projectionTotal: number;
+  projectionValue: number;
+
   openTotal: number;
   openValue: number;
 
@@ -65,7 +68,7 @@ export class AccountsReceivableComponent implements OnInit {
 
   loading = false;
 
-  activeCard: 'OPEN' | 'DUE_TODAY' | 'DUE_MONTH' | 'OVERDUE' | 'PAID_MONTH' | null = null;
+  activeCard: 'PROJECTION' | 'OPEN' | 'DUE_TODAY' | 'DUE_MONTH' | 'OVERDUE' | 'PAID_MONTH' | null = null;
 
   // filtros
   form!: FormGroup;
@@ -135,12 +138,20 @@ export class AccountsReceivableComponent implements OnInit {
 
   checkStatus(status: any){
   switch (status) {
+    case 'PROJECAO':
+      return 'Projeção'
+      break;
+
     case 'WAITING':
        return 'Em aberto'
        break;
 
     case 'PAID':
       return 'Pago'
+      break;
+
+    case 'CANCELLED':
+      return 'Cancelado'
       break;
   }
   return 'Em aberto'
@@ -257,6 +268,7 @@ private getTodayFile(): string {
 
   // ---------- Helpers ----------
   badgeClass(status: ArStatus): string {
+    if (status === 'PROJECAO') return 'badge-projection';
     if (status === 'PAID') return 'badge-paid';
     if (status === 'CANCELLED') return 'badge-cancelled';
     return 'badge-waiting';
@@ -264,6 +276,7 @@ private getTodayFile(): string {
 
   private emptyCards(): SummaryCards {
     return {
+      projectionTotal: 0, projectionValue: 0,
       openTotal: 0, openValue: 0,
       dueTodayTotal: 0, dueTodayValue: 0,
       dueMonthTotal: 0, dueMonthValue: 0,
@@ -407,7 +420,7 @@ submitCreate(): void {
   });
 }
 
-onCardClick(card: 'OPEN' | 'DUE_TODAY' | 'DUE_MONTH' | 'OVERDUE' | 'PAID_MONTH'): void {
+onCardClick(card: 'PROJECTION' | 'OPEN' | 'DUE_TODAY' | 'DUE_MONTH' | 'OVERDUE' | 'PAID_MONTH'): void {
   this.activeCard = card;
 
   const today = new Date();

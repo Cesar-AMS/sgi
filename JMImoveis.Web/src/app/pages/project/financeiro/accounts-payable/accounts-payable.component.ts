@@ -4,8 +4,8 @@ import { finalize } from 'rxjs/operators';
 import { AccountsPayableService } from 'src/app/core/services/accounts-payable.service';
 import { exportToExcel } from 'src/app/shared/utils/excel-export';
 
-type StatusType = 'WAITING' | 'PAID' | 'CANCELLED';
-type CardKey = 'OPEN' | 'DUE_TODAY' | 'DUE_MONTH' | 'OVERDUE' | 'PAID_MONTH';
+type StatusType = 'WAITING' | 'PAID' | 'CANCELLED' | 'PROJECAO';
+type CardKey = 'PROJECTION' | 'OPEN' | 'DUE_TODAY' | 'DUE_MONTH' | 'OVERDUE' | 'PAID_MONTH';
 
 export interface BranchItem {
   id: number;
@@ -39,6 +39,7 @@ export interface AccountsPayableRow {
 }
 
 export interface PayableCardsDto {
+  projectionTotal: number; projectionValue: number;
   openTotal: number; openValue: number;
   dueTodayTotal: number; dueTodayValue: number;
   dueMonthTotal: number; dueMonthValue: number;
@@ -67,6 +68,10 @@ export class AccountsPayableComponent implements OnInit {
   branches: BranchItem[] = []; // se você não usa, pode deixar vazio
   categories: CategoryItem[] = [
     { key: 'COMISSAO', label: 'Comissão' },
+    { key: 'COMISSAO_CORRETOR', label: 'Comissão Corretor' },
+    { key: 'COMISSAO_GERENTE', label: 'Comissão Gerente' },
+    { key: 'COMISSAO_COORDENADOR', label: 'Comissão Coordenador' },
+    { key: 'COMISSAO_FINANCEIRO', label: 'Comissão Financeiro' },
     { key: 'PESSOAL', label: 'Pessoal' },
     { key: 'RH', label: 'RH' },
     { key: 'DIRETORIA', label: 'Diretoria' },
@@ -75,6 +80,7 @@ export class AccountsPayableComponent implements OnInit {
 
   // Cards (mesmo shape do contas a receber)
   cards: PayableCardsDto = {
+    projectionTotal: 0, projectionValue: 0,
     openTotal: 0, openValue: 0,
     dueTodayTotal: 0, dueTodayValue: 0,
     dueMonthTotal: 0, dueMonthValue: 0,
@@ -443,6 +449,7 @@ export class AccountsPayableComponent implements OnInit {
   // ---------- Helpers ----------
   badgeClass(status: StatusType): string {
     switch (status) {
+      case 'PROJECAO': return 'badge-projection';
       case 'WAITING': return 'badge-waiting';
       case 'PAID': return 'badge-paid';
       case 'CANCELLED': return 'badge-cancelled';
@@ -452,6 +459,7 @@ export class AccountsPayableComponent implements OnInit {
 
   checkStatus(status: StatusType): string {
     switch (status) {
+      case 'PROJECAO': return 'PROJEÇÃO';
       case 'WAITING': return 'EM ABERTO';
       case 'PAID': return 'PAGO';
       case 'CANCELLED': return 'CANCELADO';
@@ -471,8 +479,43 @@ export class AccountsPayableComponent implements OnInit {
       search: (f.search ?? '').trim() || null,
     };
 
-    if (opts.includeCard) {
-      params.card = this.activeCard ?? null; // backend filtra por card
+    if (opts.includeCard && this.activeCard) {
+      const today = new Date();
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+
+      switch (this.activeCard) {
+        case 'PROJECTION':
+          params.status = 'PROJECAO';
+          params.dueFrom = null;
+          params.dueTo = null;
+          break;
+        case 'OPEN':
+          params.status = 'WAITING';
+          break;
+        case 'DUE_TODAY':
+          params.status = 'WAITING';
+          params.dueFrom = this.toDateInputValue(today);
+          params.dueTo = this.toDateInputValue(today);
+          break;
+        case 'DUE_MONTH':
+          params.status = 'WAITING';
+          params.dueFrom = this.toDateInputValue(monthStart);
+          params.dueTo = this.toDateInputValue(monthEnd);
+          break;
+        case 'OVERDUE':
+          params.status = 'WAITING';
+          params.dueFrom = null;
+          params.dueTo = this.toDateInputValue(yesterday);
+          break;
+        case 'PAID_MONTH':
+          params.status = 'PAID';
+          params.dueFrom = this.toDateInputValue(monthStart);
+          params.dueTo = this.toDateInputValue(monthEnd);
+          break;
+      }
     }
 
     if (opts.includePaging) {

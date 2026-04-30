@@ -32,7 +32,64 @@ namespace JMImoveisAPI.Services
 
             // 1) Buscar venda
             var sale = await conn.QuerySingleOrDefaultAsync<SaleV2>(
-                @"SELECT * FROM jmoficial.sales WHERE id = @Id",
+                @"SELECT
+                    id AS Id,
+                    unit_value AS UnitValue,
+                    start_value AS StartValue,
+                    value_to_constructor AS ValueToConstructor,
+                    percentage_to_realtor AS PercentageToRealtor,
+                    percentage_to_manager AS PercentageToManager,
+                    parcels_start AS ParcelsStart,
+                    realtor_comission AS RealtorComission,
+                    realtor_comission_remaining AS RealtorComissionRemaining,
+                    realtor_comission_status AS RealtorComissionStatus,
+                    manager_comission AS ManagerComission,
+                    manager_comission_remaining AS ManagerComissionRemaining,
+                    manager_comission_status AS ManagerComissionStatus,
+                    generate_notification AS GenerateNotification,
+                    notificated_date AS NotificatedDate,
+                    net_earnings AS NetEarnings,
+                    gross_earnings AS GrossEarnings,
+                    contract_path AS ContractPath,
+                    status AS Status,
+                    branch_id AS BranchId,
+                    enterprise_id AS EnterpriseId,
+                    unit_id AS UnitId,
+                    realtor_id AS RealtorId,
+                    manager_id AS ManagerId,
+                    coordenator_id AS CoordenatorId,
+                    payment_types_id AS PaymentTypesId,
+                    COALESCE(selled_at, created_at, NOW()) AS SelledAt,
+                    deleted_at AS DeletedAt,
+                    created_at AS CreatedAt,
+                    updated_at AS UpdatedAt,
+                    value_to_realstate AS ValueToRealstate,
+                    percentage_to_realstate AS PercentageToRealstate,
+                    percentage_to_financial AS PercentageToFinancial,
+                    financial_comission AS FinancialComission,
+                    financial_comission_status AS FinancialComissionStatus,
+                    percentage_to_tax AS PercentageToTax,
+                    tax_comission AS TaxComission,
+                    tax_comission_status AS TaxComissionStatus,
+                    contract_number AS ContractNumber,
+                    percentage_to_coordenator AS PercentageToCoordenator,
+                    coordenator_comission AS CoordenatorComission,
+                    coordenator_comission_status AS CoordenatorComissionStatus,
+                    realtor_id_two AS RealtorIdTwo,
+                    realtor_comission_two AS RealtorComissionTwo,
+                    realtor_comission_remaining_two AS RealtorComissionRemainingTwo,
+                    realtor_comission_status_two AS RealtorComissionStatusTwo,
+                    manager_comission_two AS ManagerComissionTwo,
+                    manager_comission_remaining_two AS ManagerComissionRemainingTwo,
+                    manager_comission_status_two AS ManagerComissionStatusTwo,
+                    coordenator_id_two AS CoordenatorIdTwo,
+                    percentage_to_coordenator_two AS PercentageToCoordenatorTwo,
+                    percentage_to_realtor_two AS PercentageToRealtorTwo,
+                    percentage_to_manager_two AS PercentageToManagerTwo,
+                    coordenator_comission_two AS CoordenatorComissionTwo,
+                    coordenator_comission_status_two AS CoordenatorComissionStatusTwo
+                  FROM jmoficial.sales
+                  WHERE id = @Id",
                 new { Id = saleId }, tx);
 
             if (sale == null)
@@ -42,6 +99,27 @@ namespace JMImoveisAPI.Services
                 throw new Exception($"Venda {saleId} sem identificador válido.");
 
             var saleIdValue = sale.Id.Value;
+
+            var existingReceivables = await conn.ExecuteScalarAsync<int>(
+                @"SELECT COUNT(1)
+                  FROM jmoficial.accounts_receivable
+                  WHERE SaleId = @SaleId
+                    AND Status <> 'CANCELLED'",
+                new { SaleId = saleIdValue }, tx);
+
+            var existingCommissions = await conn.ExecuteScalarAsync<int>(
+                @"SELECT COUNT(1)
+                  FROM jmoficial.accounts_payable
+                  WHERE SaleId = @SaleId
+                    AND Category LIKE 'COMISSAO_%'
+                    AND Status <> 'CANCELLED'",
+                new { SaleId = saleIdValue }, tx);
+
+            if (existingReceivables > 0 && existingCommissions > 0)
+            {
+                tx.Commit();
+                return;
+            }
 
             // 2) Buscar parcelas da venda
             var parcels = (await conn.QueryAsync<ParcelV2>(
@@ -269,6 +347,30 @@ namespace JMImoveisAPI.Services
                     Category = "COMISSAO_FINANCEIRO",
                     Observations = string.Empty
                 });
+            }
+
+            if (existingReceivables > 0)
+            {
+                receivables.Clear();
+            }
+
+            if (existingCommissions > 0)
+            {
+                payables.Clear();
+            }
+
+            foreach (var receivable in receivables)
+            {
+                receivable.Status = "PROJECAO";
+                receivable.PayDate = null;
+                receivable.PendingAmount = receivable.Amount;
+            }
+
+            foreach (var payable in payables)
+            {
+                payable.Status = "PROJECAO";
+                payable.PayDate = null;
+                payable.PendingAmount = payable.Amount;
             }
 
             const string insertReceivableSql = @"

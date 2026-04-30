@@ -95,12 +95,15 @@ namespace JMImoveisAPI.Services
             => TransitionAsync(id, ProposalStatus.RASCUNHO, ProposalStatus.EM_ANALISE, ct);
 
         public Task<(bool Success, string? Error, Proposal? Proposal)> AprovarAsync(long id, CancellationToken ct)
-            => TransitionAsync(id, ProposalStatus.EM_ANALISE, ProposalStatus.APROVADO, ct);
+            => TransitionAsync(id, ProposalStatus.APROVADO, ct, ProposalStatus.EM_ANALISE, ProposalStatus.REPROVADO);
 
         public Task<(bool Success, string? Error, Proposal? Proposal)> ReprovarAsync(long id, CancellationToken ct)
-            => TransitionAsync(id, ProposalStatus.EM_ANALISE, ProposalStatus.REPROVADO, ct);
+            => TransitionAsync(id, ProposalStatus.REPROVADO, ct, ProposalStatus.EM_ANALISE, ProposalStatus.APROVADO);
 
         private async Task<(bool Success, string? Error, Proposal? Proposal)> TransitionAsync(long id, ProposalStatus expectedStatus, ProposalStatus nextStatus, CancellationToken ct)
+            => await TransitionAsync(id, nextStatus, ct, expectedStatus);
+
+        private async Task<(bool Success, string? Error, Proposal? Proposal)> TransitionAsync(long id, ProposalStatus nextStatus, CancellationToken ct, params ProposalStatus[] allowedStatuses)
         {
             var proposal = await _repo.GetByIdAsync(id, ct);
             if (proposal is null)
@@ -109,13 +112,13 @@ namespace JMImoveisAPI.Services
             }
 
             var currentStatus = NormalizeStatus(proposal.Status);
-            if (!string.Equals(currentStatus, expectedStatus.ToString(), StringComparison.Ordinal))
+            if (!allowedStatuses.Any(status => string.Equals(currentStatus, status.ToString(), StringComparison.Ordinal)))
             {
                 proposal.Status = currentStatus;
                 return (false, "INVALID_STATUS", proposal);
             }
 
-            var updated = await _repo.UpdateProposalStatusAsync(id, expectedStatus.ToString(), nextStatus.ToString(), ct);
+            var updated = await _repo.UpdateProposalStatusAsync(id, currentStatus, nextStatus.ToString(), ct);
             if (!updated)
             {
                 proposal.Status = currentStatus;
@@ -127,7 +130,7 @@ namespace JMImoveisAPI.Services
                 if (nextStatus == ProposalStatus.APROVADO)
                 {
                     await _repo.UpdateUnitStatusAsync(proposal.UnidadeId, "SELL", ct);
-                    await CriarVendaDaPropostaAsync(proposal);
+                    await TentarCriarVendaDaPropostaAsync(proposal);
                 }
                 else if (nextStatus == ProposalStatus.REPROVADO)
                 {
@@ -136,18 +139,26 @@ namespace JMImoveisAPI.Services
             }
             catch
             {
-                if (nextStatus == ProposalStatus.APROVADO)
-                {
-                    await _repo.UpdateUnitStatusAsync(proposal.UnidadeId, "OPEN", ct);
-                }
-
-                await _repo.UpdateProposalStatusAsync(id, nextStatus.ToString(), expectedStatus.ToString(), ct);
+                await _repo.UpdateProposalStatusAsync(id, nextStatus.ToString(), currentStatus, ct);
                 proposal.Status = currentStatus;
-                return (false, "SALE_CREATE_FAILED", proposal);
+                return (false, "UNIT_STATUS_UPDATE_FAILED", proposal);
             }
 
             proposal.Status = nextStatus.ToString();
             return (true, null, proposal);
+        }
+
+        private async Task TentarCriarVendaDaPropostaAsync(Proposal proposal)
+        {
+            try
+            {
+                await CriarVendaDaPropostaAsync(proposal);
+            }
+            catch
+            {
+                // Aprovacao da proposta e venda da unidade nao devem ser bloqueadas
+                // por falha na integracao posterior de venda/financeiro.
+            }
         }
 
         private async Task CriarVendaDaPropostaAsync(Proposal proposal)
@@ -432,12 +443,20 @@ namespace JMImoveisAPI.Services
 
         private static string NormalizeStatus(string? status)
         {
-            var normalized = (status ?? string.Empty).Trim().ToUpperInvariant();
+            var normalized = (status ?? string.Empty)
+                .Trim()
+                .ToUpperInvariant()
+                .Replace(" ", "_")
+                .Replace("-", "_");
+
+            normalized = RemoverAcentosStatus(normalized);
+
             return normalized switch
             {
                 "" => ProposalStatus.RASCUNHO.ToString(),
                 "OPEN" => ProposalStatus.RASCUNHO.ToString(),
                 "RESERVED" => ProposalStatus.RASCUNHO.ToString(),
+                "EM_ANALISE" => ProposalStatus.EM_ANALISE.ToString(),
                 "IN_ANALYSIS" => ProposalStatus.EM_ANALISE.ToString(),
                 "IN_ANALISE" => ProposalStatus.EM_ANALISE.ToString(),
                 "APPROVED" => ProposalStatus.APROVADO.ToString(),
@@ -445,6 +464,23 @@ namespace JMImoveisAPI.Services
                 "CANCELLED" => ProposalStatus.CANCELADO.ToString(),
                 _ => normalized
             };
+        }
+
+        private static string RemoverAcentosStatus(string status)
+        {
+            return status
+                .Replace("Á", "A")
+                .Replace("À", "A")
+                .Replace("Â", "A")
+                .Replace("Ã", "A")
+                .Replace("É", "E")
+                .Replace("Ê", "E")
+                .Replace("Í", "I")
+                .Replace("Ó", "O")
+                .Replace("Ô", "O")
+                .Replace("Õ", "O")
+                .Replace("Ú", "U")
+                .Replace("Ç", "C");
         }
     }
 }

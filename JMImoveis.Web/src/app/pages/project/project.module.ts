@@ -53,7 +53,11 @@ import { DesistenciasComponent } from './vendas/desistencias/desistencias.compon
 import { VendasNewComponent } from './vendas/vendas-new/vendas-new.component';
 import { ViewCorretorComponent } from './vendas/view-corretor/view-corretor.component';
 import { VisaoGeralComponent } from './vendas/visao-geral/visao-geral.component';
-
+import { DashboardComercialComponent } from '../vendas/dashboard-comercial/dashboard-comercial.component';
+import { VendasListComponent } from '../vendas/vendas-list/vendas-list.component';
+import { ComissoesComponent } from '../financeiro/comissoes/comissoes.component';
+import { FinanceiroDreComponent } from '../financeiro/dre/dre.component';
+import { FinanceiroFluxoCaixaComponent } from '../financeiro/fluxo-caixa/fluxo-caixa.component';
 @NgModule({
   declarations: [
     ViewCorretorComponent,
@@ -87,6 +91,9 @@ import { VisaoGeralComponent } from './vendas/visao-geral/visao-geral.component'
     FolhaPagamentosComponent,
     FeriasComponent,
     ControleUniformeComponent,
+    ComissoesComponent,
+    FinanceiroDreComponent,
+    FinanceiroFluxoCaixaComponent,
   ],
   imports: [
     CommonModule,

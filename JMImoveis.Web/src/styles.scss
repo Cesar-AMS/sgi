@@ -416,3 +416,214 @@ bs-dropdown-container {
 .stepper-body {
   padding: 0px !important;
 }
+
+// Padrao visual dos modulos core: Atendimento, Negocios e Comercial.
+// Escopado para nao alterar telas fora desses fluxos.
+$core-primary: #007bff;
+$core-primary-hover: #0056b3;
+$core-secondary: #6c757d;
+$core-danger: #dc3545;
+$core-warning: #ffc107;
+$core-success: #28a745;
+$core-border: #ddd;
+$core-soft-bg: #f5f5f5;
+
+.cadastros-container,
+.cadastros-form-container,
+.gerenciamento-container,
+.vendas-container,
+.leads-wrapper,
+#invoiceList {
+  .header,
+  .card-header {
+    margin-bottom: 20px;
+
+    h1,
+    h2,
+    h5,
+    h6,
+    .card-title {
+      margin: 0;
+      font-weight: 700;
+      color: #222;
+    }
+  }
+
+  .btn-padrao,
+  .btn-novo,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-warning,
+  .btn-success,
+  .btn-editar,
+  .btn-excluir,
+  .btn-cancelar,
+  .btn-salvar,
+  .btn-orange {
+    min-height: 36px;
+    padding: 8px 16px !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.2;
+    text-decoration: none;
+    transition: opacity 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+
+    &:hover {
+      opacity: 0.88;
+    }
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+
+  .btn-novo,
+  .btn-primary,
+  .btn-salvar,
+  .btn-orange {
+    background-color: $core-primary !important;
+    color: #fff !important;
+
+    &:hover {
+      background-color: $core-primary-hover !important;
+    }
+  }
+
+  .btn-secondary,
+  .btn-cancelar {
+    background-color: $core-secondary !important;
+    color: #fff !important;
+  }
+
+  .btn-danger,
+  .btn-excluir {
+    background-color: $core-danger !important;
+    color: #fff !important;
+  }
+
+  .btn-warning,
+  .btn-editar {
+    background-color: $core-warning !important;
+    color: #333 !important;
+  }
+
+  .btn-success {
+    background-color: $core-success !important;
+    color: #fff !important;
+  }
+
+  .filtros,
+  .filter-bar {
+    background-color: $core-soft-bg !important;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px !important;
+    padding: 20px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .filtro-group,
+  .form-group,
+  .mb-3 {
+    label,
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    input,
+    select,
+    textarea,
+    .form-control,
+    .form-select {
+      width: 100%;
+      min-height: 38px;
+      padding: 10px !important;
+      border: 1px solid $core-border !important;
+      border-radius: 4px !important;
+
+      &:focus {
+        outline: none;
+        border-color: $core-primary !important;
+        box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.12);
+      }
+    }
+  }
+
+  .form-grid,
+  .form-container form {
+    gap: 20px;
+  }
+
+  .tabela,
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+
+    th {
+      background-color: $core-soft-bg !important;
+      color: #333;
+      font-weight: 700;
+      padding: 12px !important;
+      border-bottom: 1px solid $core-border !important;
+    }
+
+    td {
+      padding: 12px !important;
+      border-bottom: 1px solid $core-border !important;
+      vertical-align: middle;
+    }
+  }
+
+  .acoes {
+    gap: 8px;
+  }
+
+  .loading,
+  .vazio,
+  .empty-state,
+  .loading-overlay,
+  .text-center.text-muted.py-5 {
+    text-align: center;
+    padding: 40px !important;
+    color: #666 !important;
+  }
+}
+
+.vendas-container {
+  .card {
+    position: relative;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.75);
+    }
+
+    &.status-disponivel::after {
+      background-color: #168a2f;
+    }
+
+    &.status-reservada::after {
+      background-color: #c77700;
+    }
+
+    &.status-vendida::after {
+      background-color: #c0182a;
+    }
+  }
+}

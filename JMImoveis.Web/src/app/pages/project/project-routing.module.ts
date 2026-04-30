@@ -16,7 +16,6 @@ import { AccountsPayableComponent } from './financeiro/accounts-payable/accounts
 import { AccountsReceivableComponent } from './financeiro/accounts-receivable/accounts-receivable.component';
 import { CentroCustoComponent } from './financeiro/centro-custo/centro-custo.component';
 import { ContasContabeisComponent } from './financeiro/contas-contabeis/contas-contabeis.component';
-import { DreComponent } from './financeiro/dre/dre.component';
 import { FluxoCaixaComponent } from './financeiro/fluxo-caixa/fluxo-caixa.component';
 import { ProjecaoComponent } from './financeiro/projecao/projecao.component';
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
@@ -33,11 +32,24 @@ import { DesistenciasComponent } from './vendas/desistencias/desistencias.compon
 import { VendasNewComponent } from './vendas/vendas-new/vendas-new.component';
 import { ViewCorretorComponent } from './vendas/view-corretor/view-corretor.component';
 import { VisaoGeralComponent } from './vendas/visao-geral/visao-geral.component';
+import { DashboardComercialComponent } from '../vendas/dashboard-comercial/dashboard-comercial.component';
+import { VendasListComponent } from '../vendas/vendas-list/vendas-list.component';
+import { ComissoesComponent } from '../financeiro/comissoes/comissoes.component';
+import { FinanceiroDreComponent } from '../financeiro/dre/dre.component';
+import { FinanceiroFluxoCaixaComponent } from '../financeiro/fluxo-caixa/fluxo-caixa.component';
 
 const routes: Routes = [
   {
     path: 'dashboard',
     component: DashboardHomeComponent,
+  },
+  {
+    path: 'vendas/dashboard',
+    component: DashboardComercialComponent
+  },
+  {
+    path: 'vendas/vendas',
+    component: VendasListComponent
   },
   {
     path: 'vendas/visao-geral',
@@ -101,11 +113,15 @@ const routes: Routes = [
   },
   {
     path: 'financeiro/dre',
-    component: DreComponent,
+    component: FinanceiroDreComponent,
+  },
+  {
+    path: 'financeiro/comissoes',
+    component: ComissoesComponent,
   },
   {
     path: 'financeiro/fluxo-caixa',
-    component: FluxoCaixaComponent,
+    component: FinanceiroFluxoCaixaComponent,
   },
   {
     path: 'financeiro/projecao',
@@ -201,5 +217,5 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
 })
-export class ProjectRoutingModule {}
+export class ProjectRoutingModule { }
 

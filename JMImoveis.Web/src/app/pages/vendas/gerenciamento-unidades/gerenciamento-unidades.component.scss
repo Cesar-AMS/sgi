@@ -1,5 +1,8 @@
 .gerenciamento-container {
     padding: 20px;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
 }
 
 .header {
@@ -25,8 +28,8 @@
     background: #fff;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 20px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
 }
 
 .filtros {
@@ -39,7 +42,7 @@
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 
     label {
         font-weight: 600;
@@ -48,33 +51,45 @@
 
     input,
     select {
-        min-height: 38px;
+        min-height: 36px;
         border: 1px solid #d1d5db;
-        border-radius: 6px;
-        padding: 8px 10px;
+        border-radius: 4px;
+        padding: 7px 10px;
+    }
+
+    small {
+        color: #6b7280;
+        font-size: 11px;
+        line-height: 1.2;
     }
 }
 
 .form-card h2 {
-    margin: 0 0 16px;
+    margin: 0 0 12px;
     font-size: 18px;
 }
 
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(140px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 14px;
+    row-gap: 10px;
+
+    .form-group {
+        grid-column: span 2;
+        min-width: 0;
+    }
 }
 
 .form-wide {
-    grid-column: span 2;
+    grid-column: span 4 !important;
 }
 
 .form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    margin-top: 16px;
+    margin-top: 14px;
 }
 
 button {
@@ -172,6 +187,18 @@ th {
     color: #666;
 }
 
+@media (max-width: 991px) {
+    .form-grid {
+        .form-group {
+            grid-column: span 4;
+        }
+    }
+
+    .form-wide {
+        grid-column: span 8 !important;
+    }
+}
+
 @media (max-width: 768px) {
     .header,
     .form-actions {
@@ -179,12 +206,31 @@ th {
         align-items: stretch;
     }
 
+    .form-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+
+        .form-group {
+            grid-column: span 3;
+        }
+    }
+
+    .form-wide {
+        grid-column: span 6 !important;
+    }
+}
+
+@media (max-width: 575px) {
+    .gerenciamento-container {
+        padding: 12px;
+    }
+
     .filtros,
     .form-grid {
         grid-template-columns: 1fr;
     }
 
+    .form-grid .form-group,
     .form-wide {
-        grid-column: span 1;
+        grid-column: span 1 !important;
     }
 }

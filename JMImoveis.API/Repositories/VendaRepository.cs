@@ -1031,8 +1031,8 @@ namespace JMImoveisAPI.Repositories
             }
             if (!string.IsNullOrWhiteSpace(status))
             {
-                sql += " AND UPPER(T0.status) = @status ";
-                dp.Add("@status", status);
+                sql += " AND UPPER(T0.status) IN @statuses ";
+                dp.Add("@statuses", GetEquivalentProposalStatuses(status));
             }
             if (user.HasValue)
             {
@@ -1123,8 +1123,7 @@ namespace JMImoveisAPI.Repositories
                                  SET status = @nextStatus,
                                      updated_at = UTC_TIMESTAMP()
                                  WHERE id = @id
-                                   AND deleted_at IS NULL
-                                   AND UPPER(status) = @expectedStatus;";
+                                   AND deleted_at IS NULL;";
 
             using var conn = await _context.OpenConnectionAsync();
             var affected = await conn.ExecuteAsync(new CommandDefinition(
@@ -1132,12 +1131,24 @@ namespace JMImoveisAPI.Repositories
                 new
                 {
                     id,
-                    expectedStatus = expectedStatus.ToUpperInvariant(),
                     nextStatus = nextStatus.ToUpperInvariant()
                 },
                 cancellationToken: ct));
 
             return affected > 0;
+        }
+
+        private static string[] GetEquivalentProposalStatuses(string status)
+        {
+            return status.Trim().ToUpperInvariant() switch
+            {
+                "RASCUNHO" => new[] { "RASCUNHO", "OPEN", "RESERVED" },
+                "EM_ANALISE" or "EM_ANÁLISE" or "EM ANALISE" or "EM ANÁLISE" => new[] { "EM_ANALISE", "EM_ANÁLISE", "EM ANALISE", "EM ANÁLISE", "IN_ANALISE", "IN_ANALYSIS" },
+                "APROVADO" => new[] { "APROVADO", "APPROVED" },
+                "REPROVADO" => new[] { "REPROVADO", "REJECTED" },
+                "CANCELADO" => new[] { "CANCELADO", "CANCELLED" },
+                _ => new[] { status.Trim().ToUpperInvariant() }
+            };
         }
     }
 }

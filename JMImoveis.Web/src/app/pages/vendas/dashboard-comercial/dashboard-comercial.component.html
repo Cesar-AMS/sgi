@@ -1,0 +1,100 @@
+<div class="comercial-dashboard">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h5 class="mb-1">Visao Geral Comercial</h5>
+            <span class="text-muted small">Resumo do mes atual</span>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-sm" (click)="carregarDashboard()" [disabled]="carregando">
+            <span *ngIf="carregando" class="spinner-border spinner-border-sm me-1"></span>
+            Atualizar
+        </button>
+    </div>
+
+    <div *ngIf="carregando" class="loading-state">
+        Carregando indicadores comerciais...
+    </div>
+
+    <ng-container *ngIf="!carregando">
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="kpi-card">
+                    <span>Total vendas mes</span>
+                    <strong>{{ totalVendasMes }}</strong>
+                    <small>Vendas fechadas no periodo</small>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="kpi-card">
+                    <span>Propostas em analise</span>
+                    <strong>{{ totalPropostasAnalise }}</strong>
+                    <small>Aguardando validacao da gestao</small>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="kpi-card">
+                    <span>Valor total vendido</span>
+                    <strong>{{ valorTotalVendido | currency:'BRL':'symbol':'1.2-2' }}</strong>
+                    <small>Soma das vendas fechadas</small>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="kpi-card">
+                    <span>Ticket medio</span>
+                    <strong>{{ ticketMedio | currency:'BRL':'symbol':'1.2-2' }}</strong>
+                    <small>Media por venda fechada</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-12 col-xl-8">
+                <div class="summary-panel">
+                    <div class="panel-title">
+                        <h6>Vendas por periodo</h6>
+                        <span>Ultimos dias com venda</span>
+                    </div>
+
+                    <div class="bar-chart" *ngIf="chartItems.length; else semGrafico">
+                        <div class="bar-item" *ngFor="let item of chartItems">
+                            <div class="bar-value">{{ item.total | currency:'BRL':'symbol':'1.0-0' }}</div>
+                            <div class="bar-track">
+                                <div class="bar-fill" [style.height.%]="item.height"></div>
+                            </div>
+                            <div class="bar-label">{{ item.label }}</div>
+                        </div>
+                    </div>
+
+                    <ng-template #semGrafico>
+                        <div class="empty-state">Nenhuma venda fechada no periodo.</div>
+                    </ng-template>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-4">
+                <div class="summary-panel">
+                    <div class="panel-title">
+                        <h6>Resumo operacional</h6>
+                        <span>Indicadores rapidos</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Registros de venda no periodo</span>
+                        <strong>{{ vendas.length }}</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Vendas fechadas</span>
+                        <strong>{{ totalVendasMes }}</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Propostas aguardando gestao</span>
+                        <strong>{{ totalPropostasAnalise }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</div>

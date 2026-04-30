@@ -7,6 +7,24 @@
   color: #212529;
 }
 
+.proposal-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.proposal-fieldset:disabled {
+  .form-control,
+  .form-select,
+  .form-check-input,
+  .input-group .btn {
+    background-color: #f8f9fa;
+    color: #495057;
+    opacity: 1;
+  }
+}
+
 .print-area .form-section {
   break-inside: avoid;
   page-break-inside: avoid;

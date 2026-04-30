@@ -62,6 +62,8 @@ export class PropostasComponent implements OnInit, OnChanges {
   proposta: PropostaReserva = this.criarPropostaVazia();
   selectedProposalId?: number;
   approving = false;
+  editandoProposta = false;
+  salvandoEdicao = false;
   construtoras: Construtoras[] = [];
   empreendimentos: Empreendimento[] = [];
   gerentes: Usuario[] = [];
@@ -146,6 +148,7 @@ export class PropostasComponent implements OnInit, OnChanges {
       condicao: this.proposta?.condicao ?? []
     } as PropostaReserva;
     this.resetarSegundoProponente();
+    this.editandoProposta = true;
 
     setTimeout(() => this.modalReserva?.show());
   }
@@ -161,6 +164,7 @@ export class PropostasComponent implements OnInit, OnChanges {
       condicao: []
     };
     this.resetarSegundoProponente();
+    this.editandoProposta = true;
 
     setTimeout(() => this.modalReserva?.show());
   }
@@ -416,6 +420,15 @@ export class PropostasComponent implements OnInit, OnChanges {
     this.pagedItems = (this.items || []).slice(start, end);
   }
 
+  private atualizarStatusNaLista(id: number, status: PropostaStatus): void {
+    this.items = (this.items || []).map(item =>
+      Number(item.id) === Number(id)
+        ? { ...item, status }
+        : item
+    );
+    this.updatePagedItems();
+  }
+
   onPageChanged(event: PageChangedEvent): void {
     this.page = event.page;
     this.itemsPerPage = event.itemsPerPage;
@@ -497,6 +510,7 @@ export class PropostasComponent implements OnInit, OnChanges {
         this.copiarEndereco();
         this.aplicarFiltroCoordenadores(true);
         this.aplicarFiltroVendedores(true);
+        this.editandoProposta = false;
         this.modalReserva.show();
       },
       error: (err) => {
@@ -510,16 +524,55 @@ export class PropostasComponent implements OnInit, OnChanges {
     this.selectedProposalId = undefined;
   }
 
+  habilitarEdicaoProposta(): void {
+    this.editandoProposta = true;
+  }
+
+  cancelarEdicaoProposta(): void {
+    if (!this.proposta?.id) {
+      this.editandoProposta = false;
+      return;
+    }
+
+    this.openModal(this.proposta.id);
+  }
+
+  salvarEdicaoProposta(): void {
+    if (!this.proposta?.id) {
+      return;
+    }
+
+    if (this.mesmoEndereco) {
+      this.copiarEndereco();
+    }
+
+    this.salvandoEdicao = true;
+    this.proposalsService.update(this.proposta.id, this.proposta).subscribe({
+      next: () => {
+        this.toast.success('Proposta atualizada com sucesso');
+        this.editandoProposta = false;
+        this.buscar();
+      },
+      error: (err) => {
+        console.error(err);
+        this.toast.error(err.error?.message || 'Erro ao atualizar proposta');
+      },
+      complete: () => this.salvandoEdicao = false
+    });
+  }
+
   canEnviarParaAnalise(): boolean {
     return this.normalizeStatus(this.proposta?.status) === 'RASCUNHO';
   }
 
   canApprove(): boolean {
-    return this.normalizeStatus(this.proposta?.status) === 'EM_ANALISE';
+    const status = this.normalizeStatus(this.proposta?.status);
+    return status === 'EM_ANALISE' || status === 'REPROVADO';
   }
 
   canReprovar(): boolean {
-    return this.normalizeStatus(this.proposta?.status) === 'EM_ANALISE';
+    const status = this.normalizeStatus(this.proposta?.status);
+    return status === 'EM_ANALISE' || status === 'APROVADO';
   }
 
   enviarParaAnalise(): void {
@@ -544,13 +597,14 @@ export class PropostasComponent implements OnInit, OnChanges {
   approveSelected() {
     if (!this.proposta?.id || !this.canApprove()) return;
 
+    const propostaId = this.proposta.id;
     this.approving = true;
-    this.proposalsService.approve(this.proposta.id).subscribe({
+    this.proposalsService.approve(propostaId).subscribe({
       next: () => {
         this.proposta.status = 'APROVADO';
+        this.atualizarStatusNaLista(propostaId, 'APROVADO');
         this.toast.success('Proposta aprovada');
         this.modalReserva.hide();
-        this.buscar();
       },
       error: err => {
         console.error(err);
@@ -563,13 +617,14 @@ export class PropostasComponent implements OnInit, OnChanges {
   reprovarProposta(): void {
     if (!this.proposta?.id || !this.canReprovar()) return;
 
+    const propostaId = this.proposta.id;
     this.approving = true;
-    this.proposalsService.reprovar(this.proposta.id).subscribe({
+    this.proposalsService.reprovar(propostaId).subscribe({
       next: () => {
         this.proposta.status = 'REPROVADO';
+        this.atualizarStatusNaLista(propostaId, 'REPROVADO');
         this.toast.success('Proposta reprovada');
         this.modalReserva.hide();
-        this.buscar();
       },
       error: (err) => {
         console.error(err);

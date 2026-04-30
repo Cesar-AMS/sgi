@@ -27,6 +27,8 @@
     </div>
   </div>
 
+  <h5 class="mb-2 mt-3">PROJEÇÃO</h5>
+
   <!-- Cards -->
   <div class="ar-cards">
     <div class="ar-card" (click)="onCardClick('OPEN')" [class.active]="activeCard==='OPEN'">
@@ -42,15 +44,9 @@
     </div>
 
     <div class="ar-card" (click)="onCardClick('DUE_MONTH')" [class.active]="activeCard==='DUE_MONTH'">
-      <div class="label">Vence esse mês</div>
+      <div class="label">Vence este mês</div>
       <div class="value">{{ cards.dueMonthValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
       <div class="meta">{{ cards.dueMonthTotal }} títulos</div>
-    </div>
-
-    <div class="ar-card" (click)="onCardClick('OVERDUE')" [class.active]="activeCard==='OVERDUE'">
-      <div class="label">Vencido</div>
-      <div class="value">{{ cards.overdueValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
-      <div class="meta">{{ cards.overdueTotal }} títulos</div>
     </div>
 
     <div class="ar-card" (click)="onCardClick('PAID_MONTH')" [class.active]="activeCard==='PAID_MONTH'">
@@ -96,6 +92,7 @@
             <label class="form-label">Status</label>
             <select class="form-select" formControlName="status">
               <option [ngValue]="null">Todos</option>
+              <option value="PROJECAO">Projeção</option>
               <option value="WAITING">Em aberto</option>
               <option value="PAID">Pago</option>
               <option value="CANCELLED">Cancelado</option>
@@ -234,4 +231,224 @@
     </div>
   </div>
 
+</div>
+
+<!-- Modal criar -->
+<div *ngIf="showCreateModal">
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.35);">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Registrar conta a pagar</h5>
+          <button type="button" class="btn-close" (click)="closeCreateModal()"></button>
+        </div>
+
+        <div class="modal-body">
+          <form [formGroup]="createForm">
+            <div class="row g-4">
+
+              <div class="col-md-5 border-end">
+                <label class="form-label fw-semibold">
+                  Valor do pagamento <span class="text-danger">*</span>
+                </label>
+
+                <h1 class="text-muted fw-bold mb-3">
+                  {{ (createForm.value.amount || 0) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                </h1>
+
+                <div class="input-group mb-3">
+                  <span class="input-group-text">R$</span>
+                  <input type="number"
+                         class="form-control"
+                         formControlName="amount"
+                         (input)="onAmountChanged()">
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           formControlName="isPaid"
+                           id="paidNowPayable"
+                           (change)="onPaidToggle()">
+                    <label class="form-check-label" for="paidNowPayable">Já foi pago</label>
+                  </div>
+
+                  <div class="text-end">
+                    <div class="small text-muted">Valor pendente</div>
+                    <div class="fw-bold">
+                      {{ (createForm.value.pendingAmount || 0) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                    </div>
+                  </div>
+                </div>
+
+                <div *ngIf="createForm.value.isPaid" class="mb-3">
+                  <label class="form-label">Data do pagamento</label>
+                  <input type="date" class="form-control" formControlName="paidDate">
+                </div>
+
+                <label class="form-label">Descrição <span class="text-danger">*</span></label>
+                <input type="text"
+                       class="form-control"
+                       formControlName="description"
+                       placeholder="Ex: Comissão, despesa, ajuste...">
+
+                <label class="form-label mt-3">Categoria <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="category">
+                  <option value="">Selecione</option>
+                  <option *ngFor="let c of categories" [value]="c.key">{{ c.label }}</option>
+                </select>
+
+                <label class="form-label mt-3">Status</label>
+                <select class="form-select" formControlName="status">
+                  <option value="PROJECAO">PROJEÇÃO</option>
+                  <option value="WAITING">EM ABERTO</option>
+                  <option value="PAID">PAGO</option>
+                  <option value="CANCELLED">CANCELADO</option>
+                </select>
+              </div>
+
+              <div class="col-md-7">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Filial</label>
+                    <select class="form-select" formControlName="branchId">
+                      <option [ngValue]="null">Todas</option>
+                      <option *ngFor="let b of branches" [ngValue]="b.id">{{ b.name }}</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Venda (SaleId)</label>
+                    <input type="number" class="form-control" formControlName="saleId" placeholder="Ex: 856">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Data de competência</label>
+                    <input type="date" class="form-control" formControlName="competenceDate">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Data de vencimento</label>
+                    <input type="date" class="form-control" formControlName="dueDate">
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label">Observações</label>
+                    <textarea rows="4"
+                              class="form-control"
+                              formControlName="observations"
+                              placeholder="Ex: Pago via PIX, ajuste interno..."></textarea>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeCreateModal()">
+            Cancelar
+          </button>
+
+          <button type="button"
+                  class="btn btn-success"
+                  [disabled]="createForm.invalid || creating"
+                  (click)="submitCreate()">
+            <span *ngIf="!creating"><i class="bi bi-check2-circle"></i> Adicionar e continuar</span>
+            <span *ngIf="creating" class="d-flex align-items-center gap-2">
+              <span class="spinner-border spinner-border-sm"></span> Salvando...
+            </span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal baixa -->
+<div *ngIf="showSettleModal">
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.35);">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Baixa do título</h5>
+          <button type="button" class="btn-close" (click)="closeSettleModal()"></button>
+        </div>
+
+        <div class="modal-body">
+          <form [formGroup]="settleForm">
+            <div class="row g-3">
+
+              <div class="col-12">
+                <div class="p-3 rounded bg-light border">
+                  <div class="d-flex justify-content-between">
+                    <div>
+                      <div class="fw-semibold">{{ selectedRow?.description }}</div>
+                      <div class="small text-muted">
+                        Venc.: {{ selectedRow?.dueDate | date:'dd/MM/yyyy' }} -
+                        Categoria: {{ selectedRow?.category }} -
+                        Status: {{ selectedRow?.status }}
+                      </div>
+                    </div>
+
+                    <div class="text-end">
+                      <div class="small text-muted">Pendente</div>
+                      <div class="fw-bold">
+                        {{ selectedRow?.pendingAmount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Valor da baixa <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" formControlName="paid_value">
+                <div class="small text-muted mt-1">
+                  Se for parcial, o pendente será atualizado.
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Data do pagamento <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" formControlName="paid_date">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Observação</label>
+                <textarea rows="3"
+                          class="form-control"
+                          formControlName="observations"
+                          placeholder="Ex: Pago via PIX / transferência / ajuste"></textarea>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeSettleModal()">
+            Cancelar
+          </button>
+
+          <button type="button"
+                  class="btn btn-primary"
+                  [disabled]="settleForm.invalid || settling"
+                  (click)="confirmSettle()">
+            <span *ngIf="!settling"><i class="bi bi-check2-circle"></i> Confirmar baixa</span>
+            <span *ngIf="settling" class="d-flex align-items-center gap-2">
+              <span class="spinner-border spinner-border-sm"></span>
+              Salvando...
+            </span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </div>

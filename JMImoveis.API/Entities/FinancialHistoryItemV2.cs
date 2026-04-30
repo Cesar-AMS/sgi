@@ -84,6 +84,9 @@ namespace JMImoveisAPI.Entities
 
     public class AccountsPayableSummaryDto
     {
+        public int ProjectionTotal { get; set; }
+        public decimal ProjectionValue { get; set; }
+
         public int OpenTotal { get; set; }
         public decimal OpenValue { get; set; }
 

@@ -639,11 +639,13 @@ export class EspelhoComponent implements OnInit, OnChanges {
   }
 
   canApprove(): boolean {
-    return this.normalizeStatus(this.proposta?.status) === 'EM_ANALISE';
+    const status = this.normalizeStatus(this.proposta?.status);
+    return status === 'EM_ANALISE' || status === 'REPROVADO';
   }
 
   canReprovar(): boolean {
-    return this.normalizeStatus(this.proposta?.status) === 'EM_ANALISE';
+    const status = this.normalizeStatus(this.proposta?.status);
+    return status === 'EM_ANALISE' || status === 'APROVADO';
   }
 
   carregarProposta(id: number): void {

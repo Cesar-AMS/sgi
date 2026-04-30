@@ -1,0 +1,143 @@
+<div class="vendas-list">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div>
+                    <h5 class="card-title mb-1">Vendas</h5>
+                    <span class="text-muted small">Historico de vendas fechadas e oportunidades comerciais</span>
+                </div>
+
+                <button type="button" class="btn btn-primary btn-sm" routerLink="/jm/vendas/new">
+                    <i class="ri-add-line align-bottom me-1"></i> Nova Venda
+                </button>
+            </div>
+
+            <div class="filters-grid">
+                <div>
+                    <label class="form-label">Data Inicial</label>
+                    <input type="date" class="form-control form-control-sm" [(ngModel)]="filtros.inicio"
+                        (change)="buscarVendas()">
+                </div>
+
+                <div>
+                    <label class="form-label">Data Final</label>
+                    <input type="date" class="form-control form-control-sm" [(ngModel)]="filtros.fim"
+                        (change)="buscarVendas()">
+                </div>
+
+                <div>
+                    <label class="form-label">Empreendimento</label>
+                    <select class="form-select form-select-sm" [(ngModel)]="filtros.empreendimentoId"
+                        (change)="buscarVendas()">
+                        <option [ngValue]="0">Todos</option>
+                        <option *ngFor="let empreendimento of empreendimentos" [ngValue]="empreendimento.id">
+                            {{ empreendimento.name }}
+                        </option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label">Filial</label>
+                    <select class="form-select form-select-sm" [(ngModel)]="filtros.filialId"
+                        (change)="buscarVendas()">
+                        <option [ngValue]="0">Todas</option>
+                        <option *ngFor="let filial of filiais" [ngValue]="filial.id">{{ filial.name }}</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label">Gerente</label>
+                    <select class="form-select form-select-sm" [(ngModel)]="filtros.gerenteId"
+                        (change)="buscarVendas()">
+                        <option [ngValue]="0">Todos</option>
+                        <option *ngFor="let gerente of gerentes" [ngValue]="gerente.id">{{ gerente.name }}</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label">Status</label>
+                    <select class="form-select form-select-sm" [(ngModel)]="filtros.status" (change)="buscarVendas()">
+                        <option value="ABC">Todos</option>
+                        <option value="OPEN">Ativo</option>
+                        <option value="WAITING">Pendente</option>
+                        <option value="APPROVED">Vendido</option>
+                        <option value="FAILED">Cancelado</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label">Cliente</label>
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="filtros.cliente"
+                        (ngModelChange)="aplicarFiltroLocal()" placeholder="Buscar cliente">
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div *ngIf="carregando" class="loading-state">Carregando vendas...</div>
+
+            <div class="table-responsive" *ngIf="!carregando">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data Venda</th>
+                            <th>Filial</th>
+                            <th>Empreendimento</th>
+                            <th>Unidade</th>
+                            <th>Valor Imovel</th>
+                            <th>Cliente</th>
+                            <th>Status</th>
+                            <th>Vendedor</th>
+                            <th>Gerente</th>
+                            <th class="text-end">Acoes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let venda of vendasPaginadas">
+                            <td>{{ venda.selledAt | date:'dd/MM/yyyy' }}</td>
+                            <td>{{ venda.branchName || '-' }}</td>
+                            <td>{{ venda.enterpriseName || '-' }}</td>
+                            <td>{{ venda.unitName || '-' }}</td>
+                            <td>{{ venda.unitValue | currency:'BRL':'symbol':'1.2-2' }}</td>
+                            <td>{{ venda.cliente || '-' }}</td>
+                            <td>
+                                <span class="badge" [ngClass]="getStatusClass(venda.status)">
+                                    {{ getStatusLabel(venda.status) }}
+                                </span>
+                            </td>
+                            <td>{{ venda.corretor || '-' }}</td>
+                            <td>{{ venda.gerente || '-' }}</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" [routerLink]="'/jm/vendas/edit/' + venda.id">
+                                    Abrir
+                                </a>
+                            </td>
+                        </tr>
+
+                        <tr *ngIf="!vendasPaginadas.length">
+                            <td colspan="10" class="text-center text-muted py-4">Nenhuma venda encontrada.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-row" *ngIf="!carregando && totalItems > 0">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">Itens por pagina:</span>
+                    <select class="form-select form-select-sm w-auto" [ngModel]="itemsPerPage"
+                        (ngModelChange)="onItemsPerPageChange($event)">
+                        <option *ngFor="let option of perPageOptions" [value]="option">{{ option }}</option>
+                    </select>
+                    <span class="text-muted small">
+                        Mostrando {{ getStartIndex() }} - {{ getEndIndex() }} de {{ totalItems }}
+                    </span>
+                </div>
+
+                <pagination [totalItems]="totalItems" [(ngModel)]="page" [itemsPerPage]="itemsPerPage"
+                    [boundaryLinks]="true" [directionLinks]="true" [maxSize]="5"
+                    (pageChanged)="onPageChanged($event)" previousText="Anterior" nextText="Proximo"
+                    firstText="Primeira" lastText="Ultima" class="mb-0"></pagination>
+            </div>
+        </div>
+    </div>
+</div>

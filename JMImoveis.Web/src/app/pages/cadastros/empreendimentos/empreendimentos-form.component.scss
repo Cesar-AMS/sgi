@@ -1,13 +1,14 @@
 .cadastros-form-container {
     padding: 20px;
-    max-width: 600px;
+    width: 100%;
+    max-width: 1320px;
     margin: 0 auto;
 
     .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 30px;
+        margin-bottom: 18px;
 
         h2 {
             margin: 0;
@@ -28,22 +29,72 @@
 
     .form-container {
         background: #fff;
-        padding: 24px;
+        padding: 20px;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
+        .form-section {
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid #eef0f3;
+
+            &:last-of-type {
+                border-bottom: 0;
+                margin-bottom: 0;
+            }
+
+            h3 {
+                margin: 0 0 12px;
+                color: #333;
+                font-size: 16px;
+                font-weight: 700;
+            }
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            column-gap: 16px;
+            row-gap: 12px;
+        }
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 0;
+
+            &.span-2 {
+                grid-column: span 2;
+            }
+
+            &.span-3 {
+                grid-column: span 3;
+            }
+
+            &.span-4 {
+                grid-column: span 4;
+            }
+
+            &.span-6 {
+                grid-column: span 6;
+            }
+
+            &.span-8 {
+                grid-column: span 8;
+            }
+
+            &.span-12 {
+                grid-column: span 12;
+            }
 
             label {
                 display: block;
-                margin-bottom: 8px;
+                margin-bottom: 6px;
                 font-weight: bold;
             }
 
             .form-control {
                 width: 100%;
-                padding: 10px;
+                min-height: 38px;
+                padding: 8px 10px;
                 border: 1px solid #ddd;
                 border-radius: 4px;
                 font-size: 14px;
@@ -52,6 +103,11 @@
                     outline: none;
                     border-color: #007bff;
                 }
+            }
+
+            textarea.form-control {
+                min-height: 72px;
+                resize: vertical;
             }
 
             .erro {
@@ -65,7 +121,7 @@
             display: flex;
             justify-content: flex-end;
             gap: 12px;
-            margin-top: 24px;
+            margin-top: 18px;
 
             button {
                 padding: 10px 20px;
@@ -104,5 +160,52 @@
         text-align: center;
         padding: 40px;
         color: #666;
+    }
+}
+
+@media (max-width: 991px) {
+    .cadastros-form-container {
+        .form-container {
+            .form-group {
+                &.span-2,
+                &.span-3,
+                &.span-4,
+                &.span-6,
+                &.span-8 {
+                    grid-column: span 6;
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 575px) {
+    .cadastros-form-container {
+        padding: 12px;
+
+        .header,
+        .form-container .form-actions {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .form-container {
+            padding: 14px;
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group {
+                &.span-2,
+                &.span-3,
+                &.span-4,
+                &.span-6,
+                &.span-8,
+                &.span-12 {
+                    grid-column: span 1;
+                }
+            }
+        }
     }
 }

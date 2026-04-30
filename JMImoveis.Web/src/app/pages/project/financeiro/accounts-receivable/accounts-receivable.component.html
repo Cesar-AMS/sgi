@@ -29,6 +29,8 @@
 </div>
   </div>
 
+  <h5 class="mb-2 mt-3">PROJEÇÃO</h5>
+
   <!-- Cards -->
   <div class="ar-cards">
     <div class="ar-card" (click)="onCardClick('OPEN')" [class.active]="activeCard==='OPEN'">
@@ -44,19 +46,13 @@
     </div>
 
     <div class="ar-card" (click)="onCardClick('DUE_MONTH')" [class.active]="activeCard==='DUE_MONTH'">
-      <div class="label">Vence esse mês</div>
+      <div class="label">Vence este mês</div>
       <div class="value">{{ cards.dueMonthValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
       <div class="meta">{{ cards.dueMonthTotal }} títulos</div>
     </div>
 
-    <div class="ar-card" (click)="onCardClick('OVERDUE')" [class.active]="activeCard==='OVERDUE'">
-      <div class="label">Vencido</div>
-      <div class="value">{{ cards.overdueValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
-      <div class="meta">{{ cards.overdueTotal }} títulos</div>
-    </div>
-
     <div class="ar-card" (click)="onCardClick('PAID_MONTH')" [class.active]="activeCard==='PAID_MONTH'">
-      <div class="label">Pago no mês</div>
+      <div class="label">Recebido no mês</div>
       <div class="value">{{ cards.paidMonthValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
       <div class="meta">{{ cards.paidMonthTotal }} títulos</div>
     </div>
@@ -98,6 +94,7 @@
             <label class="form-label">Status</label>
             <select class="form-select" formControlName="status">
               <option [ngValue]="null">Todos</option>
+              <option value="PROJECAO">Projeção</option>
               <option value="WAITING">Em aberto</option>
               <option value="PAID">Pago</option>
               <option value="CANCELLED">Cancelado</option>
@@ -318,6 +315,7 @@
                 <select class="form-select"
                         formControlName="status"
                   >
+                  <option value="PROJECAO">PROJEÇÃO</option>
                   <option value="WAITING">EM ABERTO</option>
                   <option value="PAID">PAGO</option>
                   <option value="CANCELLED">CANCELADO</option>

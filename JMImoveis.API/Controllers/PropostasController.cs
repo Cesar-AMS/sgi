@@ -111,7 +111,12 @@ public sealed class PropostasController : ControllerBase
 
         if (!result.Success)
         {
-            return BadRequest(new { message = "Apenas propostas em análise podem ser aprovadas", status = result.Proposal?.Status });
+            return BadRequest(new
+            {
+                message = ObterMensagemErroValidacao(result.Error, true),
+                error = result.Error,
+                status = result.Proposal?.Status
+            });
         }
 
         return Ok(new { message = "Proposta aprovada com sucesso", status = result.Proposal!.Status });
@@ -133,10 +138,31 @@ public sealed class PropostasController : ControllerBase
 
         if (!result.Success)
         {
-            return BadRequest(new { message = "Apenas propostas em análise podem ser reprovadas", status = result.Proposal?.Status });
+            return BadRequest(new
+            {
+                message = ObterMensagemErroValidacao(result.Error, false),
+                error = result.Error,
+                status = result.Proposal?.Status
+            });
         }
 
         return Ok(new { message = "Proposta reprovada com sucesso", status = result.Proposal!.Status });
+    }
+
+    private static string ObterMensagemErroValidacao(string? error, bool aprovacao)
+    {
+        return error switch
+        {
+            "INVALID_STATUS" => aprovacao
+                ? "Apenas propostas em análise ou reprovadas podem ser aprovadas"
+                : "Apenas propostas em análise ou aprovadas podem ser reprovadas",
+            "UNIT_STATUS_UPDATE_FAILED" => aprovacao
+                ? "Não foi possível atualizar a unidade para vendida"
+                : "Não foi possível liberar a unidade novamente",
+            _ => aprovacao
+                ? "Erro ao aprovar proposta"
+                : "Erro ao reprovar proposta"
+        };
     }
 
     private async Task<bool> UsuarioPodeValidarAsync()

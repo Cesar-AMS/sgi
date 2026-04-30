@@ -95,6 +95,9 @@ namespace JMImoveisAPI.Repositories
             p.Add("MonthEnd", monthEnd);
 
             string sql = $@"SELECT
+                              SUM(CASE WHEN Status='PROJECAO' THEN 1 ELSE 0 END) AS ProjectionTotal,
+                              SUM(CASE WHEN Status='PROJECAO' THEN PendingAmount ELSE 0 END) AS ProjectionValue,
+
                               SUM(CASE WHEN Status='WAITING' THEN 1 ELSE 0 END) AS OpenTotal,
                               SUM(CASE WHEN Status='WAITING' THEN PendingAmount ELSE 0 END) AS OpenValue,
 
@@ -174,7 +177,19 @@ namespace JMImoveisAPI.Repositories
             if (q.UserId.HasValue) { clauses.Add("UserId = @UserId"); dp.Add("UserId", q.UserId.Value); }
             if (q.SaleId.HasValue) { clauses.Add("SaleId = @SaleId"); dp.Add("SaleId", q.SaleId.Value); }
 
-            if (!string.IsNullOrWhiteSpace(q.Category)) { clauses.Add("Category = @Category"); dp.Add("Category", q.Category.Trim()); }
+            if (!string.IsNullOrWhiteSpace(q.Category))
+            {
+                var category = q.Category.Trim().ToUpperInvariant();
+                if (category == "COMISSAO")
+                {
+                    clauses.Add("Category LIKE 'COMISSAO_%'");
+                }
+                else
+                {
+                    clauses.Add("Category = @Category");
+                    dp.Add("Category", category);
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(q.Search))
             {

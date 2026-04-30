@@ -1,0 +1,124 @@
+.comercial-dashboard {
+    .loading-state,
+    .empty-state {
+        color: #666;
+        padding: 40px;
+        text-align: center;
+    }
+
+    .kpi-card,
+    .summary-panel {
+        background: #fff;
+        border: 1px solid #e7e7e7;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .kpi-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 132px;
+        padding: 18px;
+
+        span {
+            color: #6c757d;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        strong {
+            color: #1f2937;
+            font-size: 25px;
+            line-height: 1.2;
+            margin: 10px 0 8px;
+        }
+
+        small {
+            color: #7b8490;
+        }
+    }
+
+    .summary-panel {
+        min-height: 280px;
+        padding: 18px;
+    }
+
+    .panel-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+
+        h6 {
+            margin: 0;
+        }
+
+        span {
+            color: #6c757d;
+            font-size: 12px;
+        }
+    }
+
+    .bar-chart {
+        align-items: flex-end;
+        display: flex;
+        gap: 12px;
+        min-height: 220px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .bar-item {
+        align-items: center;
+        display: flex;
+        flex: 1 0 56px;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 56px;
+    }
+
+    .bar-value,
+    .bar-label {
+        color: #6c757d;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    .bar-track {
+        align-items: flex-end;
+        background: #f1f3f5;
+        border-radius: 6px;
+        display: flex;
+        height: 150px;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .bar-fill {
+        background: #007bff;
+        border-radius: 6px 6px 0 0;
+        width: 100%;
+    }
+
+    .summary-row {
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        padding: 14px 0;
+
+        &:last-child {
+            border-bottom: 0;
+        }
+
+        span {
+            color: #5f6873;
+        }
+
+        strong {
+            color: #1f2937;
+            font-size: 18px;
+        }
+    }
+}

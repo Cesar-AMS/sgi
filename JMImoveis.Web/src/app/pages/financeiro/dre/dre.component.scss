@@ -1,0 +1,262 @@
+.dre-container {
+  padding: 20px;
+}
+
+.dre-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+
+  h2 {
+    color: #1f2937;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  p {
+    color: #6b7280;
+    margin: 6px 0 0;
+  }
+}
+
+.filtros {
+  display: flex;
+  gap: 10px;
+
+  .form-select {
+    min-width: 150px;
+  }
+}
+
+.dre-summary {
+  align-items: stretch;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #6b7280;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 92px;
+  padding: 16px;
+
+  span {
+    color: #6b7280;
+    display: block;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  strong {
+    color: #111827;
+    display: block;
+    font-size: 22px;
+  }
+
+  &.receitas {
+    border-left-color: #198754;
+  }
+
+  &.despesas {
+    border-left-color: #dc3545;
+  }
+
+  &.resultado.positivo {
+    border-left-color: #198754;
+  }
+
+  &.resultado.negativo {
+    border-left-color: #dc3545;
+  }
+}
+
+.dre-grid {
+  align-items: stretch;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dre-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  padding: 18px;
+
+  h3 {
+    color: #1f2937;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+  }
+}
+
+.card-title-row {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+
+  span {
+    color: #6b7280;
+    font-size: 12px;
+  }
+}
+
+.group-line,
+.dre-total,
+.dre-item {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.group-line {
+  background: #f8fafc;
+  border-radius: 6px;
+  color: #374151;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+}
+
+.dre-item {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 11px 0;
+
+  strong {
+    color: #1f2937;
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  span {
+    color: #6b7280;
+    display: block;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+}
+
+.item-value {
+  color: #111827;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dre-total {
+  border-top: 2px solid #e5e7eb;
+  color: #111827;
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.empty-state {
+  color: #6b7280;
+  padding: 22px 0;
+  text-align: center;
+}
+
+.resultado-card {
+  align-items: stretch;
+  justify-content: space-between;
+  text-align: center;
+
+  .resultado-value {
+    font-size: 34px;
+    font-weight: 800;
+    margin: 24px 0 6px;
+  }
+
+  p {
+    color: #6b7280;
+    margin-bottom: 24px;
+  }
+
+  &.positivo .resultado-value {
+    color: #198754;
+  }
+
+  &.negativo .resultado-value {
+    color: #dc3545;
+  }
+}
+
+.chart-box {
+  border-top: 1px solid #e5e7eb;
+  margin-top: auto;
+  padding-top: 18px;
+  text-align: left;
+}
+
+.chart-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 76px 1fr;
+  margin-bottom: 12px;
+
+  span {
+    color: #4b5563;
+    font-size: 13px;
+  }
+}
+
+.bar-track {
+  background: #eef2f7;
+  border-radius: 999px;
+  height: 12px;
+  overflow: hidden;
+}
+
+.bar {
+  border-radius: 999px;
+  height: 100%;
+  min-width: 0;
+}
+
+.receitas-bar {
+  background: #198754;
+}
+
+.despesas-bar {
+  background: #dc3545;
+}
+
+@media (max-width: 1200px) {
+  .dre-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dre-header,
+  .filtros {
+    flex-direction: column;
+  }
+
+  .dre-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros .form-select {
+    width: 100%;
+  }
+}
