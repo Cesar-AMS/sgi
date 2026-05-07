@@ -6,9 +6,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CdkStepperModule } from '@angular/cdk/stepper';
 import { ModalModule } from 'ngx-bootstrap/modal';
 
-// auth
-import { AngularFireModule } from '@angular/fire/compat';
-import { AngularFireAuthModule } from '@angular/fire/compat/auth';
 // Page Route
 import { AppRoutingModule } from './app-routing.module';
 import { LayoutsModule } from './layouts/layouts.module';
@@ -43,7 +40,6 @@ import { ChatEffects } from './store/chat/chat.effects';
 import { ProductEffects } from './store/Product/product.effect';
 import { InvoiceEffects } from './store/Invoices/invoices.effects';
 import { AuthenticationEffects } from './store/Authentication/authentication.effects';
-import { initFirebaseBackend } from './authUtils';
 import { SellerEffects } from './store/Seller/seller.effects';
 import { OrdersEffects } from './store/Orders/order.effects';
 import { InstructorEffects } from './store/Learning-instructor/instructor.effects';
@@ -57,82 +53,74 @@ import { SpinnerInterceptor } from './core/helpers/spinner.interceptor';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 
-
 registerLocaleData(localePt);
-
-
 
 export function createTranslateLoader(http: HttpClient): any {
   return new TranslateHttpLoader(http, 'assets/i18n/', '.json');
 }
-if (environment.defaultauth === 'firebase') {
-  initFirebaseBackend(environment.firebaseConfig);
-} else {
-  fakebackendInterceptor;
-}
 
-
-
-
-@NgModule({ declarations: [
-        AppComponent,
-        AuthlayoutComponent
-    ],
-    bootstrap: [AppComponent], imports: [TranslateModule.forRoot({
-            defaultLanguage: 'en',
-            loader: {
-                provide: TranslateLoader,
-                useFactory: (createTranslateLoader),
-                deps: [HttpClient]
-            }
-        }),
-        StoreModule.forRoot(rootReducer),
-        StoreDevtoolsModule.instrument({
-            maxAge: 25, // Retains last 25 states
-            logOnly: environment.production, // Restrict extension to log-only mode
-        }),
-        EffectsModule.forRoot([
-            AnalyticsEffects,
-            CRMEffects,
-            ECoEffects,
-            LearningEffects,
-            RealEffects,
-            AppRealestateEffects,
-            AgentEffects,
-            AgenciesEffects,
-            TicketEffects,
-            ChatEffects,
-            ProductEffects,
-            InvoiceEffects,
-            AuthenticationEffects,
-            SellerEffects,
-            OrdersEffects,
-            InstructorEffects,
-            CustomerEffects,
-            studentsEffects,
-            CourcesEffects,
-            InstructorEffects
-        ]),
-        AngularFireModule.initializeApp(environment.firebaseConfig),
-        BrowserModule,
-        BrowserAnimationsModule,
-        AppRoutingModule,
-        LayoutsModule,
-        CommonModule,
-        ToastrModule.forRoot(),
-        FormsModule,
-        NgxSpinnerModule.forRoot({ type: 'ball-spin-clockwise' }) ,
-        ReactiveFormsModule,
-        CdkStepperModule,
-        ModalModule.forRoot(),
-        AngularFireAuthModule], providers: [
-          { provide: HTTP_INTERCEPTORS, useClass: SpinnerInterceptor,  multi: true },
-          { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
-          { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
-          { provide: LocationStrategy, useClass: HashLocationStrategy  },
-          { provide: LOCALE_ID, useValue: 'pt-BR' }, 
-          CurrencyPipe,
-          provideHttpClient(withInterceptorsFromDi()),
-    ] })
+@NgModule({
+  declarations: [
+    AppComponent,
+    AuthlayoutComponent
+  ],
+  bootstrap: [AppComponent],
+  imports: [
+    TranslateModule.forRoot({
+      defaultLanguage: 'en',
+      loader: {
+        provide: TranslateLoader,
+        useFactory: (createTranslateLoader),
+        deps: [HttpClient]
+      }
+    }),
+    StoreModule.forRoot(rootReducer),
+    StoreDevtoolsModule.instrument({
+      maxAge: 25,
+      logOnly: environment.production,
+    }),
+    EffectsModule.forRoot([
+      AnalyticsEffects,
+      CRMEffects,
+      ECoEffects,
+      LearningEffects,
+      RealEffects,
+      AppRealestateEffects,
+      AgentEffects,
+      AgenciesEffects,
+      TicketEffects,
+      ChatEffects,
+      ProductEffects,
+      InvoiceEffects,
+      AuthenticationEffects,
+      SellerEffects,
+      OrdersEffects,
+      InstructorEffects,
+      CustomerEffects,
+      studentsEffects,
+      CourcesEffects,
+      InstructorEffects
+    ]),
+    BrowserModule,
+    BrowserAnimationsModule,
+    AppRoutingModule,
+    LayoutsModule,
+    CommonModule,
+    ToastrModule.forRoot(),
+    FormsModule,
+    NgxSpinnerModule.forRoot({ type: 'ball-spin-clockwise' }),
+    ReactiveFormsModule,
+    CdkStepperModule,
+    ModalModule.forRoot()
+  ],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: SpinnerInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
+    { provide: LocationStrategy, useClass: HashLocationStrategy },
+    { provide: LOCALE_ID, useValue: 'pt-BR' },
+    CurrencyPipe,
+    provideHttpClient(withInterceptorsFromDi()),
+  ]
+})
 export class AppModule { }
-

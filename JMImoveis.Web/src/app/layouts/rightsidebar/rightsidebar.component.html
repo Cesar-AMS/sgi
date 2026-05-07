@@ -505,7 +505,7 @@
 
             <div class="row">
                 <div class="col-4">
-                    <div class="form-check sidebar-setting card-radio" data-bs-toggle="collapse" data-bs-target="#collapseBgGradient.show">
+                    <div class="form-check sidebar-setting card-radio">
                         <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-light" value="light" [checked]="sidebarcolor === 'light'" (change)="changeSidebarColor('light')" (click)="removeActive()">
                         <label class="form-check-label p-0 avatar-md w-100" for="sidebar-color-light">
                             <span class="d-flex gap-1 h-100">
@@ -529,7 +529,7 @@
                     <h5 class="fs-sm text-center fw-medium mt-2">Light</h5>
                 </div>
                 <div class="col-4">
-                    <div class="form-check sidebar-setting card-radio" data-bs-toggle="collapse" data-bs-target="#collapseBgGradient.show">
+                    <div class="form-check sidebar-setting card-radio">
                         <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-dark" value="dark" [checked]="sidebarcolor === 'dark'" (change)="changeSidebarColor('dark')" (click)="removeActive()">
                         <label class="form-check-label p-0 avatar-md w-100" for="sidebar-color-dark">
                             <span class="d-flex gap-1 h-100">
@@ -553,7 +553,7 @@
                     <h5 class="fs-sm text-center fw-medium mt-2">Dark</h5>
                 </div>
                 <div class="col-4">
-                    <button class="btn btn-link avatar-md w-100 p-0 overflow-hidden border collapsed" id="collapseBgGradient1" data-bs-target="#collapseBgGradient" type="button" (click)="addActive('gradient')">
+                    <button class="btn btn-link avatar-md w-100 p-0 overflow-hidden border collapsed" id="collapseBgGradient1" type="button" (click)="addActive('gradient')">
                         <span class="d-flex gap-1 h-100">
                             <span class="flex-shrink-0">
                                 <span class="bg-vertical-gradient d-flex h-100 flex-column gap-1 p-1">

@@ -1,7 +1,7 @@
 import { environment } from 'src/environments/environment';
 
-const configuredUrl = environment.backendApiUrl || 'https://jmapi.ensuo.com.br/';
+const rawUrl = environment.backendApiUrl || '/api/';
+const configuredUrl = rawUrl.replace(/\/+$/, '');
+const normalizedUrl = configuredUrl.endsWith('/api') ? configuredUrl.slice(0, -4) : configuredUrl;
 
-export const BACKEND_API_URL = configuredUrl.endsWith('/')
-  ? configuredUrl
-  : `${configuredUrl}/`;
+export const BACKEND_API_URL = `${normalizedUrl}/`;

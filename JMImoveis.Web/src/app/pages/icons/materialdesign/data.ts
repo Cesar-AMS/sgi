@@ -2823,7 +2823,6 @@ const icons = [
   { name: 'fire-hydrant-off', hex: 'F1139', version: '4.4.95' },
   { name: 'fire-off', hex: 'F1722', version: '5.9.55' },
   { name: 'fire-truck', hex: 'F08AB', version: '2.2.43' },
-  { name: 'firebase', hex: 'F0967', version: '2.4.85' },
   { name: 'firefox', hex: 'F0239', version: '1.5.54' },
   { name: 'fireplace', hex: 'F0E2E', version: '3.6.95' },
   { name: 'fireplace-off', hex: 'F0E2F', version: '3.6.95' },

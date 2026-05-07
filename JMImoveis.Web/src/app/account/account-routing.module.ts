@@ -7,7 +7,17 @@ import { RegisterComponent } from './register/register.component';
 
 const routes: Routes = [
   {
+    path: '',
+    redirectTo: 'login',
+    pathMatch: 'full'
+  },
+  {
     path: 'auth', loadChildren: () => import('./auth/auth.module').then(m => m.AuthModule)
+  },
+  {
+    path: 'signin',
+    redirectTo: 'login',
+    pathMatch: 'full'
   },
   {
     path: 'login',

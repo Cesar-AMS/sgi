@@ -2,7 +2,6 @@
 import { Store } from '@ngrx/store';
 
 import { User } from '../../store/Authentication/auth.models';
-import { getFirebaseBackend } from 'src/app/authUtils';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { catchError, map, tap } from 'rxjs/operators';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
@@ -11,9 +10,6 @@ import { SessionService } from '../session/session.service';
 import { BACKEND_API_URL } from './backend-api-url';
 
 import { login, loginSuccess, loginFailure, logout, logoutSuccess, RegisterSuccess } from '../../store/Authentication/authentication.actions';
-
-import { AngularFireAuth } from '@angular/fire/compat/auth';
-import firebase from 'firebase/compat/app';
 
 const AUTH_API = GlobalComponent.AUTH_API;
 
@@ -44,35 +40,9 @@ export class AuthenticationService {
     constructor(
         private http: HttpClient,
         private store: Store,
-        private afAuth: AngularFireAuth,
         private sessionService: SessionService
     ) {
         this.currentUserSubject = new BehaviorSubject<User>(this.sessionService.getCurrentUser() ?? ({} as User));
-    }
-
-    signInWithGoogle(): Promise<User> {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        return this.signInWithPopup(provider);
-    }
-
-    signInWithFacebook(): Promise<User> {
-        const provider = new firebase.auth.FacebookAuthProvider();
-        return this.signInWithPopup(provider);
-    }
-
-    private async signInWithPopup(provider: firebase.auth.AuthProvider): Promise<User> {
-        try {
-            const result = await this.afAuth.signInWithPopup(provider);
-            const user = result.user;
-            return {
-            };
-        } catch (error) {
-            throw new Error('Failed to sign in with the specified provider.');
-        }
-    }
-
-    signOut(): Promise<void> {
-        return this.afAuth.signOut();
     }
 
     register(email: string, first_name: string, password: string) {
@@ -167,6 +137,6 @@ export class AuthenticationService {
     }
 
     public currentUser(): any {
-        return getFirebaseBackend()!.getAuthenticatedUser();
+        return this.sessionService.getCurrentUser();
     }
 }

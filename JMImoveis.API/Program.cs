@@ -1,6 +1,7 @@
 using JMImoveisAPI.Configurations;
 using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -11,11 +12,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy",
-        builder => builder
-            .SetIsOriginAllowed(origin => true)
-            .AllowAnyHeader()
+    options.AddPolicy("AllowSpecificOrigins",
+        policy => policy
+            .WithOrigins(
+                "http://2.24.203.33:8081",
+                "http://crm.jmimoveiszl.com.br",
+                "http://localhost:8081",
+                "http://localhost:4200",
+                "http://localhost:9920")
             .AllowAnyMethod()
+            .AllowAnyHeader()
             .AllowCredentials());
 });
 
@@ -65,13 +71,19 @@ builder.Services.Configure<CorretorDashboardOptions>(builder.Configuration.GetSe
 builder.Services.AddSingleton<DapperContext>();
 builder.Services.AddDependencyInjection();
 
+var jwtSecret = builder.Configuration["Jwt:Secret"];
+if (string.IsNullOrWhiteSpace(jwtSecret))
+{
+    throw new InvalidOperationException("Jwt:Secret não configurado. Defina Jwt__Secret no container ou configure appsettings.json.");
+}
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
-    var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Secret"]!);
+    var key = Encoding.ASCII.GetBytes(jwtSecret);
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
@@ -81,20 +93,25 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
 var app = builder.Build();
 
 app.MapHealthChecks("/health").AllowAnonymous();
 
-app.UseCors("CorsPolicy");              
-
 app.UseSwagger();
 app.UseSwaggerUI();
 
+app.UseRouting();
+app.UseCors("AllowSpecificOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
-var jwtSecret = builder.Configuration["Jwt:Secret"];
 
-app.UseMiddleware<JwtMiddleware>(jwtSecret);
 app.MapControllers();
 
 app.Run();

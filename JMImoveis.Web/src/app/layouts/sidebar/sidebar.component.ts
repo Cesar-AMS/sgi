@@ -128,8 +128,13 @@ export class SidebarComponent {
   }
 
   toggleItem(event: any, item: any) {
+    event.preventDefault();
     item.isOpen = !item.isOpen;
     const isCurrentMenuId = event.target.closest('a.nav-link');
+
+    if (!isCurrentMenuId) {
+      return;
+    }
 
     isCurrentMenuId.setAttribute('aria-expanded', item.isOpen.toString());
 
@@ -148,8 +153,13 @@ export class SidebarComponent {
   }
 
   toggleSubItem(event: any) {
-    let isCurrentMenuId = event.target.closest('a.nav-link');
-    let isMenu = isCurrentMenuId.nextElementSibling as any;
+    event.preventDefault();
+    const isCurrentMenuId = event.target.closest('a.nav-link') as HTMLElement | null;
+    const isMenu = isCurrentMenuId?.nextElementSibling as HTMLElement | null;
+
+    if (!isCurrentMenuId || !isMenu) {
+      return;
+    }
 
     if (isMenu.classList.contains('show')) {
       isMenu.classList.remove('show');
@@ -164,16 +174,22 @@ export class SidebarComponent {
         submenu.setAttribute('aria-expanded', 'false');
       });
 
-      if (event.target && event.target.nextElementSibling) {
+      if (isMenu) {
         isCurrentMenuId.setAttribute('aria-expanded', 'true');
-        event.target.nextElementSibling.classList.toggle('show');
+        isMenu.classList.toggle('show');
       }
     }
   }
 
   toggleExtraSubItem(event: any) {
-    let isCurrentMenuId = event.target.closest('a.nav-link');
-    let isMenu = isCurrentMenuId.nextElementSibling as any;
+    event.preventDefault();
+    const isCurrentMenuId = event.target.closest('a.nav-link') as HTMLElement | null;
+    const isMenu = isCurrentMenuId?.nextElementSibling as HTMLElement | null;
+
+    if (!isCurrentMenuId || !isMenu) {
+      return;
+    }
+
     if (isMenu.classList.contains('show')) {
       isMenu.classList.remove('show');
       isCurrentMenuId.setAttribute('aria-expanded', 'false');
@@ -188,9 +204,9 @@ export class SidebarComponent {
         submenu.setAttribute('aria-expanded', 'false');
       });
 
-      if (event.target && event.target.nextElementSibling) {
+      if (isMenu) {
         isCurrentMenuId.setAttribute('aria-expanded', 'true');
-        event.target.nextElementSibling.classList.toggle('show');
+        isMenu.classList.toggle('show');
       }
     }
   }
@@ -198,6 +214,9 @@ export class SidebarComponent {
   toggleParentItem(event: any, item: any) {
     this.toggleItem(event, item);
     let isCurrentMenuId = event.target.closest('a.nav-link');
+    if (!isCurrentMenuId) {
+      return;
+    }
     let dropDowns = Array.from(document.querySelectorAll('#navbar-nav .show'));
     dropDowns.forEach((node: any) => {
       node.classList.remove('show');
@@ -218,33 +237,35 @@ export class SidebarComponent {
   }
 
   activateParentDropdown(item: any) {
+    if (!item) {
+      return false;
+    }
+
     item.classList.add('active');
-    let parentCollapseDiv = item.closest('.collapse.menu-dropdown');
+    const parentCollapseDiv = item.closest('.collapse.menu-dropdown') as HTMLElement | null;
+
     if (parentCollapseDiv) {
       parentCollapseDiv.classList.add('show');
-      parentCollapseDiv.parentElement.children[0].classList.add('active');
-      parentCollapseDiv.parentElement.children[0].setAttribute('aria-expanded', 'true');
-      if (parentCollapseDiv.parentElement.closest('.collapse.menu-dropdown')) {
-        parentCollapseDiv.parentElement.closest('.collapse').classList.add('show');
-        if (parentCollapseDiv.parentElement.closest('.collapse').previousElementSibling) {
-          parentCollapseDiv.parentElement
-            .closest('.collapse')
-            .previousElementSibling.classList.add('active');
-        }
-        if (
-          parentCollapseDiv.parentElement.closest('.collapse').previousElementSibling.closest(
-            '.collapse'
-          )
-        ) {
-          parentCollapseDiv.parentElement
-            .closest('.collapse')
-            .previousElementSibling.closest('.collapse')
-            .classList.add('show');
-          parentCollapseDiv.parentElement
-            .closest('.collapse')
-            .previousElementSibling.closest('.collapse')
-            .previousElementSibling.classList.add('active');
-        }
+
+      const parentElement = parentCollapseDiv.parentElement;
+      const parentLink = parentElement?.children?.[0] as HTMLElement | undefined;
+      parentLink?.classList.add('active');
+      parentLink?.setAttribute('aria-expanded', 'true');
+
+      const outerCollapse = parentElement?.closest('.collapse.menu-dropdown') as HTMLElement | null;
+      if (outerCollapse) {
+        outerCollapse.classList.add('show');
+
+        const outerTrigger = outerCollapse.previousElementSibling as HTMLElement | null;
+        outerTrigger?.classList.add('active');
+        outerTrigger?.setAttribute('aria-expanded', 'true');
+
+        const topCollapse = outerTrigger?.closest('.collapse') as HTMLElement | null;
+        topCollapse?.classList.add('show');
+
+        const topTrigger = topCollapse?.previousElementSibling as HTMLElement | null;
+        topTrigger?.classList.add('active');
+        topTrigger?.setAttribute('aria-expanded', 'true');
       }
       return false;
     }
@@ -258,7 +279,8 @@ export class SidebarComponent {
       this.removeActivation(items);
     }
 
-    this.activateParentDropdown(event.target);
+    const target = (event.target as HTMLElement | null)?.closest('a.nav-link');
+    this.activateParentDropdown(target);
   }
 
   initActiveMenu() {

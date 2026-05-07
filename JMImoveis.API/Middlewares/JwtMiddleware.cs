@@ -1,7 +1,9 @@
+using JMImoveisAPI.Configurations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
@@ -10,10 +12,10 @@ public class JwtMiddleware
     private readonly RequestDelegate _next;
     private readonly string _secret;
 
-    public JwtMiddleware(RequestDelegate next, string secret)
+    public JwtMiddleware(RequestDelegate next, IOptions<JwtSettings> jwtSettings)
     {
         _next = next;
-        _secret = secret;
+        _secret = jwtSettings.Value.Secret;
     }
 
     public async Task Invoke(HttpContext context)

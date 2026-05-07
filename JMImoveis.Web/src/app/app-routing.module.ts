@@ -10,6 +10,11 @@ const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'auth',
+    component: AuthlayoutComponent,
+    loadChildren: () => import('./account/account.module').then((m) => m.AccountModule)
+  },
+  {
     path: '',
     component: LayoutComponent,
     loadChildren: () => import('./pages/pages.module').then((m) => m.PagesModule)

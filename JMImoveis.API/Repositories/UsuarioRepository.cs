@@ -66,30 +66,40 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<IEnumerable<Usuario>> GetUsersByRoleAndBranchAsync(int branchId, int roleId, int status)
         {
-            var and = "";
+            var filters = new List<string>();
+            var parameters = new DynamicParameters();
 
-            if(roleId != 0)
+            if (roleId != 0)
             {
-                and += $" and T0.jobpositionId = {roleId}";
+                filters.Add("UR.role_id = @RoleId");
+                parameters.Add("RoleId", roleId);
             }
 
             if (status != 2)
             {
-                and += $"  and T0.hidden = {status}";
+                filters.Add("T0.hidden = @Hidden");
+                parameters.Add("Hidden", status);
             }
 
-            if(branchId != 0)
+            if (branchId != 0)
             {
-                and += $" and T1.branch_id = {branchId}";
+                filters.Add("T1.branch_id = @BranchId");
+                parameters.Add("BranchId", branchId);
             }
 
-            var sql = @$"SELECT DISTINCT T0.* FROM users T0 
-                         LEFT JOIN user_branches T1 ON T0.id = T1.user_id 
-                         WHERE 1 = 1  
-                         {and}";
+            var where = filters.Count > 0
+                ? "WHERE " + string.Join(" AND ", filters)
+                : "";
+
+            var sql = @$"SELECT DISTINCT T0.*
+                         FROM users T0
+                         LEFT JOIN user_roles UR ON T0.id = UR.user_id
+                         LEFT JOIN user_branches T1 ON T0.id = T1.user_id
+                         {where}
+                         ORDER BY T0.name";
 
             await using var conn = await _context.OpenConnectionAsync();
-            return await conn.QueryAsync<Usuario>(sql);
+            return await conn.QueryAsync<Usuario>(sql, parameters);
         }
 
         public async Task UpdateMenuAsync(List<MenuItemDto> menu, int userId)

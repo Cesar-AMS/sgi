@@ -5,12 +5,13 @@ import { map } from 'rxjs/operators';
 import { SessionService } from '../core/session/session.service';
 import { Unidade, CreateUnidade, UpdateUnidade, StatusConfig, StatusUnidade } from '../models/unidade.model';
 import { UpdateStatus } from '../models/update-status.model';
+import { BACKEND_API_URL } from '../core/services/backend-api-url';
 
 @Injectable({
     providedIn: 'root'
 })
 export class UnidadeService {
-    private readonly baseUrl = 'http://localhost:9920/api/Apartament';
+    private readonly baseUrl = `${BACKEND_API_URL}api/Apartament`;
 
     constructor(
         private http: HttpClient,

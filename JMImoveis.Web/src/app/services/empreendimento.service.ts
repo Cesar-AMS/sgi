@@ -4,12 +4,13 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SessionService } from '../core/session/session.service';
 import { Empreendimento, CreateEmpreendimento, UpdateEmpreendimento, CountResponse } from '../models/empreendimento.model';
+import { BACKEND_API_URL } from '../core/services/backend-api-url';
 
 @Injectable({
     providedIn: 'root'
 })
 export class EmpreendimentoService {
-    private readonly baseUrl = 'http://localhost:9920/api/Empreendimento';
+    private readonly baseUrl = `${BACKEND_API_URL}api/Empreendimento`;
 
     constructor(
         private http: HttpClient,

@@ -340,11 +340,6 @@ export class TopbarComponent {
    */
   logout() {
     this.authService.logout();
-    // if (environment.defaultauth === 'firebase') {
-    //   this.authService.logout();
-    // } else {
-    //   this.authFackservice.logout();
-    // }
     this.router.navigate(['/auth/login']);
   }
 }

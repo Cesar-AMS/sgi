@@ -1,21 +1,17 @@
-# Etapa 1: Build
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 
-# Copia arquivos da solução
-COPY JMImoveisAPI.sln .
-COPY JMImoveisAPI/JMImoveisAPI.csproj JMImoveisAPI/
-RUN dotnet restore JMImoveisAPI/JMImoveisAPI.csproj
-
-# Copia o restante do código e publica
+# Copia os arquivos do projeto
 COPY . .
-WORKDIR /src/JMImoveisAPI
-RUN dotnet publish -c Release -o /app/publish
 
-# Etapa 2: Runtime
+# Publica o projeto
+RUN dotnet publish -c Release -o /app
+
+# Imagem final
 FROM mcr.microsoft.com/dotnet/aspnet:7.0
 WORKDIR /app
-COPY --from=build /app/publish .
+COPY --from=build /app .
 
 EXPOSE 80
-ENTRYPOINT ["dotnet", "JMImoveisAPI.dll"]
+
+ENTRYPOINT ["dotnet", "JMImoveis.API.dll"]
