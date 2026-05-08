@@ -1117,6 +1117,23 @@ namespace JMImoveisAPI.Repositories
                 cancellationToken: ct)) > 0;
         }
 
+        public async Task<EnterpriseApprovalParams?> GetEnterpriseApprovalParamsAsync(long enterpriseId, CancellationToken ct)
+        {
+            const string sql = @"SELECT approval_act AS ""ApprovalAct"",
+                                        approval_installments AS ""ApprovalInstallments"",
+                                        approval_intermediate AS ""ApprovalIntermediate""
+                                 FROM jmoficial.enterprises
+                                 WHERE id = @enterpriseId
+                                   AND deleted_at IS NULL
+                                 LIMIT 1;";
+
+            using var conn = await _context.OpenConnectionAsync();
+            return await conn.QuerySingleOrDefaultAsync<EnterpriseApprovalParams>(new CommandDefinition(
+                sql,
+                new { enterpriseId },
+                cancellationToken: ct));
+        }
+
         public async Task<bool> UpdateProposalStatusAsync(long id, string expectedStatus, string nextStatus, CancellationToken ct)
         {
             const string sql = @"UPDATE jmoficial.proposals

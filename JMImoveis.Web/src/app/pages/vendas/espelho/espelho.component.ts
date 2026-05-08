@@ -175,6 +175,22 @@ export class EspelhoVendasComponent implements OnInit {
         }
     }
 
+    formatarMetragem(area: number | string | null | undefined): string {
+        if (area === null || area === undefined || area === '') {
+            return '';
+        }
+
+        const valor = Number(String(area).replace(',', '.'));
+        if (!Number.isFinite(valor)) {
+            return String(area);
+        }
+
+        return valor.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
     private restaurarFiltrosSalvos(): void {
         const filtros = this.obterFiltrosSalvos();
         if (!filtros?.construtoraId) {

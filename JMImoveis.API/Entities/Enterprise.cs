@@ -11,6 +11,15 @@
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
         public bool Hidden { get; set; }
+        public string? Type { get; set; }
+        public DateTime? ExpectedDeliveryDate { get; set; }
+        public int? TowersNumber { get; set; }
+        public int? FloorCount { get; set; }
+        public int? UnitsPerFloor { get; set; }
+        public decimal? ApprovalAct { get; set; }
+        public int? ApprovalInstallments { get; set; }
+        public decimal? ApprovalIntermediate { get; set; }
+        public List<EnterpriseUnitFinalSize>? UnitFinalSizes { get; set; }
     }
 
     public class UnitsEnterprise //Apartamento

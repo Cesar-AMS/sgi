@@ -1,5 +1,6 @@
 ﻿using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
+using System.Globalization;
 
 namespace JMImoveisAPI.Services
 {
@@ -35,6 +36,8 @@ namespace JMImoveisAPI.Services
             }
 
             var proposal = MapProposal(dto);
+            var conds = MapConditions(dto).ToList();
+            await ValidateApprovalParametersAsync(proposal, conds, ct);
 
             var unitStatus = await _repo.GetUnitStatusAsync(proposal.UnidadeId, ct);
             if (!string.Equals((unitStatus ?? string.Empty).Trim(), "OPEN", StringComparison.OrdinalIgnoreCase))
@@ -48,7 +51,6 @@ namespace JMImoveisAPI.Services
             }
 
             proposal.Status = ProposalStatus.EM_ANALISE.ToString();
-            var conds = MapConditions(dto);
             return await _repo.CreateAsync(proposal, conds, ct);
         }
 
@@ -65,7 +67,8 @@ namespace JMImoveisAPI.Services
             proposal.CreatedAt = existing.CreatedAt;
             proposal.Status = NormalizeStatus(string.IsNullOrWhiteSpace(dto.Status) ? existing.Status : dto.Status);
 
-            var conds = MapConditions(dto);
+            var conds = MapConditions(dto).ToList();
+            await ValidateApprovalParametersAsync(proposal, conds, ct);
             return await _repo.UpdateProposalAsync(proposal, conds, ct);
         }
 
@@ -300,7 +303,7 @@ namespace JMImoveisAPI.Services
             var result = new List<Installaments?>();
             var sequence = 1;
 
-            foreach (var condicao in condicoes.Where(c => EhEntrada(c.Descricao) || EhSinal(c.Descricao)))
+            foreach (var condicao in condicoes.Where(c => EhIntermediaria(c.Descricao)))
             {
                 foreach (var parcela in ExpandCondition(condicao))
                 {
@@ -323,7 +326,7 @@ namespace JMImoveisAPI.Services
             var result = new List<Installaments?>();
             var sequence = 1;
 
-            foreach (var condicao in condicoes.Where(c => !EhAto(c.Descricao) && !EhEntrada(c.Descricao) && !EhSinal(c.Descricao)))
+            foreach (var condicao in condicoes.Where(c => !EhAto(c.Descricao) && !EhIntermediaria(c.Descricao)))
             {
                 foreach (var parcela in ExpandCondition(condicao))
                 {
@@ -360,14 +363,102 @@ namespace JMImoveisAPI.Services
             };
         }
 
+        private async Task ValidateApprovalParametersAsync(
+            Proposal proposal,
+            IReadOnlyCollection<ProposalCondition> conds,
+            CancellationToken ct)
+        {
+            var parameters = await _repo.GetEnterpriseApprovalParamsAsync(proposal.EmpreendimentoId, ct);
+            if (parameters is null)
+            {
+                return;
+            }
+
+            var errors = new List<string>();
+
+            if (parameters.ApprovalAct.HasValue && parameters.ApprovalAct.Value > 0)
+            {
+                var totalAto = conds
+                    .Where(c => EhAto(c.Descricao))
+                    .Sum(ValorTotalCondicao);
+
+                if (totalAto < parameters.ApprovalAct.Value)
+                {
+                    errors.Add($"Ato informado menor que o minimo configurado para o empreendimento. Minimo: {FormatCurrency(parameters.ApprovalAct.Value)}. Informado: {FormatCurrency(totalAto)}.");
+                }
+            }
+
+            if (parameters.ApprovalInstallments.HasValue && parameters.ApprovalInstallments.Value > 0)
+            {
+                var totalParcelas = conds
+                    .Where(c => !EhAto(c.Descricao) && !EhIntermediaria(c.Descricao))
+                    .Sum(c => Math.Max(c.Qtde, 0));
+
+                if (totalParcelas > parameters.ApprovalInstallments.Value)
+                {
+                    errors.Add($"Quantidade de parcelas maior que o permitido para o empreendimento. Maximo: {parameters.ApprovalInstallments.Value}. Informado: {totalParcelas}.");
+                }
+            }
+
+            if (parameters.ApprovalIntermediate.HasValue && parameters.ApprovalIntermediate.Value > 0)
+            {
+                var totalIntermediaria = conds
+                    .Where(c => EhIntermediaria(c.Descricao))
+                    .Sum(ValorTotalCondicao);
+
+                if (totalIntermediaria < parameters.ApprovalIntermediate.Value)
+                {
+                    errors.Add($"Intermediaria informada menor que o minimo configurado para o empreendimento. Minimo: {FormatCurrency(parameters.ApprovalIntermediate.Value)}. Informado: {FormatCurrency(totalIntermediaria)}.");
+                }
+            }
+
+            if (errors.Count > 0)
+            {
+                throw new ArgumentException(string.Join(" ", errors));
+            }
+        }
+
+        private static decimal ValorTotalCondicao(ProposalCondition condicao)
+        {
+            if (condicao.ValorTotal > 0)
+            {
+                return condicao.ValorTotal;
+            }
+
+            return condicao.ValorParcela * Math.Max(condicao.Qtde, 1);
+        }
+
+        private static string FormatCurrency(decimal value)
+            => value.ToString("C", CultureInfo.GetCultureInfo("pt-BR"));
+
         private static bool EhAto(string? descricao)
-            => string.Equals((descricao ?? string.Empty).Trim(), "Ato", StringComparison.OrdinalIgnoreCase);
+            => NormalizarDescricaoCondicao(descricao) == "ATO";
 
         private static bool EhEntrada(string? descricao)
-            => string.Equals((descricao ?? string.Empty).Trim(), "Entrada", StringComparison.OrdinalIgnoreCase);
+            => NormalizarDescricaoCondicao(descricao) == "ENTRADA";
 
         private static bool EhSinal(string? descricao)
-            => string.Equals((descricao ?? string.Empty).Trim(), "Sinal", StringComparison.OrdinalIgnoreCase);
+            => NormalizarDescricaoCondicao(descricao) == "SINAL";
+
+        private static bool EhIntermediaria(string? descricao)
+        {
+            var normalized = NormalizarDescricaoCondicao(descricao);
+            return normalized == "INTERMEDIARIA" ||
+                   normalized == "ENTRADA" ||
+                   normalized == "SINAL";
+        }
+
+        private static string NormalizarDescricaoCondicao(string? descricao)
+        {
+            var normalized = (descricao ?? string.Empty)
+                .Trim()
+                .ToUpperInvariant()
+                .Replace(" ", string.Empty)
+                .Replace("-", string.Empty)
+                .Replace("_", string.Empty);
+
+            return RemoverAcentosStatus(normalized);
+        }
 
         private static string SomenteDigitos(string? valor)
             => new string((valor ?? string.Empty).Where(char.IsDigit).ToArray());

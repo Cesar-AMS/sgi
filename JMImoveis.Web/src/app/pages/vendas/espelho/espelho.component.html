@@ -48,8 +48,8 @@
 
                     <div class="card-detalhes">
                         <div class="card-info-item" *ngIf="unidade.area" title="Metros quadrados">
-                            <span class="info-label">m2</span>
-                            <span class="info-value">{{ unidade.area }}</span>
+                            <span class="info-label">m&sup2;</span>
+                            <span class="info-value">{{ formatarMetragem(unidade.area) }}</span>
                         </div>
 
                         <div class="card-info-item" *ngIf="unidade.dormitorios !== undefined && unidade.dormitorios !== null" title="Dormitorios">

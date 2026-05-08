@@ -76,6 +76,7 @@ namespace JMImoveisAPI.Controllers
                 Size = dto.Size,
                 Dormitories = dto.Dormitories,
                 Status = dto.Status,
+                EnterpriseId = dto.EnterpriseId,
                 Active = dto.Active
             });
             return ok ? NoContent() : NotFound();

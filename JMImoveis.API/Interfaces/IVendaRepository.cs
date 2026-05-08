@@ -27,6 +27,7 @@ namespace JMImoveisAPI.Interfaces
         Task<bool> UpdateUnitStatusAsync(long unitId, string nextStatus, CancellationToken ct);
         Task<string?> GetUnitStatusAsync(long unitId, CancellationToken ct);
         Task<bool> HasActiveProposalForUnitAsync(long unitId, CancellationToken ct);
+        Task<EnterpriseApprovalParams?> GetEnterpriseApprovalParamsAsync(long enterpriseId, CancellationToken ct);
 
         Task<List<int>> GetCustomerIdsBySaleIdAsync(int saleId);
         Task<List<ParcelDto>> GetParcelsBySaleIdAsync(int saleId);

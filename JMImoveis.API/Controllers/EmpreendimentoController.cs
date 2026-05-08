@@ -59,7 +59,16 @@ namespace JMImoveisAPI.Controllers
                 Name = dto.Name,
                 Address = dto.Address,
                 ConstructorId = dto.ConstructorId,
-                Hidden = dto.Hidden
+                Hidden = dto.Hidden,
+                Type = dto.Type,
+                ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
+                TowersNumber = dto.TowersNumber,
+                FloorCount = dto.FloorCount,
+                UnitsPerFloor = dto.UnitsPerFloor,
+                ApprovalAct = dto.ApprovalAct,
+                ApprovalInstallments = dto.ApprovalInstallments,
+                ApprovalIntermediate = dto.ApprovalIntermediate,
+                UnitFinalSizes = dto.UnitFinalSizes
             });
             return CreatedAtAction(nameof(Get), new { id }, new { id });
         }
@@ -72,7 +81,16 @@ namespace JMImoveisAPI.Controllers
                 Name = dto.Name,
                 Address = dto.Address,
                 ConstructorId = dto.ConstructorId,
-                Hidden = dto.Hidden
+                Hidden = dto.Hidden,
+                Type = dto.Type,
+                ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
+                TowersNumber = dto.TowersNumber,
+                FloorCount = dto.FloorCount,
+                UnitsPerFloor = dto.UnitsPerFloor,
+                ApprovalAct = dto.ApprovalAct,
+                ApprovalInstallments = dto.ApprovalInstallments,
+                ApprovalIntermediate = dto.ApprovalIntermediate,
+                UnitFinalSizes = dto.UnitFinalSizes
             });
             return ok ? NoContent() : NotFound();
         }

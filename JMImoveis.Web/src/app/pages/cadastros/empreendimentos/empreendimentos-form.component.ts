@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { EmpreendimentoService } from '../../../services/empreendimento.service';
 import { ConstrutoraService } from '../../../services/construtora.service';
@@ -54,7 +54,11 @@ export class EmpreendimentosFormComponent implements OnInit {
             bairro: [''],
             tipo: ['RESIDENCIAL', [Validators.required]],
             status: ['LANCAMENTO', [Validators.required]],
-            numeroTorres: [null],
+            hidden: [false],
+            numeroTorres: [null, [Validators.required, Validators.min(1)]],
+            numeroAndares: [null, [Validators.required, Validators.min(1)]],
+            unidadesPorAndar: [null, [Validators.required, Validators.min(1)]],
+            metragemPorFinal: this.fb.array([]),
             numeroUnidades: [null],
             areaTotal: [null],
             dataLancamento: [''],
@@ -67,12 +71,18 @@ export class EmpreendimentosFormComponent implements OnInit {
             dataAprovacao: [''],
             responsavelTecnico: [''],
             descricao: [''],
-            observacoes: ['']
+            observacoes: [''],
+            parametroAto: [null, [Validators.min(0)]],
+            parametroParcelas: [null, [Validators.min(0), Validators.pattern(/^\d+$/)]],
+            parametroIntermediaria: [null, [Validators.min(0)]]
         });
     }
 
     ngOnInit(): void {
         this.carregarConstrutoras();
+        this.form.get('unidadesPorAndar')?.valueChanges.subscribe((value) => {
+            this.ajustarMetragensPorFinal(value);
+        });
 
         const idParam = this.route.snapshot.paramMap.get('id');
         if (idParam) {
@@ -99,6 +109,11 @@ export class EmpreendimentosFormComponent implements OnInit {
         this.carregando = true;
         this.empreendimentoService.getById(this.id).subscribe({
             next: (data: any) => {
+                const unitFinalSizes = data.unitFinalSizes ?? [];
+                const unidadesPorAndar = data.unidadesPorAndar
+                    ?? data.unitsPerFloor
+                    ?? this.getMaiorFinal(unitFinalSizes);
+
                 this.form.patchValue({
                     nome: data.nome ?? data.name,
                     endereco: data.endereco ?? data.address,
@@ -111,7 +126,10 @@ export class EmpreendimentosFormComponent implements OnInit {
                     bairro: data.bairro,
                     tipo: data.tipo,
                     status: data.status,
+                    hidden: data.hidden ?? false,
                     numeroTorres: data.numeroTorres,
+                    numeroAndares: data.numeroAndares,
+                    unidadesPorAndar,
                     numeroUnidades: data.numeroUnidades,
                     areaTotal: data.areaTotal,
                     dataLancamento: this.toDateInput(data.dataLancamento),
@@ -124,8 +142,12 @@ export class EmpreendimentosFormComponent implements OnInit {
                     dataAprovacao: this.toDateInput(data.dataAprovacao),
                     responsavelTecnico: data.responsavelTecnico,
                     descricao: data.descricao,
-                    observacoes: data.observacoes
+                    observacoes: data.observacoes,
+                    parametroAto: data.parametroAto,
+                    parametroParcelas: data.parametroParcelas,
+                    parametroIntermediaria: data.parametroIntermediaria
                 });
+                this.aplicarMetragensPorFinal(unitFinalSizes);
                 this.carregando = false;
             },
             error: () => {
@@ -157,7 +179,10 @@ export class EmpreendimentosFormComponent implements OnInit {
             neighborhood: dadosFront.bairro,
             type: dadosFront.tipo,
             workStatus: dadosFront.status,
-            towersNumber: dadosFront.numeroTorres,
+            hidden: Boolean(dadosFront.hidden),
+            towersNumber: this.toNullableNumber(dadosFront.numeroTorres),
+            floorCount: this.toNullableNumber(dadosFront.numeroAndares),
+            unitsPerFloor: this.toNullableNumber(dadosFront.unidadesPorAndar),
             unitsNumber: dadosFront.numeroUnidades,
             totalArea: dadosFront.areaTotal,
             launchDate: dadosFront.dataLancamento || null,
@@ -170,7 +195,11 @@ export class EmpreendimentosFormComponent implements OnInit {
             approvalDate: dadosFront.dataAprovacao || null,
             technicalResponsible: dadosFront.responsavelTecnico,
             description: dadosFront.descricao,
-            observations: dadosFront.observacoes
+            observations: dadosFront.observacoes,
+            approvalAct: this.toNullableNumber(dadosFront.parametroAto),
+            approvalInstallments: this.toNullableNumber(dadosFront.parametroParcelas),
+            approvalIntermediate: this.toNullableNumber(dadosFront.parametroIntermediaria),
+            unitFinalSizes: this.montarUnitFinalSizes()
         };
 
         if (this.editando && this.id) {
@@ -200,6 +229,69 @@ export class EmpreendimentosFormComponent implements OnInit {
 
     voltar(): void {
         this.router.navigate(['/jm/cadastros/empreendimentos']);
+    }
+
+    get metragensPorFinal(): FormArray {
+        return this.form.get('metragemPorFinal') as FormArray;
+    }
+
+    get finaisMetragem(): number[] {
+        return this.metragensPorFinal.controls.map((_, index) => index + 1);
+    }
+
+    private ajustarMetragensPorFinal(value: unknown): void {
+        const quantidade = Math.floor(Number(value));
+        const total = Number.isFinite(quantidade) && quantidade > 0 ? quantidade : 0;
+
+        while (this.metragensPorFinal.length > total) {
+            this.metragensPorFinal.removeAt(this.metragensPorFinal.length - 1);
+        }
+
+        while (this.metragensPorFinal.length < total) {
+            this.metragensPorFinal.push(this.fb.control(null, [Validators.min(0)]));
+        }
+    }
+
+    private aplicarMetragensPorFinal(sizes: any[] | null | undefined): void {
+        if (!Array.isArray(sizes) || sizes.length === 0) return;
+
+        for (const item of sizes) {
+            const unitFinal = Number(item.unitFinal ?? item.UnitFinal);
+            const sizeM2 = this.toNullableNumber(item.sizeM2 ?? item.SizeM2);
+            if (!Number.isFinite(unitFinal) || unitFinal <= 0 || sizeM2 === null) continue;
+
+            while (this.metragensPorFinal.length < unitFinal) {
+                this.metragensPorFinal.push(this.fb.control(null, [Validators.min(0)]));
+            }
+
+            this.metragensPorFinal.at(unitFinal - 1).setValue(sizeM2);
+        }
+    }
+
+    private montarUnitFinalSizes(): Array<{ unitFinal: number; sizeM2: number }> {
+        return this.metragensPorFinal.controls
+            .map((control, index) => ({
+                unitFinal: index + 1,
+                sizeM2: this.toNullableNumber(control.value)
+            }))
+            .filter((item): item is { unitFinal: number; sizeM2: number } =>
+                item.sizeM2 !== null && Number.isFinite(item.sizeM2) && item.sizeM2 >= 0
+            );
+    }
+
+    private getMaiorFinal(sizes: any[] | null | undefined): number | null {
+        if (!Array.isArray(sizes) || sizes.length === 0) return null;
+
+        const maiorFinal = Math.max(...sizes.map((item) => Number(item.unitFinal ?? item.UnitFinal)).filter(Number.isFinite));
+        return Number.isFinite(maiorFinal) && maiorFinal > 0 ? maiorFinal : null;
+    }
+
+    private toNullableNumber(value: unknown): number | null {
+        if (value === null || value === undefined || value === '') return null;
+
+        const normalized = typeof value === 'string' ? value.replace(',', '.') : value;
+        const numberValue = Number(normalized);
+        return Number.isFinite(numberValue) && numberValue >= 0 ? numberValue : null;
     }
 
     private toDateInput(value: Date | string | null | undefined): string {

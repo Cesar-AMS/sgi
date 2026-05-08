@@ -2,6 +2,7 @@
 using JMImoveisAPI.Configurations;
 using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
+using MySqlConnector;
 
 namespace JMImoveisAPI.Repositories
 {
@@ -12,12 +13,57 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<int> CreateAsync(Enterprise entity)
         {
-            const string ins = @"INSERT INTO enterprises (name, address, constructor_id, hidden, created_at, updated_at)
-                                 VALUES (@Name, @Address, @ConstructorId, @Hidden, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+            const string ins = @"INSERT INTO enterprises (
+                                     name,
+                                     address,
+                                     constructor_id,
+                                     hidden,
+                                     type,
+                                     expected_delivery_date,
+                                     towers_number,
+                                     floor_count,
+                                     units_per_floor,
+                                     approval_act,
+                                     approval_installments,
+                                     approval_intermediate,
+                                     created_at,
+                                     updated_at)
+                                 VALUES (
+                                     @Name,
+                                     @Address,
+                                     @ConstructorId,
+                                     @Hidden,
+                                     @Type,
+                                     @ExpectedDeliveryDate,
+                                     @TowersNumber,
+                                     @FloorCount,
+                                     @UnitsPerFloor,
+                                     @ApprovalAct,
+                                     @ApprovalInstallments,
+                                     @ApprovalIntermediate,
+                                     UTC_TIMESTAMP(),
+                                     UTC_TIMESTAMP());
                                  SELECT LAST_INSERT_ID();";
 
             await using var con = await _ctx.OpenConnectionAsync();
-            return await con.ExecuteScalarAsync<int>(ins, entity);
+            await using var tx = await con.BeginTransactionAsync();
+
+            try
+            {
+                var id = await con.ExecuteScalarAsync<int>(ins, entity, tx);
+                if (entity.UnitFinalSizes is not null)
+                {
+                    await ReplaceUnitFinalSizesAsync(con, tx, id, entity.UnitFinalSizes);
+                }
+
+                await tx.CommitAsync();
+                return id;
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<IEnumerable<UnitsEnterprise>> GetAllUnitsByEnterprise(int enterpriseId)
@@ -63,7 +109,18 @@ namespace JMImoveisAPI.Repositories
                                         T0.address,
                                         T0.constructor_id AS ""ConstructorId"",
                                         T1.name AS ""Constructor"",
-                                        T0.created_at AS ""CreatedAt""
+                                        T0.created_at AS ""CreatedAt"",
+                                        T0.updated_at AS ""UpdatedAt"",
+                                        T0.deleted_at AS ""DeletedAt"",
+                                        T0.hidden AS ""Hidden"",
+                                        T0.type AS ""Type"",
+                                        T0.expected_delivery_date AS ""ExpectedDeliveryDate"",
+                                        T0.towers_number AS ""TowersNumber"",
+                                        T0.floor_count AS ""FloorCount"",
+                                        T0.units_per_floor AS ""UnitsPerFloor"",
+                                        T0.approval_act AS ""ApprovalAct"",
+                                        T0.approval_installments AS ""ApprovalInstallments"",
+                                        T0.approval_intermediate AS ""ApprovalIntermediate""
                                  FROM enterprises T0
                                  INNER JOIN constructors T1 ON T0.constructor_id = T1.id
                                  WHERE T0.hidden = 0;";
@@ -81,12 +138,36 @@ namespace JMImoveisAPI.Repositories
                                         created_at AS ""CreatedAt"",
                                         updated_at AS ""UpdatedAt"",
                                         deleted_at AS ""DeletedAt"",
-                                        hidden
+                                        hidden AS ""Hidden"",
+                                        type AS ""Type"",
+                                        expected_delivery_date AS ""ExpectedDeliveryDate"",
+                                        towers_number AS ""TowersNumber"",
+                                        floor_count AS ""FloorCount"",
+                                        units_per_floor AS ""UnitsPerFloor"",
+                                        approval_act AS ""ApprovalAct"",
+                                        approval_installments AS ""ApprovalInstallments"",
+                                        approval_intermediate AS ""ApprovalIntermediate""
                                 FROM enterprises
                                 WHERE id = @id;";
 
+            const string sizesSql = @"SELECT id AS ""Id"",
+                                             enterprise_id AS ""EnterpriseId"",
+                                             unit_final AS ""UnitFinal"",
+                                             size_m2 AS ""SizeM2"",
+                                             created_at AS ""CreatedAt"",
+                                             updated_at AS ""UpdatedAt""
+                                      FROM enterprise_unit_final_sizes
+                                      WHERE enterprise_id = @id
+                                      ORDER BY unit_final;";
+
             await using var con = await _ctx.OpenConnectionAsync();
-            return await con.QuerySingleOrDefaultAsync<Enterprise>(sql, new { id });
+            var enterprise = await con.QuerySingleOrDefaultAsync<Enterprise>(sql, new { id });
+            if (enterprise is not null)
+            {
+                enterprise.UnitFinalSizes = (await con.QueryAsync<EnterpriseUnitFinalSize>(sizesSql, new { id })).ToList();
+            }
+
+            return enterprise;
         }
 
         public async Task<IEnumerable<Enterprise?>> GetConstructorAsync()
@@ -103,7 +184,18 @@ namespace JMImoveisAPI.Repositories
                                         name,
                                         address,
                                         constructor_id AS ""ConstructorId"",
-                                        created_at AS ""CreatedAt""
+                                        created_at AS ""CreatedAt"",
+                                        updated_at AS ""UpdatedAt"",
+                                        deleted_at AS ""DeletedAt"",
+                                        hidden AS ""Hidden"",
+                                        type AS ""Type"",
+                                        expected_delivery_date AS ""ExpectedDeliveryDate"",
+                                        towers_number AS ""TowersNumber"",
+                                        floor_count AS ""FloorCount"",
+                                        units_per_floor AS ""UnitsPerFloor"",
+                                        approval_act AS ""ApprovalAct"",
+                                        approval_installments AS ""ApprovalInstallments"",
+                                        approval_intermediate AS ""ApprovalIntermediate""
                                  FROM jmoficial.enterprises
                                  WHERE constructor_id = @id
                                    AND hidden = 0;";
@@ -150,13 +242,77 @@ namespace JMImoveisAPI.Repositories
                                      address = @Address,
                                      constructor_id = @ConstructorId,
                                      hidden = @Hidden,
+                                     type = @Type,
+                                     expected_delivery_date = @ExpectedDeliveryDate,
+                                     towers_number = @TowersNumber,
+                                     floor_count = @FloorCount,
+                                     units_per_floor = @UnitsPerFloor,
+                                     approval_act = @ApprovalAct,
+                                     approval_installments = @ApprovalInstallments,
+                                     approval_intermediate = @ApprovalIntermediate,
                                      updated_at = UTC_TIMESTAMP()
                                  WHERE id = @Id;";
 
             entity.Id = id;
             await using var con = await _ctx.OpenConnectionAsync();
-            var rows = await con.ExecuteAsync(upd, entity);
-            return rows > 0;
+            await using var tx = await con.BeginTransactionAsync();
+
+            try
+            {
+                var rows = await con.ExecuteAsync(upd, entity, tx);
+                if (rows == 0)
+                {
+                    await tx.RollbackAsync();
+                    return false;
+                }
+
+                if (entity.UnitFinalSizes is not null)
+                {
+                    await ReplaceUnitFinalSizesAsync(con, tx, id, entity.UnitFinalSizes);
+                }
+
+                await tx.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+        }
+
+        private static async Task ReplaceUnitFinalSizesAsync(
+            MySqlConnection con,
+            MySqlTransaction tx,
+            int enterpriseId,
+            IEnumerable<EnterpriseUnitFinalSize> sizes)
+        {
+            const string deleteSql = @"DELETE FROM enterprise_unit_final_sizes
+                                       WHERE enterprise_id = @enterpriseId;";
+
+            const string insertSql = @"INSERT INTO enterprise_unit_final_sizes
+                                           (enterprise_id, unit_final, size_m2, created_at)
+                                       VALUES
+                                           (@EnterpriseId, @UnitFinal, @SizeM2, UTC_TIMESTAMP());";
+
+            var validSizes = sizes
+                .Where(x => x.UnitFinal > 0 && x.SizeM2 >= 0)
+                .GroupBy(x => x.UnitFinal)
+                .Select(g => g.Last())
+                .Select(x => new
+                {
+                    EnterpriseId = enterpriseId,
+                    x.UnitFinal,
+                    x.SizeM2
+                })
+                .ToList();
+
+            await con.ExecuteAsync(deleteSql, new { enterpriseId }, tx);
+
+            if (validSizes.Count > 0)
+            {
+                await con.ExecuteAsync(insertSql, validSizes, tx);
+            }
         }
     }
 }

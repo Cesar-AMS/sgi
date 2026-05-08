@@ -2,6 +2,7 @@
 using JMImoveisAPI.Configurations;
 using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
+using System.Globalization;
 
 namespace JMImoveisAPI.Repositories
 {
@@ -20,6 +21,7 @@ namespace JMImoveisAPI.Repositories
                                 SELECT LAST_INSERT_ID();";
 
             await using var con = await _ctx.OpenConnectionAsync();
+            u.Size = await ResolveSizeByUnitFinalAsync(con, u.EnterpriseId, u.Number, u.Size);
             return await con.ExecuteScalarAsync<int>(ins, u);
         }
 
@@ -120,8 +122,82 @@ namespace JMImoveisAPI.Repositories
             u.Id = id;
 
             await using var con = await _ctx.OpenConnectionAsync();
+            u.EnterpriseId = await ResolveEnterpriseIdForUpdateAsync(con, id, u.EnterpriseId);
+            u.Size = await ResolveSizeByUnitFinalAsync(con, u.EnterpriseId, u.Number, u.Size);
             var rows = await con.ExecuteAsync(upd, u);
             return rows > 0;
+        }
+
+        private static async Task<int> ResolveEnterpriseIdForUpdateAsync(
+            MySqlConnector.MySqlConnection con,
+            int unitId,
+            int enterpriseId)
+        {
+            if (enterpriseId > 0)
+            {
+                return enterpriseId;
+            }
+
+            const string sql = @"SELECT enterprise_id
+                                 FROM jmoficial.units
+                                 WHERE id = @unitId;";
+
+            return await con.ExecuteScalarAsync<int>(sql, new { unitId });
+        }
+
+        private static async Task<string?> ResolveSizeByUnitFinalAsync(
+            MySqlConnector.MySqlConnection con,
+            int enterpriseId,
+            int unitNumber,
+            string? fallbackSize)
+        {
+            if (enterpriseId <= 0 || unitNumber <= 0)
+            {
+                return fallbackSize;
+            }
+
+            const string sizeSql = @"SELECT s.size_m2
+                                     FROM jmoficial.enterprises e
+                                     INNER JOIN jmoficial.enterprise_unit_final_sizes s
+                                        ON s.enterprise_id = e.id
+                                       AND s.unit_final = @unitFinal
+                                     WHERE e.id = @enterpriseId;";
+
+            var unitFinal = await CalculateUnitFinalAsync(con, enterpriseId, unitNumber);
+            if (!unitFinal.HasValue) return fallbackSize;
+
+            var configuredSize = await con.ExecuteScalarAsync<decimal?>(sizeSql, new { enterpriseId, unitFinal });
+
+            return configuredSize.HasValue
+                ? configuredSize.Value.ToString("0.00", CultureInfo.InvariantCulture)
+                : fallbackSize;
+        }
+
+        private static async Task<int?> CalculateUnitFinalAsync(
+            MySqlConnector.MySqlConnection con,
+            int enterpriseId,
+            int unitNumber)
+        {
+            const string sql = @"SELECT units_per_floor
+                                 FROM jmoficial.enterprises
+                                 WHERE id = @enterpriseId;";
+
+            var unitsPerFloor = await con.ExecuteScalarAsync<int?>(sql, new { enterpriseId });
+            if (!unitsPerFloor.HasValue || unitsPerFloor.Value <= 0)
+            {
+                return null;
+            }
+
+            var modulo = unitsPerFloor.Value switch
+            {
+                <= 9 => 10,
+                <= 99 => 100,
+                <= 999 => 1000,
+                _ => 10000
+            };
+
+            var unitFinal = unitNumber % modulo;
+            return unitFinal > 0 ? unitFinal : null;
         }
     }
 }

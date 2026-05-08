@@ -72,6 +72,8 @@ export class EmpreendimentoService {
             tipo: item.type ?? item.tipo,
             status: item.workStatus ?? item.statusObra ?? item.status,
             numeroTorres: item.towersNumber ?? item.numeroTorres,
+            numeroAndares: item.floorCount ?? item.numeroAndares,
+            unidadesPorAndar: item.unitsPerFloor ?? item.unidadesPorAndar,
             numeroUnidades: item.unitsNumber ?? item.numeroUnidades,
             areaTotal: item.totalArea ?? item.areaTotal,
             dataLancamento: item.launchDate ?? item.dataLancamento,
@@ -84,7 +86,11 @@ export class EmpreendimentoService {
             dataAprovacao: item.approvalDate ?? item.dataAprovacao,
             responsavelTecnico: item.technicalResponsible ?? item.responsavelTecnico,
             descricao: item.description ?? item.descricao,
-            observacoes: item.observations ?? item.observacoes
+            observacoes: item.observations ?? item.observacoes,
+            parametroAto: item.approvalAct ?? item.parametroAto,
+            parametroParcelas: item.approvalInstallments ?? item.parametroParcelas,
+            parametroIntermediaria: item.approvalIntermediate ?? item.parametroIntermediaria,
+            unitFinalSizes: item.unitFinalSizes ?? item.metragemPorFinal ?? []
         };
     }
 }

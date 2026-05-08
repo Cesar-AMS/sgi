@@ -1,3 +1,12 @@
+export interface EnterpriseUnitFinalSize {
+    id?: number;
+    enterpriseId?: number;
+    unitFinal: number;
+    sizeM2: number;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+}
+
 export interface Empreendimento {
     id: number;
     nome: string;
@@ -27,6 +36,12 @@ export interface Empreendimento {
     responsavelTecnico?: string;
     descricao?: string;
     observacoes?: string;
+    numeroAndares?: number;
+    unidadesPorAndar?: number;
+    parametroAto?: number;
+    parametroParcelas?: number;
+    parametroIntermediaria?: number;
+    unitFinalSizes?: EnterpriseUnitFinalSize[];
 }
 
 export interface CreateEmpreendimento {
@@ -55,6 +70,12 @@ export interface CreateEmpreendimento {
     responsavelTecnico?: string;
     descricao?: string;
     observacoes?: string;
+    numeroAndares?: number;
+    unidadesPorAndar?: number;
+    parametroAto?: number;
+    parametroParcelas?: number;
+    parametroIntermediaria?: number;
+    unitFinalSizes?: EnterpriseUnitFinalSize[];
 }
 
 export interface UpdateEmpreendimento {
@@ -83,6 +104,12 @@ export interface UpdateEmpreendimento {
     responsavelTecnico?: string;
     descricao?: string;
     observacoes?: string;
+    numeroAndares?: number;
+    unidadesPorAndar?: number;
+    parametroAto?: number;
+    parametroParcelas?: number;
+    parametroIntermediaria?: number;
+    unitFinalSizes?: EnterpriseUnitFinalSize[];
 }
 
 export interface CountResponse {

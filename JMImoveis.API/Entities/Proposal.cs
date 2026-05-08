@@ -63,6 +63,13 @@
         public decimal ValorTotal { get; set; }
     }
 
+    public sealed class EnterpriseApprovalParams
+    {
+        public decimal? ApprovalAct { get; set; }
+        public int? ApprovalInstallments { get; set; }
+        public decimal? ApprovalIntermediate { get; set; }
+    }
+
     public enum ProposalStatus
     {
         RASCUNHO,
