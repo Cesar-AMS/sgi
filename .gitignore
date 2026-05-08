@@ -91,3 +91,5 @@ Desktop.ini
 
 # Local project context for ChatGPT tabs
 docs/99-contexto-chatgpt-local.md
+.env.production
+docker-compose.yml.bak
