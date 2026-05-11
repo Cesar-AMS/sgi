@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModalModule } from 'ngx-bootstrap/modal';
 import { PaginationModule } from 'ngx-bootstrap/pagination';
+import { NgxCurrencyDirective } from 'ngx-currency';
 
 import { PropostasComponent } from '../project/propostas/propostas.component';
 import { EspelhoVendasComponent } from './espelho/espelho.component';
@@ -19,6 +20,7 @@ import { VendasRoutingModule } from './vendas-routing.module';
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
+        NgxCurrencyDirective,
         ModalModule.forRoot(),
         PaginationModule.forRoot(),
         VendasRoutingModule

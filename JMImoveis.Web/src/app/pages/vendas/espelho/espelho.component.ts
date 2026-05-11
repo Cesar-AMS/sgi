@@ -146,7 +146,27 @@ export class EspelhoVendasComponent implements OnInit {
         this.carregarUnidadesPorConstrutora();
     }
 
+    isUnidadeDisponivel(unidade: Unidade): boolean {
+        return unidade.status === 'disponivel';
+    }
+
+    getTituloUnidade(unidade: Unidade): string {
+        if (unidade.status === 'reservada') {
+            return 'Unidade reservada';
+        }
+
+        if (unidade.status === 'vendida') {
+            return 'Unidade vendida';
+        }
+
+        return 'Disponivel para proposta';
+    }
+
     abrirProposta(unidade: Unidade): void {
+        if (!this.isUnidadeDisponivel(unidade)) {
+            return;
+        }
+
         const estadoFiltros = {
             construtoraId: this.construtoraSelecionada?.id,
             empreendimentoId: this.empreendimentoSelecionado?.id,

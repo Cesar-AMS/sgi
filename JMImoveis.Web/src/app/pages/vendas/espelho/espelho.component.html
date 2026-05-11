@@ -39,6 +39,9 @@
                     class="card"
                     *ngFor="let unidade of grupo.unidades"
                     [ngClass]="unidade.statusCor"
+                    [class.card-bloqueado]="!isUnidadeDisponivel(unidade)"
+                    [attr.aria-disabled]="!isUnidadeDisponivel(unidade)"
+                    [attr.title]="getTituloUnidade(unidade)"
                     (click)="abrirProposta(unidade)">
                     <div class="card-topo">
                         <div class="card-numero" [title]="'Apartamento ' + unidade.numero + ' - ' + grupo.label">

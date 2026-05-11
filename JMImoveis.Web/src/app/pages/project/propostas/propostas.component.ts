@@ -36,6 +36,39 @@ interface Usuario {
   email?: string;
 }
 
+interface SimulacaoComissionamentoItem {
+  data: string;
+  descricao: string;
+  quantidade: number;
+  valorCliente: number;
+  valorImobiliaria: number;
+  valorConstrutora: number;
+  saldoComissaoApos: number;
+  observacao?: string;
+}
+
+interface SimulacaoComissionamento {
+  valorImovel: number;
+  percentualComissao: number;
+  comissaoTotal: number;
+  totalImobiliaria: number;
+  totalConstrutora: number;
+  saldoComissaoFinal: number;
+  itens: SimulacaoComissionamentoItem[];
+}
+
+interface EventoSimulacaoComissionamento {
+  data: string;
+  descricao: string;
+  quantidadeOriginal: number;
+  parcelaNumero?: number;
+  valorCliente: number;
+  tipoDestino: 'comissao' | 'construtora' | 'pendente' | 'nao-classificada';
+  observacao?: string;
+  ordemCondicao: number;
+  ordemParcela: number;
+}
+
 @Component({
   selector: 'app-propostas',
   templateUrl: './propostas.component.html',
@@ -74,6 +107,28 @@ export class PropostasComponent implements OnInit, OnChanges {
   todosVendedores: Usuario[] = [];
   construtorFilter = '';
   apartamentos: Apartamento[] = [];
+  readonly currencyOptions = {
+    prefix: 'R$ ',
+    thousands: '.',
+    decimal: ',',
+    precision: 2,
+    allowNegative: false,
+    align: 'left'
+  };
+  readonly descricaoCondicaoOptions = [
+    'Ato - JM',
+    'Ato - Construtora',
+    'Comissão',
+    'Anual - JM',
+    'Anual - Construtora',
+    'Mensal',
+    'FGTS',
+    'Entrega de chaves',
+    'Pós obras',
+    'Financiamento',
+    'Promoção',
+    'Repasse Construtora'
+  ];
   today = new Date();
   voltarAoEspelho = false;
   assinatura1: string | null = null;
@@ -725,6 +780,154 @@ export class PropostasComponent implements OnInit, OnChanges {
 
   track = (_: number, item: Condicao) => item;
 
+  isDescricaoCondicaoPersonalizada(descricao?: string | null): boolean {
+    return !!descricao && !this.descricaoCondicaoOptions.includes(descricao);
+  }
+
+  calcularSimulacaoComissionamento(): SimulacaoComissionamento {
+    const valorImovel = this.round2(this.toNumber(this.proposta?.vlrUnidade));
+    const percentualComissao = 6;
+    const comissaoTotal = this.round2(valorImovel * (percentualComissao / 100));
+    let saldoComissao = comissaoTotal;
+    let totalImobiliaria = 0;
+    let totalConstrutora = 0;
+
+    const itens = this.expandirCondicoesParaEventosSimulacao().map((evento) => {
+      let valorImobiliaria = 0;
+      let valorConstrutora = 0;
+      let observacao = evento.observacao;
+
+      if (evento.tipoDestino === 'comissao') {
+        valorImobiliaria = this.round2(Math.min(evento.valorCliente, saldoComissao));
+        valorConstrutora = this.round2(evento.valorCliente - valorImobiliaria);
+        saldoComissao = this.round2(saldoComissao - valorImobiliaria);
+      } else {
+        valorConstrutora = evento.valorCliente;
+      }
+
+      totalImobiliaria = this.round2(totalImobiliaria + valorImobiliaria);
+      totalConstrutora = this.round2(totalConstrutora + valorConstrutora);
+
+      return {
+        data: evento.data,
+        descricao: evento.descricao,
+        quantidade: evento.quantidadeOriginal,
+        valorCliente: evento.valorCliente,
+        valorImobiliaria,
+        valorConstrutora,
+        saldoComissaoApos: saldoComissao,
+        observacao
+      };
+    });
+
+    return {
+      valorImovel,
+      percentualComissao,
+      comissaoTotal,
+      totalImobiliaria,
+      totalConstrutora,
+      saldoComissaoFinal: saldoComissao,
+      itens
+    };
+  }
+
+  expandirCondicoesParaEventosSimulacao(): EventoSimulacaoComissionamento[] {
+    const eventos: EventoSimulacaoComissionamento[] = [];
+
+    (this.proposta?.condicao ?? []).forEach((condicao, ordemCondicao) => {
+      const descricaoOriginal = condicao?.descricao || '';
+      const descricaoNormalizada = this.normalizarDescricaoComissionamento(descricaoOriginal);
+      const quantidadeOriginal = Math.max(Math.trunc(this.toNumber(condicao?.qtde)) || 1, 1);
+      const valorParcela = this.round2(this.toNumber(condicao?.valorParcela));
+      const valorTotal = this.toNumber(condicao?.valorTotal);
+      const valorEventoUnico = this.round2(valorTotal > 0 ? valorTotal : quantidadeOriginal * valorParcela);
+      const vencimento = this.normalizarVencimentoSimulacao(condicao?.vencimento);
+      const observacaoData = vencimento.usouFallback
+        ? 'Vencimento ausente; data atual usada na simulação'
+        : undefined;
+
+      const criarEvento = (
+        data: string,
+        descricao: string,
+        valorCliente: number,
+        tipoDestino: EventoSimulacaoComissionamento['tipoDestino'],
+        ordemParcela: number,
+        parcelaNumero?: number,
+        observacao?: string
+      ) => {
+        eventos.push({
+          data,
+          descricao,
+          quantidadeOriginal,
+          parcelaNumero,
+          valorCliente: this.round2(valorCliente),
+          tipoDestino,
+          observacao: this.combinarObservacoes(observacaoData, observacao),
+          ordemCondicao,
+          ordemParcela
+        });
+      };
+
+      if (descricaoNormalizada === 'MENSAL') {
+        for (let index = 0; index < quantidadeOriginal; index++) {
+          criarEvento(
+            this.adicionarPeriodoSimulacao(vencimento.data, index, 'month'),
+            `${descricaoOriginal || 'Mensal'} ${index + 1}/${quantidadeOriginal}`,
+            valorParcela,
+            'comissao',
+            index,
+            index + 1
+          );
+        }
+
+        return;
+      }
+
+      if (['ANUALJM', 'ANUALCONST', 'ANUALCONSTRUTORA'].includes(descricaoNormalizada)) {
+        const tipoDestino = descricaoNormalizada === 'ANUALJM' ? 'comissao' : 'construtora';
+
+        for (let index = 0; index < quantidadeOriginal; index++) {
+          criarEvento(
+            this.adicionarPeriodoSimulacao(vencimento.data, index, 'year'),
+            `${descricaoOriginal || 'Anual'} ${index + 1}/${quantidadeOriginal}`,
+            valorParcela,
+            tipoDestino,
+            index,
+            index + 1
+          );
+        }
+
+        return;
+      }
+
+      const classificacao = this.classificarDescricaoComissionamento(descricaoOriginal);
+      const observacao = this.observacaoEventoUnicoSimulacao(descricaoNormalizada, classificacao);
+
+      criarEvento(
+        vencimento.data,
+        descricaoOriginal || 'Condição',
+        valorEventoUnico,
+        classificacao,
+        0,
+        undefined,
+        observacao
+      );
+    });
+
+    return eventos.sort((a, b) => {
+      const dataCompare = a.data.localeCompare(b.data);
+      if (dataCompare !== 0) {
+        return dataCompare;
+      }
+
+      if (a.ordemCondicao !== b.ordemCondicao) {
+        return a.ordemCondicao - b.ordemCondicao;
+      }
+
+      return a.ordemParcela - b.ordemParcela;
+    });
+  }
+
   recalc(i: number): void {
     const c = this.proposta.condicao[i];
     const q = this.toNumber(c.qtde);
@@ -741,6 +944,72 @@ export class PropostasComponent implements OnInit, OnChanges {
     return Math.round((n + Number.EPSILON) * 100) / 100;
   }
 
+  private classificarDescricaoComissionamento(descricao?: string | null): 'comissao' | 'construtora' | 'pendente' | 'nao-classificada' {
+    const normalized = this.normalizarDescricaoComissionamento(descricao);
+
+    if (['ATOCOMISSAO', 'ATOJM', 'COMISSAO', 'ANUALJM', 'MENSAL'].includes(normalized)) {
+      return 'comissao';
+    }
+
+    if (['ATOCONSTRUTORA', 'ANUALCONST', 'ANUALCONSTRUTORA', 'REPASSECONSTRUTORA'].includes(normalized)) {
+      return 'construtora';
+    }
+
+    if (['FGTS', 'ENTREGADECHAVES', 'POSOBRAS', 'FINANCIAMENTO', 'PROMOCAO'].includes(normalized)) {
+      return 'pendente';
+    }
+
+    return 'nao-classificada';
+  }
+
+  private normalizarDescricaoComissionamento(descricao?: string | null): string {
+    return (descricao || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/[\s\-_]/g, '');
+  }
+
+  private normalizarVencimentoSimulacao(vencimento?: string | null): { data: string; usouFallback: boolean } {
+    const raw = (vencimento || '').trim();
+    const data = raw.length >= 10 ? raw.slice(0, 10) : raw;
+    const parsed = moment(data, 'YYYY-MM-DD', true);
+
+    if (parsed.isValid()) {
+      return { data: parsed.format('YYYY-MM-DD'), usouFallback: false };
+    }
+
+    return { data: moment().format('YYYY-MM-DD'), usouFallback: true };
+  }
+
+  private adicionarPeriodoSimulacao(data: string, quantidade: number, unidade: 'month' | 'year'): string {
+    return moment(data, 'YYYY-MM-DD').add(quantidade, unidade).format('YYYY-MM-DD');
+  }
+
+  private observacaoEventoUnicoSimulacao(
+    descricaoNormalizada: string,
+    classificacao: EventoSimulacaoComissionamento['tipoDestino']
+  ): string | undefined {
+    switch (descricaoNormalizada) {
+      case 'FGTS':
+      case 'PROMOCAO':
+        return 'Regra comercial pode exigir conferência futura';
+      case 'POSOBRAS':
+        return 'Pós obras tratado como evento único nesta simulação';
+      case 'FINANCIAMENTO':
+        return 'Financiamento tratado como evento único nesta simulação';
+      default:
+        return classificacao === 'nao-classificada'
+          ? 'Descrição não classificada; conferência futura recomendada'
+          : undefined;
+    }
+  }
+
+  private combinarObservacoes(...observacoes: Array<string | undefined>): string | undefined {
+    const validas = observacoes.filter((observacao): observacao is string => !!observacao);
+    return validas.length ? validas.join(' ') : undefined;
+  }
+
   remover(i: number): void {
     this.proposta.condicao.splice(i, 1);
   }
@@ -752,7 +1021,7 @@ export class PropostasComponent implements OnInit, OnChanges {
     this.proposta.condicao.push({
       qtde: 1,
       descricao: '',
-      vencimento: moment().format(),
+      vencimento: moment().format('YYYY-MM-DD'),
       valorParcela: 0,
       valorTotal: 0
     });
