@@ -845,13 +845,17 @@ namespace JMImoveisAPI.Repositories
                                                  cliente_name, date_nascimento, cnpj_cpf, rg, email_cliente, phone_one, phone_two, estado_civil, profissao, renda,
                                                  cliente_name_secondary, data_nascimento_secondary, cnpj_cpf_secondary, rg_secondary, email_cliente_secondary, phone_one_secondary, phone_two_secondary, estado_civil_secondary, profissao_secondary, renda_secondary,
                                                  cep, rua, nro, comp, bairro, cidade, estado,
-                                                 corretor_id, gerente_id, coordenador_id, status)
+                                                 corretor_id, gerente_id, coordenador_id, status,
+                                                 commission_mode, commission_percentage, commission_total, commission_total_to_realestate, commission_total_to_constructor,
+                                                 commission_balance, commission_calculated_at, commission_calculation_version)
                                                 VALUES
                                                 (@EmpreendimentoId, @UnidadeId, @VlrUnidade, @EngCaixa,
                                                  @ClienteName, @DateNascimento, @CnpjCpf, @Rg, @EmailCliente, @PhoneOne, @PhoneTwo, @EstadoCivil, @Profissao, @Renda,
                                                  @ClienteNameSecondary, @DataNascimentoSecondary, @CnpjCpfSecondary, @RgSecondary, @EmailClienteSecondary, @PhoneOneSecondary, @PhoneTwoSecondary, @EstadoCivilSecondary, @ProfissaoSecondary, @RendaSecondary,
                                                  @Cep, @Rua, @Nro, @Comp, @Bairro, @Cidade, @Estado,
-                                                 @CorretorId, @GerenteId, @CoordenadorId, @Status);
+                                                 @CorretorId, @GerenteId, @CoordenadorId, @Status,
+                                                 @CommissionMode, @CommissionPercentage, @CommissionTotal, @CommissionTotalToRealestate, @CommissionTotalToConstructor,
+                                                 @CommissionBalance, @CommissionCalculatedAt, @CommissionCalculationVersion);
                                                 SELECT LAST_INSERT_ID();";
 
             const string sqlInsertCond = @"INSERT INTO proposal_conditions
@@ -942,6 +946,14 @@ namespace JMImoveisAPI.Repositories
                                                   gerente_id = @GerenteId,
                                                   coordenador_id = @CoordenadorId,
                                                   status = @Status,
+                                                  commission_mode = @CommissionMode,
+                                                  commission_percentage = @CommissionPercentage,
+                                                  commission_total = @CommissionTotal,
+                                                  commission_total_to_realestate = @CommissionTotalToRealestate,
+                                                  commission_total_to_constructor = @CommissionTotalToConstructor,
+                                                  commission_balance = @CommissionBalance,
+                                                  commission_calculated_at = @CommissionCalculatedAt,
+                                                  commission_calculation_version = @CommissionCalculationVersion,
                                                   updated_at = UTC_TIMESTAMP()
                                               WHERE id = @Id
                                                 AND deleted_at IS NULL;";

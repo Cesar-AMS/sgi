@@ -46,6 +46,14 @@
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
+        public string? CommissionMode { get; set; }
+        public decimal? CommissionPercentage { get; set; }
+        public decimal? CommissionTotal { get; set; }
+        public decimal? CommissionTotalToRealestate { get; set; }
+        public decimal? CommissionTotalToConstructor { get; set; }
+        public decimal? CommissionBalance { get; set; }
+        public DateTime? CommissionCalculatedAt { get; set; }
+        public int? CommissionCalculationVersion { get; set; }
         public string? EnterPriseName { get; set; }
         public string? UnitName { get; set; }
         public string? CorretorNome { get; set; }

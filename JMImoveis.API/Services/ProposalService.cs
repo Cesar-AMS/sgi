@@ -6,9 +6,13 @@ namespace JMImoveisAPI.Services
 {
     public class ProposalService : IProposalService
     {
+        private const string CommissionModeAtoParcelas = "ATO_PARCELAS";
+        private const int CommissionCalculationVersion = 1;
+
         private readonly IVendaRepository _repo;
         private readonly IClienteRepository _clienteRepository;
         private readonly IVendaCriacaoService _vendaCriacaoService;
+        private readonly ProposalCommissionCalculator _commissionCalculator = new();
 
         public ProposalService(
             IVendaRepository repo,
@@ -38,6 +42,7 @@ namespace JMImoveisAPI.Services
             var proposal = MapProposal(dto);
             var conds = MapConditions(dto).ToList();
             await ValidateApprovalParametersAsync(proposal, conds, ct);
+            AplicarResumoComissao(proposal, conds);
 
             var unitStatus = await _repo.GetUnitStatusAsync(proposal.UnidadeId, ct);
             if (!string.Equals((unitStatus ?? string.Empty).Trim(), "OPEN", StringComparison.OrdinalIgnoreCase))
@@ -69,6 +74,7 @@ namespace JMImoveisAPI.Services
 
             var conds = MapConditions(dto).ToList();
             await ValidateApprovalParametersAsync(proposal, conds, ct);
+            AplicarResumoComissao(proposal, conds);
             return await _repo.UpdateProposalAsync(proposal, conds, ct);
         }
 
@@ -426,6 +432,21 @@ namespace JMImoveisAPI.Services
             }
 
             return condicao.ValorParcela * Math.Max(condicao.Qtde, 1);
+        }
+
+        private void AplicarResumoComissao(Proposal proposal, List<ProposalCondition> conds)
+        {
+            proposal.Condicao = conds;
+            var result = _commissionCalculator.CalculateAtoParcelas(proposal.VlrUnidade, proposal.Condicao);
+
+            proposal.CommissionMode = CommissionModeAtoParcelas;
+            proposal.CommissionPercentage = result.CommissionPercentage;
+            proposal.CommissionTotal = result.CommissionTotal;
+            proposal.CommissionTotalToRealestate = result.TotalRealEstate;
+            proposal.CommissionTotalToConstructor = result.TotalConstructor;
+            proposal.CommissionBalance = result.CommissionBalanceFinal;
+            proposal.CommissionCalculatedAt = DateTime.UtcNow;
+            proposal.CommissionCalculationVersion = CommissionCalculationVersion;
         }
 
         private static string FormatCurrency(decimal value)
