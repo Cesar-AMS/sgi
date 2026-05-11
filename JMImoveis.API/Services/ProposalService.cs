@@ -379,7 +379,7 @@ namespace JMImoveisAPI.Services
             if (parameters.ApprovalAct.HasValue && parameters.ApprovalAct.Value > 0)
             {
                 var totalAto = conds
-                    .Where(c => EhAto(c.Descricao))
+                    .Where(c => EhAtoValidacaoComercial(c.Descricao))
                     .Sum(ValorTotalCondicao);
 
                 if (totalAto < parameters.ApprovalAct.Value)
@@ -391,7 +391,7 @@ namespace JMImoveisAPI.Services
             if (parameters.ApprovalInstallments.HasValue && parameters.ApprovalInstallments.Value > 0)
             {
                 var totalParcelas = conds
-                    .Where(c => !EhAto(c.Descricao) && !EhIntermediaria(c.Descricao))
+                    .Where(c => EhParcelaMensalValidacaoComercial(c.Descricao))
                     .Sum(c => Math.Max(c.Qtde, 0));
 
                 if (totalParcelas > parameters.ApprovalInstallments.Value)
@@ -403,7 +403,7 @@ namespace JMImoveisAPI.Services
             if (parameters.ApprovalIntermediate.HasValue && parameters.ApprovalIntermediate.Value > 0)
             {
                 var totalIntermediaria = conds
-                    .Where(c => EhIntermediaria(c.Descricao))
+                    .Where(c => EhIntermediariaValidacaoComercial(c.Descricao))
                     .Sum(ValorTotalCondicao);
 
                 if (totalIntermediaria < parameters.ApprovalIntermediate.Value)
@@ -430,6 +430,30 @@ namespace JMImoveisAPI.Services
 
         private static string FormatCurrency(decimal value)
             => value.ToString("C", CultureInfo.GetCultureInfo("pt-BR"));
+
+        private static bool EhAtoValidacaoComercial(string? descricao)
+        {
+            var normalized = NormalizarDescricaoCondicao(descricao);
+            return normalized == "ATO" ||
+                   normalized == "ATOCOMISSAO" ||
+                   normalized == "ATOJM" ||
+                   normalized == "ATOCONST" ||
+                   normalized == "ATOCONSTRUTORA";
+        }
+
+        private static bool EhIntermediariaValidacaoComercial(string? descricao)
+        {
+            var normalized = NormalizarDescricaoCondicao(descricao);
+            return normalized == "INTERMEDIARIA" ||
+                   normalized == "ENTRADA" ||
+                   normalized == "SINAL" ||
+                   normalized == "ANUALJM" ||
+                   normalized == "ANUALCONST" ||
+                   normalized == "ANUALCONSTRUTORA";
+        }
+
+        private static bool EhParcelaMensalValidacaoComercial(string? descricao)
+            => NormalizarDescricaoCondicao(descricao) == "MENSAL";
 
         private static bool EhAto(string? descricao)
             => NormalizarDescricaoCondicao(descricao) == "ATO";
