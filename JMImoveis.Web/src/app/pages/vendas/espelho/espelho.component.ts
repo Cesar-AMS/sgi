@@ -174,10 +174,15 @@ export class EspelhoVendasComponent implements OnInit {
         };
         sessionStorage.setItem(this.filtrosStorageKey, JSON.stringify(estadoFiltros));
 
+        const empreendimento = this.empreendimentoSelecionado?.id === unidade.empreendimentoId
+            ? this.empreendimentoSelecionado
+            : this.empreendimentos.find((e) => e.id === unidade.empreendimentoId);
+
         this.fichaProposta = {
             unidadeId: unidade.id,
             unidadeNumero: unidade.numero,
             empreendimentoId: unidade.empreendimentoId,
+            empreendimentoNome: empreendimento?.nome,
             valor: unidade.valor
         };
     }

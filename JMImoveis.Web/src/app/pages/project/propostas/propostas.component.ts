@@ -21,6 +21,7 @@ export interface FichaPropostaInicial {
   unidadeId: number;
   unidadeNumero?: string;
   empreendimentoId?: number;
+  empreendimentoNome?: string;
   valor?: number;
 }
 
@@ -117,10 +118,7 @@ export class PropostasComponent implements OnInit, OnChanges {
   };
   readonly descricaoCondicaoOptions = [
     'Ato - JM',
-    'Ato - Construtora',
-    'Comissão',
     'Anual - JM',
-    'Anual - Construtora',
     'Mensal',
     'FGTS',
     'Entrega de chaves',
@@ -214,6 +212,7 @@ export class PropostasComponent implements OnInit, OnChanges {
       unidadeID: String(ficha.unidadeId),
       unitName: ficha.unidadeNumero || String(ficha.unidadeId),
       empreendimentoID: ficha.empreendimentoId ? String(ficha.empreendimentoId) : '',
+      enterPriseName: ficha.empreendimentoNome || '',
       vlrUnidade: ficha.valor ?? 0,
       status: 'RASCUNHO',
       condicao: []
