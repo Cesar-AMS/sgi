@@ -78,6 +78,11 @@ namespace JMImoveisAPI.Services
 
         private static IEnumerable<CommissionEvent> ExpandirCondicao(ProposalCondition condicao, int conditionOrder)
         {
+            if (EhPosObras(condicao.Descricao))
+            {
+                return Enumerable.Empty<CommissionEvent>();
+            }
+
             var classification = ClassificarDescricao(condicao.Descricao);
             var baseObservation = ObterObservacaoDescricao(classification);
             var eventDate = ObterVencimento(condicao.Vencimento, out var vencimentoObservation);
@@ -227,6 +232,9 @@ namespace JMImoveisAPI.Services
             var normalized = NormalizarDescricao(descricao);
             return normalized is "ANUALJM" or "ANUALCONST" or "ANUALCONSTRUTORA";
         }
+
+        private static bool EhPosObras(string? descricao)
+            => NormalizarDescricao(descricao) == "POSOBRAS";
 
         private static string ObterDescricaoBase(string? descricao, string fallback)
             => string.IsNullOrWhiteSpace(descricao) ? fallback : descricao.Trim();

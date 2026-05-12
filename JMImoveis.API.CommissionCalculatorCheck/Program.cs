@@ -5,6 +5,7 @@ var calculator = new ProposalCommissionCalculator();
 
 ValidarCenarioDiretor(calculator);
 ValidarClassificacoesAdicionais(calculator);
+ValidarPosObrasIgnorado(calculator);
 ValidarMensalInvalidoEVencimentoAusente(calculator);
 
 Console.WriteLine("Validacao da calculadora de comissionamento concluida com sucesso.");
@@ -23,9 +24,9 @@ static void ValidarCenarioDiretor(ProposalCommissionCalculator calculator)
 
     AssertEqual(15120m, result.CommissionTotal, "Comissao total");
     AssertEqual(15120m, result.TotalRealEstate, "Total imobiliaria");
-    AssertEqual(54380m, result.TotalConstructor, "Total construtora");
+    AssertEqual(36380m, result.TotalConstructor, "Total construtora");
     AssertEqual(0m, result.CommissionBalanceFinal, "Saldo final comissao");
-    AssertEqual(42, result.Items.Count, "Quantidade de eventos");
+    AssertEqual(41, result.Items.Count, "Quantidade de eventos");
 
     var ato = result.Items.Single(i => i.Description == "Ato - comissão");
     AssertEqual(2000m, ato.RealEstateAmount, "Ato para imobiliaria");
@@ -54,9 +55,7 @@ static void ValidarCenarioDiretor(ProposalCommissionCalculator calculator)
     var entrega = result.Items.Single(i => i.OriginalDescription == "Entrega de chaves");
     AssertContains("Regra comercial", entrega.Observation, "Observacao entrega de chaves");
 
-    var posObras = result.Items.Single(i => i.OriginalDescription == "Pós obras");
-    AssertEqual(18000m, posObras.ConstructorAmount, "Pos obras evento unico para construtora");
-    AssertContains("Pós obras tratado como evento único", posObras.Observation, "Observacao pos obras");
+    AssertEqual(false, result.Items.Any(i => i.OriginalDescription == "Pós obras"), "Pos obras nao gera evento de comissao");
 }
 
 static void ValidarClassificacoesAdicionais(ProposalCommissionCalculator calculator)
@@ -76,6 +75,23 @@ static void ValidarClassificacoesAdicionais(ProposalCommissionCalculator calcula
     AssertContains("Regra comercial", result.Items[1].Observation, "Observacao FGTS");
     AssertContains("Regra comercial", result.Items[2].Observation, "Observacao promocao");
     AssertContains("Descrição não classificada", result.Items[3].Observation, "Observacao desconhecida");
+}
+
+static void ValidarPosObrasIgnorado(ProposalCommissionCalculator calculator)
+{
+    var result = calculator.CalculateAtoParcelas(100000m, new[]
+    {
+        Condicao("Pós obras", 1, 1000m, 1000m, new DateTime(2026, 1, 10)),
+        Condicao("Pos obras", 1, 1000m, 1000m, new DateTime(2026, 2, 10)),
+        Condicao("Pós-Obras", 1, 1000m, 1000m, new DateTime(2026, 3, 10)),
+        Condicao("POS OBRAS", 1, 1000m, 1000m, new DateTime(2026, 4, 10))
+    });
+
+    AssertEqual(6000m, result.CommissionTotal, "Comissao total com pos obras ignorado");
+    AssertEqual(0m, result.TotalRealEstate, "Pos obras nao vai para imobiliaria");
+    AssertEqual(0m, result.TotalConstructor, "Pos obras nao vai para construtora");
+    AssertEqual(6000m, result.CommissionBalanceFinal, "Pos obras nao consome saldo");
+    AssertEqual(0, result.Items.Count, "Pos obras nao gera eventos");
 }
 
 static void ValidarMensalInvalidoEVencimentoAusente(ProposalCommissionCalculator calculator)
