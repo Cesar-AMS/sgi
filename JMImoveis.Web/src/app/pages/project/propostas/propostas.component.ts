@@ -98,6 +98,7 @@ export class PropostasComponent implements OnInit, OnChanges {
   approving = false;
   editandoProposta = false;
   salvandoEdicao = false;
+  gerandoPdf = false;
   construtoras: Construtoras[] = [];
   empreendimentos: Empreendimento[] = [];
   gerentes: Usuario[] = [];
@@ -428,6 +429,10 @@ export class PropostasComponent implements OnInit, OnChanges {
   }
 
   async downloadA4PrimeiraFolha() {
+    if (this.gerandoPdf) {
+      return;
+    }
+
     const el = this.areaA4Ref?.nativeElement;
 
     if (!el) {
@@ -435,36 +440,55 @@ export class PropostasComponent implements OnInit, OnChanges {
       return;
     }
 
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    const margin = 10;
-    const contentW = pageW - margin * 2;
-    const contentH = pageH - margin * 2;
+    this.gerandoPdf = true;
+    el.classList.add('modo-download');
 
-    await new Promise(r => setTimeout(r, 150));
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const contentW = pageW - margin * 2;
+      const contentH = pageH - margin * 2;
 
-    const scale = 2;
-    const pxPerMm = (el.scrollWidth * scale) / contentW;
-    const captureHeightPx = Math.floor(contentH * pxPerMm);
-    const finalCaptureHeight = Math.min(captureHeightPx, el.scrollHeight * scale);
+      await new Promise(r => setTimeout(r, 50));
 
-    const canvas = await html2canvas(el, {
-      backgroundColor: '#ffffff',
-      scale,
-      useCORS: true,
-      allowTaint: true,
-      windowWidth: el.scrollWidth,
-      windowHeight: el.scrollHeight,
-      height: finalCaptureHeight / scale,
-      y: 0
-    });
+      const scale = 1.3;
+      const captureWidth = el.scrollWidth;
+      const captureHeight = el.scrollHeight;
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    const imgH = (canvas.height * contentW) / canvas.width;
+      const canvas = await html2canvas(el, {
+        backgroundColor: '#ffffff',
+        scale,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        windowWidth: captureWidth,
+        windowHeight: captureHeight,
+        width: captureWidth,
+        height: captureHeight,
+        y: 0
+      });
 
-    pdf.addImage(imgData, 'JPEG', margin, margin, contentW, imgH);
-    pdf.save(`proposta_${this.proposta?.enterPriseName || 'novo'}_${this.proposta?.clienteName ?? 'novo'}.pdf`);
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      const imgH = (canvas.height * contentW) / canvas.width;
+
+      pdf.addImage(imgData, 'JPEG', margin, margin, contentW, imgH);
+      let heightLeft = imgH - contentH;
+      let position = margin - contentH;
+
+      while (heightLeft > 0) {
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', margin, position, contentW, imgH);
+        heightLeft -= contentH;
+        position -= contentH;
+      }
+
+      pdf.save(`proposta_${this.proposta?.enterPriseName || 'novo'}_${this.proposta?.clienteName ?? 'novo'}.pdf`);
+    } finally {
+      el.classList.remove('modo-download');
+      this.gerandoPdf = false;
+    }
   }
 
   private updatePagedItems(): void {
@@ -600,6 +624,7 @@ export class PropostasComponent implements OnInit, OnChanges {
       this.copiarEndereco();
     }
 
+    this.garantirVencimentosTecnicosCondicoes();
     this.salvandoEdicao = true;
     this.proposalsService.update(this.proposta.id, this.proposta).subscribe({
       next: () => {
@@ -630,21 +655,86 @@ export class PropostasComponent implements OnInit, OnChanges {
   }
 
   enviarParaAnalise(): void {
-    if (!this.proposta?.id || !this.canEnviarParaAnalise()) return;
+    if (!this.proposta) {
+      this.toast.warning('Preencha os dados obrigatórios antes de enviar para análise.');
+      return;
+    }
+
+    if (!this.canEnviarParaAnalise()) {
+      this.toast.warning('Apenas propostas em rascunho podem ser enviadas para análise.');
+      return;
+    }
+
+    if (!this.proposta.id) {
+      this.criarPropostaParaAnalise();
+      return;
+    }
 
     this.approving = true;
     this.proposalsService.enviarParaAnalise(this.proposta.id).subscribe({
       next: () => {
         this.proposta.status = 'EM_ANALISE';
-        this.toast.success('Proposta enviada para analise');
+        this.toast.success('Proposta enviada para análise com sucesso.');
         this.modalReserva.hide();
         this.buscar();
       },
       error: (err) => {
         console.error(err);
-        this.toast.error(err.error?.message || 'Erro ao enviar proposta');
+        this.toast.error(err.error?.message || 'Não foi possível enviar a proposta para análise.');
       },
       complete: () => this.approving = false
+    });
+  }
+
+  private criarPropostaParaAnalise(): void {
+    if (this.mesmoEndereco) {
+      this.copiarEndereco();
+    }
+
+    this.garantirVencimentosTecnicosCondicoes();
+
+    if (!this.propostaEstaProntaParaAnalise()) {
+      this.toast.warning('Preencha os dados obrigatórios antes de enviar para análise.');
+      return;
+    }
+
+    this.approving = true;
+    this.proposta.status = 'EM_ANALISE';
+
+    this.proposalsService.create(this.proposta).subscribe({
+      next: () => {
+        this.toast.success('Proposta enviada para análise com sucesso.');
+        this.modalReserva.hide();
+        this.buscar();
+      },
+      error: (err) => {
+        console.error(err);
+        this.toast.error(err.error?.message || 'Não foi possível enviar a proposta para análise.');
+      },
+      complete: () => this.approving = false
+    });
+  }
+
+  private propostaEstaProntaParaAnalise(): boolean {
+    if (!this.proposta.empreendimentoID) return false;
+    if (!this.proposta.unidadeID) return false;
+    if (!this.toNumber(this.proposta.vlrUnidade)) return false;
+    if (!this.proposta.clienteName?.trim()) return false;
+    if (!this.proposta.cnpjCpf?.trim()) return false;
+    if (!this.proposta.phoneOne?.trim()) return false;
+    if (!this.proposta.emailCliente?.trim()) return false;
+
+    const condicoes = this.proposta.condicao ?? [];
+    if (!condicoes.length) return false;
+
+    return condicoes.every((condicao) => {
+      if (!condicao?.descricao?.trim()) return false;
+      if (this.toNumber(condicao.qtde) <= 0) return false;
+      if (!condicao.vencimento) return false;
+
+      const valorParcela = this.toNumber(condicao.valorParcela);
+      const valorTotal = this.toNumber(condicao.valorTotal);
+      return valorParcela > 0 || valorTotal > 0;
     });
   }
 
@@ -783,6 +873,32 @@ export class PropostasComponent implements OnInit, OnChanges {
     return !!descricao && !this.descricaoCondicaoOptions.includes(descricao);
   }
 
+  deveExibirVencimentoCondicao(descricao?: string | null): boolean {
+    return ![
+      'FGTS',
+      'ENTREGADECHAVES',
+      'POSOBRAS',
+      'FINANCIAMENTO',
+      'PROMOCAO',
+      'REPASSECONSTRUTORA'
+    ].includes(this.normalizarDescricaoCondicao(descricao));
+  }
+
+  onDescricaoCondicaoChange(condicao: Condicao, index: number): void {
+    this.garantirVencimentoTecnicoCondicao(condicao);
+    this.recalc(index);
+  }
+
+  private garantirVencimentosTecnicosCondicoes(): void {
+    (this.proposta?.condicao ?? []).forEach((condicao) => this.garantirVencimentoTecnicoCondicao(condicao));
+  }
+
+  private garantirVencimentoTecnicoCondicao(condicao?: Condicao | null): void {
+    if (condicao && !condicao.vencimento) {
+      condicao.vencimento = moment().format('YYYY-MM-DD');
+    }
+  }
+
   calcularSimulacaoComissionamento(): SimulacaoComissionamento {
     const valorImovel = this.round2(this.toNumber(this.proposta?.vlrUnidade));
     const percentualComissao = 6;
@@ -836,6 +952,11 @@ export class PropostasComponent implements OnInit, OnChanges {
     (this.proposta?.condicao ?? []).forEach((condicao, ordemCondicao) => {
       const descricaoOriginal = condicao?.descricao || '';
       const descricaoNormalizada = this.normalizarDescricaoComissionamento(descricaoOriginal);
+
+      if (descricaoNormalizada === 'POSOBRAS') {
+        return;
+      }
+
       const quantidadeOriginal = Math.max(Math.trunc(this.toNumber(condicao?.qtde)) || 1, 1);
       const valorParcela = this.round2(this.toNumber(condicao?.valorParcela));
       const valorTotal = this.toNumber(condicao?.valorTotal);
@@ -929,9 +1050,32 @@ export class PropostasComponent implements OnInit, OnChanges {
 
   recalc(i: number): void {
     const c = this.proposta.condicao[i];
+
+    if (!this.deveCalcularValorTotalAutomaticamente(c?.descricao)) {
+      return;
+    }
+
     const q = this.toNumber(c.qtde);
     const v = this.toNumber(c.valorParcela);
     c.valorTotal = this.round2(q * v);
+  }
+
+  deveCalcularValorTotalAutomaticamente(descricao?: string | null): boolean {
+    return this.normalizarDescricaoCondicao(descricao) !== 'POSOBRAS';
+  }
+
+  textoEngenhariaCaixa(): string {
+    const valor = this.proposta?.engCaixa;
+
+    if (valor === true || String(valor).toLowerCase() === 'sim') {
+      return 'Sim';
+    }
+
+    if (valor === false || String(valor).toLowerCase() === 'nao' || String(valor).toLowerCase() === 'não') {
+      return 'Não';
+    }
+
+    return 'Não informado';
   }
 
   private toNumber(v: any): number {
@@ -962,6 +1106,10 @@ export class PropostasComponent implements OnInit, OnChanges {
   }
 
   private normalizarDescricaoComissionamento(descricao?: string | null): string {
+    return this.normalizarDescricaoCondicao(descricao);
+  }
+
+  private normalizarDescricaoCondicao(descricao?: string | null): string {
     return (descricao || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -1027,18 +1175,7 @@ export class PropostasComponent implements OnInit, OnChanges {
   }
 
   saveUser() {
-    this.proposta.status = 'EM_ANALISE';
-
-    this.proposalsService.create(this.proposta).subscribe({
-      next: () => {
-        this.toast.success('Proposta enviada para analise');
-        this.buscar();
-      },
-      error: err => {
-        console.error(err);
-        this.toast.error(err.error?.message || 'Erro ao salvar proposta');
-      }
-    });
+    this.criarPropostaParaAnalise();
   }
 
   print(elementId: string) {

@@ -71,6 +71,36 @@
   border-bottom: 1px solid #212529;
 }
 
+.modo-download .no-print {
+  display: none !important;
+}
+
+.print-only {
+  display: none !important;
+}
+
+.modo-download .print-only {
+  display: inline !important;
+}
+
+.modo-download .print-only.print-block {
+  display: block !important;
+}
+
+.modo-download .print-area button,
+.modo-download .print-area .btn {
+  display: none !important;
+}
+
+.modo-download .print-area .form-control:not(.no-print),
+.modo-download .print-area .form-select:not(.no-print) {
+  border-color: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
 @media print {
   .modal-content,
   .card,
@@ -101,8 +131,19 @@
   }
 
   .d-print-none,
+  .no-print,
+  .print-area button,
+  .print-area .btn,
   .btn-close,
   .modal-header {
     display: none !important;
+  }
+
+  .print-only {
+    display: inline !important;
+  }
+
+  .print-only.print-block {
+    display: block !important;
   }
 }

@@ -267,7 +267,7 @@
                 <div class="input-group">
                   <input type="text" class="form-control" placeholder="00000-000" id="end-cep" name="cep"
                     [(ngModel)]="proposta.cep" (ngModelChange)="copiarEndereco()">
-                  <button type="button" class="input-group-text btn btn-primary" id="btnGroupAddon"
+                  <button type="button" class="input-group-text btn btn-primary no-print" id="btnGroupAddon"
                     (click)="cep()">Buscar CEP</button>
                 </div>
               </div>
@@ -313,7 +313,7 @@
             </div>
           </div>
 
-          <div class="form-check mt-4">
+          <div class="form-check mt-4 no-print">
             <input class="form-check-input" type="checkbox" id="mostrarSegundoProponente"
               name="mostrarSegundoProponente" [(ngModel)]="mostrarSegundoProponente">
             <label class="form-check-label" for="mostrarSegundoProponente">
@@ -390,10 +390,10 @@
             <div class="form-section mt-3">
               <h6 class="card-title mb-3">Endereço do 2º Proponente</h6>
 
-              <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="mesmoEnderecoCheck" name="mesmoEndereco"
+              <div class="form-check mt-4 no-print">
+                <input class="form-check-input" type="checkbox" id="mesmoEnderecoProponente1" name="mesmoEnderecoProponente1"
                   [(ngModel)]="mesmoEndereco" (ngModelChange)="copiarEndereco()">
-                <label class="form-check-label" for="mesmoEnderecoCheck">
+                <label class="form-check-label" for="mesmoEnderecoProponente1">
                   Mesmo endereço do 1º Proponente
                 </label>
               </div>
@@ -404,7 +404,7 @@
                   <div class="input-group">
                     <input type="text" class="form-control" placeholder="00000-000" id="end2-cep" name="cep2"
                       [(ngModel)]="endereco2.cep" [disabled]="mesmoEndereco">
-                    <button type="button" class="input-group-text btn btn-primary" (click)="buscarCep2()"
+                    <button type="button" class="input-group-text btn btn-primary no-print" (click)="buscarCep2()"
                       [disabled]="mesmoEndereco">Buscar CEP</button>
                   </div>
                 </div>
@@ -454,7 +454,7 @@
 
           <div class="mt-3 form-section payment-section">
             <h6 class="card-title">Condicoes da Proposta
-              <small class="bg bg-danger ps-2 pe-2 text-white rounded float-end">
+              <small class="bg bg-danger ps-2 pe-2 text-white rounded float-end no-print">
                 Falta {{proposta.vlrUnidade - vlrTotal() | currency:'BRL':'symbol':'1.2-2':'pt-BR'}} para completar o valor da venda
               </small>
             </h6>
@@ -469,18 +469,20 @@
                   <th scope="col" class="text-nowrap">Vencimento</th>
                   <th scope="col" class="text-nowrap">Valor Parcela (R$)</th>
                   <th scope="col" class="text-nowrap">Valor Total (R$)</th>
-                  <th scope="col" class="text-nowrap"></th>
+                  <th scope="col" class="text-nowrap no-print"></th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr *ngFor="let c of proposta.condicao; let i = index; trackBy: track" class="p-2 border">
                   <td class="border">
-                    <input type="number" class="form-control form-control-sm border-0" [(ngModel)]="c.qtde"
+                    <input type="number" class="form-control form-control-sm border-0 no-print" [(ngModel)]="c.qtde"
                       name="qtde{{i}}" min="1" step="1" (ngModelChange)="recalc(i)" />
+                    <span class="print-only">{{ c.qtde }}</span>
                   </td>
                   <td class="border">
-                    <select class="form-select form-select-sm border-0" [(ngModel)]="c.descricao" name="desc{{i}}">
+                    <select class="form-select form-select-sm border-0 no-print" [(ngModel)]="c.descricao" name="desc{{i}}"
+                      (ngModelChange)="onDescricaoCondicaoChange(c, i)">
                       <option [ngValue]="''" disabled>Selecione</option>
                       <option *ngIf="isDescricaoCondicaoPersonalizada(c.descricao)" [ngValue]="c.descricao">
                         {{ c.descricao }}
@@ -489,20 +491,43 @@
                         {{ descricao }}
                       </option>
                     </select>
+                    <span class="print-only">{{ c.descricao || '-' }}</span>
                   </td>
                   <td class="border">
-                    <input type="date" class="form-control form-control-sm border-0" [(ngModel)]="c.vencimento"
-                      name="venc{{i}}" />
+                    <input *ngIf="deveExibirVencimentoCondicao(c.descricao)" type="date"
+                      class="form-control form-control-sm border-0 no-print" [(ngModel)]="c.vencimento" name="venc{{i}}" />
+                    <span *ngIf="deveExibirVencimentoCondicao(c.descricao)" class="print-only">
+                      {{ c.vencimento | date:'dd/MM/yyyy':'UTC' }}
+                    </span>
+                    <span *ngIf="!deveExibirVencimentoCondicao(c.descricao)" class="text-muted small no-print">
+                      Sem data visível
+                    </span>
+                    <span *ngIf="!deveExibirVencimentoCondicao(c.descricao)" class="text-muted small print-only">
+                      Sem data visível
+                    </span>
                   </td>
                   <td class="border">
-                    <input type="text" class="form-control form-control-sm border-0" currencyMask
+                    <input type="text" class="form-control form-control-sm border-0 no-print" currencyMask
                       [options]="currencyOptions" [(ngModel)]="c.valorParcela" name="valor{{i}}"
                       inputmode="decimal" (ngModelChange)="recalc(i)" />
+                    <span class="print-only">
+                      {{ c.valorParcela | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+                    </span>
                   </td>
                   <td class="text-end fw-semibold border">
-                    {{ c.valorTotal | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+                    <ng-container *ngIf="deveCalcularValorTotalAutomaticamente(c.descricao); else valorTotalManual">
+                      {{ c.valorTotal | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+                    </ng-container>
+                    <ng-template #valorTotalManual>
+                      <input type="text" class="form-control form-control-sm border-0 text-end fw-semibold no-print"
+                        currencyMask [options]="currencyOptions" [(ngModel)]="c.valorTotal" name="total{{i}}"
+                        inputmode="decimal" />
+                      <span class="print-only">
+                        {{ c.valorTotal | currency:'BRL':'symbol-narrow':'1.2-2':'pt-BR' }}
+                      </span>
+                    </ng-template>
                   </td>
-                  <td class="text-center border pt-1 pb-1 ps-0 pe-0">
+                  <td class="text-center border pt-1 pb-1 ps-0 pe-0 no-print">
                     <button type="button" class="btn btn-sm btn-outline-danger p-1" (click)="remover(i)"
                       [disabled]="proposta.id && !editandoProposta">&times;</button>
                   </td>
@@ -511,20 +536,19 @@
                 <tr *ngIf="proposta?.condicao?.length === 0">
                   <td colspan="6" class="text-center text-muted py-4">Nenhuma condicao adicionada</td>
                 </tr>
-                <tr>
-                  <td colspan="5">
-                    <a href="javascript:void(0)" id="add-item"
-                      class="btn btn-subtle-secondary fw-medium float-end mt-4 mb-4"
-                      *ngIf="!proposta.id || editandoProposta" (click)="adicionar()">
-                      <i class="ri-add-fill me-1 align-bottom"></i> Adicionar condicao
-                    </a>
-                  </td>
-                </tr>
               </tbody>
             </table>
+            <div class="d-flex justify-content-end align-items-center mt-2 mb-2 no-print">
+              <a href="javascript:void(0)" id="add-item"
+                class="btn btn-subtle-secondary fw-medium"
+                *ngIf="!proposta.id || editandoProposta" (click)="adicionar()">
+                <i class="ri-add-fill me-1 align-bottom"></i> Adicionar condicao
+              </a>
+            </div>
           </div>
 
-          <div class="mt-3 form-section" *ngIf="calcularSimulacaoComissionamento() as simulacao">
+          <div class="mt-3 form-section simulacao-comissionamento no-print"
+            *ngIf="calcularSimulacaoComissionamento() as simulacao">
             <h6 class="card-title mb-3">Simulação de Comissionamento</h6>
 
             <div class="alert alert-warning p-2 ps-3" role="alert" *ngIf="!simulacao.valorImovel">
@@ -614,7 +638,7 @@
           <div class="row g-3 align-items-center form-section proposal-confirmation">
             <div class="col-12 col-md-6">
               <label class="form-label">Engenharia da Caixa paga pelo cliente? <span class="text-danger">*</span></label>
-              <div class="d-flex gap-3">
+              <div class="d-flex gap-3 no-print">
                 <div class="form-check">
                   <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa" name="engCaixa"
                     value="sim" id="engSim">
@@ -625,6 +649,9 @@
                     value="nao" id="engNao">
                   <label class="form-check-label" for="engNao">Nao</label>
                 </div>
+              </div>
+              <div class="print-only print-block fw-semibold">
+                {{ textoEngenhariaCaixa() }}
               </div>
             </div>
 
@@ -643,29 +670,32 @@
               <div class="row g-3">
                 <div class="col-12 col-md-4">
                   <label class="form-label fw-semibold">Gerente</label>
-                  <select class="form-select" name="gerenteID" [(ngModel)]="proposta.gerenteID"
+                  <select class="form-select no-print" name="gerenteID" [(ngModel)]="proposta.gerenteID"
                     (change)="onGerenteChange()">
                     <option value="">Selecione</option>
                     <option *ngFor="let g of gerentes" [value]="g.id">{{ g.name }}</option>
                   </select>
+                  <div class="print-only print-block">{{ proposta.gerenteNome || '-' }}</div>
                 </div>
 
                 <div class="col-12 col-md-4">
                   <label class="form-label fw-semibold">Coordenador</label>
-                  <select class="form-select" name="coordenadorID" [(ngModel)]="proposta.coordenadorID"
+                  <select class="form-select no-print" name="coordenadorID" [(ngModel)]="proposta.coordenadorID"
                     (change)="onCoordenadorChange()">
                     <option value="">Selecione</option>
                     <option *ngFor="let c of coordenadores" [value]="c.id">{{ c.name }}</option>
                   </select>
+                  <div class="print-only print-block">{{ proposta.coordenadorNome || '-' }}</div>
                 </div>
 
                 <div class="col-12 col-md-4">
                   <label class="form-label fw-semibold">Vendedor</label>
-                  <select class="form-select" name="corretorID" [(ngModel)]="proposta.corretorID"
+                  <select class="form-select no-print" name="corretorID" [(ngModel)]="proposta.corretorID"
                     (change)="onCorretorChange()">
                     <option value="">Selecione</option>
                     <option *ngFor="let v of vendedores" [value]="v.id">{{ v.name }}</option>
                   </select>
+                  <div class="print-only print-block">{{ proposta.corretorNome || '-' }}</div>
                 </div>
               </div>
             </div>
@@ -732,8 +762,9 @@
             <i class="ri-close-circle-line align-bottom me-1"></i> Reprovar
           </button>
 
-          <button type="button" class="btn btn-primary" (click)="downloadA4PrimeiraFolha()">
-            <i class="ri-download-2-line align-bottom me-1"></i> Download
+          <button type="button" class="btn btn-primary" (click)="downloadA4PrimeiraFolha()"
+            [disabled]="gerandoPdf">
+            <i class="ri-download-2-line align-bottom me-1"></i> {{ gerandoPdf ? 'Gerando PDF...' : 'Download' }}
           </button>
         </div>
       </div>
