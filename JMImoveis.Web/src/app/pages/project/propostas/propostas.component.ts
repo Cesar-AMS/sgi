@@ -91,6 +91,7 @@ export class PropostasComponent implements OnInit, OnChanges {
 
   @ViewChild('detailTpl', { static: false }) modalReserva!: ModalDirective;
   @ViewChild('areaA4Ref', { static: false }) areaA4Ref!: ElementRef<HTMLElement>;
+  @ViewChild('areaDocumentoProposta', { static: false }) areaDocumentoProposta!: ElementRef<HTMLElement>;
 
   modalRef?: BsModalRef;
   proposta: PropostaReserva = this.criarPropostaVazia();
@@ -433,7 +434,7 @@ export class PropostasComponent implements OnInit, OnChanges {
       return;
     }
 
-    const el = this.areaA4Ref?.nativeElement;
+    const el = this.areaDocumentoProposta?.nativeElement;
 
     if (!el) {
       this.toast.error('Nao foi possivel localizar a area do PDF.');
@@ -470,25 +471,123 @@ export class PropostasComponent implements OnInit, OnChanges {
         y: 0
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
-      const imgH = (canvas.height * contentW) / canvas.width;
-
-      pdf.addImage(imgData, 'JPEG', margin, margin, contentW, imgH);
-      let heightLeft = imgH - contentH;
-      let position = margin - contentH;
-
-      while (heightLeft > 0) {
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', margin, position, contentW, imgH);
-        heightLeft -= contentH;
-        position -= contentH;
-      }
+      this.adicionarCanvasEmUmaPagina(pdf, canvas, margin, contentW, contentH);
 
       pdf.save(`proposta_${this.proposta?.enterPriseName || 'novo'}_${this.proposta?.clienteName ?? 'novo'}.pdf`);
     } finally {
       el.classList.remove('modo-download');
       this.gerandoPdf = false;
     }
+  }
+
+  private adicionarCanvasEmUmaPagina(
+    pdf: jsPDF,
+    canvas: HTMLCanvasElement,
+    margin: number,
+    contentW: number,
+    contentH: number
+  ): void {
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const imgW = contentW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+    const fitScale = Math.min(1, contentH / imgH);
+    const finalW = imgW * fitScale;
+    const finalH = imgH * fitScale;
+    const x = margin + (contentW - finalW) / 2;
+    const y = margin;
+
+    pdf.addImage(imgData, 'JPEG', x, y, finalW, finalH);
+  }
+
+  private adicionarCanvasPaginado(
+    pdf: jsPDF,
+    canvas: HTMLCanvasElement,
+    el: HTMLElement,
+    margin: number,
+    contentW: number,
+    contentH: number
+  ): void {
+    const pxPerMm = canvas.width / contentW;
+    const pageHeightPx = Math.floor(contentH * pxPerMm);
+    const protectedRanges = this.obterFaixasProtegidasPdf(el, canvas);
+    let offsetY = 0;
+    let firstPage = true;
+
+    while (offsetY < canvas.height) {
+      const sliceEnd = this.calcularFimPaginaPdf(offsetY, pageHeightPx, canvas.height, protectedRanges);
+      const sliceHeight = Math.max(1, sliceEnd - offsetY);
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width = canvas.width;
+      pageCanvas.height = sliceHeight;
+
+      const context = pageCanvas.getContext('2d');
+      if (!context) {
+        throw new Error('Nao foi possivel preparar a pagina do PDF.');
+      }
+
+      context.drawImage(
+        canvas,
+        0,
+        offsetY,
+        canvas.width,
+        sliceHeight,
+        0,
+        0,
+        canvas.width,
+        sliceHeight
+      );
+
+      if (!firstPage) {
+        pdf.addPage();
+      }
+
+      const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.92);
+      const pageImgH = sliceHeight / pxPerMm;
+      pdf.addImage(pageImgData, 'JPEG', margin, margin, contentW, pageImgH);
+
+      firstPage = false;
+      offsetY = sliceEnd;
+    }
+  }
+
+  private obterFaixasProtegidasPdf(el: HTMLElement, canvas: HTMLCanvasElement): Array<{ top: number; bottom: number }> {
+    const containerRect = el.getBoundingClientRect();
+    const canvasScale = canvas.width / el.scrollWidth;
+
+    return Array.from(el.querySelectorAll<HTMLElement>('.avoid-break'))
+      .map((block) => {
+        const rect = block.getBoundingClientRect();
+        const top = Math.max(0, (rect.top - containerRect.top) * canvasScale);
+        const bottom = Math.min(canvas.height, (rect.bottom - containerRect.top) * canvasScale);
+        return { top, bottom };
+      })
+      .filter(range => range.bottom > range.top)
+      .sort((a, b) => a.top - b.top);
+  }
+
+  private calcularFimPaginaPdf(
+    offsetY: number,
+    pageHeightPx: number,
+    canvasHeight: number,
+    protectedRanges: Array<{ top: number; bottom: number }>
+  ): number {
+    const naturalEnd = Math.min(offsetY + pageHeightPx, canvasHeight);
+
+    if (naturalEnd >= canvasHeight) {
+      return canvasHeight;
+    }
+
+    const minUsefulPageHeight = pageHeightPx * 0.45;
+    const crossingRange = protectedRanges.find(range =>
+      range.top > offsetY + minUsefulPageHeight &&
+      range.top < naturalEnd &&
+      range.bottom > naturalEnd &&
+      range.bottom - range.top < pageHeightPx
+    );
+
+    return crossingRange
+      ? Math.max(offsetY + 1, Math.floor(crossingRange.top))
+      : naturalEnd;
   }
 
   private updatePagedItems(): void {
@@ -1076,6 +1175,102 @@ export class PropostasComponent implements OnInit, OnChanges {
     }
 
     return 'Não informado';
+  }
+
+  documentoCampo(valor: any): string {
+    if (valor === null || valor === undefined || valor === '') {
+      return '';
+    }
+
+    return String(valor);
+  }
+
+  documentoMoeda(valor: any): string {
+    const numero = this.toNumber(valor);
+
+    if (!numero) {
+      return '';
+    }
+
+    return numero.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  documentoData(valor?: string | Date | null): string {
+    if (!valor) {
+      return '';
+    }
+
+    const data = moment(valor);
+    return data.isValid() ? data.format('DD/MM/YYYY') : '';
+  }
+
+  dataAtualPorExtenso(): string {
+    const data = this.today instanceof Date ? this.today : new Date();
+    const dataFormatada = data.toLocaleDateString('pt-BR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    return `São Paulo, ${dataFormatada}.`;
+  }
+
+  documentoCidadeUf(cidade?: string | null, estado?: string | null): string {
+    const partes = [cidade, estado]
+      .map(parte => (parte || '').trim())
+      .filter(Boolean);
+
+    return partes.join('/');
+  }
+
+  documentoBloco(): string {
+    const unitName = (this.proposta?.unitName || '').trim();
+    const match = unitName.match(/\s([A-Za-z0-9]+)$/);
+
+    if (!match || !/^Apto\s+/i.test(unitName)) {
+      return '';
+    }
+
+    return match[1];
+  }
+
+  documentoCondicoesLinhas(): Array<Condicao | null> {
+    const condicoes = this.proposta?.condicao ?? [];
+    const linhasMinimas = 8;
+    const linhasVazias = Math.max(linhasMinimas - condicoes.length, 0);
+
+    return [
+      ...condicoes,
+      ...Array.from({ length: linhasVazias }, () => null)
+    ];
+  }
+
+  documentoVencimento(condicao?: Condicao | null): string {
+    if (!condicao || !this.deveExibirVencimentoCondicao(condicao.descricao)) {
+      return '';
+    }
+
+    return this.documentoData(condicao.vencimento);
+  }
+
+  documentoEngenhariaMarcada(valorEsperado: 'sim' | 'nao'): string {
+    const valor = this.proposta?.engCaixa;
+    const normalizado = String(valor).trim().toLowerCase();
+
+    if (valorEsperado === 'sim' && (valor === true || normalizado === 'sim')) {
+      return 'X';
+    }
+
+    if (valorEsperado === 'nao' && (valor === false || normalizado === 'nao' || normalizado === 'não')) {
+      return 'X';
+    }
+
+    return '';
   }
 
   private toNumber(v: any): number {

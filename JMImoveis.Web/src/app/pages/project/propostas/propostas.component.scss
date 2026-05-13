@@ -31,6 +31,11 @@
   margin-bottom: 1rem;
 }
 
+.print-area .avoid-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
 .print-area .card-title {
   font-size: 0.95rem;
   font-weight: 700;
@@ -71,6 +76,225 @@
   border-bottom: 1px solid #212529;
 }
 
+.proposta-documento-print {
+  position: fixed;
+  top: 0;
+  left: -1200px;
+  width: 794px;
+  min-height: 1123px;
+  padding: 18px 34px 24px;
+  background: #fff;
+  color: #111;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  line-height: 1.32;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.proposta-documento-print,
+.proposta-documento-print * {
+  box-sizing: border-box;
+}
+
+.proposta-documento-print .avoid-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.doc-header {
+  display: grid;
+  grid-template-columns: 150px 1fr 150px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.doc-logo {
+  justify-self: end;
+  width: 150px;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.doc-logo-img {
+  display: block;
+  max-width: 64px;
+  max-height: 64px;
+  object-fit: contain;
+}
+
+.doc-title-wrap {
+  text-align: center;
+}
+
+.doc-title-wrap h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin-bottom: 8px;
+}
+
+.doc-table td,
+.doc-table th {
+  border: 1px solid #222;
+  padding: 5px 7px 7px;
+  vertical-align: top;
+  min-height: 28px;
+}
+
+.doc-top-table td {
+  height: 32px;
+  text-align: left;
+  vertical-align: middle;
+  padding-top: 8px;
+  padding-bottom: 4px;
+}
+
+.doc-section-title {
+  background: #163b60;
+  color: #fff;
+  font-weight: 800;
+  text-align: center;
+  padding: 6px 8px;
+  border: 1px solid #163b60;
+  letter-spacing: 0.3px;
+  font-size: 12px;
+}
+
+.doc-fields td {
+  height: 42px;
+}
+
+.doc-fields span {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #222;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.doc-conditions th {
+  background: #e9eef4;
+  text-align: center;
+  font-size: 11px;
+}
+
+.doc-conditions td {
+  height: 27px;
+}
+
+.doc-conditions td:nth-child(1),
+.doc-conditions td:nth-child(3),
+.doc-conditions td:nth-child(4),
+.doc-conditions td:nth-child(5) {
+  text-align: center;
+}
+
+.doc-total-row td {
+  font-weight: 800;
+  background: #f2f2f2;
+}
+
+.doc-total-row td:first-child {
+  text-align: right;
+}
+
+.doc-engineering {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid #222;
+  padding: 8px 10px;
+  margin: 10px 0;
+}
+
+.doc-engineering strong {
+  font-size: 13px;
+}
+
+.doc-engineering-value {
+  font-weight: 800;
+}
+
+.doc-engineering-date {
+  margin-left: auto;
+  text-align: right;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.doc-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 46px;
+  margin-top: 14px;
+}
+
+.doc-team-lines > div,
+.doc-buyer-lines > div {
+  padding-top: 12px;
+  margin-bottom: 24px;
+}
+
+.doc-team-lines > div:first-child {
+  padding-top: 22px;
+  margin-bottom: 28px;
+}
+
+.doc-team-lines span,
+.doc-buyer-lines span {
+  display: block;
+  height: 1px;
+  border-top: 1px solid #111;
+  margin-bottom: 4px;
+}
+
+.doc-team-lines strong,
+.doc-buyer-lines strong {
+  display: block;
+  text-align: center;
+  font-size: 11px;
+}
+
+.doc-team-lines small {
+  display: block;
+  margin-top: 2px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.doc-buyer-lines h2 {
+  margin: 0 0 24px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.doc-footer {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 10px;
+}
+
+.doc-footer p {
+  margin: 3px 0;
+}
+
+.doc-site,
+.doc-creci {
+  font-weight: 800;
+}
+
 .modo-download .no-print {
   display: none !important;
 }
@@ -94,6 +318,31 @@
 
 .modo-download .print-area .form-control:not(.no-print),
 .modo-download .print-area .form-select:not(.no-print) {
+  border-color: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.print-area.modo-download .form-section {
+  margin-bottom: 0.55rem;
+}
+
+.print-area.modo-download .card-title {
+  margin-bottom: 0.45rem;
+}
+
+.print-area.modo-download .row {
+  --vz-gutter-y: 0.45rem;
+}
+
+.print-area.modo-download .signature-line {
+  height: 42px;
+}
+
+.print-area.modo-download .form-control:not(.no-print),
+.print-area.modo-download .form-select:not(.no-print) {
   border-color: transparent !important;
   background-color: transparent !important;
   box-shadow: none !important;
