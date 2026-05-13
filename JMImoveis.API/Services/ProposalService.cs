@@ -12,6 +12,7 @@ namespace JMImoveisAPI.Services
         private readonly IVendaRepository _repo;
         private readonly IClienteRepository _clienteRepository;
         private readonly IVendaCriacaoService _vendaCriacaoService;
+        private readonly IAccountsReceivableService _accountsReceivableService;
         private readonly ILogger<ProposalService> _logger;
         private readonly ProposalCommissionCalculator _commissionCalculator = new();
 
@@ -19,11 +20,13 @@ namespace JMImoveisAPI.Services
             IVendaRepository repo,
             IClienteRepository clienteRepository,
             IVendaCriacaoService vendaCriacaoService,
+            IAccountsReceivableService accountsReceivableService,
             ILogger<ProposalService> logger)
         {
             _repo = repo;
             _clienteRepository = clienteRepository;
             _vendaCriacaoService = vendaCriacaoService;
+            _accountsReceivableService = accountsReceivableService;
             _logger = logger;
         }
 
@@ -231,7 +234,8 @@ namespace JMImoveisAPI.Services
         {
             var customerId = await GarantirClienteAsync(proposal);
             var sale = MapSaleFromProposal(proposal, customerId);
-            await _vendaCriacaoService.CreateSaleOnlyAsync(sale);
+            var saleId = await _vendaCriacaoService.CreateSaleOnlyAsync(sale);
+            await GerarContasReceberDaPropostaAsync(proposal, saleId);
         }
 
         private async Task<int?> GarantirClienteAsync(Proposal proposal)
@@ -337,6 +341,112 @@ namespace JMImoveisAPI.Services
             return proposal.Condicao
                 .Where(c => EhEntrada(c.Descricao) || EhAto(c.Descricao))
                 .Sum(c => c.ValorTotal > 0 ? c.ValorTotal : c.ValorParcela * c.Qtde);
+        }
+
+        private async Task GerarContasReceberDaPropostaAsync(Proposal proposal, int saleId)
+        {
+            foreach (var titulo in BuildContasReceber(proposal, saleId))
+            {
+                await _accountsReceivableService.CreateAsync(titulo);
+            }
+        }
+
+        private static IEnumerable<CreateAccountsReceivableRequest> BuildContasReceber(Proposal proposal, int saleId)
+        {
+            foreach (var condicao in proposal.Condicao ?? Enumerable.Empty<ProposalCondition>())
+            {
+                var categoria = ClassificarCategoriaRecebivel(condicao.Descricao);
+                var quantidade = QuantidadeTitulosRecebiveis(condicao);
+                var valorParcela = CalcularValorParcelaRecebivel(condicao, quantidade);
+                var vencimentoBase = condicao.Vencimento == default ? DateTime.Today : condicao.Vencimento.Date;
+
+                for (var index = 0; index < quantidade; index++)
+                {
+                    var vencimento = CalcularVencimentoRecebivel(condicao.Descricao, vencimentoBase, index);
+                    var descricao = quantidade > 1
+                        ? $"{categoria} {index + 1}/{quantidade} - Venda {saleId}"
+                        : $"{categoria} - Venda {saleId}";
+
+                    yield return new CreateAccountsReceivableRequest
+                    {
+                        SaleId = saleId,
+                        BranchId = 1,
+                        CompetenceDate = DateTime.Today,
+                        DueDate = vencimento,
+                        PaidDate = null,
+                        Description = descricao,
+                        Status = "WAITING",
+                        Category = categoria,
+                        Amount = valorParcela,
+                        PendingAmount = valorParcela,
+                        Observations = condicao.Descricao
+                    };
+                }
+            }
+        }
+
+        private static int QuantidadeTitulosRecebiveis(ProposalCondition condicao)
+        {
+            if (EhMensal(condicao.Descricao) || EhAnual(condicao.Descricao))
+            {
+                return Math.Max(condicao.Qtde, 1);
+            }
+
+            return 1;
+        }
+
+        private static decimal CalcularValorParcelaRecebivel(ProposalCondition condicao, int quantidade)
+        {
+            if (EhMensal(condicao.Descricao) || EhAnual(condicao.Descricao))
+            {
+                if (condicao.ValorParcela > 0)
+                {
+                    return condicao.ValorParcela;
+                }
+
+                return quantidade > 0 ? condicao.ValorTotal / quantidade : condicao.ValorTotal;
+            }
+
+            if (condicao.ValorTotal > 0)
+            {
+                return condicao.ValorTotal;
+            }
+
+            return condicao.ValorParcela * Math.Max(condicao.Qtde, 1);
+        }
+
+        private static DateTime CalcularVencimentoRecebivel(string? descricao, DateTime vencimentoBase, int index)
+        {
+            if (EhAnual(descricao))
+            {
+                return vencimentoBase.AddYears(index);
+            }
+
+            if (EhMensal(descricao))
+            {
+                return vencimentoBase.AddMonths(index);
+            }
+
+            return vencimentoBase;
+        }
+
+        private static string ClassificarCategoriaRecebivel(string? descricao)
+        {
+            var normalized = NormalizarDescricaoCondicao(descricao);
+
+            return normalized switch
+            {
+                "ATOJM" or "ATO" => "Ato",
+                "MENSAL" => "Mensal",
+                "ANUALJM" or "ANUAL" => "Anual",
+                "FGTS" => "FGTS",
+                "ENTREGADECHAVES" => "Entrega de chaves",
+                "POSOBRAS" => "Pós obras",
+                "FINANCIAMENTO" => "Financiamento",
+                "PROMOCAO" => "Promoção",
+                "REPASSECONSTRUTORA" => "Repasse Construtora",
+                _ => string.IsNullOrWhiteSpace(descricao) ? "Outros" : descricao.Trim()
+            };
         }
 
         private static List<Acts?>? BuildActs(IEnumerable<ProposalCondition> condicoes)
@@ -533,6 +643,16 @@ namespace JMImoveisAPI.Services
 
         private static bool EhParcelaMensalValidacaoComercial(string? descricao)
             => NormalizarDescricaoCondicao(descricao) == "MENSAL";
+
+        private static bool EhMensal(string? descricao)
+            => NormalizarDescricaoCondicao(descricao) == "MENSAL";
+
+        private static bool EhAnual(string? descricao)
+        {
+            var normalized = NormalizarDescricaoCondicao(descricao);
+            return normalized == "ANUAL" ||
+                   normalized == "ANUALJM";
+        }
 
         private static bool EhAto(string? descricao)
             => NormalizarDescricaoCondicao(descricao) == "ATO";
