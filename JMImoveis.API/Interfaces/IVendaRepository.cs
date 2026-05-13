@@ -25,8 +25,10 @@ namespace JMImoveisAPI.Interfaces
         Task<IEnumerable<Proposal>> ListAsync(DateTime? de, DateTime? ate, string? status, int? user, int? gerente, int? coordenador, int? corretor, int? construtora, int? empreendimento, CancellationToken ct);
         Task<bool> UpdateProposalStatusAsync(long id, string expectedStatus, string nextStatus, CancellationToken ct);
         Task<bool> UpdateUnitStatusAsync(long unitId, string nextStatus, CancellationToken ct);
+        Task<bool> UpdateUnitStatusIfCurrentAsync(long unitId, string expectedStatus, string nextStatus, CancellationToken ct);
         Task<string?> GetUnitStatusAsync(long unitId, CancellationToken ct);
         Task<bool> HasActiveProposalForUnitAsync(long unitId, CancellationToken ct);
+        Task<bool> HasActiveProposalForUnitExceptAsync(long unitId, long proposalId, CancellationToken ct);
         Task<EnterpriseApprovalParams?> GetEnterpriseApprovalParamsAsync(long enterpriseId, CancellationToken ct);
 
         Task<List<int>> GetCustomerIdsBySaleIdAsync(int saleId);

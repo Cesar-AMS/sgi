@@ -1099,6 +1099,30 @@ namespace JMImoveisAPI.Repositories
             return affected > 0;
         }
 
+        public async Task<bool> UpdateUnitStatusIfCurrentAsync(long unitId, string expectedStatus, string nextStatus, CancellationToken ct)
+        {
+            const string sql = @"UPDATE jmoficial.units
+                                 SET status = @nextStatus,
+                                     updated_at = UTC_TIMESTAMP()
+                                 WHERE id = @unitId
+                                   AND active = 1
+                                   AND deleted_at IS NULL
+                                   AND UPPER(status) = @expectedStatus;";
+
+            using var conn = await _context.OpenConnectionAsync();
+            var affected = await conn.ExecuteAsync(new CommandDefinition(
+                sql,
+                new
+                {
+                    unitId,
+                    expectedStatus = expectedStatus.ToUpperInvariant(),
+                    nextStatus = nextStatus.ToUpperInvariant()
+                },
+                cancellationToken: ct));
+
+            return affected > 0;
+        }
+
         public async Task<string?> GetUnitStatusAsync(long unitId, CancellationToken ct)
         {
             const string sql = @"SELECT status
@@ -1126,6 +1150,22 @@ namespace JMImoveisAPI.Repositories
             return await conn.ExecuteScalarAsync<int>(new CommandDefinition(
                 sql,
                 new { unitId },
+                cancellationToken: ct)) > 0;
+        }
+
+        public async Task<bool> HasActiveProposalForUnitExceptAsync(long unitId, long proposalId, CancellationToken ct)
+        {
+            const string sql = @"SELECT COUNT(1)
+                                 FROM jmoficial.proposals
+                                 WHERE unidade_id = @unitId
+                                   AND id <> @proposalId
+                                   AND deleted_at IS NULL
+                                   AND UPPER(status) IN ('EM_ANALISE', 'APROVADO');";
+
+            using var conn = await _context.OpenConnectionAsync();
+            return await conn.ExecuteScalarAsync<int>(new CommandDefinition(
+                sql,
+                new { unitId, proposalId },
                 cancellationToken: ct)) > 0;
         }
 

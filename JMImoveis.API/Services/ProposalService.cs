@@ -100,8 +100,61 @@ namespace JMImoveisAPI.Services
             return proposals;
         }
 
-        public Task<(bool Success, string? Error, Proposal? Proposal)> EnviarParaAnaliseAsync(long id, CancellationToken ct)
-            => TransitionAsync(id, ProposalStatus.RASCUNHO, ProposalStatus.EM_ANALISE, ct);
+        public async Task<(bool Success, string? Error, Proposal? Proposal)> EnviarParaAnaliseAsync(long id, CancellationToken ct)
+        {
+            var proposal = await _repo.GetByIdAsync(id, ct);
+            if (proposal is null)
+            {
+                return (false, "NOT_FOUND", null);
+            }
+
+            var currentStatus = NormalizeStatus(proposal.Status);
+            if (!string.Equals(currentStatus, ProposalStatus.RASCUNHO.ToString(), StringComparison.Ordinal))
+            {
+                proposal.Status = currentStatus;
+                return (false, "INVALID_STATUS", proposal);
+            }
+
+            var unitStatus = NormalizeUnitStatus(await _repo.GetUnitStatusAsync(proposal.UnidadeId, ct));
+            if (unitStatus == "SELL")
+            {
+                proposal.Status = currentStatus;
+                return (false, "UNIT_SOLD", proposal);
+            }
+
+            if (unitStatus == "RESERVED" && await _repo.HasActiveProposalForUnitExceptAsync(proposal.UnidadeId, id, ct))
+            {
+                proposal.Status = currentStatus;
+                return (false, "UNIT_RESERVED", proposal);
+            }
+
+            if (unitStatus != "OPEN" && unitStatus != "RESERVED")
+            {
+                proposal.Status = currentStatus;
+                return (false, "UNIT_STATUS_UPDATE_FAILED", proposal);
+            }
+
+            var updated = await _repo.UpdateProposalStatusAsync(id, currentStatus, ProposalStatus.EM_ANALISE.ToString(), ct);
+            if (!updated)
+            {
+                proposal.Status = currentStatus;
+                return (false, "INVALID_STATUS", proposal);
+            }
+
+            if (unitStatus == "OPEN")
+            {
+                var reserved = await _repo.UpdateUnitStatusIfCurrentAsync(proposal.UnidadeId, "OPEN", "RESERVED", ct);
+                if (!reserved)
+                {
+                    await _repo.UpdateProposalStatusAsync(id, ProposalStatus.EM_ANALISE.ToString(), currentStatus, ct);
+                    proposal.Status = currentStatus;
+                    return (false, "UNIT_STATUS_UPDATE_FAILED", proposal);
+                }
+            }
+
+            proposal.Status = ProposalStatus.EM_ANALISE.ToString();
+            return (true, null, proposal);
+        }
 
         public Task<(bool Success, string? Error, Proposal? Proposal)> AprovarAsync(long id, CancellationToken ct)
             => TransitionAsync(id, ProposalStatus.APROVADO, ct, ProposalStatus.EM_ANALISE, ProposalStatus.REPROVADO);
@@ -598,6 +651,23 @@ namespace JMImoveisAPI.Services
                 "APPROVED" => ProposalStatus.APROVADO.ToString(),
                 "REJECTED" => ProposalStatus.REPROVADO.ToString(),
                 "CANCELLED" => ProposalStatus.CANCELADO.ToString(),
+                _ => normalized
+            };
+        }
+
+        private static string NormalizeUnitStatus(string? status)
+        {
+            var normalized = (status ?? string.Empty)
+                .Trim()
+                .ToUpperInvariant();
+
+            return normalized switch
+            {
+                "SOLD" => "SELL",
+                "VENDIDA" => "SELL",
+                "RESERVADA" => "RESERVED",
+                "DISPONIVEL" => "OPEN",
+                "AVAILABLE" => "OPEN",
                 _ => normalized
             };
         }

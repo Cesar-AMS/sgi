@@ -89,7 +89,7 @@ public sealed class PropostasController : ControllerBase
 
         if (!result.Success)
         {
-            return BadRequest(new { message = "Apenas propostas em rascunho podem ser enviadas para análise", status = result.Proposal?.Status });
+            return BadRequest(new { message = ObterMensagemErroEnvioAnalise(result.Error), error = result.Error, status = result.Proposal?.Status });
         }
 
         return Ok(new { message = "Proposta enviada para análise com sucesso", status = result.Proposal!.Status });
@@ -162,6 +162,18 @@ public sealed class PropostasController : ControllerBase
             _ => aprovacao
                 ? "Erro ao aprovar proposta"
                 : "Erro ao reprovar proposta"
+        };
+    }
+
+    private static string ObterMensagemErroEnvioAnalise(string? error)
+    {
+        return error switch
+        {
+            "INVALID_STATUS" => "Apenas propostas em rascunho podem ser enviadas para análise",
+            "UNIT_SOLD" => "Unidade vendida não pode ser enviada para análise",
+            "UNIT_RESERVED" => "Unidade reservada por outra proposta ativa",
+            "UNIT_STATUS_UPDATE_FAILED" => "Não foi possível reservar a unidade para análise",
+            _ => "Não foi possível enviar a proposta para análise"
         };
     }
 
