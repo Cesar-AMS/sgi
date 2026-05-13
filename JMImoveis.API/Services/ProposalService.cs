@@ -12,16 +12,19 @@ namespace JMImoveisAPI.Services
         private readonly IVendaRepository _repo;
         private readonly IClienteRepository _clienteRepository;
         private readonly IVendaCriacaoService _vendaCriacaoService;
+        private readonly ILogger<ProposalService> _logger;
         private readonly ProposalCommissionCalculator _commissionCalculator = new();
 
         public ProposalService(
             IVendaRepository repo,
             IClienteRepository clienteRepository,
-            IVendaCriacaoService vendaCriacaoService)
+            IVendaCriacaoService vendaCriacaoService,
+            ILogger<ProposalService> logger)
         {
             _repo = repo;
             _clienteRepository = clienteRepository;
             _vendaCriacaoService = vendaCriacaoService;
+            _logger = logger;
         }
 
         public async Task<long> CreateAsync(PropostaReservaDto dto, CancellationToken ct)
@@ -216,8 +219,9 @@ namespace JMImoveisAPI.Services
             {
                 await CriarVendaDaPropostaAsync(proposal);
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Erro ao criar venda da proposta {ProposalId}.", proposal.Id);
                 // Aprovacao da proposta e venda da unidade nao devem ser bloqueadas
                 // por falha na integracao posterior de venda/financeiro.
             }
@@ -227,7 +231,7 @@ namespace JMImoveisAPI.Services
         {
             var customerId = await GarantirClienteAsync(proposal);
             var sale = MapSaleFromProposal(proposal, customerId);
-            await _vendaCriacaoService.CreateAsync(sale);
+            await _vendaCriacaoService.CreateSaleOnlyAsync(sale);
         }
 
         private async Task<int?> GarantirClienteAsync(Proposal proposal)
@@ -253,17 +257,17 @@ namespace JMImoveisAPI.Services
             var cliente = new Cliente
             {
                 Name = string.IsNullOrWhiteSpace(proposal.ClienteName) ? "Cliente da Proposta" : proposal.ClienteName,
-                CpfCnpj = proposal.CnpjCpf,
-                Email = proposal.EmailCliente,
-                Cellphone = proposal.PhoneOne,
-                Cellphone2 = proposal.PhoneTwo,
-                Cep = proposal.Cep,
-                Address = proposal.Rua,
-                AddressNumber = proposal.Nro,
-                Complement = proposal.Comp,
-                Neighborhood = proposal.Bairro,
-                City = proposal.Cidade,
-                State = proposal.Estado,
+                CpfCnpj = ValorOuPadrao(proposal.CnpjCpf, $"PROPOSTA-{proposal.Id}"),
+                Email = ValorOuPadrao(proposal.EmailCliente, $"proposta-{proposal.Id}@sem-email.local"),
+                Cellphone = ValorOuPadrao(proposal.PhoneOne, string.Empty),
+                Cellphone2 = ValorOuPadrao(proposal.PhoneTwo, string.Empty),
+                Cep = ValorOuPadrao(proposal.Cep, string.Empty),
+                Address = ValorOuPadrao(proposal.Rua, string.Empty),
+                AddressNumber = ValorOuPadrao(proposal.Nro, string.Empty),
+                Complement = ValorOuPadrao(proposal.Comp, string.Empty),
+                Neighborhood = ValorOuPadrao(proposal.Bairro, string.Empty),
+                City = ValorOuPadrao(proposal.Cidade, string.Empty),
+                State = ValorOuPadrao(proposal.Estado, string.Empty),
                 Profession = proposal.Profissao,
                 Income = proposal.Renda
             };
@@ -280,7 +284,7 @@ namespace JMImoveisAPI.Services
 
             return new VendasV2
             {
-                Status = "RESERVED",
+                Status = "COMPLETE",
                 UnitValue = proposal.VlrUnidade,
                 StartValue = CalcularValorEntrada(proposal),
                 ValueToConstructor = proposal.VlrUnidade,
@@ -301,6 +305,7 @@ namespace JMImoveisAPI.Services
                 UnitId = checked((int)proposal.UnidadeId),
                 RealtorId = proposal.CorretorId.HasValue ? checked((int)proposal.CorretorId.Value) : null,
                 ManagerId = proposal.GerenteId.HasValue ? checked((int)proposal.GerenteId.Value) : null,
+                CoordenatorId = proposal.CoordenadorId.HasValue ? checked((int)proposal.CoordenadorId.Value) : null,
                 PaymentTypesId = 1,
                 SelledAt = DateTime.Now,
                 CreatedAt = DateTime.Now,
@@ -560,6 +565,9 @@ namespace JMImoveisAPI.Services
 
         private static string SomenteDigitos(string? valor)
             => new string((valor ?? string.Empty).Where(char.IsDigit).ToArray());
+
+        private static string ValorOuPadrao(string? valor, string padrao)
+            => string.IsNullOrWhiteSpace(valor) ? padrao : valor;
 
         private static Proposal MapProposal(PropostaReservaDto dto)
         {

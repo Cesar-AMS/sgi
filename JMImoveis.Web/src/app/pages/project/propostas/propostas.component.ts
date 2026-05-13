@@ -769,6 +769,11 @@ export class PropostasComponent implements OnInit, OnChanges {
       return;
     }
 
+    if (!this.equipeObrigatoriaPreenchida()) {
+      this.toast.warning('Preencha vendedor, coordenador e gerente antes de enviar para análise.');
+      return;
+    }
+
     if (!this.proposta.id) {
       this.criarPropostaParaAnalise();
       return;
@@ -808,6 +813,11 @@ export class PropostasComponent implements OnInit, OnChanges {
     this.garantirVencimentosTecnicosCondicoes();
     this.normalizarEngCaixaParaBoolean();
     this.normalizarRendaParaString();
+
+    if (!this.equipeObrigatoriaPreenchida()) {
+      this.toast.warning('Preencha vendedor, coordenador e gerente antes de enviar para análise.');
+      return;
+    }
 
     if (!this.propostaEstaProntaParaAnalise()) {
       this.toast.warning('Preencha os dados obrigatórios antes de enviar para análise.');
@@ -933,6 +943,7 @@ export class PropostasComponent implements OnInit, OnChanges {
     if (!this.proposta.cnpjCpf?.trim()) return false;
     if (!this.proposta.phoneOne?.trim()) return false;
     if (!this.proposta.emailCliente?.trim()) return false;
+    if (!this.equipeObrigatoriaPreenchida()) return false;
 
     const condicoes = this.proposta.condicao ?? [];
     if (!condicoes.length) return false;
@@ -946,6 +957,21 @@ export class PropostasComponent implements OnInit, OnChanges {
       const valorTotal = this.toNumber(condicao.valorTotal);
       return valorParcela > 0 || valorTotal > 0;
     });
+  }
+
+  private equipeObrigatoriaPreenchida(): boolean {
+    return !this.valorSelecaoVazio(this.proposta?.corretorID) &&
+      !this.valorSelecaoVazio(this.proposta?.coordenadorID) &&
+      !this.valorSelecaoVazio(this.proposta?.gerenteID);
+  }
+
+  private valorSelecaoVazio(valor: any): boolean {
+    if (valor === null || valor === undefined) {
+      return true;
+    }
+
+    const texto = String(valor).trim();
+    return texto === '' || texto === '0';
   }
 
   approveSelected() {

@@ -18,24 +18,7 @@ namespace JMImoveisAPI.Services
 
         public async Task<int> CreateAsync(VendasV2 item)
         {
-            item.GenerateNotification = false;
-            item.SelledAt = item.SelledAt ?? DateTime.Now;
-            item.GrossEarnings = 0;
-            item.PaymentTypesId = 1;
-            item.TaxComission = 0;
-            item.TaxComissionStatus = "PAID";
-            item.PercentageToTax = 0;
-
-            item.GrossEarnings = item.ValueToRealstate ?? 0;
-
-            if (item.BranchId is null)
-            {
-                item.BranchId = 1;
-            }
-
-            var id = await _vendaRepository.CreateAsync(item);
-
-            item.Id = id;
+            var id = await CreateSaleOnlyAsync(item);
 
             var options = new FinanceMappingOptions(
                 SeriesIdReceivables: 1,
@@ -54,6 +37,34 @@ namespace JMImoveisAPI.Services
             await _financeIntegrationService.RegisterSaleFinancialsAsync(item, options);
 
             return id;
+        }
+
+        public async Task<int> CreateSaleOnlyAsync(VendasV2 item)
+        {
+            PrepareSale(item);
+
+            var id = await _vendaRepository.CreateAsync(item);
+            item.Id = id;
+
+            return id;
+        }
+
+        private static void PrepareSale(VendasV2 item)
+        {
+            item.GenerateNotification = false;
+            item.SelledAt = item.SelledAt ?? DateTime.Now;
+            item.GrossEarnings = 0;
+            item.PaymentTypesId = 1;
+            item.TaxComission = 0;
+            item.TaxComissionStatus = "PAID";
+            item.PercentageToTax = 0;
+
+            item.GrossEarnings = item.ValueToRealstate ?? 0;
+
+            if (item.BranchId is null)
+            {
+                item.BranchId = 1;
+            }
         }
     }
 }
