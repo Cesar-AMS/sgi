@@ -724,6 +724,8 @@ export class PropostasComponent implements OnInit, OnChanges {
     }
 
     this.garantirVencimentosTecnicosCondicoes();
+    this.normalizarEngCaixaParaBoolean();
+    this.normalizarRendaParaString();
     this.salvandoEdicao = true;
     this.proposalsService.update(this.proposta.id, this.proposta).subscribe({
       next: () => {
@@ -759,6 +761,9 @@ export class PropostasComponent implements OnInit, OnChanges {
       return;
     }
 
+    this.normalizarEngCaixaParaBoolean();
+    this.normalizarRendaParaString();
+
     if (!this.canEnviarParaAnalise()) {
       this.toast.warning('Apenas propostas em rascunho podem ser enviadas para análise.');
       return;
@@ -774,12 +779,22 @@ export class PropostasComponent implements OnInit, OnChanges {
       next: () => {
         this.proposta.status = 'EM_ANALISE';
         this.toast.success('Proposta enviada para análise com sucesso.');
-        this.modalReserva.hide();
-        this.buscar();
+        console.log('Sucesso no envio - chamando finalizar', {
+          id: this.proposta?.id,
+          status: this.proposta?.status,
+          somenteModal: this.somenteModal,
+          voltarAoEspelho: this.voltarAoEspelho
+        });
+        this.finalizarEnvioParaAnaliseComSucesso();
       },
       error: (err) => {
-        console.error(err);
-        this.toast.error(err.error?.message || 'Não foi possível enviar a proposta para análise.');
+        console.error('Erro ao enviar proposta existente para análise', {
+          status: err?.status,
+          error: err?.error,
+          message: err?.message,
+          proposta: this.proposta
+        });
+        this.toast.error(this.extrairMensagemErroProposta(err));
       },
       complete: () => this.approving = false
     });
@@ -791,6 +806,8 @@ export class PropostasComponent implements OnInit, OnChanges {
     }
 
     this.garantirVencimentosTecnicosCondicoes();
+    this.normalizarEngCaixaParaBoolean();
+    this.normalizarRendaParaString();
 
     if (!this.propostaEstaProntaParaAnalise()) {
       this.toast.warning('Preencha os dados obrigatórios antes de enviar para análise.');
@@ -798,20 +815,114 @@ export class PropostasComponent implements OnInit, OnChanges {
     }
 
     this.approving = true;
+    const statusAnterior = this.proposta.status;
     this.proposta.status = 'EM_ANALISE';
 
     this.proposalsService.create(this.proposta).subscribe({
       next: () => {
         this.toast.success('Proposta enviada para análise com sucesso.');
-        this.modalReserva.hide();
-        this.buscar();
+        console.log('Sucesso no envio - chamando finalizar', {
+          id: this.proposta?.id,
+          status: this.proposta?.status,
+          somenteModal: this.somenteModal,
+          voltarAoEspelho: this.voltarAoEspelho
+        });
+        this.finalizarEnvioParaAnaliseComSucesso();
       },
       error: (err) => {
-        console.error(err);
-        this.toast.error(err.error?.message || 'Não foi possível enviar a proposta para análise.');
+        console.error('Erro ao criar proposta para análise RAW', err);
+        console.error('Erro ao criar proposta para análise DETALHADO', {
+          status: err?.status,
+          statusText: err?.statusText,
+          error: err?.error,
+          message: err?.message,
+          proposta: this.proposta
+        });
+        this.proposta.status = statusAnterior || 'RASCUNHO';
+        this.toast.error(this.extrairMensagemErroProposta(err));
       },
       complete: () => this.approving = false
     });
+  }
+
+  private finalizarEnvioParaAnaliseComSucesso(): void {
+    this.modalReserva?.hide();
+
+    if (this.somenteModal) {
+      this.fichaFechada.emit();
+      this.router.navigate(['/jm/vendas/espelho']);
+      return;
+    }
+
+    this.buscar();
+  }
+
+  private extrairMensagemErroProposta(err: any): string {
+    const error = err?.error;
+
+    if (typeof error === 'string' && error.trim()) {
+      return error;
+    }
+
+    if (error?.message) {
+      return error.message;
+    }
+
+    if (error?.errors && typeof error.errors === 'object') {
+      const mensagens = Object.values(error.errors)
+        .flat()
+        .filter((msg): msg is string => typeof msg === 'string' && !!msg.trim());
+
+      if (mensagens.length) {
+        return mensagens.join(' ');
+      }
+    }
+
+    if (error?.title) {
+      return error.title;
+    }
+
+    return 'Não foi possível enviar a proposta para análise.';
+  }
+
+  private normalizarEngCaixaParaBoolean(): void {
+    const valor = this.proposta?.engCaixa as any;
+
+    if (typeof valor === 'boolean') {
+      return;
+    }
+
+    if (typeof valor === 'string') {
+      const normalizado = valor.trim().toLowerCase();
+      this.proposta.engCaixa = normalizado === 'sim' || normalizado === 'true';
+      return;
+    }
+
+    this.proposta.engCaixa = false;
+  }
+
+  private normalizarRendaParaString(): void {
+    this.proposta.renda = this.converterValorParaString(this.proposta.renda);
+
+    if (this.proposta.rendaSecondary !== undefined && this.proposta.rendaSecondary !== null) {
+      this.proposta.rendaSecondary = this.converterValorParaString(this.proposta.rendaSecondary);
+    }
+  }
+
+  private converterValorParaString(valor: any): string {
+    if (valor === null || valor === undefined) {
+      return '';
+    }
+
+    if (typeof valor === 'string') {
+      return valor;
+    }
+
+    if (typeof valor === 'number') {
+      return valor.toString();
+    }
+
+    return String(valor);
   }
 
   private propostaEstaProntaParaAnalise(): boolean {

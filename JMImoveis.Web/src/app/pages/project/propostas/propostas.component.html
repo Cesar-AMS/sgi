@@ -637,12 +637,12 @@
               <div class="d-flex gap-3 no-print">
                 <div class="form-check">
                   <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa" name="engCaixa"
-                    value="sim" id="engSim">
+                    [value]="true" id="engSim">
                   <label class="form-check-label" for="engSim">Sim</label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="radio" [(ngModel)]="proposta.engCaixa" name="engCaixa"
-                    value="nao" id="engNao">
+                    [value]="false" id="engNao">
                   <label class="form-check-label" for="engNao">Nao</label>
                 </div>
               </div>
