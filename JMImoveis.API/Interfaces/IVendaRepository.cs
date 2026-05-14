@@ -10,6 +10,7 @@ namespace JMImoveisAPI.Interfaces
         Task<IEnumerable<VendasV2>> GetAllByDateAsync(string? startAt = null, string? finishAt = null, int enterpriseId = 0, int filialId = 0, int clienteId = 0, string status = "ABC", int managerId = 0);
         Task<IEnumerable<VendasV2>> GetAllAsync();
         Task<VendasV2?> GetByIdAsync(int id);
+        Task<VendasV2?> GetByContractNumberAsync(string contractNumber);
         Task<int> CreateAsync(VendasV2 entity);
         Task<bool> UpdateAsync(VendasV2 entity);
         Task<bool> DeleteAsync(int id);

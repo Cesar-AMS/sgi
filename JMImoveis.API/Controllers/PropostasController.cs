@@ -159,6 +159,7 @@ public sealed class PropostasController : ControllerBase
             "UNIT_STATUS_UPDATE_FAILED" => aprovacao
                 ? "Não foi possível atualizar a unidade para vendida"
                 : "Não foi possível liberar a unidade novamente",
+            "SALE_FINANCIAL_FAILED" => "Não foi possível concluir a criação da venda ou das contas a receber",
             _ => aprovacao
                 ? "Erro ao aprovar proposta"
                 : "Erro ao reprovar proposta"

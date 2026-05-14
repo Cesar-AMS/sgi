@@ -47,6 +47,19 @@ namespace JMImoveisAPI.Repositories
 
         }
 
+        public async Task<bool> HasAnyBySaleIdAsync(int saleId)
+        {
+            await using var conn = await _context.OpenConnectionAsync();
+
+            const string sql = @"SELECT COUNT(1)
+                                 FROM jmoficial.accounts_receivable
+                                 WHERE SaleId = @SaleId
+                                   AND Status <> 'CANCELLED';";
+
+            var count = await conn.ExecuteScalarAsync<int>(sql, new { SaleId = saleId });
+            return count > 0;
+        }
+
         public async Task<PagedResult<AccountsReceivableRowDto>> GetPagedAsync(AccountsReceivableQuery q, int page, int pageSize)
         {
             page = page <= 0 ? 1 : page;

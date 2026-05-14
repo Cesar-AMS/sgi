@@ -198,7 +198,12 @@ namespace JMImoveisAPI.Services
                 if (nextStatus == ProposalStatus.APROVADO)
                 {
                     await _repo.UpdateUnitStatusAsync(proposal.UnidadeId, "SELL", ct);
-                    await TentarCriarVendaDaPropostaAsync(proposal);
+                    var vendaCriada = await TentarCriarVendaDaPropostaAsync(proposal, currentStatus, ct);
+                    if (!vendaCriada)
+                    {
+                        proposal.Status = currentStatus;
+                        return (false, "SALE_FINANCIAL_FAILED", proposal);
+                    }
                 }
                 else if (nextStatus == ProposalStatus.REPROVADO)
                 {
@@ -216,25 +221,41 @@ namespace JMImoveisAPI.Services
             return (true, null, proposal);
         }
 
-        private async Task TentarCriarVendaDaPropostaAsync(Proposal proposal)
+        private async Task<bool> TentarCriarVendaDaPropostaAsync(Proposal proposal, string previousStatus, CancellationToken ct)
         {
             try
             {
                 await CriarVendaDaPropostaAsync(proposal);
+                return true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro ao criar venda da proposta {ProposalId}.", proposal.Id);
-                // Aprovacao da proposta e venda da unidade nao devem ser bloqueadas
-                // por falha na integracao posterior de venda/financeiro.
+                await _repo.UpdateProposalStatusAsync((long)proposal.Id, ProposalStatus.APROVADO.ToString(), previousStatus, ct);
+                await _repo.UpdateUnitStatusAsync(proposal.UnidadeId, StatusUnidadeAoReverterAprovacao(previousStatus), ct);
+                return false;
             }
         }
 
         private async Task CriarVendaDaPropostaAsync(Proposal proposal)
         {
             var customerId = await GarantirClienteAsync(proposal);
-            var sale = MapSaleFromProposal(proposal, customerId);
-            var saleId = await _vendaCriacaoService.CreateSaleOnlyAsync(sale);
+            var contractNumber = $"PROP-{proposal.Id}";
+            var existingSale = await _repo.GetByContractNumberAsync(contractNumber);
+            int saleId;
+
+            if (existingSale?.Id > 0)
+            {
+                saleId = existingSale.Id;
+                _logger.LogInformation("Venda existente encontrada para proposta {ProposalId}: sale_id {SaleId}, contract_number {ContractNumber}.", proposal.Id, saleId, contractNumber);
+            }
+            else
+            {
+                var sale = MapSaleFromProposal(proposal, customerId);
+                saleId = await _vendaCriacaoService.CreateSaleOnlyAsync(sale);
+                _logger.LogInformation("Venda criada com sucesso para proposta {ProposalId}: sale_id {SaleId}, contract_number {ContractNumber}.", proposal.Id, saleId, contractNumber);
+            }
+
             await GerarContasReceberDaPropostaAsync(proposal, saleId);
         }
 
@@ -345,10 +366,31 @@ namespace JMImoveisAPI.Services
 
         private async Task GerarContasReceberDaPropostaAsync(Proposal proposal, int saleId)
         {
+            if (await _accountsReceivableService.HasAnyBySaleIdAsync(saleId))
+            {
+                _logger.LogInformation("Contas a receber ja existem para sale_id {SaleId}; geracao ignorada para proposta {ProposalId}.", saleId, proposal.Id);
+                return;
+            }
+
+            var gerados = 0;
             foreach (var titulo in BuildContasReceber(proposal, saleId))
             {
+                if (titulo.Amount <= 0)
+                {
+                    _logger.LogWarning("Condicao da proposta {ProposalId} ignorada por valor invalido. SaleId: {SaleId}. Categoria: {Category}. Observacao: {Observations}.", proposal.Id, saleId, titulo.Category, titulo.Observations);
+                    continue;
+                }
+
+                if (titulo.DueDate == DateTime.Today && titulo.Observations?.Contains("[VENCIMENTO_FALLBACK]") == true)
+                {
+                    _logger.LogWarning("Conta a receber da proposta {ProposalId} usou vencimento fallback para hoje. SaleId: {SaleId}. Categoria: {Category}.", proposal.Id, saleId, titulo.Category);
+                }
+
                 await _accountsReceivableService.CreateAsync(titulo);
+                gerados++;
             }
+
+            _logger.LogInformation("Contas a receber geradas com sucesso para proposta {ProposalId}: sale_id {SaleId}, quantidade {Quantidade}.", proposal.Id, saleId, gerados);
         }
 
         private static IEnumerable<CreateAccountsReceivableRequest> BuildContasReceber(Proposal proposal, int saleId)
@@ -358,7 +400,8 @@ namespace JMImoveisAPI.Services
                 var categoria = ClassificarCategoriaRecebivel(condicao.Descricao);
                 var quantidade = QuantidadeTitulosRecebiveis(condicao);
                 var valorParcela = CalcularValorParcelaRecebivel(condicao, quantidade);
-                var vencimentoBase = condicao.Vencimento == default ? DateTime.Today : condicao.Vencimento.Date;
+                var usouVencimentoFallback = condicao.Vencimento == default;
+                var vencimentoBase = usouVencimentoFallback ? DateTime.Today : condicao.Vencimento.Date;
 
                 for (var index = 0; index < quantidade; index++)
                 {
@@ -379,7 +422,9 @@ namespace JMImoveisAPI.Services
                         Category = categoria,
                         Amount = valorParcela,
                         PendingAmount = valorParcela,
-                        Observations = condicao.Descricao
+                        Observations = usouVencimentoFallback
+                            ? $"{condicao.Descricao} [VENCIMENTO_FALLBACK]"
+                            : condicao.Descricao
                     };
                 }
             }
@@ -436,9 +481,10 @@ namespace JMImoveisAPI.Services
 
             return normalized switch
             {
-                "ATOJM" or "ATO" => "Ato",
+                "ATOJM" or "ATO" or "ATOCOMISSAO" or "ATOCONST" or "ATOCONSTRUTORA" => "Ato",
                 "MENSAL" => "Mensal",
-                "ANUALJM" or "ANUAL" => "Anual",
+                "ANUALJM" or "ANUAL" or "ANUALCONST" or "ANUALCONSTRUTORA" => "Anual",
+                "COMISSAO" => "Comissão",
                 "FGTS" => "FGTS",
                 "ENTREGADECHAVES" => "Entrega de chaves",
                 "POSOBRAS" => "Pós obras",
@@ -651,7 +697,9 @@ namespace JMImoveisAPI.Services
         {
             var normalized = NormalizarDescricaoCondicao(descricao);
             return normalized == "ANUAL" ||
-                   normalized == "ANUALJM";
+                   normalized == "ANUALJM" ||
+                   normalized == "ANUALCONST" ||
+                   normalized == "ANUALCONSTRUTORA";
         }
 
         private static bool EhAto(string? descricao)
@@ -798,6 +846,13 @@ namespace JMImoveisAPI.Services
                 "AVAILABLE" => "OPEN",
                 _ => normalized
             };
+        }
+
+        private static string StatusUnidadeAoReverterAprovacao(string previousStatus)
+        {
+            return string.Equals(previousStatus, ProposalStatus.EM_ANALISE.ToString(), StringComparison.Ordinal)
+                ? "RESERVED"
+                : "OPEN";
         }
 
         private static string RemoverAcentosStatus(string status)

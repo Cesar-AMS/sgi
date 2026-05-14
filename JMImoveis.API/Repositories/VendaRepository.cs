@@ -458,6 +458,59 @@ namespace JMImoveisAPI.Repositories
             return await conn.QueryFirstOrDefaultAsync<VendasV2>(sql, new { id });
         }
 
+        public async Task<VendasV2?> GetByContractNumberAsync(string contractNumber)
+        {
+            const string sql = @"
+                SELECT id AS Id,
+                       unit_value AS UnitValue,
+                       start_value AS StartValue,
+                       value_to_constructor AS ValueToConstructor,
+                       percentage_to_realtor AS PercentageToRealtor,
+                       percentage_to_manager AS PercentageToManager,
+                       parcels_start AS ParcelsStart,
+                       realtor_comission AS RealtorComission,
+                       realtor_comission_remaining AS RealtorComissionRemaining,
+                       realtor_comission_status AS RealtorComissionStatus,
+                       manager_comission AS ManagerComission,
+                       manager_comission_remaining AS ManagerComissionRemaining,
+                       manager_comission_status AS ManagerComissionStatus,
+                       generate_notification AS GenerateNotification,
+                       notificated_date AS NotificatedDate,
+                       net_earnings AS NetEarnings,
+                       gross_earnings AS GrossEarnings,
+                       contract_path AS ContractPath,
+                       status AS Status,
+                       branch_id AS BranchId,
+                       enterprise_id AS EnterpriseId,
+                       unit_id AS UnitId,
+                       realtor_id AS RealtorId,
+                       manager_id AS ManagerId,
+                       payment_types_id AS PaymentTypesId,
+                       selled_at AS SelledAt,
+                       deleted_at AS DeletedAt,
+                       created_at AS CreatedAt,
+                       updated_at AS UpdatedAt,
+                       value_to_realstate AS ValueToRealstate,
+                       percentage_to_realstate AS PercentageToRealstate,
+                       percentage_to_financial AS PercentageToFinancial,
+                       financial_comission AS FinancialComission,
+                       financial_comission_status AS FinancialComissionStatus,
+                       percentage_to_tax AS PercentageToTax,
+                       tax_comission AS TaxComission,
+                       tax_comission_status AS TaxComissionStatus,
+                       contract_number AS ContractNumber,
+                       customer_id AS CustomerId,
+                       coordenator_id AS CoordenatorId
+                  FROM jmoficial.sales
+                 WHERE contract_number = @ContractNumber
+                   AND deleted_at IS NULL
+                 ORDER BY id DESC
+                 LIMIT 1;";
+
+            await using var conn = await _context.OpenConnectionAsync();
+            return await conn.QueryFirstOrDefaultAsync<VendasV2>(sql, new { ContractNumber = contractNumber });
+        }
+
         public async Task<int> CreateAsync(VendasV2 entity)
         {
             string query = @" INSERT INTO jmoficial.sales (unit_value, start_value, value_to_constructor,

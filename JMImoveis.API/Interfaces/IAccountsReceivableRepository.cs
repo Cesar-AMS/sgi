@@ -7,6 +7,7 @@ namespace JMImoveisAPI.Interfaces
         Task<PagedResult<AccountsReceivableRowDto>> GetPagedAsync(AccountsReceivableQuery q, int page, int pageSize);
         Task<AccountsReceivableSummaryDto> GetSummaryAsync(AccountsReceivableQuery q);
         Task<int> CreateAsync(CreateAccountsReceivableRequest req);
+        Task<bool> HasAnyBySaleIdAsync(int saleId);
 
         Task SettleAsync(int id, SettleAccountsReceivableRequest req);
     }

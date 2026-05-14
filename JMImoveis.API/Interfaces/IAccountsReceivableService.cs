@@ -19,8 +19,9 @@ namespace JMImoveisAPI.Interfaces
             int? branchId,
             string? category,
             string? status,
-            string? search);
+                string? search);
         Task<int> CreateAsync(CreateAccountsReceivableRequest req);
+        Task<bool> HasAnyBySaleIdAsync(int saleId);
         Task SettleAsync(int id, SettleAccountsReceivableRequest req);
     }
 }

@@ -57,6 +57,16 @@ namespace JMImoveisAPI.Services
             return await _repo.CreateAsync(req);
         }
 
+        public Task<bool> HasAnyBySaleIdAsync(int saleId)
+        {
+            if (saleId <= 0)
+            {
+                return Task.FromResult(false);
+            }
+
+            return _repo.HasAnyBySaleIdAsync(saleId);
+        }
+
         public async Task SettleAsync(int id, SettleAccountsReceivableRequest req)
         {
             if (req.PaidValue <= 0)
