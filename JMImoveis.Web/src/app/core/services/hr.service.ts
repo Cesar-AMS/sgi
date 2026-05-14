@@ -10,9 +10,13 @@ export type EmployeeControlRow = {
   name: string;
   email: string;
   cargo: string;
+  managerId?: number | null;
+  coordenatorId?: number | null;
   gerente: string;
   coordenador: string;
   status: string;
+  employmentType: string;
+  employmentTypeLabel: string;
   branch: string;
 };
 
@@ -103,9 +107,13 @@ export class HrService {
       name: user.name || '-',
       email: user.email || '-',
       cargo: this.resolveUserRole(user, rolesById),
+      managerId: user.managerId,
+      coordenatorId: user.coordenatorId,
       gerente: this.resolveUserName(user.managerName, usersById, user.managerId),
       coordenador: this.resolveUserName(user.coordenatorName, usersById, user.coordenatorId),
       status: user.hidden ? 'Inativo' : 'Ativo',
+      employmentType: this.normalizeEmploymentType(user.employmentType),
+      employmentTypeLabel: this.getEmploymentTypeLabel(user.employmentType),
       branch: user.filial ? `Filial ${user.filial}` : '-',
     }));
   }
@@ -163,5 +171,30 @@ export class HrService {
     return Array.from(new Map(
       normalized.map((roleName) => [roleName.toLocaleLowerCase('pt-BR'), roleName])
     ).values());
+  }
+
+  private normalizeEmploymentType(employmentType?: string | null): string {
+    const normalized = employmentType?.trim().toUpperCase();
+    if (!normalized) {
+      return 'FUNCIONARIO';
+    }
+
+    return ['FUNCIONARIO', 'PJ', 'PARCEIRO', 'TERCEIRO', 'CONTADOR', 'DIRETOR', 'OUTRO'].includes(normalized)
+      ? normalized
+      : 'OUTRO';
+  }
+
+  private getEmploymentTypeLabel(employmentType?: string | null): string {
+    const labels: Record<string, string> = {
+      FUNCIONARIO: 'Funcionário',
+      PJ: 'Pessoa Jurídica',
+      PARCEIRO: 'Parceiro',
+      TERCEIRO: 'Terceiro',
+      CONTADOR: 'Contador',
+      DIRETOR: 'Diretor',
+      OUTRO: 'Outro',
+    };
+
+    return labels[this.normalizeEmploymentType(employmentType)] || 'Funcionário';
   }
 }

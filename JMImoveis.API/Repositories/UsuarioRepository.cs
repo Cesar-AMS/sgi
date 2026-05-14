@@ -49,6 +49,7 @@ namespace JMImoveisAPI.Repositories
                                 T0.coordenator_id as ""CoordenatorId"",
                                 T0.manager_id as ""ManagerId"",
                                 T0.gestor_id as ""GestorId"",
+                                T0.employment_type as ""EmploymentType"",
                                 manager.name as ""ManagerName"",
                                 coordenator.name as ""CoordenatorName"",
                                 gestor.name as ""GestorName""
@@ -184,6 +185,7 @@ namespace JMImoveisAPI.Repositories
                                 T0.coordenator_id as ""CoordenatorId"",
                                 T0.manager_id as ""ManagerId"",
                                 T0.gestor_id as ""GestorId"",
+                                T0.employment_type as ""EmploymentType"",
                                 manager.name as ""ManagerName"",
                                 coordenator.name as ""CoordenatorName"",
                                 gestor.name as ""GestorName""
@@ -216,10 +218,10 @@ namespace JMImoveisAPI.Repositories
         {
             const string insertUserSql = @"INSERT INTO users
                     (email, password, name, cpf, address, cellphone, admission_date, created_at, hidden, jobpositionId,
-                     manager_id, coordenator_id, gestor_id)
+                     manager_id, coordenator_id, gestor_id, employment_type)
                 VALUES
                     (@Email, @Password, @Name, @Cpf, @Address, @Cellphone, @AdmissionDate, @CreatedAt, @Hidden, @JobpositionId,
-                     @ManagerId, @CoordenatorId, @GestorId);";
+                     @ManagerId, @CoordenatorId, @GestorId, @EmploymentType);";
 
             const string insertUserBranchSql = @"INSERT INTO user_branches (branch_id, user_id, created_at, updated_at)
                                                  VALUES (@BranchId, @UserId, NOW(), NOW());";
@@ -246,7 +248,8 @@ namespace JMImoveisAPI.Repositories
                     JobpositionId = entity.JobpositionId?.FirstOrDefault(),
                     entity.ManagerId,
                     entity.CoordenatorId,
-                    entity.GestorId
+                    entity.GestorId,
+                    EmploymentType = NormalizeEmploymentType(entity.EmploymentType)
                 }, tx);
 
                 var userId = await conn.ExecuteScalarAsync<long>("SELECT LAST_INSERT_ID();", transaction: tx);
@@ -297,7 +300,8 @@ namespace JMImoveisAPI.Repositories
                                 hidden = @Hidden,
                                 manager_id = @ManagerId,
                                 coordenator_id = @CoordenatorId,
-                                gestor_id = @GestorId
+                                gestor_id = @GestorId,
+                                employment_type = @EmploymentType
 
                             WHERE id = @id";
             await using var conn = await _context.OpenConnectionAsync();
@@ -305,7 +309,23 @@ namespace JMImoveisAPI.Repositories
 
             try
             {
-                var updated = await conn.ExecuteAsync(sql, entity, tx) > 0;
+                var updated = await conn.ExecuteAsync(sql, new
+                {
+                    entity.Id,
+                    entity.Email,
+                    entity.Password,
+                    entity.Name,
+                    entity.Cpf,
+                    entity.Address,
+                    entity.Cellphone,
+                    entity.AdmissionDate,
+                    entity.CreatedAt,
+                    entity.Hidden,
+                    entity.ManagerId,
+                    entity.CoordenatorId,
+                    entity.GestorId,
+                    EmploymentType = NormalizeEmploymentType(entity.EmploymentType)
+                }, tx) > 0;
 
                 if (!updated)
                 {
@@ -405,6 +425,28 @@ namespace JMImoveisAPI.Repositories
                 .Where(roleId => roleId > 0)
                 .Distinct()
                 .ToList();
+        }
+
+        private static string? NormalizeEmploymentType(string? employmentType)
+        {
+            if (string.IsNullOrWhiteSpace(employmentType))
+            {
+                return null;
+            }
+
+            var normalized = employmentType.Trim().ToUpperInvariant();
+            var allowedTypes = new HashSet<string>
+            {
+                "FUNCIONARIO",
+                "PJ",
+                "PARCEIRO",
+                "TERCEIRO",
+                "CONTADOR",
+                "DIRETOR",
+                "OUTRO"
+            };
+
+            return allowedTypes.Contains(normalized) ? normalized : null;
         }
 
         private sealed class UsuarioRoleProjection

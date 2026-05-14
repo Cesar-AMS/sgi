@@ -133,6 +133,7 @@ export interface Usuarios  {
   coordenatorId?: number
   managerId?: number
   gestorId?: number
+  employmentType?: string
   coordenatorName?: string
   managerName?: string
   gestorName?: string

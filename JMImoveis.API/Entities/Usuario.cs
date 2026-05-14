@@ -27,6 +27,7 @@ namespace JMImoveisAPI.Entities
         public int? CoordenatorId { get; set; }
         public int? ManagerId { get; set; }
         public int? GestorId { get; set; }
+        public string? EmploymentType { get; set; }
         public string? CoordenatorName { get; set; }
         public string? ManagerName { get; set; }
         public string? GestorName { get; set; }

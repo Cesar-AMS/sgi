@@ -9,6 +9,13 @@ type EmployeeForm = Partial<Usuarios> & {
   jobpositionId: number[];
 };
 
+type EmployeeTab = 'funcionarios' | 'externos';
+
+type EmploymentTypeOption = {
+  value: string;
+  label: string;
+};
+
 @Component({
   selector: 'app-controle-funcionarios',
   templateUrl: './controle-funcionarios.component.html',
@@ -18,6 +25,7 @@ export class ControleFuncionariosComponent implements OnInit {
   @ViewChild('employeeModal', { static: false }) employeeModal?: ModalDirective;
 
   rows: EmployeeControlRow[] = [];
+  activeTab: EmployeeTab = 'funcionarios';
   roles: Cargos[] = [];
   managers: Usuarios[] = [];
   coordinators: Usuarios[] = [];
@@ -28,6 +36,15 @@ export class ControleFuncionariosComponent implements OnInit {
   saving = false;
   errorMessage = '';
   formErrorMessage = '';
+  employmentTypes: EmploymentTypeOption[] = [
+    { value: 'FUNCIONARIO', label: 'Funcionário' },
+    { value: 'PJ', label: 'Pessoa Jurídica' },
+    { value: 'PARCEIRO', label: 'Parceiro' },
+    { value: 'TERCEIRO', label: 'Terceiro' },
+    { value: 'CONTADOR', label: 'Contador' },
+    { value: 'DIRETOR', label: 'Diretor' },
+    { value: 'OUTRO', label: 'Outro' },
+  ];
 
   constructor(
     private hrService: HrService,
@@ -57,6 +74,34 @@ export class ControleFuncionariosComponent implements OnInit {
     });
   }
 
+  get filteredRows(): EmployeeControlRow[] {
+    if (this.activeTab === 'externos') {
+      return this.externalRows;
+    }
+
+    return this.employeeRows;
+  }
+
+  get employeeRows(): EmployeeControlRow[] {
+    return this.rows.filter((row) => this.isEmployeeType(row.employmentType));
+  }
+
+  get externalRows(): EmployeeControlRow[] {
+    return this.rows.filter((row) => this.isExternalType(row.employmentType));
+  }
+
+  get employeeCount(): number {
+    return this.employeeRows.length;
+  }
+
+  get externalCount(): number {
+    return this.externalRows.length;
+  }
+
+  changeTab(tab: EmployeeTab): void {
+    this.activeTab = tab;
+  }
+
   openNewEmployee(): void {
     this.formMode = 'new';
     this.formErrorMessage = '';
@@ -75,6 +120,7 @@ export class ControleFuncionariosComponent implements OnInit {
         this.employeeForm = {
           ...user,
           password: '',
+          employmentType: this.normalizeEmploymentType(user.employmentType),
           admissionDate: this.toDateInputValue(user.admissionDate),
           jobpositionId: this.normalizeRoleIds(user.jobpositionId),
         };
@@ -121,6 +167,7 @@ export class ControleFuncionariosComponent implements OnInit {
       next: () => {
         this.saving = false;
         this.employeeModal?.hide();
+        this.activeTab = this.isExternalType(payload.employmentType) ? 'externos' : 'funcionarios';
         this.loadEmployees();
       },
       error: (err) => {
@@ -173,6 +220,7 @@ export class ControleFuncionariosComponent implements OnInit {
       ...this.employeeForm,
       jobpositionId: this.normalizeRoleIds(this.employeeForm.jobpositionId),
       hidden: !!this.employeeForm.hidden,
+      employmentType: this.normalizeEmploymentType(this.employeeForm.employmentType),
       managerId: this.normalizeOptionalNumber(this.employeeForm.managerId),
       coordenatorId: this.normalizeOptionalNumber(this.employeeForm.coordenatorId),
       gestorId: this.normalizeOptionalNumber(this.employeeForm.gestorId),
@@ -195,6 +243,7 @@ export class ControleFuncionariosComponent implements OnInit {
       address: '',
       admissionDate: '',
       hidden: false,
+      employmentType: 'FUNCIONARIO',
       jobpositionId: [],
       managerId: undefined,
       coordenatorId: undefined,
@@ -217,6 +266,25 @@ export class ControleFuncionariosComponent implements OnInit {
   private normalizeOptionalNumber(value: number | string | null | undefined): number | undefined {
     const numberValue = Number(value);
     return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : undefined;
+  }
+
+  private normalizeEmploymentType(value?: string | null): string {
+    const normalized = value?.trim().toUpperCase();
+    if (!normalized) {
+      return 'FUNCIONARIO';
+    }
+
+    const allowed = this.employmentTypes.some((type) => type.value === normalized);
+    return allowed ? normalized : 'OUTRO';
+  }
+
+  private isEmployeeType(value?: string | null): boolean {
+    return this.normalizeEmploymentType(value) === 'FUNCIONARIO';
+  }
+
+  private isExternalType(value?: string | null): boolean {
+    return ['PJ', 'PARCEIRO', 'TERCEIRO', 'CONTADOR', 'DIRETOR', 'OUTRO']
+      .includes(this.normalizeEmploymentType(value));
   }
 
   private toDateInputValue(value?: string | null): string {
