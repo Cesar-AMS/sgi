@@ -198,14 +198,52 @@
                 name="jobpositionId"
                 multiple
                 [(ngModel)]="employeeForm.jobpositionId"
+                (ngModelChange)="onRoleChange()"
                 required
                 [disabled]="loadingOptions">
                 <option *ngFor="let role of roles" [ngValue]="role.id">{{ role.name }}</option>
               </select>
             </div>
 
-            <div *ngIf="shouldShowEmployeeBasicFields" class="col-12 col-md-3">
-              <label class="form-label" for="employee-manager">Gerente</label>
+            <div *ngIf="shouldShowEmployeeBasicFields" class="col-12">
+              <small class="text-muted">{{ hierarchyHelpText }}</small>
+            </div>
+
+            <div *ngIf="shouldShowDirectorField" class="col-12 col-md-3">
+              <label class="form-label" for="employee-director">
+                Diretor <span class="text-danger">*</span>
+              </label>
+              <select
+                id="employee-director"
+                class="form-control"
+                name="gestorIdDirector"
+                [(ngModel)]="employeeForm.gestorId"
+                (ngModelChange)="onDirectorChange()">
+                <option [ngValue]="undefined">Selecione...</option>
+                <option *ngFor="let director of directorOptions" [ngValue]="director.id">{{ director.name }}</option>
+              </select>
+            </div>
+
+            <div *ngIf="shouldShowGestorField" class="col-12 col-md-3">
+              <label class="form-label" for="employee-gestor">
+                Gestor <span class="text-danger">*</span>
+              </label>
+              <select
+                id="employee-gestor"
+                class="form-control"
+                name="gestorId"
+                [(ngModel)]="employeeForm.gestorId"
+                (ngModelChange)="onGestorChange()">
+                <option [ngValue]="undefined">Selecione...</option>
+                <option *ngFor="let gestor of gestorOptions" [ngValue]="gestor.id">{{ gestor.name }}</option>
+              </select>
+            </div>
+
+            <div *ngIf="shouldShowManagerField" class="col-12 col-md-3">
+              <label class="form-label" for="employee-manager">
+                Gerente
+                <span *ngIf="isSelectedCoordinatorRole || isSelectedSellerRole" class="text-danger">*</span>
+              </label>
               <select
                 id="employee-manager"
                 class="form-control"
@@ -213,19 +251,23 @@
                 [(ngModel)]="employeeForm.managerId"
                 (ngModelChange)="onManagerChange()">
                 <option [ngValue]="undefined">Selecione...</option>
-                <option *ngFor="let manager of managers" [ngValue]="manager.id">{{ manager.name }}</option>
+                <option *ngFor="let manager of managerOptions" [ngValue]="manager.id">{{ manager.name }}</option>
               </select>
             </div>
 
-            <div *ngIf="shouldShowEmployeeBasicFields" class="col-12 col-md-3">
-              <label class="form-label" for="employee-coordinator">Coordenador</label>
+            <div *ngIf="shouldShowCoordinatorField" class="col-12 col-md-3">
+              <label class="form-label" for="employee-coordinator">
+                Coordenador
+                <span *ngIf="isSelectedSellerRole" class="text-danger">*</span>
+              </label>
               <select
                 id="employee-coordinator"
                 class="form-control"
                 name="coordenatorId"
-                [(ngModel)]="employeeForm.coordenatorId">
+                [(ngModel)]="employeeForm.coordenatorId"
+                (ngModelChange)="onCoordinatorChange()">
                 <option [ngValue]="undefined">Selecione...</option>
-                <option *ngFor="let coordinator of coordinators" [ngValue]="coordinator.id">{{ coordinator.name }}</option>
+                <option *ngFor="let coordinator of coordinatorOptions" [ngValue]="coordinator.id">{{ coordinator.name }}</option>
               </select>
             </div>
 

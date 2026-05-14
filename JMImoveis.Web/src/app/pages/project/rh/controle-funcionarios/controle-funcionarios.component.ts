@@ -31,6 +31,14 @@ type EmployeeDocumentTypeOption = {
   label: string;
 };
 
+type HierarchyOption = {
+  id: number;
+  name: string;
+  managerId?: number | null;
+  coordenatorId?: number | null;
+  gestorId?: number | null;
+};
+
 @Component({
   selector: 'app-controle-funcionarios',
   templateUrl: './controle-funcionarios.component.html',
@@ -213,6 +221,13 @@ export class ControleFuncionariosComponent implements OnInit {
       return;
     }
 
+    this.applyHierarchyBySelectedRole();
+    const hierarchyError = this.validateCommercialHierarchy();
+    if (hierarchyError) {
+      this.formErrorMessage = hierarchyError;
+      return;
+    }
+
     const payload = this.buildUserPayload();
     const request = this.formMode === 'edit'
       ? this.adminAccessService.updateUser(payload)
@@ -274,9 +289,139 @@ export class ControleFuncionariosComponent implements OnInit {
     return this.shouldShowEmployeeDetails;
   }
 
+  get isSelectedDirectorRole(): boolean {
+    return this.hasRoleKind(this.selectedRoleNames(), 'diretor');
+  }
+
+  get isSelectedGestorRole(): boolean {
+    return this.hasRoleKind(this.selectedRoleNames(), 'gestor');
+  }
+
+  get isSelectedManagerRole(): boolean {
+    return this.hasRoleKind(this.selectedRoleNames(), 'gerente');
+  }
+
+  get isSelectedCoordinatorRole(): boolean {
+    return this.hasRoleKind(this.selectedRoleNames(), 'coordenador');
+  }
+
+  get isSelectedSellerRole(): boolean {
+    return this.selectedRoleNames().some((roleName) => this.isSellerRoleName(roleName));
+  }
+
+  get isSelectedOperationalRole(): boolean {
+    return this.selectedRoleNames().some((roleName) => this.isOperationalRoleName(roleName));
+  }
+
+  get isSelectedCommercialRole(): boolean {
+    return this.isSelectedDirectorRole
+      || this.isSelectedGestorRole
+      || this.isSelectedManagerRole
+      || this.isSelectedCoordinatorRole
+      || this.isSelectedSellerRole;
+  }
+
+  get directorOptions(): HierarchyOption[] {
+    return this.getHierarchyOptionsByRole('diretor');
+  }
+
+  get gestorOptions(): HierarchyOption[] {
+    return this.getHierarchyOptionsByRole('gestor');
+  }
+
+  get managerOptions(): HierarchyOption[] {
+    return this.getHierarchyOptionsByRole('gerente');
+  }
+
+  get coordinatorOptions(): HierarchyOption[] {
+    const options = this.getHierarchyOptionsByRole('coordenador');
+    const managerId = this.normalizeOptionalNumber(this.employeeForm.managerId);
+    return managerId ? options.filter((option) => this.normalizeOptionalNumber(option.managerId) === managerId) : options;
+  }
+
+  get shouldShowDirectorField(): boolean {
+    return this.shouldShowEmployeeBasicFields && this.isSelectedGestorRole;
+  }
+
+  get shouldShowGestorField(): boolean {
+    return this.shouldShowEmployeeBasicFields && this.isSelectedManagerRole;
+  }
+
+  get shouldShowManagerField(): boolean {
+    return this.shouldShowEmployeeBasicFields
+      && (this.isSelectedCoordinatorRole || this.isSelectedSellerRole || this.isSelectedOperationalRole);
+  }
+
+  get shouldShowCoordinatorField(): boolean {
+    return this.shouldShowEmployeeBasicFields && (this.isSelectedSellerRole || this.isSelectedOperationalRole);
+  }
+
+  get hierarchyHelpText(): string {
+    if (!this.shouldShowEmployeeBasicFields) {
+      return '';
+    }
+
+    if (this.isSelectedDirectorRole) {
+      return 'Diretor e o topo da hierarquia.';
+    }
+
+    if (this.isSelectedGestorRole) {
+      return 'Gestor deve estar vinculado a um diretor.';
+    }
+
+    if (this.isSelectedManagerRole) {
+      return 'Gerente deve estar vinculado a um gestor.';
+    }
+
+    if (this.isSelectedCoordinatorRole) {
+      return 'Coordenador deve estar vinculado a um gerente.';
+    }
+
+    if (this.isSelectedSellerRole) {
+      return 'Vendedor deve estar vinculado a um coordenador. O gerente sera definido pela equipe.';
+    }
+
+    if (this.isSelectedOperationalRole) {
+      return 'Limpeza/Operacional pode ser vinculado a gerente ou coordenador, sem bloqueio nesta etapa.';
+    }
+
+    return 'Hierarquia comercial opcional para cargos fora de gerente, coordenador e vendedor/corretor.';
+  }
+
   onManagerChange(): void {
-    this.employeeForm.coordenatorId = undefined;
-    this.loadCoordinators(this.employeeForm.managerId);
+    if (!this.isSelectedSellerRole && !this.isSelectedOperationalRole) {
+      this.employeeForm.coordenatorId = undefined;
+      return;
+    }
+
+    if (this.employeeForm.coordenatorId) {
+      const coordinator = this.coordinatorOptions.find((option) => option.id === Number(this.employeeForm.coordenatorId));
+      if (!coordinator) {
+        this.employeeForm.coordenatorId = undefined;
+      }
+    }
+  }
+
+  onCoordinatorChange(): void {
+    this.applyManagerFromSelectedCoordinator();
+  }
+
+  onDirectorChange(): void {
+    if (this.isSelectedGestorRole) {
+      this.employeeForm.managerId = undefined;
+      this.employeeForm.coordenatorId = undefined;
+    }
+  }
+
+  onGestorChange(): void {
+    if (this.isSelectedManagerRole) {
+      this.employeeForm.managerId = undefined;
+      this.employeeForm.coordenatorId = undefined;
+    }
+  }
+
+  onRoleChange(): void {
+    this.applyHierarchyBySelectedRole();
   }
 
   onEmploymentTypeChange(): void {
@@ -477,7 +622,7 @@ export class ControleFuncionariosComponent implements OnInit {
 
     this.adminAccessService.listManagers().subscribe({
       next: (managers) => {
-        this.managers = managers ?? [];
+        this.managers = this.filterUsersByRole(managers ?? [], 'gerente');
       },
       error: (err) => console.error('Erro ao carregar gerentes', err),
     });
@@ -488,13 +633,199 @@ export class ControleFuncionariosComponent implements OnInit {
   private loadCoordinators(managerId?: number | null): void {
     this.adminAccessService.listCoordinators(managerId).subscribe({
       next: (coordinators) => {
-        this.coordinators = coordinators ?? [];
+        this.coordinators = this.filterUsersByRole(coordinators ?? [], 'coordenador');
       },
       error: (err) => console.error('Erro ao carregar coordenadores', err),
     });
   }
 
+  private applyHierarchyBySelectedRole(): void {
+    if (!this.shouldShowEmployeeBasicFields) {
+      return;
+    }
+
+    if (this.isSelectedDirectorRole) {
+      this.employeeForm.gestorId = undefined;
+      this.employeeForm.managerId = undefined;
+      this.employeeForm.coordenatorId = undefined;
+      return;
+    }
+
+    if (this.isSelectedGestorRole) {
+      this.employeeForm.managerId = undefined;
+      this.employeeForm.coordenatorId = undefined;
+      return;
+    }
+
+    if (this.isSelectedManagerRole) {
+      this.employeeForm.managerId = undefined;
+      this.employeeForm.coordenatorId = undefined;
+      return;
+    }
+
+    if (this.isSelectedCoordinatorRole) {
+      this.employeeForm.gestorId = undefined;
+      this.employeeForm.coordenatorId = undefined;
+      return;
+    }
+
+    if (this.isSelectedSellerRole) {
+      this.applyManagerFromSelectedCoordinator();
+    }
+  }
+
+  private validateCommercialHierarchy(): string | null {
+    if (!this.shouldShowEmployeeBasicFields || !this.isSelectedCommercialRole) {
+      return null;
+    }
+
+    if (this.isSelectedDirectorRole) {
+      return null;
+    }
+
+    if (this.isSelectedGestorRole) {
+      return this.normalizeOptionalNumber(this.employeeForm.gestorId)
+        ? null
+        : 'Gestor deve estar vinculado a um diretor.';
+    }
+
+    if (this.isSelectedManagerRole) {
+      return this.normalizeOptionalNumber(this.employeeForm.gestorId)
+        ? null
+        : 'Gerente deve estar vinculado a um gestor.';
+    }
+
+    if (this.isSelectedCoordinatorRole) {
+      return this.normalizeOptionalNumber(this.employeeForm.managerId)
+        ? null
+        : 'Coordenador deve estar vinculado a um gerente.';
+    }
+
+    if (this.isSelectedSellerRole) {
+      this.applyManagerFromSelectedCoordinator();
+      return this.normalizeOptionalNumber(this.employeeForm.coordenatorId) && this.normalizeOptionalNumber(this.employeeForm.managerId)
+        ? null
+        : 'Vendedor/Corretor deve estar vinculado a um coordenador e gerente.';
+    }
+
+    return null;
+  }
+
+  private applyManagerFromSelectedCoordinator(): void {
+    const coordinatorId = this.normalizeOptionalNumber(this.employeeForm.coordenatorId);
+    if (!coordinatorId) {
+      return;
+    }
+
+    const coordinator = this.coordinatorOptions.find((item) => Number(item.id) === coordinatorId)
+      ?? this.coordinators.find((item) => Number(item.id) === coordinatorId)
+      ?? this.rows.find((item) => item.id === coordinatorId);
+
+    const managerId = this.normalizeOptionalNumber(coordinator?.managerId);
+    if (managerId) {
+      this.employeeForm.managerId = managerId;
+    }
+
+    const gestorId = this.normalizeOptionalNumber(coordinator?.gestorId);
+    if (gestorId && !this.employeeForm.gestorId) {
+      this.employeeForm.gestorId = gestorId;
+    }
+  }
+
+  private selectedRoleNames(): string[] {
+    const roleIds = this.normalizeRoleIds(this.employeeForm.jobpositionId);
+    const roleNames = roleIds
+      .map((roleId) => this.roles.find((role) => Number(role.id) === roleId)?.name)
+      .filter((roleName): roleName is string => !!roleName?.trim());
+
+    return this.distinctRoleNames(roleNames);
+  }
+
+  private getHierarchyOptionsByRole(roleKind: 'diretor' | 'gestor' | 'gerente' | 'coordenador'): HierarchyOption[] {
+    const byRows = this.rows
+      .filter((row) => this.hasRoleKind([row.cargo], roleKind))
+      .map((row) => ({
+        id: row.id,
+        name: row.name,
+        managerId: row.managerId,
+        coordenatorId: row.coordenatorId,
+        gestorId: row.gestorId ?? this.findLoadedUser(row.id)?.gestorId,
+      }));
+
+    if (byRows.length) {
+      return byRows;
+    }
+
+    const fallbackUsers = roleKind === 'gerente'
+      ? this.managers
+      : roleKind === 'coordenador'
+        ? this.coordinators
+        : [];
+
+    return fallbackUsers.map((user) => ({
+      id: user.id,
+      name: user.name,
+      managerId: user.managerId,
+      coordenatorId: user.coordenatorId,
+      gestorId: user.gestorId,
+    }));
+  }
+
+  private findLoadedUser(userId: number): Usuarios | undefined {
+    return [...this.managers, ...this.coordinators].find((user) => Number(user.id) === Number(userId));
+  }
+
+  private filterUsersByRole(users: Usuarios[], roleKind: 'diretor' | 'gestor' | 'gerente' | 'coordenador'): Usuarios[] {
+    const filtered = users.filter((user) => this.hasRoleKind(this.roleNamesFromUser(user), roleKind));
+    return filtered.length ? filtered : users;
+  }
+
+  private roleNamesFromUser(user: Usuarios): string[] {
+    const roleNames = [
+      ...(user.roleName?.split(',') ?? []),
+      ...(user.roleNames ?? []),
+      ...this.normalizeRoleIds(user.jobpositionId)
+        .map((roleId) => this.roles.find((role) => Number(role.id) === roleId)?.name),
+    ];
+
+    return this.distinctRoleNames(roleNames);
+  }
+
+  private distinctRoleNames(roleNames: Array<string | undefined | null>): string[] {
+    const normalized = roleNames
+      .map((roleName) => roleName?.trim())
+      .filter((roleName): roleName is string => !!roleName);
+
+    return Array.from(new Map(
+      normalized.map((roleName) => [this.normalizeRoleName(roleName), roleName])
+    ).values());
+  }
+
+  private hasRoleKind(roleNames: string[], roleKind: 'diretor' | 'gestor' | 'gerente' | 'coordenador'): boolean {
+    return roleNames.some((roleName) => this.normalizeRoleName(roleName).includes(roleKind));
+  }
+
+  private isSellerRoleName(roleName: string): boolean {
+    const normalized = this.normalizeRoleName(roleName);
+    return normalized.includes('vendedor') || normalized.includes('corretor');
+  }
+
+  private isOperationalRoleName(roleName: string): boolean {
+    const normalized = this.normalizeRoleName(roleName);
+    return normalized.includes('limpeza') || normalized.includes('operacional');
+  }
+
+  private normalizeRoleName(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLocaleLowerCase('pt-BR');
+  }
+
   private buildUserPayload(): Usuarios {
+    this.applyHierarchyBySelectedRole();
+
     const payload = {
       ...this.employeeForm,
       jobpositionId: this.normalizeRoleIds(this.employeeForm.jobpositionId),

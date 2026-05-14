@@ -12,6 +12,7 @@ export type EmployeeControlRow = {
   cargo: string;
   managerId?: number | null;
   coordenatorId?: number | null;
+  gestorId?: number | null;
   gerente: string;
   coordenador: string;
   status: string;
@@ -109,6 +110,7 @@ export class HrService {
       cargo: this.resolveUserRole(user, rolesById),
       managerId: user.managerId,
       coordenatorId: user.coordenatorId,
+      gestorId: user.gestorId,
       gerente: this.resolveUserName(user.managerName, usersById, user.managerId),
       coordenador: this.resolveUserName(user.coordenatorName, usersById, user.coordenatorId),
       status: user.hidden ? 'Inativo' : 'Ativo',
