@@ -59,6 +59,8 @@ namespace JMImoveisAPI.Configurations
             services.AddScoped<IFinancialService, FinancialService>();
             services.AddScoped<IEnterpriseCommissionRuleRepository, EnterpriseCommissionRuleRepository>();
             services.AddScoped<IEnterpriseCommissionRuleService, EnterpriseCommissionRuleService>();
+            services.AddScoped<IEmployeeDetailsRepository, EmployeeDetailsRepository>();
+            services.AddScoped<IEmployeeDetailsService, EmployeeDetailsService>();
 
             services.AddScoped<IProposalService, ProposalService>();
             services.AddScoped<IVendaCriacaoService, VendaCriacaoService>();
