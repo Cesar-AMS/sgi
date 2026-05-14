@@ -99,3 +99,24 @@
   border-radius: 6px;
   background: #f8f9fa;
 }
+
+.document-upload-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  background: #f8f9fa;
+}
+
+.employee-documents-table {
+  table-layout: fixed;
+  min-width: 860px;
+}
+
+.employee-documents-table th,
+.employee-documents-table td {
+  vertical-align: middle;
+}

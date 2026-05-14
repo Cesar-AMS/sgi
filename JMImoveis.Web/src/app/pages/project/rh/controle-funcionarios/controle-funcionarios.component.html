@@ -429,6 +429,150 @@
               </div>
             </div>
 
+            <div *ngIf="shouldShowEmployeeDetails" class="col-12">
+              <div class="employee-details-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="mb-0">Documentos do Funcionario</h5>
+                  <span *ngIf="loadingEmployeeDocuments" class="text-muted small">Carregando documentos...</span>
+                </div>
+
+                <div *ngIf="employeeDocumentsErrorMessage" class="alert alert-warning" role="alert">
+                  {{ employeeDocumentsErrorMessage }}
+                </div>
+
+                <div *ngIf="!employeeForm.id" class="alert alert-info mb-3" role="alert">
+                  Salve o funcionario antes de anexar documentos.
+                </div>
+
+                <div class="employee-details-block">
+                  <h6>Enviar documento</h6>
+                  <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                      <label class="form-label" for="employee-document-type">Tipo do documento</label>
+                      <select
+                        id="employee-document-type"
+                        class="form-control"
+                        name="employeeDocumentType"
+                        [(ngModel)]="employeeDocumentUploadForm.documentType"
+                        [disabled]="!employeeForm.id">
+                        <option value="">Selecione...</option>
+                        <option *ngFor="let type of employeeDocumentTypes" [value]="type.value">{{ type.label }}</option>
+                      </select>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <label class="form-label" for="employee-document-label">Descricao/Nome do documento</label>
+                      <input
+                        id="employee-document-label"
+                        class="form-control"
+                        name="employeeDocumentLabel"
+                        [(ngModel)]="employeeDocumentUploadForm.documentLabel"
+                        [disabled]="!employeeForm.id">
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <label class="form-label" for="employee-document-file">Arquivo</label>
+                      <input
+                        id="employee-document-file"
+                        #employeeDocumentFileInput
+                        class="form-control"
+                        type="file"
+                        accept="application/pdf,image/jpeg,image/png"
+                        [disabled]="!employeeForm.id"
+                        (change)="onEmployeeDocumentFileSelected($event)">
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label" for="employee-document-notes">Observacoes</label>
+                      <textarea
+                        id="employee-document-notes"
+                        class="form-control"
+                        rows="2"
+                        name="employeeDocumentNotes"
+                        [(ngModel)]="employeeDocumentUploadForm.notes"
+                        [disabled]="!employeeForm.id"></textarea>
+                    </div>
+
+                    <div class="col-12">
+                      <div class="document-upload-actions">
+                        <small class="text-muted">
+                          Formatos aceitos: PDF, JPG e PNG. Tamanho maximo: 10 MB.
+                        </small>
+                        <button
+                          type="button"
+                          class="btn btn-outline-primary btn-sm"
+                          (click)="uploadEmployeeDocument()"
+                          [disabled]="uploadingEmployeeDocument || !employeeForm.id">
+                          {{ uploadingEmployeeDocument ? 'Enviando...' : 'Enviar documento' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="employee-details-block mb-0">
+                  <h6>Documentos enviados</h6>
+
+                  <div *ngIf="loadingEmployeeDocuments" class="text-muted py-3 text-center">
+                    Carregando documentos...
+                  </div>
+
+                  <div *ngIf="!loadingEmployeeDocuments && employeeForm.id && employeeDocuments.length === 0" class="text-muted py-3 text-center">
+                    Nenhum documento enviado.
+                  </div>
+
+                  <div *ngIf="!loadingEmployeeDocuments && employeeDocuments.length > 0" class="table-responsive">
+                    <table class="table align-middle mb-0 employee-documents-table">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Tipo</th>
+                          <th>Nome do arquivo</th>
+                          <th>Descricao</th>
+                          <th>Tamanho</th>
+                          <th>Data de envio</th>
+                          <th class="text-end">Acoes</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let document of employeeDocuments">
+                          <td>{{ getEmployeeDocumentTypeLabel(document.documentType) }}</td>
+                          <td>
+                            <span class="cell-ellipsis" [title]="document.fileName || '-'">
+                              {{ document.fileName || '-' }}
+                            </span>
+                          </td>
+                          <td>
+                            <span class="cell-ellipsis" [title]="document.documentLabel || document.notes || '-'">
+                              {{ document.documentLabel || document.notes || '-' }}
+                            </span>
+                          </td>
+                          <td>{{ formatFileSize(document.fileSize) }}</td>
+                          <td>{{ formatDateTime(document.createdAt) }}</td>
+                          <td class="text-end">
+                            <div class="d-inline-flex gap-2">
+                              <button
+                                type="button"
+                                class="btn btn-outline-secondary btn-sm"
+                                (click)="openEmployeeDocument(document)">
+                                Abrir
+                              </button>
+                              <button
+                                type="button"
+                                class="btn btn-outline-danger btn-sm"
+                                (click)="deleteEmployeeDocument(document)"
+                                [disabled]="deletingEmployeeDocumentId === document.id">
+                                {{ deletingEmployeeDocumentId === document.id ? 'Excluindo...' : 'Excluir' }}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div *ngIf="shouldShowExternalDetails" class="col-12">
               <div class="employee-details-section">
                 <div class="d-flex justify-content-between align-items-center mb-3">

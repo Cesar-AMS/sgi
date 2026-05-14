@@ -1,10 +1,11 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ModalDirective } from 'ngx-bootstrap/modal';
 import { Cargos, Usuarios } from 'src/app/models/ContaBancaria';
 import { AdminAccessService } from 'src/app/core/services/admin-access.service';
 import { EmployeeControlRow, HrService } from 'src/app/core/services/hr.service';
 import { EmployeeDetails, EmployeeDetailsService } from 'src/app/core/services/employee-details.service';
 import { ExternalCollaboratorDetails, ExternalCollaboratorDetailsService } from 'src/app/core/services/external-collaborator-details.service';
+import { EmployeeDocument, EmployeeDocumentsService } from 'src/app/core/services/employee-documents.service';
 import { catchError, map, Observable, of, switchMap, throwError } from 'rxjs';
 
 type EmployeeForm = Partial<Usuarios> & {
@@ -19,6 +20,17 @@ type EmploymentTypeOption = {
   label: string;
 };
 
+type EmployeeDocumentUploadForm = {
+  documentType: string;
+  documentLabel: string;
+  notes: string;
+};
+
+type EmployeeDocumentTypeOption = {
+  value: string;
+  label: string;
+};
+
 @Component({
   selector: 'app-controle-funcionarios',
   templateUrl: './controle-funcionarios.component.html',
@@ -26,6 +38,7 @@ type EmploymentTypeOption = {
 })
 export class ControleFuncionariosComponent implements OnInit {
   @ViewChild('employeeModal', { static: false }) employeeModal?: ModalDirective;
+  @ViewChild('employeeDocumentFileInput', { static: false }) employeeDocumentFileInput?: ElementRef<HTMLInputElement>;
 
   rows: EmployeeControlRow[] = [];
   activeTab: EmployeeTab = 'funcionarios';
@@ -35,19 +48,39 @@ export class ControleFuncionariosComponent implements OnInit {
   employeeForm: EmployeeForm = this.createEmptyForm();
   employeeDetailsForm: EmployeeDetails = this.createEmptyEmployeeDetails();
   externalDetailsForm: ExternalCollaboratorDetails = this.createEmptyExternalDetails();
+  employeeDocuments: EmployeeDocument[] = [];
+  employeeDocumentUploadForm: EmployeeDocumentUploadForm = this.createEmptyEmployeeDocumentUploadForm();
   selectedContractFile: File | null = null;
+  selectedEmployeeDocumentFile: File | null = null;
   formMode: 'new' | 'edit' = 'new';
   loading = false;
   loadingOptions = false;
   loadingEmployeeDetails = false;
   loadingExternalDetails = false;
+  loadingEmployeeDocuments = false;
   uploadingContract = false;
+  uploadingEmployeeDocument = false;
+  deletingEmployeeDocumentId: number | null = null;
   saving = false;
   errorMessage = '';
   formErrorMessage = '';
+  employeeDocumentsErrorMessage = '';
   employmentTypes: EmploymentTypeOption[] = [
     { value: 'FUNCIONARIO', label: 'Funcionário da empresa' },
     { value: 'PJ', label: 'Pessoa Jurídica / Colaborador externo' },
+  ];
+  employeeDocumentTypes: EmployeeDocumentTypeOption[] = [
+    { value: 'RG_CPF', label: 'RG / CPF' },
+    { value: 'CTPS', label: 'CTPS' },
+    { value: 'COMPROVANTE_RESIDENCIA', label: 'Comprovante de residencia' },
+    { value: 'ATESTADO_ADMISSIONAL', label: 'Atestado admissional' },
+    { value: 'FOTO_3X4', label: 'Foto 3x4' },
+    { value: 'PIS_PASEP', label: 'PIS/PASEP' },
+    { value: 'TITULO_ELEITOR', label: 'Titulo de eleitor' },
+    { value: 'RESERVISTA', label: 'Reservista' },
+    { value: 'CERTIDAO', label: 'Certidao' },
+    { value: 'DEPENDENTE', label: 'Documento de dependente' },
+    { value: 'OUTRO', label: 'Outro' },
   ];
   private readonly supportedEmploymentTypes = [
     'FUNCIONARIO',
@@ -63,7 +96,8 @@ export class ControleFuncionariosComponent implements OnInit {
     private hrService: HrService,
     private adminAccessService: AdminAccessService,
     private employeeDetailsService: EmployeeDetailsService,
-    private externalCollaboratorDetailsService: ExternalCollaboratorDetailsService
+    private externalCollaboratorDetailsService: ExternalCollaboratorDetailsService,
+    private employeeDocumentsService: EmployeeDocumentsService
   ) {}
 
   ngOnInit(): void {
@@ -123,6 +157,7 @@ export class ControleFuncionariosComponent implements OnInit {
     this.employeeForm = this.createEmptyForm();
     this.employeeDetailsForm = this.createEmptyEmployeeDetails();
     this.externalDetailsForm = this.createEmptyExternalDetails();
+    this.resetEmployeeDocuments();
     this.selectedContractFile = null;
     this.loadCoordinators();
     this.employeeModal?.show();
@@ -146,6 +181,7 @@ export class ControleFuncionariosComponent implements OnInit {
         this.employeeModal?.show();
         this.loadEmployeeDetails(user.id);
         this.loadExternalDetails(user.id);
+        this.loadEmployeeDocuments(user.id);
       },
       error: (err) => {
         console.error('Erro ao carregar colaborador', err);
@@ -248,8 +284,11 @@ export class ControleFuncionariosComponent implements OnInit {
 
     if (this.shouldShowEmployeeDetails) {
       this.loadEmployeeDetails(this.employeeForm.id);
+      this.loadEmployeeDocuments(this.employeeForm.id);
       return;
     }
+
+    this.resetEmployeeDocuments();
 
     if (this.shouldShowExternalDetails) {
       this.loadExternalDetails(this.employeeForm.id);
@@ -299,6 +338,128 @@ export class ControleFuncionariosComponent implements OnInit {
         this.formErrorMessage = err?.error?.message || 'Nao foi possivel abrir o contrato.';
       },
     });
+  }
+
+  onEmployeeDocumentFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.selectedEmployeeDocumentFile = input.files?.[0] ?? null;
+  }
+
+  uploadEmployeeDocument(): void {
+    this.employeeDocumentsErrorMessage = '';
+    const userId = this.employeeForm.id;
+
+    if (!userId) {
+      this.employeeDocumentsErrorMessage = 'Salve o funcionario antes de anexar documentos.';
+      return;
+    }
+
+    if (!this.employeeDocumentUploadForm.documentType) {
+      this.employeeDocumentsErrorMessage = 'Selecione o tipo do documento.';
+      return;
+    }
+
+    if (!this.selectedEmployeeDocumentFile) {
+      this.employeeDocumentsErrorMessage = 'Selecione um arquivo para enviar.';
+      return;
+    }
+
+    const validationMessage = this.validateEmployeeDocumentFile(this.selectedEmployeeDocumentFile);
+    if (validationMessage) {
+      this.employeeDocumentsErrorMessage = validationMessage;
+      return;
+    }
+
+    this.uploadingEmployeeDocument = true;
+    this.employeeDocumentsService.upload(
+      userId,
+      this.selectedEmployeeDocumentFile,
+      this.employeeDocumentUploadForm.documentType,
+      this.employeeDocumentUploadForm.documentLabel,
+      this.employeeDocumentUploadForm.notes
+    ).subscribe({
+      next: () => {
+        this.uploadingEmployeeDocument = false;
+        this.clearSelectedEmployeeDocumentFile();
+        this.employeeDocumentUploadForm = this.createEmptyEmployeeDocumentUploadForm();
+        this.loadEmployeeDocuments(userId);
+      },
+      error: (err) => {
+        console.error('Erro ao enviar documento do funcionario', err);
+        this.uploadingEmployeeDocument = false;
+        this.employeeDocumentsErrorMessage = err?.error?.message || 'Nao foi possivel enviar o documento.';
+      },
+    });
+  }
+
+  openEmployeeDocument(document: EmployeeDocument): void {
+    if (!document.id) {
+      return;
+    }
+
+    this.employeeDocumentsErrorMessage = '';
+    this.employeeDocumentsService.download(document.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      },
+      error: (err) => {
+        console.error('Erro ao abrir documento do funcionario', err);
+        this.employeeDocumentsErrorMessage = err?.error?.message || 'Nao foi possivel abrir o documento.';
+      },
+    });
+  }
+
+  deleteEmployeeDocument(document: EmployeeDocument): void {
+    if (!document.id || !confirm('Deseja excluir este documento?')) {
+      return;
+    }
+
+    this.employeeDocumentsErrorMessage = '';
+    this.deletingEmployeeDocumentId = document.id;
+    this.employeeDocumentsService.delete(document.id).subscribe({
+      next: () => {
+        this.deletingEmployeeDocumentId = null;
+        if (this.employeeForm.id) {
+          this.loadEmployeeDocuments(this.employeeForm.id);
+        }
+      },
+      error: (err) => {
+        console.error('Erro ao excluir documento do funcionario', err);
+        this.deletingEmployeeDocumentId = null;
+        this.employeeDocumentsErrorMessage = err?.error?.message || 'Nao foi possivel excluir o documento.';
+      },
+    });
+  }
+
+  getEmployeeDocumentTypeLabel(value?: string | null): string {
+    return this.employeeDocumentTypes.find((type) => type.value === value)?.label || value || '-';
+  }
+
+  formatFileSize(size?: number | null): string {
+    if (!size || size <= 0) {
+      return '-';
+    }
+
+    if (size < 1024 * 1024) {
+      return `${(size / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  formatDateTime(value?: string | null): string {
+    if (!value) {
+      return '-';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value.substring(0, 10);
+    }
+
+    return date.toLocaleDateString('pt-BR');
   }
 
   private loadOptions(): void {
@@ -432,6 +593,14 @@ export class ControleFuncionariosComponent implements OnInit {
     return {};
   }
 
+  private createEmptyEmployeeDocumentUploadForm(): EmployeeDocumentUploadForm {
+    return {
+      documentType: '',
+      documentLabel: '',
+      notes: '',
+    };
+  }
+
   private loadEmployeeDetails(userId?: number): void {
     this.employeeDetailsForm = this.createEmptyEmployeeDetails();
 
@@ -456,6 +625,48 @@ export class ControleFuncionariosComponent implements OnInit {
         this.formErrorMessage = 'Nao foi possivel carregar os dados admissionais. Os dados basicos podem ser editados normalmente.';
       },
     });
+  }
+
+  private loadEmployeeDocuments(userId?: number): void {
+    this.resetEmployeeDocuments(false);
+
+    if (!userId || !this.shouldShowEmployeeDetails) {
+      return;
+    }
+
+    this.loadingEmployeeDocuments = true;
+    this.employeeDocumentsService.getByUserId(userId).subscribe({
+      next: (documents) => {
+        this.employeeDocuments = documents ?? [];
+        this.loadingEmployeeDocuments = false;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar documentos do funcionario', err);
+        this.employeeDocuments = [];
+        this.employeeDocumentsErrorMessage = 'Nao foi possivel carregar os documentos do funcionario.';
+        this.loadingEmployeeDocuments = false;
+      },
+    });
+  }
+
+  private resetEmployeeDocuments(resetForm = true): void {
+    this.employeeDocuments = [];
+    this.employeeDocumentsErrorMessage = '';
+    this.loadingEmployeeDocuments = false;
+    this.uploadingEmployeeDocument = false;
+    this.deletingEmployeeDocumentId = null;
+    this.clearSelectedEmployeeDocumentFile();
+
+    if (resetForm) {
+      this.employeeDocumentUploadForm = this.createEmptyEmployeeDocumentUploadForm();
+    }
+  }
+
+  private clearSelectedEmployeeDocumentFile(): void {
+    this.selectedEmployeeDocumentFile = null;
+    if (this.employeeDocumentFileInput?.nativeElement) {
+      this.employeeDocumentFileInput.nativeElement.value = '';
+    }
   }
 
   private saveEmployeeDetailsIfNeeded(userId: number, payload: Usuarios): Observable<{ userId: number; detailsSaved: boolean }> {
@@ -503,6 +714,21 @@ export class ControleFuncionariosComponent implements OnInit {
         return details;
       })
     );
+  }
+
+  private validateEmployeeDocumentFile(file: File): string | null {
+    const allowedContentTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    const maxFileSize = 10 * 1024 * 1024;
+
+    if (!allowedContentTypes.includes(file.type)) {
+      return 'Tipo de arquivo invalido. Envie PDF, JPG ou PNG.';
+    }
+
+    if (file.size > maxFileSize) {
+      return 'Arquivo deve ter no maximo 10 MB.';
+    }
+
+    return null;
   }
 
   private loadExternalDetails(userId?: number): void {
