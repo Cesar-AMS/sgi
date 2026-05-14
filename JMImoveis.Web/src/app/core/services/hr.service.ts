@@ -1,9 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
+import { Cargos, Usuarios } from 'src/app/models/ContaBancaria';
+import { AdminAccessService } from './admin-access.service';
 
 export type EmployeeControlRow = {
+  id: number;
   name: string;
-  area: string;
+  email: string;
+  cargo: string;
+  gerente: string;
+  coordenador: string;
   status: string;
   branch: string;
 };
@@ -38,12 +46,15 @@ export type UniformRow = {
 
 @Injectable({ providedIn: 'root' })
 export class HrService {
+  constructor(private adminAccessService: AdminAccessService) {}
+
   getEmployeeControl(): Observable<EmployeeControlRow[]> {
-    return of([
-      { name: 'Ana Souza', area: 'Atendimento', status: 'Ativo', branch: 'Matriz' },
-      { name: 'Carlos Lima', area: 'Vendas', status: 'Ativo', branch: 'Filial Norte' },
-      { name: 'Juliana Rocha', area: 'Financeiro', status: 'Afastado', branch: 'Matriz' },
-    ]);
+    return forkJoin({
+      users: this.adminAccessService.listUsersByStatus('all'),
+      roles: this.adminAccessService.listRoles(),
+    }).pipe(
+      map(({ users, roles }) => this.mapUsersToEmployeeRows(users, roles))
+    );
   }
 
   getPayroll(): Observable<PayrollRow[]> {
@@ -76,5 +87,81 @@ export class HrService {
       { colaborador: 'Carlos Lima', kit: 'Camisa + blazer', entrega: '18/03/2026', status: 'Pendente' },
       { colaborador: 'Juliana Rocha', kit: 'Camisa social', entrega: '08/03/2026', status: 'Ajuste solicitado' },
     ]);
+  }
+
+  private mapUsersToEmployeeRows(users: Usuarios[], roles: Cargos[]): EmployeeControlRow[] {
+    const usersById = new Map<number, Usuarios>(
+      (users ?? []).filter((user) => !!user?.id).map((user) => [user.id, user])
+    );
+
+    const rolesById = new Map<number, string>(
+      (roles ?? []).filter((role) => !!role?.id).map((role) => [role.id, role.name])
+    );
+
+    return (users ?? []).map((user) => ({
+      id: user.id,
+      name: user.name || '-',
+      email: user.email || '-',
+      cargo: this.resolveUserRole(user, rolesById),
+      gerente: this.resolveUserName(user.managerName, usersById, user.managerId),
+      coordenador: this.resolveUserName(user.coordenatorName, usersById, user.coordenatorId),
+      status: user.hidden ? 'Inativo' : 'Ativo',
+      branch: user.filial ? `Filial ${user.filial}` : '-',
+    }));
+  }
+
+  private resolveUserName(
+    enrichedName: string | undefined,
+    usersById: Map<number, Usuarios>,
+    userId?: number | null
+  ): string {
+    if (enrichedName?.trim()) {
+      return enrichedName;
+    }
+
+    if (!userId) {
+      return '-';
+    }
+
+    return usersById.get(userId)?.name || '-';
+  }
+
+  private resolveUserRole(user: Usuarios, rolesById: Map<number, string>): string {
+    if (user.roleName?.trim()) {
+      const roleNames = this.distinctRoleNames(user.roleName.split(','));
+      if (roleNames.length) {
+        return roleNames.join(', ');
+      }
+    }
+
+    if (user.roleNames?.length) {
+      const roleNames = this.distinctRoleNames(user.roleNames);
+      if (roleNames.length) {
+        return roleNames.join(', ');
+      }
+    }
+
+    const roleIds = Array.isArray(user.jobpositionId)
+      ? user.jobpositionId
+      : user.jobpositionId
+        ? [user.jobpositionId]
+        : [];
+
+    const roleNames = roleIds
+      .map((roleId) => rolesById.get(Number(roleId)))
+      .filter((roleName): roleName is string => !!roleName);
+
+    const distinctRoleNames = this.distinctRoleNames(roleNames);
+    return distinctRoleNames.length ? distinctRoleNames.join(', ') : '-';
+  }
+
+  private distinctRoleNames(roleNames: Array<string | undefined | null>): string[] {
+    const normalized = roleNames
+      .map((roleName) => roleName?.trim())
+      .filter((roleName): roleName is string => !!roleName);
+
+    return Array.from(new Map(
+      normalized.map((roleName) => [roleName.toLocaleLowerCase('pt-BR'), roleName])
+    ).values());
   }
 }

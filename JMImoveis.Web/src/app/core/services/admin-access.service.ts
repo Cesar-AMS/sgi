@@ -28,6 +28,22 @@ export class AdminAccessService {
     });
   }
 
+  listManagers(): Observable<Usuarios[]> {
+    return this.http.get<Usuarios[]>(`${this.usersUrl}/gerentes`, {
+      headers: this.authHeaders,
+    });
+  }
+
+  listCoordinators(gerenteId?: number | null): Observable<Usuarios[]> {
+    const url = gerenteId
+      ? `${this.usersUrl}/coordenadores?gerenteId=${gerenteId}`
+      : `${this.usersUrl}/coordenadores`;
+
+    return this.http.get<Usuarios[]>(url, {
+      headers: this.authHeaders,
+    });
+  }
+
   getUserById(id: number): Observable<Usuarios> {
     return this.http.get<Usuarios>(`${this.usersUrl}/${id}`, {
       headers: this.authHeaders,

@@ -59,7 +59,7 @@ namespace JMImoveisAPI.Controllers
 
         [HttpGet("corretores")]
         [HttpGet("vendedores")]
-        public async Task<IActionResult> GetCorretoresAsync([FromQuery] int? gerenteId)
+        public async Task<IActionResult> GetCorretoresAsync([FromQuery] int? gerenteId, [FromQuery] int? coordenadorId)
         {
             var result = await _usuarioService.GetCorretoresAsync();
             if (result == null)
@@ -70,6 +70,11 @@ namespace JMImoveisAPI.Controllers
             if (gerenteId.HasValue)
             {
                 result = result.Where(x => x.ManagerId == gerenteId.Value).ToList();
+            }
+
+            if (coordenadorId.HasValue)
+            {
+                result = result.Where(x => x.CoordenatorId == coordenadorId.Value).ToList();
             }
 
             return Ok(result);

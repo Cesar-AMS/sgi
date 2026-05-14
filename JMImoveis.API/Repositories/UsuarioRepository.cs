@@ -3,6 +3,7 @@ using JMImoveisAPI.Configurations;
 using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
 using System.Collections.Generic;
+using System.Data;
 using System.Text.Json;
 
 namespace JMImoveisAPI.Repositories
@@ -29,21 +30,38 @@ namespace JMImoveisAPI.Repositories
         public async Task<IEnumerable<Usuario>> GetAllAsync(string status)
         {
             var whr = "";
+            var parameters = new DynamicParameters();
 
             if(status == "active")
             {
-                whr += "where hidden = 0";
+                whr += "where T0.hidden = @Hidden";
+                parameters.Add("Hidden", false);
             }
 
             if (status == "inactive")
             {
-                whr += "where hidden = 1";
+                whr += "where T0.hidden = @Hidden";
+                parameters.Add("Hidden", true);
             }
 
 
-            var sql = $"SELECT * FROM users {whr};";
+            var sql = @$"SELECT T0.*,
+                                T0.coordenator_id as ""CoordenatorId"",
+                                T0.manager_id as ""ManagerId"",
+                                T0.gestor_id as ""GestorId"",
+                                manager.name as ""ManagerName"",
+                                coordenator.name as ""CoordenatorName"",
+                                gestor.name as ""GestorName""
+                           FROM users T0
+                           LEFT JOIN users manager ON manager.id = T0.manager_id
+                           LEFT JOIN users coordenator ON coordenator.id = T0.coordenator_id
+                           LEFT JOIN users gestor ON gestor.id = T0.gestor_id
+                           {whr}
+                          ORDER BY T0.name;";
             await using var conn = await _context.OpenConnectionAsync();
-            return await conn.QueryAsync<Usuario>(sql);
+            var users = (await conn.QueryAsync<Usuario>(sql, parameters)).ToList();
+            await PopulateUserRolesAsync(conn, users);
+            return users;
         }
 
         public async Task<Usuario?> GetByEmailAsync(string email)
@@ -162,18 +180,25 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<Usuario?> GetByIdAsync(int id)
         {
-            var sql = @$"Select *, coordenator_id as ""CoordenatorId"", 
-                                   manager_id as ""ManagerId"", 
-                                   gestor_id as ""GestorId"" 
-                                   from users WHERE id = @id";
+            var sql = @$"SELECT T0.*,
+                                T0.coordenator_id as ""CoordenatorId"",
+                                T0.manager_id as ""ManagerId"",
+                                T0.gestor_id as ""GestorId"",
+                                manager.name as ""ManagerName"",
+                                coordenator.name as ""CoordenatorName"",
+                                gestor.name as ""GestorName""
+                           FROM users T0
+                           LEFT JOIN users manager ON manager.id = T0.manager_id
+                           LEFT JOIN users coordenator ON coordenator.id = T0.coordenator_id
+                           LEFT JOIN users gestor ON gestor.id = T0.gestor_id
+                          WHERE T0.id = @id";
 
             await using var conn = await _context.OpenConnectionAsync();
             var user = await conn.QueryFirstOrDefaultAsync<Usuario>(sql, new { id });
 
             if (user != null)
             {
-                var sqlJob = $"SELECT T0.role_id FROM user_roles T0 where T0.user_id = {id}";
-                user.JobpositionId = (await conn.QueryAsync<int>(sqlJob)).ToList();
+                await PopulateUserRolesAsync(conn, new List<Usuario> { user });
             }
 
             return user;
@@ -189,22 +214,58 @@ namespace JMImoveisAPI.Repositories
 
         public async Task CreateAsync(Usuario entity)
         {
-            const string insertUserSql = @"INSERT INTO users  (email, password, name, cpf, address, cellphone, admission_date, created_at, hidden, jobpositionId)
-                VALUES  (@Email, @Password, @Name, @Cpf, @Address, @Cellphone, @AdmissionDate, @CreatedAt, @Hidden, @JobpositionId);";
+            const string insertUserSql = @"INSERT INTO users
+                    (email, password, name, cpf, address, cellphone, admission_date, created_at, hidden, jobpositionId,
+                     manager_id, coordenator_id, gestor_id)
+                VALUES
+                    (@Email, @Password, @Name, @Cpf, @Address, @Cellphone, @AdmissionDate, @CreatedAt, @Hidden, @JobpositionId,
+                     @ManagerId, @CoordenatorId, @GestorId);";
 
             const string insertUserBranchSql = @"INSERT INTO user_branches (branch_id, user_id, created_at, updated_at)
                                                  VALUES (@BranchId, @UserId, NOW(), NOW());";
+
+            const string insertUserRoleSql = @"INSERT INTO user_roles (role_id, user_id, created_at, updated_at)
+                                               VALUES (@RoleId, @UserId, NOW(), NOW());";
 
             await using var conn = await _context.OpenConnectionAsync();
             await using var tx = await conn.BeginTransactionAsync();
 
             try
             {
-                await conn.ExecuteAsync(insertUserSql, entity, tx);
+                await conn.ExecuteAsync(insertUserSql, new
+                {
+                    entity.Email,
+                    entity.Password,
+                    entity.Name,
+                    entity.Cpf,
+                    entity.Address,
+                    entity.Cellphone,
+                    entity.AdmissionDate,
+                    entity.CreatedAt,
+                    entity.Hidden,
+                    JobpositionId = entity.JobpositionId?.FirstOrDefault(),
+                    entity.ManagerId,
+                    entity.CoordenatorId,
+                    entity.GestorId
+                }, tx);
 
                 var userId = await conn.ExecuteScalarAsync<long>("SELECT LAST_INSERT_ID();", transaction: tx);
 
-                await conn.ExecuteAsync(insertUserBranchSql, new { BranchId = entity.Filial, UserId = userId }, tx);
+                if (entity.Filial.HasValue)
+                {
+                    await conn.ExecuteAsync(insertUserBranchSql, new { BranchId = entity.Filial, UserId = userId }, tx);
+                }
+
+                if (entity.JobpositionId != null && entity.JobpositionId.Any())
+                {
+                    var roleIds = NormalizeRoleIds(entity.JobpositionId);
+                    var roles = roleIds.Select(roleId => new { RoleId = roleId, UserId = userId });
+
+                    if (roleIds.Any())
+                    {
+                        await conn.ExecuteAsync(insertUserRoleSql, roles, tx);
+                    }
+                }
 
                 await tx.CommitAsync();
             }
@@ -219,7 +280,7 @@ namespace JMImoveisAPI.Repositories
         {
             var pwd = "";
 
-            if(entity.Password != "")
+            if(!string.IsNullOrWhiteSpace(entity.Password))
             {
                 pwd += " password = @Password,";
             }
@@ -233,37 +294,124 @@ namespace JMImoveisAPI.Repositories
                                 cellphone = @Cellphone,
                                 admission_date = @AdmissionDate, 
                                 created_at =  @CreatedAt, 
-                                hidden = @Hidden
+                                hidden = @Hidden,
+                                manager_id = @ManagerId,
+                                coordenator_id = @CoordenatorId,
+                                gestor_id = @GestorId
 
                             WHERE id = @id";
             await using var conn = await _context.OpenConnectionAsync();
+            await using var tx = await conn.BeginTransactionAsync();
 
-            var sqlDeleteJob = $"delete from user_roles T0 where T0.user_id = {entity.Id}";
-            await conn.ExecuteAsync(sqlDeleteJob);
-
-            if (entity.JobpositionId != null && entity.JobpositionId.Any())
+            try
             {
-                var sqlInsert = "";
+                var updated = await conn.ExecuteAsync(sql, entity, tx) > 0;
 
-                foreach (var item in entity.JobpositionId.ToList())
+                if (!updated)
                 {
-                    sqlInsert += @$"insert into user_roles (role_id, user_id, created_at, updated_at)
-                                  values ({item},{entity.Id},now(), now()); ";
-
-                    await conn.ExecuteAsync(sqlInsert);
+                    await tx.RollbackAsync();
+                    return false;
                 }
 
-            }
-            
+                const string sqlDeleteJob = "delete from user_roles where user_id = @UserId";
+                await conn.ExecuteAsync(sqlDeleteJob, new { UserId = entity.Id }, tx);
 
-            return await conn.ExecuteAsync(sql, entity) > 0;
+                if (entity.JobpositionId != null && entity.JobpositionId.Any())
+                {
+                    const string sqlInsertJob = @"insert into user_roles (role_id, user_id, created_at, updated_at)
+                                                 values (@RoleId, @UserId, now(), now());";
+
+                    var roleIds = NormalizeRoleIds(entity.JobpositionId);
+                    var roles = roleIds.Select(roleId => new { RoleId = roleId, UserId = entity.Id });
+
+                    if (roleIds.Any())
+                    {
+                        await conn.ExecuteAsync(sqlInsertJob, roles, tx);
+                    }
+                }
+
+                await tx.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var sql = "DELETE FROM usuario WHERE id = @id";
+            var sql = "DELETE FROM users WHERE id = @id";
             await using var conn = await _context.OpenConnectionAsync();
             return await conn.ExecuteAsync(sql, new { id }) > 0;
+        }
+
+        private static async Task PopulateUserRolesAsync(IDbConnection conn, List<Usuario> users)
+        {
+            var userIds = users
+                .Where(user => user.Id.HasValue)
+                .Select(user => user.Id!.Value)
+                .Distinct()
+                .ToList();
+
+            if (!userIds.Any())
+            {
+                return;
+            }
+
+            const string sql = @"SELECT DISTINCT user_roles.user_id AS UserId,
+                                        roles.id AS RoleId,
+                                        roles.name AS RoleName
+                                   FROM user_roles
+                                   INNER JOIN roles ON roles.id = user_roles.role_id
+                                  WHERE user_roles.user_id IN @UserIds
+                                  ORDER BY roles.name;";
+
+            var roles = await conn.QueryAsync<UsuarioRoleProjection>(sql, new { UserIds = userIds });
+            var rolesByUserId = roles
+                .GroupBy(role => role.UserId)
+                .ToDictionary(group => group.Key, group => group.ToList());
+
+            foreach (var user in users)
+            {
+                if (!user.Id.HasValue || !rolesByUserId.TryGetValue(user.Id.Value, out var userRoles))
+                {
+                    user.JobpositionId = new List<int>();
+                    user.RoleNames = new List<string>();
+                    user.RoleName = null;
+                    continue;
+                }
+
+                var distinctRoles = userRoles
+                    .Where(role => role.RoleId > 0)
+                    .GroupBy(role => role.RoleId)
+                    .Select(group => group.First())
+                    .ToList();
+
+                user.JobpositionId = distinctRoles.Select(role => role.RoleId).ToList();
+                user.RoleNames = distinctRoles
+                    .Select(role => role.RoleName?.Trim())
+                    .Where(roleName => !string.IsNullOrWhiteSpace(roleName))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList()!;
+                user.RoleName = string.Join(", ", user.RoleNames);
+            }
+        }
+
+        private static List<int> NormalizeRoleIds(IEnumerable<int> roleIds)
+        {
+            return roleIds
+                .Where(roleId => roleId > 0)
+                .Distinct()
+                .ToList();
+        }
+
+        private sealed class UsuarioRoleProjection
+        {
+            public int UserId { get; set; }
+            public int RoleId { get; set; }
+            public string RoleName { get; set; } = string.Empty;
         }
     }
 }

@@ -1,33 +1,191 @@
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
-      <h2 class="fw-bold mb-1">Controle de Funcionários</h2>
-      <p class="text-muted mb-0">Painel operacional para acompanhamento do quadro interno.</p>
+      <h2 class="fw-bold mb-1">Colaboradores</h2>
+      <p class="text-muted mb-0">Painel operacional para acompanhamento da equipe cadastrada.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-secondary btn-sm" (click)="openNewEmployee()">
+        Novo Colaborador
+      </button>
+      <button type="button" class="btn btn-subtle-primary btn-sm" (click)="loadEmployees()" [disabled]="loading">
+        Atualizar
+      </button>
     </div>
   </div>
 
   <div class="card border-0 shadow-sm">
     <div class="card-body">
-      <div class="table-responsive">
+      <div *ngIf="loading" class="text-muted py-4 text-center">
+        Carregando colaboradores...
+      </div>
+
+      <div *ngIf="!loading && errorMessage" class="alert alert-danger mb-0" role="alert">
+        {{ errorMessage }}
+      </div>
+
+      <div *ngIf="!loading && !errorMessage && rows.length === 0" class="text-muted py-4 text-center">
+        Nenhum colaborador encontrado.
+      </div>
+
+      <div *ngIf="!loading && !errorMessage && rows.length > 0" class="table-responsive">
         <table class="table align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Funcionário</th>
-              <th>Área</th>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Cargo/Perfil</th>
+              <th>Gerente</th>
+              <th>Coordenador</th>
               <th>Status</th>
-              <th>Unidade</th>
+              <th class="text-end">Acoes</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let row of rows">
               <td class="fw-semibold">{{ row.name }}</td>
-              <td>{{ row.area }}</td>
-              <td>{{ row.status }}</td>
-              <td>{{ row.branch }}</td>
+              <td>{{ row.email }}</td>
+              <td>{{ row.cargo }}</td>
+              <td>{{ row.gerente }}</td>
+              <td>{{ row.coordenador }}</td>
+              <td>
+                <span class="badge" [ngClass]="row.status === 'Ativo' ? 'bg-success' : 'bg-secondary'">
+                  {{ row.status }}
+                </span>
+              </td>
+              <td class="text-end">
+                <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm" (click)="openEditEmployee(row)">
+                  <i class="ph-pencil"></i>
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
+</div>
+
+<div bsModal #employeeModal="bs-modal" class="modal fade" id="employeeModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ formMode === 'edit' ? 'Editar colaborador' : 'Novo colaborador' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="employeeModal.hide()"></button>
+      </div>
+
+      <form #employeeFormRef="ngForm" (ngSubmit)="saveEmployee()">
+        <div class="modal-body">
+          <div *ngIf="formErrorMessage" class="alert alert-danger" role="alert">
+            {{ formErrorMessage }}
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="employee-name">Nome <span class="text-danger">*</span></label>
+              <input id="employee-name" class="form-control" name="name" [(ngModel)]="employeeForm.name" required>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="employee-email">Email <span class="text-danger">*</span></label>
+              <input id="employee-email" class="form-control" type="email" name="email" [(ngModel)]="employeeForm.email" required>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label" for="employee-cpf">CPF <span class="text-danger">*</span></label>
+              <input id="employee-cpf" class="form-control" name="cpf" [(ngModel)]="employeeForm.cpf" required>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label" for="employee-phone">Telefone <span class="text-danger">*</span></label>
+              <input id="employee-phone" class="form-control" name="cellphone" [(ngModel)]="employeeForm.cellphone" required>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label" for="employee-admission">Data de admissao</label>
+              <input id="employee-admission" class="form-control" type="date" name="admissionDate" [(ngModel)]="employeeForm.admissionDate">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="employee-address">Endereco <span class="text-danger">*</span></label>
+              <input id="employee-address" class="form-control" name="address" [(ngModel)]="employeeForm.address" required>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="employee-password">
+                {{ formMode === 'edit' ? 'Nova senha' : 'Senha inicial' }}
+                <span *ngIf="formMode === 'new'" class="text-danger">*</span>
+              </label>
+              <input
+                id="employee-password"
+                class="form-control"
+                type="password"
+                name="password"
+                [(ngModel)]="employeeForm.password"
+                [required]="formMode === 'new'"
+                autocomplete="new-password">
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="employee-status">Status</label>
+              <select id="employee-status" class="form-control" name="hidden" [(ngModel)]="employeeForm.hidden">
+                <option [ngValue]="false">Ativo</option>
+                <option [ngValue]="true">Inativo</option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="employee-role">Cargo/Perfil <span class="text-danger">*</span></label>
+              <select
+                id="employee-role"
+                class="form-control"
+                name="jobpositionId"
+                multiple
+                [(ngModel)]="employeeForm.jobpositionId"
+                required
+                [disabled]="loadingOptions">
+                <option *ngFor="let role of roles" [ngValue]="role.id">{{ role.name }}</option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label class="form-label" for="employee-manager">Gerente</label>
+              <select
+                id="employee-manager"
+                class="form-control"
+                name="managerId"
+                [(ngModel)]="employeeForm.managerId"
+                (ngModelChange)="onManagerChange()">
+                <option [ngValue]="undefined">Selecione...</option>
+                <option *ngFor="let manager of managers" [ngValue]="manager.id">{{ manager.name }}</option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label class="form-label" for="employee-coordinator">Coordenador</label>
+              <select
+                id="employee-coordinator"
+                class="form-control"
+                name="coordenatorId"
+                [(ngModel)]="employeeForm.coordenatorId">
+                <option [ngValue]="undefined">Selecione...</option>
+                <option *ngFor="let coordinator of coordinators" [ngValue]="coordinator.id">{{ coordinator.name }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" (click)="employeeModal.hide()" [disabled]="saving">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-success" [disabled]="saving">
+            {{ saving ? 'Salvando...' : 'Salvar' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

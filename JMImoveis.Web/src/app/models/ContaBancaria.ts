@@ -126,13 +126,18 @@ export interface Usuarios  {
   tpCommissioned?: string;
   valueCommissioned?: number;
   valueCommissionedMax?: number;
-  jobpositionId: number;
+  jobpositionId: number | number[];
   filial: number;
   enterpriseVisibility: boolean
   empregado: boolean
   coordenatorId?: number
   managerId?: number
   gestorId?: number
+  coordenatorName?: string
+  managerName?: string
+  gestorName?: string
+  roleName?: string
+  roleNames?: string[]
 }
 
 

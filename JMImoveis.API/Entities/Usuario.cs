@@ -27,6 +27,11 @@ namespace JMImoveisAPI.Entities
         public int? CoordenatorId { get; set; }
         public int? ManagerId { get; set; }
         public int? GestorId { get; set; }
+        public string? CoordenatorName { get; set; }
+        public string? ManagerName { get; set; }
+        public string? GestorName { get; set; }
+        public string? RoleName { get; set; }
+        public List<string>? RoleNames { get; set; }
         public string? MenuJson { get; set; }
     }
 
