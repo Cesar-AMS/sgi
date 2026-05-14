@@ -194,6 +194,227 @@
                 </div>
             </section>
 
+            <section class="form-section commission-rules-section">
+                <div class="section-title-row">
+                    <div>
+                        <h3>Regras de Comissão</h3>
+                        <p class="section-hint">
+                            Cadastre as regras por empreendimento para uso futuro na geração de contas a pagar.
+                        </p>
+                    </div>
+                    <button type="button" class="btn-secundario" [disabled]="!id" (click)="novaRegraComissao()">
+                        Nova regra
+                    </button>
+                </div>
+
+                <div class="alert-info" *ngIf="!id">
+                    Salve o empreendimento antes de cadastrar regras de comissão.
+                </div>
+
+                <div *ngIf="id">
+                    <div class="loading-inline" *ngIf="carregandoRegrasComissao">
+                        Carregando regras de comissão...
+                    </div>
+
+                    <div class="rules-list" *ngIf="regrasComissao.length > 0">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Versão</th>
+                                    <th>Status</th>
+                                    <th>Pagamento</th>
+                                    <th>Campanha</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let regra of regrasComissao">
+                                    <td>{{ obterLabelTipoRegra(regra.ruleType) }}</td>
+                                    <td>{{ regra.version }}</td>
+                                    <td>
+                                        <span class="status-pill" [class.inactive]="!regra.active">
+                                            {{ regra.active ? 'Ativa' : 'Inativa' }}
+                                        </span>
+                                    </td>
+                                    <td>Dia {{ regra.paymentDay || 5 }}</td>
+                                    <td>{{ regra.campaignName || '-' }}</td>
+                                    <td>
+                                        <button type="button" class="btn-link-table"
+                                            (click)="selecionarRegraComissao(regra)">
+                                            Editar
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="commission-rule-editor">
+                        <div class="form-grid">
+                            <div class="form-group span-4">
+                                <label for="regraTipo">Tipo da regra</label>
+                                <select id="regraTipo" class="form-control" name="regraTipo"
+                                    [disabled]="!!regraComissaoForm.id"
+                                    [(ngModel)]="regraComissaoForm.ruleType"
+                                    [ngModelOptions]="{ standalone: true }">
+                                    <option *ngFor="let tipo of regraTipoOptions" [value]="tipo.value">
+                                        {{ tipo.label }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group span-2">
+                                <label for="regraAtiva">Ativa</label>
+                                <select id="regraAtiva" class="form-control" name="regraAtiva"
+                                    [(ngModel)]="regraComissaoForm.active"
+                                    [ngModelOptions]="{ standalone: true }">
+                                    <option [ngValue]="true">Sim</option>
+                                    <option [ngValue]="false">Não</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group span-3">
+                                <label for="regraInicio">Início</label>
+                                <input type="date" id="regraInicio" class="form-control" name="regraInicio"
+                                    [(ngModel)]="regraComissaoForm.startsAt"
+                                    [ngModelOptions]="{ standalone: true }">
+                            </div>
+
+                            <div class="form-group span-3">
+                                <label for="regraFim">Fim</label>
+                                <input type="date" id="regraFim" class="form-control" name="regraFim"
+                                    [(ngModel)]="regraComissaoForm.endsAt"
+                                    [ngModelOptions]="{ standalone: true }">
+                            </div>
+
+                            <div class="form-group span-3">
+                                <label for="regraAtoThreshold">Limite do ato</label>
+                                <input type="number" id="regraAtoThreshold" class="form-control" min="0" step="0.01"
+                                    name="regraAtoThreshold" [(ngModel)]="regraComissaoForm.atoThreshold"
+                                    [ngModelOptions]="{ standalone: true }">
+                            </div>
+
+                            <div class="form-group span-3">
+                                <label for="regraDiaPagamento">Dia de pagamento</label>
+                                <input type="number" id="regraDiaPagamento" class="form-control" min="1" max="31"
+                                    name="regraDiaPagamento" [(ngModel)]="regraComissaoForm.paymentDay"
+                                    [ngModelOptions]="{ standalone: true }">
+                            </div>
+
+                            <div class="form-group span-3">
+                                <label for="regraDiretor">Diretor</label>
+                                <select id="regraDiretor" class="form-control" name="regraDiretor"
+                                    [(ngModel)]="regraComissaoForm.directorEnabled"
+                                    [ngModelOptions]="{ standalone: true }">
+                                    <option [ngValue]="false">Não habilitado</option>
+                                    <option [ngValue]="true">Habilitado</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group span-3">
+                                <label for="regraCampanha">Campanha</label>
+                                <input type="text" id="regraCampanha" class="form-control" name="regraCampanha"
+                                    [(ngModel)]="regraComissaoForm.campaignName"
+                                    [ngModelOptions]="{ standalone: true }">
+                            </div>
+
+                            <div class="form-group span-12">
+                                <label for="regraObservacoes">Observações</label>
+                                <textarea id="regraObservacoes" class="form-control" rows="2" name="regraObservacoes"
+                                    [(ngModel)]="regraComissaoForm.notes"
+                                    [ngModelOptions]="{ standalone: true }"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="items-header">
+                            <h4>Itens da regra</h4>
+                            <button type="button" class="btn-secundario" (click)="adicionarItemRegraComissao()">
+                                Adicionar item
+                            </button>
+                        </div>
+
+                        <div class="items-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Cargo</th>
+                                        <th>Percentual %</th>
+                                        <th>Valor fixo</th>
+                                        <th>Pagamento</th>
+                                        <th>Dia</th>
+                                        <th>Ativo</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let item of regraComissaoForm.items; let i = index">
+                                        <td>
+                                            <select class="form-control" name="regraItemCargo{{ i }}"
+                                                [(ngModel)]="item.role" [ngModelOptions]="{ standalone: true }">
+                                                <option *ngFor="let cargo of regraCargoOptions" [value]="cargo.value">
+                                                    {{ cargo.label }}
+                                                </option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" min="0" step="0.0001" class="form-control"
+                                                name="regraItemPercentual{{ i }}" [(ngModel)]="item.percentage"
+                                                [ngModelOptions]="{ standalone: true }">
+                                        </td>
+                                        <td>
+                                            <input type="number" min="0" step="0.01" class="form-control"
+                                                name="regraItemValorFixo{{ i }}" [(ngModel)]="item.fixedAmount"
+                                                [ngModelOptions]="{ standalone: true }">
+                                        </td>
+                                        <td>
+                                            <select class="form-control" name="regraItemPagamento{{ i }}"
+                                                [(ngModel)]="item.paymentMode" [ngModelOptions]="{ standalone: true }">
+                                                <option *ngFor="let pagamento of regraPagamentoOptions"
+                                                    [value]="pagamento.value">
+                                                    {{ pagamento.label }}
+                                                </option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" min="1" max="31" class="form-control"
+                                                name="regraItemDiaPagamento{{ i }}" [(ngModel)]="item.paymentDay"
+                                                [ngModelOptions]="{ standalone: true }">
+                                        </td>
+                                        <td>
+                                            <select class="form-control" name="regraItemAtivo{{ i }}"
+                                                [(ngModel)]="item.active" [ngModelOptions]="{ standalone: true }">
+                                                <option [ngValue]="true">Sim</option>
+                                                <option [ngValue]="false">Não</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn-remover"
+                                                [disabled]="regraComissaoForm.items.length === 1"
+                                                (click)="removerItemRegraComissao(i)">
+                                                Remover
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="commission-actions">
+                            <button type="button" class="btn-cancelar" *ngIf="regraComissaoForm.id"
+                                [disabled]="salvandoRegraComissao || !regraComissaoForm.active"
+                                (click)="desativarRegraComissao()">
+                                Desativar regra
+                            </button>
+                            <button type="button" class="btn-salvar" [disabled]="salvandoRegraComissao"
+                                (click)="salvarRegraComissao()">
+                                {{ salvandoRegraComissao ? 'Salvando...' : 'Salvar regra de comissão' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <div class="form-actions">
                 <button type="button" class="btn-cancelar" (click)="voltar()">Cancelar</button>
                 <button type="submit" class="btn-salvar" [disabled]="form.invalid">Salvar</button>

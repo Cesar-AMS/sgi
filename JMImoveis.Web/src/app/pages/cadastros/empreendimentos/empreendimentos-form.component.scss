@@ -256,6 +256,156 @@
             }
         }
 
+        .commission-rules-section {
+            .section-title-row,
+            .items-header,
+            .commission-actions {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+
+            .section-title-row {
+                margin-bottom: 12px;
+
+                h3 {
+                    margin-bottom: 4px;
+                }
+            }
+
+            .section-hint {
+                margin: 0;
+                color: #667085;
+                font-size: 13px;
+                line-height: 1.4;
+            }
+
+            .alert-info {
+                padding: 12px 14px;
+                border: 1px solid #b6d7ff;
+                border-radius: 6px;
+                background: #eef6ff;
+                color: #1f5f9f;
+                font-size: 13px;
+            }
+
+            .loading-inline {
+                margin-bottom: 12px;
+                color: #667085;
+                font-size: 13px;
+            }
+
+            .rules-list,
+            .items-table {
+                overflow-x: auto;
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 13px;
+                }
+
+                th,
+                td {
+                    padding: 10px;
+                    border-bottom: 1px solid #eef0f3;
+                    text-align: left;
+                    vertical-align: middle;
+                    white-space: nowrap;
+                }
+
+                th {
+                    background: #f8fafc;
+                    color: #344054;
+                    font-weight: 700;
+                }
+            }
+
+            .rules-list {
+                margin-bottom: 14px;
+            }
+
+            .status-pill {
+                display: inline-flex;
+                align-items: center;
+                min-height: 22px;
+                padding: 2px 8px;
+                border-radius: 999px;
+                background: #dcfce7;
+                color: #166534;
+                font-size: 12px;
+                font-weight: 700;
+
+                &.inactive {
+                    background: #f2f4f7;
+                    color: #667085;
+                }
+            }
+
+            .commission-rule-editor {
+                padding: 14px;
+                border: 1px solid #eef0f3;
+                border-radius: 6px;
+                background: #fafbfc;
+            }
+
+            .items-header {
+                margin: 18px 0 10px;
+
+                h4 {
+                    margin: 0;
+                    color: #333;
+                    font-size: 14px;
+                    font-weight: 700;
+                }
+            }
+
+            .items-table {
+                .form-control {
+                    min-width: 120px;
+                }
+            }
+
+            .commission-actions {
+                justify-content: flex-end;
+                margin-top: 14px;
+            }
+
+            .btn-secundario,
+            .btn-link-table,
+            .btn-remover {
+                border: 1px solid #d0d5dd;
+                border-radius: 4px;
+                background: #fff;
+                color: #344054;
+                cursor: pointer;
+                font-size: 13px;
+            }
+
+            .btn-secundario {
+                padding: 8px 12px;
+            }
+
+            .btn-link-table,
+            .btn-remover {
+                padding: 6px 10px;
+            }
+
+            .btn-link-table {
+                color: #007bff;
+            }
+
+            .btn-remover {
+                color: #b42318;
+            }
+
+            button:disabled {
+                cursor: not-allowed;
+                opacity: 0.6;
+            }
+        }
+
         .form-actions {
             display: flex;
             justify-content: flex-end;

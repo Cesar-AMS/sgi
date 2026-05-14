@@ -5,6 +5,11 @@ import { ToastrService } from 'ngx-toastr';
 import { EmpreendimentoService } from '../../../services/empreendimento.service';
 import { ConstrutoraService } from '../../../services/construtora.service';
 import { Construtora } from '../../../models/construtora.model';
+import {
+    EnterpriseCommissionRule,
+    EnterpriseCommissionRuleItem,
+    EnterpriseCommissionRulesService
+} from '../../../core/services/enterprise-commission-rules.service';
 
 @Component({
     selector: 'app-empreendimentos-form',
@@ -16,11 +21,33 @@ export class EmpreendimentosFormComponent implements OnInit {
     id: number | null = null;
     editando = false;
     carregando = false;
+    carregandoRegrasComissao = false;
+    salvandoRegraComissao = false;
     construtoras: Construtora[] = [];
+    regrasComissao: EnterpriseCommissionRule[] = [];
+    regraComissaoForm: EnterpriseCommissionRule = this.criarRegraComissaoVazia();
     tipoOptions = [
         { value: 'RESIDENCIAL', label: 'Residencial' },
         { value: 'COMERCIAL', label: 'Comercial' },
         { value: 'MISTO', label: 'Misto' }
+    ];
+    regraTipoOptions = [
+        { value: 'TIPO_1', label: 'Tipo 1' },
+        { value: 'TIPO_2', label: 'Tipo 2' },
+        { value: 'TIPO_3', label: 'Tipo 3 - Campanha' },
+        { value: 'PARCEIRO', label: 'Parceiro' }
+    ];
+    regraCargoOptions = [
+        { value: 'GERENTE', label: 'Gerente' },
+        { value: 'COORDENADOR', label: 'Coordenador' },
+        { value: 'DIRETOR', label: 'Diretor' },
+        { value: 'GESTOR_COMERCIAL', label: 'Gestor Comercial' },
+        { value: 'CORRETOR_PARCEIRO', label: 'Corretor Parceiro' }
+    ];
+    regraPagamentoOptions = [
+        { value: 'FIXED_DAY', label: 'Dia fixo' },
+        { value: 'CLIENT_PAYMENT_FLOW', label: 'Fluxo do cliente' },
+        { value: 'MANUAL_ADVANCE', label: 'Vale/antecipacao' }
     ];
     statusOptions = [
         { value: 'LANCAMENTO', label: 'Lancamento' },
@@ -40,6 +67,7 @@ export class EmpreendimentosFormComponent implements OnInit {
         private router: Router,
         private empreendimentoService: EmpreendimentoService,
         private construtoraService: ConstrutoraService,
+        private regrasComissaoService: EnterpriseCommissionRulesService,
         private toastr: ToastrService
     ) {
         this.form = this.fb.group({
@@ -149,6 +177,7 @@ export class EmpreendimentosFormComponent implements OnInit {
                 });
                 this.aplicarMetragensPorFinal(unitFinalSizes);
                 this.carregando = false;
+                this.carregarRegrasComissao();
             },
             error: () => {
                 this.toastr.error('Erro ao carregar empreendimento');
@@ -252,6 +281,111 @@ export class EmpreendimentosFormComponent implements OnInit {
         }
     }
 
+    carregarRegrasComissao(): void {
+        if (!this.id) {
+            this.regrasComissao = [];
+            this.regraComissaoForm = this.criarRegraComissaoVazia();
+            return;
+        }
+
+        this.carregandoRegrasComissao = true;
+        this.regrasComissaoService.listByEnterprise(this.id).subscribe({
+            next: (regras) => {
+                this.regrasComissao = regras || [];
+                this.regraComissaoForm = this.regrasComissao.length
+                    ? this.clonarRegraComissao(this.regrasComissao[0])
+                    : this.criarRegraComissaoVazia(this.id as number);
+                this.carregandoRegrasComissao = false;
+            },
+            error: (err) => {
+                console.error('Erro ao carregar regras de comissão', err);
+                this.regrasComissao = [];
+                this.regraComissaoForm = this.criarRegraComissaoVazia(this.id as number);
+                this.carregandoRegrasComissao = false;
+                this.toastr.error(this.obterMensagemErro(err, 'Erro ao carregar regras de comissão'));
+            }
+        });
+    }
+
+    novaRegraComissao(): void {
+        this.regraComissaoForm = this.criarRegraComissaoVazia(this.id || undefined);
+    }
+
+    selecionarRegraComissao(regra: EnterpriseCommissionRule): void {
+        this.regraComissaoForm = this.clonarRegraComissao(regra);
+    }
+
+    adicionarItemRegraComissao(): void {
+        this.regraComissaoForm.items.push({
+            role: 'GERENTE',
+            percentage: null,
+            fixedAmount: null,
+            paymentMode: 'FIXED_DAY',
+            paymentDay: this.regraComissaoForm.paymentDay || 5,
+            active: true
+        });
+    }
+
+    removerItemRegraComissao(index: number): void {
+        this.regraComissaoForm.items.splice(index, 1);
+    }
+
+    salvarRegraComissao(): void {
+        if (!this.id) {
+            this.toastr.warning('Salve o empreendimento antes de cadastrar regras de comissão.');
+            return;
+        }
+
+        const payload = this.montarPayloadRegraComissao(this.id);
+        const mensagemValidacao = this.validarRegraComissao(payload);
+        if (mensagemValidacao) {
+            this.toastr.warning(mensagemValidacao);
+            return;
+        }
+
+        this.salvandoRegraComissao = true;
+        const request = payload.id
+            ? this.regrasComissaoService.update(payload.id, payload)
+            : this.regrasComissaoService.create(payload);
+
+        request.subscribe({
+            next: (regraSalva) => {
+                this.toastr.success('Regra de comissão salva com sucesso.');
+                this.salvandoRegraComissao = false;
+                this.regraComissaoForm = this.clonarRegraComissao(regraSalva);
+                this.carregarRegrasComissao();
+            },
+            error: (err) => {
+                console.error('Erro ao salvar regra de comissão', err);
+                this.salvandoRegraComissao = false;
+                this.toastr.error(this.obterMensagemErro(err, 'Erro ao salvar regra de comissão'));
+            }
+        });
+    }
+
+    desativarRegraComissao(): void {
+        const regraId = Number(this.regraComissaoForm?.id || 0);
+        if (!this.id || !regraId) return;
+
+        this.salvandoRegraComissao = true;
+        this.regrasComissaoService.deactivate(regraId).subscribe({
+            next: () => {
+                this.toastr.success('Regra de comissão desativada com sucesso.');
+                this.salvandoRegraComissao = false;
+                this.carregarRegrasComissao();
+            },
+            error: (err) => {
+                console.error('Erro ao desativar regra de comissão', err);
+                this.salvandoRegraComissao = false;
+                this.toastr.error(this.obterMensagemErro(err, 'Erro ao desativar regra de comissão'));
+            }
+        });
+    }
+
+    obterLabelTipoRegra(tipo?: string): string {
+        return this.regraTipoOptions.find(option => option.value === tipo)?.label || tipo || '';
+    }
+
     private aplicarMetragensPorFinal(sizes: any[] | null | undefined): void {
         if (!Array.isArray(sizes) || sizes.length === 0) return;
 
@@ -297,5 +431,90 @@ export class EmpreendimentosFormComponent implements OnInit {
     private toDateInput(value: Date | string | null | undefined): string {
         if (!value) return '';
         return String(value).slice(0, 10);
+    }
+
+    private criarRegraComissaoVazia(enterpriseId?: number): EnterpriseCommissionRule {
+        return {
+            enterpriseId: enterpriseId || this.id || 0,
+            ruleType: 'TIPO_1',
+            active: true,
+            startsAt: null,
+            endsAt: null,
+            atoThreshold: 5000,
+            paymentDay: 5,
+            directorEnabled: false,
+            campaignName: null,
+            notes: null,
+            items: [
+                this.criarItemRegraComissao('GERENTE', 0.65, null),
+                this.criarItemRegraComissao('COORDENADOR', 0.30, null),
+                this.criarItemRegraComissao('GESTOR_COMERCIAL', null, 80)
+            ]
+        };
+    }
+
+    private criarItemRegraComissao(role: string, percentage: number | null, fixedAmount: number | null): EnterpriseCommissionRuleItem {
+        return {
+            role,
+            percentage,
+            fixedAmount,
+            paymentMode: 'FIXED_DAY',
+            paymentDay: 5,
+            active: true
+        };
+    }
+
+    private clonarRegraComissao(regra: EnterpriseCommissionRule): EnterpriseCommissionRule {
+        return {
+            ...regra,
+            startsAt: this.toDateInput(regra.startsAt),
+            endsAt: this.toDateInput(regra.endsAt),
+            items: (regra.items || []).map(item => ({ ...item }))
+        };
+    }
+
+    private montarPayloadRegraComissao(enterpriseId: number): EnterpriseCommissionRule {
+        return {
+            ...this.regraComissaoForm,
+            enterpriseId,
+            atoThreshold: this.toNullableNumber(this.regraComissaoForm.atoThreshold),
+            paymentDay: this.toNumberOrDefault(this.regraComissaoForm.paymentDay, 5),
+            startsAt: this.regraComissaoForm.startsAt || null,
+            endsAt: this.regraComissaoForm.endsAt || null,
+            campaignName: this.emptyToNull(this.regraComissaoForm.campaignName),
+            notes: this.emptyToNull(this.regraComissaoForm.notes),
+            items: (this.regraComissaoForm.items || []).map(item => ({
+                ...item,
+                percentage: this.toNullableNumber(item.percentage),
+                fixedAmount: this.toNullableNumber(item.fixedAmount),
+                paymentDay: this.toNullableNumber(item.paymentDay)
+            }))
+        };
+    }
+
+    private validarRegraComissao(regra: EnterpriseCommissionRule): string | null {
+        if (!regra.ruleType) return 'Selecione o tipo da regra de comissão.';
+        if (!regra.paymentDay || regra.paymentDay < 1 || regra.paymentDay > 31) {
+            return 'Informe um dia de pagamento entre 1 e 31.';
+        }
+        if (!regra.items?.length) return 'Inclua ao menos um item de comissão.';
+
+        const itemInvalido = regra.items.find(item =>
+            !item.role || (item.percentage === null && item.fixedAmount === null)
+        );
+        return itemInvalido ? 'Cada item precisa ter cargo e percentual ou valor fixo.' : null;
+    }
+
+    private toNumberOrDefault(value: unknown, fallback: number): number {
+        const numberValue = this.toNullableNumber(value);
+        return numberValue === null ? fallback : numberValue;
+    }
+
+    private emptyToNull(value?: string | null): string | null {
+        return value && value.trim() ? value.trim() : null;
+    }
+
+    private obterMensagemErro(err: any, fallback: string): string {
+        return err?.error?.message || err?.message || fallback;
     }
 }
