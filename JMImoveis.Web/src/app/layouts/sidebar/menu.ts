@@ -252,14 +252,6 @@ export const MENU: MenuItem[] = [
         permissionKey: 'admin.general-settings.view',
       },
       {
-        id: 92,
-        label: 'Usuarios',
-        parentId: 90,
-        disabled: true,
-        alwaysVisible: true,
-        badge: 'Interno',
-      },
-      {
         id: 93,
         label: 'Perfis e Acessos',
         parentId: 90,
