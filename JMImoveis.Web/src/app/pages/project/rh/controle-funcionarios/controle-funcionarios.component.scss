@@ -1,3 +1,101 @@
 :host {
   display: block;
 }
+
+.employee-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.employee-table th,
+.employee-table td {
+  vertical-align: middle;
+}
+
+.employee-table .col-name {
+  width: 28%;
+}
+
+.employee-table .col-role {
+  width: 22%;
+}
+
+.employee-table .col-manager,
+.employee-table .col-coordinator {
+  width: 18%;
+}
+
+.employee-table .col-status {
+  width: 8%;
+  white-space: nowrap;
+}
+
+.employee-table .col-actions {
+  width: 6%;
+  white-space: nowrap;
+}
+
+.cell-ellipsis {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.employee-modal-body {
+  max-height: 72vh;
+  overflow-y: auto;
+}
+
+.employment-type-panel {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #d9e2ef;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.employment-type-select {
+  max-width: 360px;
+}
+
+.employee-form-section-title {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.employee-details-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.employee-details-block {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.employee-details-block h6 {
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.contract-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  background: #f8f9fa;
+}

@@ -3,6 +3,9 @@ import { ModalDirective } from 'ngx-bootstrap/modal';
 import { Cargos, Usuarios } from 'src/app/models/ContaBancaria';
 import { AdminAccessService } from 'src/app/core/services/admin-access.service';
 import { EmployeeControlRow, HrService } from 'src/app/core/services/hr.service';
+import { EmployeeDetails, EmployeeDetailsService } from 'src/app/core/services/employee-details.service';
+import { ExternalCollaboratorDetails, ExternalCollaboratorDetailsService } from 'src/app/core/services/external-collaborator-details.service';
+import { catchError, map, Observable, of, switchMap, throwError } from 'rxjs';
 
 type EmployeeForm = Partial<Usuarios> & {
   password?: string;
@@ -30,25 +33,37 @@ export class ControleFuncionariosComponent implements OnInit {
   managers: Usuarios[] = [];
   coordinators: Usuarios[] = [];
   employeeForm: EmployeeForm = this.createEmptyForm();
+  employeeDetailsForm: EmployeeDetails = this.createEmptyEmployeeDetails();
+  externalDetailsForm: ExternalCollaboratorDetails = this.createEmptyExternalDetails();
+  selectedContractFile: File | null = null;
   formMode: 'new' | 'edit' = 'new';
   loading = false;
   loadingOptions = false;
+  loadingEmployeeDetails = false;
+  loadingExternalDetails = false;
+  uploadingContract = false;
   saving = false;
   errorMessage = '';
   formErrorMessage = '';
   employmentTypes: EmploymentTypeOption[] = [
-    { value: 'FUNCIONARIO', label: 'Funcionário' },
-    { value: 'PJ', label: 'Pessoa Jurídica' },
-    { value: 'PARCEIRO', label: 'Parceiro' },
-    { value: 'TERCEIRO', label: 'Terceiro' },
-    { value: 'CONTADOR', label: 'Contador' },
-    { value: 'DIRETOR', label: 'Diretor' },
-    { value: 'OUTRO', label: 'Outro' },
+    { value: 'FUNCIONARIO', label: 'Funcionário da empresa' },
+    { value: 'PJ', label: 'Pessoa Jurídica / Colaborador externo' },
+  ];
+  private readonly supportedEmploymentTypes = [
+    'FUNCIONARIO',
+    'PJ',
+    'PARCEIRO',
+    'TERCEIRO',
+    'CONTADOR',
+    'DIRETOR',
+    'OUTRO',
   ];
 
   constructor(
     private hrService: HrService,
-    private adminAccessService: AdminAccessService
+    private adminAccessService: AdminAccessService,
+    private employeeDetailsService: EmployeeDetailsService,
+    private externalCollaboratorDetailsService: ExternalCollaboratorDetailsService
   ) {}
 
   ngOnInit(): void {
@@ -106,6 +121,9 @@ export class ControleFuncionariosComponent implements OnInit {
     this.formMode = 'new';
     this.formErrorMessage = '';
     this.employeeForm = this.createEmptyForm();
+    this.employeeDetailsForm = this.createEmptyEmployeeDetails();
+    this.externalDetailsForm = this.createEmptyExternalDetails();
+    this.selectedContractFile = null;
     this.loadCoordinators();
     this.employeeModal?.show();
   }
@@ -126,6 +144,8 @@ export class ControleFuncionariosComponent implements OnInit {
         };
         this.loadCoordinators(user.managerId);
         this.employeeModal?.show();
+        this.loadEmployeeDetails(user.id);
+        this.loadExternalDetails(user.id);
       },
       error: (err) => {
         console.error('Erro ao carregar colaborador', err);
@@ -163,11 +183,25 @@ export class ControleFuncionariosComponent implements OnInit {
       : this.adminAccessService.createUser(payload);
 
     this.saving = true;
-    request.subscribe({
-      next: () => {
+    request.pipe(
+      switchMap((response) => this.resolveSavedUserId(payload, response)),
+      switchMap((userId) => this.saveDetailsByEmploymentType(userId, payload))
+    ).subscribe({
+      next: ({ userId, detailsSaved }) => {
         this.saving = false;
-        this.employeeModal?.hide();
+        if (!detailsSaved) {
+          this.formMode = 'edit';
+          this.employeeForm.id = userId;
+          this.employeeForm.password = '';
+          this.formErrorMessage = this.isExternalType(payload.employmentType)
+            ? 'Colaborador salvo, mas nao foi possivel salvar os dados de PJ/externo. Revise e tente salvar novamente.'
+            : 'Colaborador salvo, mas nao foi possivel salvar os dados admissionais. Revise e tente salvar novamente.';
+          this.loadEmployees();
+          return;
+        }
+
         this.activeTab = this.isExternalType(payload.employmentType) ? 'externos' : 'funcionarios';
+        this.employeeModal?.hide();
         this.loadEmployees();
       },
       error: (err) => {
@@ -178,9 +212,93 @@ export class ControleFuncionariosComponent implements OnInit {
     });
   }
 
+  get shouldShowEmployeeDetails(): boolean {
+    return this.isEmployeeType(this.employeeForm.employmentType);
+  }
+
+  get shouldShowExternalDetails(): boolean {
+    return this.isExternalType(this.employeeForm.employmentType);
+  }
+
+  get basicSectionTitle(): string {
+    return this.shouldShowEmployeeDetails
+      ? 'Dados do Funcionario'
+      : 'Dados da Pessoa Juridica / Colaborador Externo';
+  }
+
+  get nameFieldLabel(): string {
+    return this.shouldShowEmployeeDetails ? 'Nome' : 'Nome / Razao social';
+  }
+
+  get documentFieldLabel(): string {
+    return this.shouldShowEmployeeDetails ? 'CPF' : 'CPF/CNPJ';
+  }
+
+  get shouldShowEmployeeBasicFields(): boolean {
+    return this.shouldShowEmployeeDetails;
+  }
+
   onManagerChange(): void {
     this.employeeForm.coordenatorId = undefined;
     this.loadCoordinators(this.employeeForm.managerId);
+  }
+
+  onEmploymentTypeChange(): void {
+    this.selectedContractFile = null;
+
+    if (this.shouldShowEmployeeDetails) {
+      this.loadEmployeeDetails(this.employeeForm.id);
+      return;
+    }
+
+    if (this.shouldShowExternalDetails) {
+      this.loadExternalDetails(this.employeeForm.id);
+    }
+  }
+
+  onContractFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.selectedContractFile = input.files?.[0] ?? null;
+  }
+
+  uploadContract(): void {
+    const userId = this.employeeForm.id;
+    if (!userId || !this.selectedContractFile) {
+      this.formErrorMessage = 'Salve o colaborador e selecione um arquivo antes de enviar o contrato.';
+      return;
+    }
+
+    this.uploadingContract = true;
+    this.externalCollaboratorDetailsService.uploadContract(userId, this.selectedContractFile).subscribe({
+      next: (details) => {
+        this.externalDetailsForm = this.normalizeExternalDetailsForForm(details);
+        this.selectedContractFile = null;
+        this.uploadingContract = false;
+      },
+      error: (err) => {
+        console.error('Erro ao enviar contrato do colaborador externo', err);
+        this.formErrorMessage = err?.error?.message || 'Nao foi possivel enviar o contrato.';
+        this.uploadingContract = false;
+      },
+    });
+  }
+
+  openContract(): void {
+    if (!this.employeeForm.id) {
+      return;
+    }
+
+    this.externalCollaboratorDetailsService.downloadContract(this.employeeForm.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      },
+      error: (err) => {
+        console.error('Erro ao abrir contrato do colaborador externo', err);
+        this.formErrorMessage = err?.error?.message || 'Nao foi possivel abrir o contrato.';
+      },
+    });
   }
 
   private loadOptions(): void {
@@ -233,6 +351,58 @@ export class ControleFuncionariosComponent implements OnInit {
     return payload;
   }
 
+  private buildEmployeeDetailsPayload(userId: number): EmployeeDetails {
+    return {
+      ...this.employeeDetailsForm,
+      userId,
+      rg: this.normalizeText(this.employeeDetailsForm.rg),
+      rgIssueDate: this.normalizeDateInput(this.employeeDetailsForm.rgIssueDate),
+      rgIssuer: this.normalizeText(this.employeeDetailsForm.rgIssuer),
+      rgState: this.normalizeText(this.employeeDetailsForm.rgState),
+      birthDate: this.normalizeDateInput(this.employeeDetailsForm.birthDate),
+      birthCity: this.normalizeText(this.employeeDetailsForm.birthCity),
+      birthState: this.normalizeText(this.employeeDetailsForm.birthState),
+      nationality: this.normalizeText(this.employeeDetailsForm.nationality),
+      maritalStatus: this.normalizeText(this.employeeDetailsForm.maritalStatus),
+      spouseName: this.normalizeText(this.employeeDetailsForm.spouseName),
+      fatherName: this.normalizeText(this.employeeDetailsForm.fatherName),
+      motherName: this.normalizeText(this.employeeDetailsForm.motherName),
+      educationLevel: this.normalizeText(this.employeeDetailsForm.educationLevel),
+      educationStatus: this.normalizeText(this.employeeDetailsForm.educationStatus),
+      ctpsNumber: this.normalizeText(this.employeeDetailsForm.ctpsNumber),
+      ctpsSeries: this.normalizeText(this.employeeDetailsForm.ctpsSeries),
+      ctpsState: this.normalizeText(this.employeeDetailsForm.ctpsState),
+      ctpsIssueDate: this.normalizeDateInput(this.employeeDetailsForm.ctpsIssueDate),
+      pisPasep: this.normalizeText(this.employeeDetailsForm.pisPasep),
+      voterTitle: this.normalizeText(this.employeeDetailsForm.voterTitle),
+      voterZone: this.normalizeText(this.employeeDetailsForm.voterZone),
+      voterSection: this.normalizeText(this.employeeDetailsForm.voterSection),
+      reservistNumber: this.normalizeText(this.employeeDetailsForm.reservistNumber),
+      reservistCategory: this.normalizeText(this.employeeDetailsForm.reservistCategory),
+      salary: this.normalizeOptionalDecimal(this.employeeDetailsForm.salary),
+      functionName: this.normalizeText(this.employeeDetailsForm.functionName),
+      monthlyWorkload: this.normalizeOptionalDecimal(this.employeeDetailsForm.monthlyWorkload),
+      weeklyWorkload: this.normalizeOptionalDecimal(this.employeeDetailsForm.weeklyWorkload),
+      dayOff: this.normalizeText(this.employeeDetailsForm.dayOff),
+      experienceContractDays: this.normalizeOptionalInteger(this.employeeDetailsForm.experienceContractDays),
+      experienceExtensionDays: this.normalizeOptionalInteger(this.employeeDetailsForm.experienceExtensionDays),
+      transportVoucherDiscount: this.normalizeOptionalDecimal(this.employeeDetailsForm.transportVoucherDiscount),
+      workScheduleNotes: this.normalizeText(this.employeeDetailsForm.workScheduleNotes),
+      dependentNotes: this.normalizeText(this.employeeDetailsForm.dependentNotes),
+      notes: this.normalizeText(this.employeeDetailsForm.notes),
+    };
+  }
+
+  private buildExternalDetailsPayload(userId: number): ExternalCollaboratorDetails {
+    return {
+      ...this.externalDetailsForm,
+      userId,
+      startDate: this.normalizeDateInput(this.externalDetailsForm.startDate),
+      endDate: this.normalizeDateInput(this.externalDetailsForm.endDate),
+      notes: this.normalizeText(this.externalDetailsForm.notes),
+    };
+  }
+
   private createEmptyForm(): EmployeeForm {
     return {
       name: '',
@@ -249,6 +419,149 @@ export class ControleFuncionariosComponent implements OnInit {
       coordenatorId: undefined,
       gestorId: undefined,
     };
+  }
+
+  private createEmptyEmployeeDetails(): EmployeeDetails {
+    return {
+      firstJob: null,
+      hasDependents: null,
+    };
+  }
+
+  private createEmptyExternalDetails(): ExternalCollaboratorDetails {
+    return {};
+  }
+
+  private loadEmployeeDetails(userId?: number): void {
+    this.employeeDetailsForm = this.createEmptyEmployeeDetails();
+
+    if (!userId || !this.shouldShowEmployeeDetails) {
+      return;
+    }
+
+    this.loadingEmployeeDetails = true;
+    this.employeeDetailsService.getByUserId(userId).subscribe({
+      next: (details) => {
+        this.employeeDetailsForm = this.normalizeEmployeeDetailsForForm(details);
+        this.loadingEmployeeDetails = false;
+      },
+      error: (err) => {
+        this.loadingEmployeeDetails = false;
+        if (err?.status === 404) {
+          this.employeeDetailsForm = this.createEmptyEmployeeDetails();
+          return;
+        }
+
+        console.error('Erro ao carregar dados admissionais', err);
+        this.formErrorMessage = 'Nao foi possivel carregar os dados admissionais. Os dados basicos podem ser editados normalmente.';
+      },
+    });
+  }
+
+  private saveEmployeeDetailsIfNeeded(userId: number, payload: Usuarios): Observable<{ userId: number; detailsSaved: boolean }> {
+    if (!this.isEmployeeType(payload.employmentType)) {
+      return of({ userId, detailsSaved: true });
+    }
+
+    return this.employeeDetailsService.upsertByUserId(userId, this.buildEmployeeDetailsPayload(userId)).pipe(
+      map(() => ({ userId, detailsSaved: true })),
+      catchError((err) => {
+        console.error('Erro ao salvar dados admissionais', err);
+        return of({ userId, detailsSaved: false });
+      })
+    );
+  }
+
+  private saveDetailsByEmploymentType(userId: number, payload: Usuarios): Observable<{ userId: number; detailsSaved: boolean }> {
+    if (this.isEmployeeType(payload.employmentType)) {
+      return this.saveEmployeeDetailsIfNeeded(userId, payload);
+    }
+
+    if (this.isExternalType(payload.employmentType)) {
+      return this.externalCollaboratorDetailsService.upsertByUserId(userId, this.buildExternalDetailsPayload(userId)).pipe(
+        switchMap(() => this.uploadSelectedContractIfNeeded(userId)),
+        map(() => ({ userId, detailsSaved: true })),
+        catchError((err) => {
+          console.error('Erro ao salvar dados do colaborador externo', err);
+          return of({ userId, detailsSaved: false });
+        })
+      );
+    }
+
+    return of({ userId, detailsSaved: true });
+  }
+
+  private uploadSelectedContractIfNeeded(userId: number): Observable<ExternalCollaboratorDetails | null> {
+    if (!this.selectedContractFile) {
+      return of(null);
+    }
+
+    return this.externalCollaboratorDetailsService.uploadContract(userId, this.selectedContractFile).pipe(
+      map((details) => {
+        this.externalDetailsForm = this.normalizeExternalDetailsForForm(details);
+        this.selectedContractFile = null;
+        return details;
+      })
+    );
+  }
+
+  private loadExternalDetails(userId?: number): void {
+    this.externalDetailsForm = this.createEmptyExternalDetails();
+
+    if (!userId || !this.shouldShowExternalDetails) {
+      return;
+    }
+
+    this.loadingExternalDetails = true;
+    this.externalCollaboratorDetailsService.getByUserId(userId).subscribe({
+      next: (details) => {
+        this.externalDetailsForm = this.normalizeExternalDetailsForForm(details);
+        this.loadingExternalDetails = false;
+      },
+      error: (err) => {
+        this.loadingExternalDetails = false;
+        if (err?.status === 404) {
+          this.externalDetailsForm = this.createEmptyExternalDetails();
+          return;
+        }
+
+        console.error('Erro ao carregar dados do colaborador externo', err);
+        this.formErrorMessage = 'Nao foi possivel carregar os dados de PJ/externo. Os dados basicos podem ser editados normalmente.';
+      },
+    });
+  }
+
+  private resolveSavedUserId(payload: Usuarios, response: unknown): Observable<number> {
+    const responseId = this.extractUserIdFromResponse(response);
+    if (responseId) {
+      return of(responseId);
+    }
+
+    if (this.formMode === 'edit' && payload.id) {
+      return of(payload.id);
+    }
+
+    const email = payload.email?.trim().toLowerCase();
+    if (!email) {
+      return throwError(() => new Error('Nao foi possivel identificar o usuario criado.'));
+    }
+
+    return this.adminAccessService.listUsersByStatus('all').pipe(
+      map((users) => {
+        const created = (users ?? []).find((user) => user.email?.trim().toLowerCase() === email);
+        if (!created?.id) {
+          throw new Error('Nao foi possivel localizar o usuario criado para salvar os dados admissionais.');
+        }
+
+        return created.id;
+      })
+    );
+  }
+
+  private extractUserIdFromResponse(response: unknown): number | null {
+    const value = response as { id?: number; userId?: number; data?: { id?: number; userId?: number } } | null;
+    const id = value?.id ?? value?.userId ?? value?.data?.id ?? value?.data?.userId;
+    return id && Number.isFinite(Number(id)) ? Number(id) : null;
   }
 
   private normalizeRoleIds(value: number | number[] | undefined): number[] {
@@ -274,8 +587,47 @@ export class ControleFuncionariosComponent implements OnInit {
       return 'FUNCIONARIO';
     }
 
-    const allowed = this.employmentTypes.some((type) => type.value === normalized);
+    const allowed = this.supportedEmploymentTypes.includes(normalized);
     return allowed ? normalized : 'OUTRO';
+  }
+
+  private normalizeEmployeeDetailsForForm(details: EmployeeDetails): EmployeeDetails {
+    return {
+      ...details,
+      rgIssueDate: this.toDateInputValue(details.rgIssueDate),
+      birthDate: this.toDateInputValue(details.birthDate),
+      ctpsIssueDate: this.toDateInputValue(details.ctpsIssueDate),
+    };
+  }
+
+  private normalizeExternalDetailsForForm(details: ExternalCollaboratorDetails): ExternalCollaboratorDetails {
+    return {
+      ...details,
+      startDate: this.toDateInputValue(details.startDate),
+      endDate: this.toDateInputValue(details.endDate),
+    };
+  }
+
+  private normalizeText(value: unknown): string | null {
+    return typeof value === 'string' && value.trim() ? value.trim() : null;
+  }
+
+  private normalizeDateInput(value: unknown): string | null {
+    return typeof value === 'string' && value.trim() ? value.substring(0, 10) : null;
+  }
+
+  private normalizeOptionalDecimal(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) ? numberValue : null;
+  }
+
+  private normalizeOptionalInteger(value: unknown): number | null {
+    const numberValue = this.normalizeOptionalDecimal(value);
+    return numberValue === null ? null : Math.trunc(numberValue);
   }
 
   private isEmployeeType(value?: string | null): boolean {
