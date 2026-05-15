@@ -38,19 +38,26 @@ import { VendasListComponent } from '../vendas/vendas-list/vendas-list.component
 import { ComissoesComponent } from '../financeiro/comissoes/comissoes.component';
 import { FinanceiroDreComponent } from '../financeiro/dre/dre.component';
 import { FinanceiroFluxoCaixaComponent } from '../financeiro/fluxo-caixa/fluxo-caixa.component';
+import { PermissionGuard } from 'src/app/core/guards/permission.guard';
 
 const routes: Routes = [
   {
     path: 'dashboard',
     component: DashboardHomeComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'dashboard.visualizar' },
   },
   {
     path: 'vendas/dashboard',
-    component: DashboardComercialComponent
+    component: DashboardComercialComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'vendas.dashboard.visualizar' },
   },
   {
     path: 'vendas/vendas',
-    component: VendasListComponent
+    component: VendasListComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'vendas.vendas.visualizar' },
   },
   {
     path: 'vendas/visao-geral',
@@ -59,10 +66,14 @@ const routes: Routes = [
   {
     path: 'vendas/new',
     component: VendasNewComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'vendas.vendas.criar' },
   },
   {
     path: 'vendas/edit/:id',
     component: VendasNewComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'vendas.vendas.editar' },
   },
   {
     path: 'vendas/corretor',
@@ -75,6 +86,8 @@ const routes: Routes = [
   {
     path: 'vendas/desistencias',
     component: DesistenciasComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'vendas.cancelamentos.visualizar' },
   },
   {
     path: 'vendas',
@@ -99,54 +112,80 @@ const routes: Routes = [
   {
     path: 'financeiro/centro-custo',
     component: CentroCustoComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'financeiro.centro_custo.visualizar' },
   },
   {
     path: 'financeiro/contas-contabeis',
     component: ContasContabeisComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'financeiro.contas_contabeis.visualizar' },
   },
   {
     path: 'financeiro/contas-pagar',
     component: AccountsPayableComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'financeiro.contas_pagar.visualizar' },
   },
   {
     path: 'financeiro/contas-receber',
     component: AccountsReceivableComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'financeiro.contas_receber.visualizar' },
   },
   {
     path: 'financeiro/dre',
     component: FinanceiroDreComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'financeiro.dre.visualizar' },
   },
   {
     path: 'financeiro/comissoes',
     component: ComissoesComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'financeiro.comissoes.visualizar' },
   },
   {
     path: 'financeiro/fluxo-caixa',
     component: FinanceiroFluxoCaixaComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'financeiro.fluxo_caixa.visualizar' },
   },
   {
     path: 'financeiro/projecao',
     component: ProjecaoComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'financeiro.projecao.visualizar' },
   },
   {
     path: 'rh/controle-funcionarios',
     component: ControleFuncionariosComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'rh.colaboradores.visualizar' },
   },
   {
     path: 'rh/controle-faltas',
     component: ControleFaltasComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'rh.faltas.visualizar' },
   },
   {
     path: 'rh/folha-pagamentos',
     component: FolhaPagamentosComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'rh.folha_pagamentos.visualizar' },
   },
   {
     path: 'rh/ferias',
     component: FeriasComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'rh.ferias.visualizar' },
   },
   {
     path: 'rh/controle-uniforme',
     component: ControleUniformeComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'rh.uniformes.visualizar' },
   },
   {
     path: 'leads',
@@ -156,6 +195,8 @@ const routes: Routes = [
   {
     path: 'atendimento/leads/listagem',
     component: LeadsComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.leads.visualizar' },
   },
   {
     path: 'atendimento/leads/andamento',
@@ -174,14 +215,20 @@ const routes: Routes = [
   {
     path: 'clientes',
     component: ClientListComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.clientes.visualizar' },
   },
   {
     path: 'settings',
     component: GeraisComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'administracao.gerais.visualizar' },
   },
   {
     path: 'configuracoes/perfis-acessos',
     component: PerfisAcessosComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'administracao.perfis_acessos.visualizar' },
   },
   {
     path: 'construtora',
@@ -206,6 +253,8 @@ const routes: Routes = [
   {
     path: 'atendimento/agendamento',
     component: VisitasComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.agendamento.visualizar' },
   },
   {
     path: 'comparecimento',

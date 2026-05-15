@@ -4,6 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { MenuItem } from './menu.model';
 import { MENU } from './menu';
+import { Permission, PermissionsService } from 'src/app/core/services/permissions.service';
+import { SessionService } from 'src/app/core/session/session.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -20,16 +22,15 @@ export class SidebarComponent {
 
   constructor(
     private router: Router,
+    private permissionsService: PermissionsService,
+    private sessionService: SessionService,
     public translate: TranslateService
   ) {
     translate.setDefaultLang('en');
   }
 
   ngOnInit(): void {
-    // A aplicacao de users.menu_json no sidebar fica para uma etapa futura.
-    // Nesta etapa o sidebar deve continuar usando o MENU oficial completo.
-    this.menuItems = this.normalizeMenuLinks(MENU);
-    setTimeout(() => this.initActiveMenu(), 0);
+    this.loadMenuWithPermissionState();
 
     this.router.events.subscribe((event) => {
       if (
@@ -48,6 +49,26 @@ export class SidebarComponent {
     setTimeout(() => {
       this.initActiveMenu();
     }, 0);
+  }
+
+  private loadMenuWithPermissionState(): void {
+    const userId = this.resolveCurrentUserId();
+
+    if (!userId) {
+      this.applyFullMenuFallback();
+      return;
+    }
+
+    this.permissionsService.getUserEffectivePermissions(userId).subscribe({
+      next: (permissions) => {
+        this.menuItems = this.applyPermissionStateToMenu(permissions);
+        setTimeout(() => this.initActiveMenu(), 0);
+      },
+      error: (err) => {
+        console.warn('Nao foi possivel carregar permissoes efetivas. Usando MENU oficial.', err);
+        this.applyFullMenuFallback();
+      },
+    });
   }
 
   private normalizeSubItems(items: MenuItem[]): MenuItem[] {
@@ -89,6 +110,141 @@ export class SidebarComponent {
 
     walk(clone);
     return clone;
+  }
+
+  private applyPermissionStateToMenu(permissions: Permission[] | null | undefined): MenuItem[] {
+    const officialMenu = this.normalizeMenuLinks(MENU);
+    const permissionKeys = this.extractPermissionKeys(permissions);
+
+    if (!permissionKeys.size || permissionKeys.has('sistema.admin.total')) {
+      return officialMenu;
+    }
+
+    return this.markPermissionDisabledItems(officialMenu, permissionKeys);
+  }
+
+  private markPermissionDisabledItems(items: MenuItem[], permissionKeys: Set<string>): MenuItem[] {
+    return items.map((item) => {
+      const subItems = item.subItems?.length
+        ? this.markPermissionDisabledItems(item.subItems, permissionKeys)
+        : undefined;
+      const permissionDisabled = this.shouldDisableByPermission(item, permissionKeys);
+
+      return {
+        ...item,
+        subItems,
+        permissionDisabled,
+      };
+    });
+  }
+
+  private shouldDisableByPermission(item: MenuItem, permissionKeys: Set<string>): boolean {
+    if (item.isTitle || item.alwaysVisible) {
+      return false;
+    }
+
+    if (item.permissionKey) {
+      return !permissionKeys.has(item.permissionKey);
+    }
+
+    if (item.permissionKeys?.length) {
+      return !item.permissionKeys.some((permissionKey) => permissionKeys.has(permissionKey));
+    }
+
+    return false;
+  }
+
+  private extractPermissionKeys(permissions: Permission[] | null | undefined): Set<string> {
+    const keys = new Set<string>();
+
+    for (const permission of permissions ?? []) {
+      const key = permission.permissionKey ?? permission.permission_key;
+      if (key) {
+        keys.add(key);
+      }
+    }
+
+    return keys;
+  }
+
+  private applyFullMenuFallback(): void {
+    this.menuItems = this.normalizeMenuLinks(MENU);
+    setTimeout(() => this.initActiveMenu(), 0);
+  }
+
+  private resolveCurrentUserId(): number | null {
+    const sessionUserId = this.sessionService.getCurrentUserId();
+    if (sessionUserId) {
+      return sessionUserId;
+    }
+
+    const storedUserId =
+      this.extractUserIdFromStorage('currentUser') ??
+      this.extractUserIdFromStorage('authUser');
+
+    if (storedUserId) {
+      return storedUserId;
+    }
+
+    return this.extractUserIdFromToken(localStorage.getItem('token'));
+  }
+
+  private extractUserIdFromStorage(key: string): number | null {
+    const raw = localStorage.getItem(key) ?? sessionStorage.getItem(key);
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      const user = JSON.parse(raw);
+      return this.normalizeUserId(
+        user?.id ??
+        user?.Id ??
+        user?.userId ??
+        user?.user_id ??
+        user?.sub
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  private extractUserIdFromToken(token: string | null): number | null {
+    if (!token) {
+      return null;
+    }
+
+    const normalizedToken = token.replace(/^Bearer\s+/i, '').trim();
+    const payload = normalizedToken.split('.')[1];
+
+    if (!payload) {
+      return null;
+    }
+
+    try {
+      const json = JSON.parse(atob(this.toBase64(payload)));
+      return this.normalizeUserId(
+        json?.id ??
+        json?.Id ??
+        json?.userId ??
+        json?.user_id ??
+        json?.nameid ??
+        json?.sub
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  private normalizeUserId(value: unknown): number | null {
+    const id = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }
+
+  private toBase64(value: string): string {
+    const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+    const padding = base64.length % 4;
+    return padding ? base64 + '='.repeat(4 - padding) : base64;
   }
 
   removeActivation(items: any) {
@@ -288,7 +444,11 @@ export class SidebarComponent {
   }
 
   isDisabled(item: MenuItem | undefined | null): boolean {
-    return !!item?.disabled;
+    return !!item?.disabled || !!item?.permissionDisabled;
+  }
+
+  isPermissionDisabled(item: MenuItem | undefined | null): boolean {
+    return !!item?.permissionDisabled;
   }
 
   blockNavigation(event: Event): void {

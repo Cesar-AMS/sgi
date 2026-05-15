@@ -65,6 +65,8 @@ namespace JMImoveisAPI.Configurations
             services.AddScoped<IExternalCollaboratorDetailsService, ExternalCollaboratorDetailsService>();
             services.AddScoped<IEmployeeDocumentRepository, EmployeeDocumentRepository>();
             services.AddScoped<IEmployeeDocumentService, EmployeeDocumentService>();
+            services.AddScoped<IPermissionRepository, PermissionRepository>();
+            services.AddScoped<IPermissionService, PermissionService>();
 
             services.AddScoped<IProposalService, ProposalService>();
             services.AddScoped<IVendaCriacaoService, VendaCriacaoService>();

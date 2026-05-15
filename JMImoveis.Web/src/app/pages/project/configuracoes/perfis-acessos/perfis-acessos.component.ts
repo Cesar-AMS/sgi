@@ -1,15 +1,20 @@
 import { Component, OnInit } from '@angular/core';
-import { MenuItem } from 'src/app/layouts/sidebar/menu.model';
-import { MENU } from 'src/app/layouts/sidebar/menu';
+import { forkJoin } from 'rxjs';
+import { AdminAccessService } from 'src/app/core/services/admin-access.service';
 import { EmployeeControlRow, HrService } from 'src/app/core/services/hr.service';
-import { UserMenuService } from 'src/app/core/services/user-menu.service';
+import {
+  Permission,
+  PermissionsService,
+  UserPermissionOverride
+} from 'src/app/core/services/permissions.service';
+import { Cargos } from 'src/app/models/ContaBancaria';
 
-type AccessTreeNode = {
-  item: MenuItem;
-  checked: boolean;
-  indeterminate: boolean;
-  children: AccessTreeNode[];
+type PermissionGroup = {
+  module: string;
+  permissions: Permission[];
 };
+
+type OverrideEffect = 'DEFAULT' | 'ALLOW' | 'DENY';
 
 @Component({
   selector: 'app-perfis-acessos',
@@ -17,49 +22,73 @@ type AccessTreeNode = {
   styleUrls: ['./perfis-acessos.component.scss'],
 })
 export class PerfisAcessosComponent implements OnInit {
+  roles: Cargos[] = [];
   collaborators: EmployeeControlRow[] = [];
   filteredCollaborators: EmployeeControlRow[] = [];
+
+  permissions: Permission[] = [];
+  permissionGroups: PermissionGroup[] = [];
+
+  selectedRole?: Cargos;
   selectedCollaborator?: EmployeeControlRow;
-  accessTree: AccessTreeNode[] = [];
+
+  selectedRolePermissionIds = new Set<number>();
+  effectivePermissionIds = new Set<number>();
+  userOverrideEffects = new Map<number, OverrideEffect>();
+
   searchTerm = '';
-  loadingCollaborators = false;
-  loadingMenu = false;
-  saving = false;
+
+  loadingInitialData = false;
+  loadingRolePermissions = false;
+  loadingUserPermissions = false;
+  savingRolePermissions = false;
+  savingUserOverrides = false;
+
   successMessage = '';
   errorMessage = '';
-  checkedMenuCount = 0;
-
-  private readonly catalogMenu = this.normalizeMenuLinks(MENU);
 
   constructor(
     private hrService: HrService,
-    private userMenuService: UserMenuService
-  ) {}
+    private adminAccessService: AdminAccessService,
+    private permissionsService: PermissionsService
+  ) { }
 
   ngOnInit(): void {
-    this.loadCollaborators();
+    this.loadInitialData();
   }
 
-  loadCollaborators(): void {
-    this.loadingCollaborators = true;
+  loadInitialData(): void {
+    this.loadingInitialData = true;
+    this.successMessage = '';
     this.errorMessage = '';
 
-    this.hrService.getEmployeeControl().subscribe({
-      next: (rows) => {
-        this.collaborators = rows ?? [];
+    forkJoin({
+      collaborators: this.hrService.getEmployeeControl(),
+      roles: this.adminAccessService.listRoles(),
+      permissions: this.permissionsService.getPermissions(),
+    }).subscribe({
+      next: ({ collaborators, roles, permissions }) => {
+        this.collaborators = collaborators ?? [];
+        this.roles = (roles ?? [])
+          .filter((role) => role?.id)
+          .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+        this.permissions = permissions ?? [];
+        this.permissionGroups = this.groupPermissionsByModule(this.permissions);
+        this.resetOverrideEffects();
         this.applySearch();
-        this.loadingCollaborators = false;
+        this.loadingInitialData = false;
       },
       error: (err) => {
-        console.error('Erro ao carregar colaboradores para perfis e acessos', err);
-        this.errorMessage = 'Nao foi possivel carregar os colaboradores.';
-        this.loadingCollaborators = false;
+        console.error('Erro ao carregar dados de Perfis e Acessos', err);
+        this.errorMessage = 'Nao foi possivel carregar os dados de Perfis e Acessos.';
+        this.loadingInitialData = false;
       },
     });
   }
 
   applySearch(): void {
     const term = this.normalizeSearch(this.searchTerm);
+
     if (!term) {
       this.filteredCollaborators = [...this.collaborators];
       return;
@@ -78,229 +107,265 @@ export class PerfisAcessosComponent implements OnInit {
     });
   }
 
+  selectRole(role: Cargos): void {
+    this.selectedRole = role;
+    this.selectedRolePermissionIds = new Set<number>();
+    this.successMessage = '';
+    this.errorMessage = '';
+    this.loadRolePermissions(role.id);
+  }
+
   selectCollaborator(collaborator: EmployeeControlRow): void {
-    this.selectedCollaborator = collaborator;
-    this.successMessage = '';
-    this.errorMessage = '';
-    this.accessTree = this.buildTree(new Set<string>());
-    this.checkedMenuCount = 0;
-    this.loadCollaboratorMenu(collaborator.id);
-  }
-
-  clearSelection(): void {
-    this.selectedCollaborator = undefined;
-    this.accessTree = [];
-    this.checkedMenuCount = 0;
-    this.successMessage = '';
-    this.errorMessage = '';
-    this.loadingMenu = false;
-    this.saving = false;
-  }
-
-  private loadCollaboratorMenu(collaboratorId: number, successMessage?: string): void {
-    this.loadingMenu = true;
-    this.userMenuService.getUserMenu(collaboratorId).subscribe({
-      next: (menu) => {
-        const allowedLinks = this.extractLinks(Array.isArray(menu) ? menu : []);
-        this.accessTree = this.buildTree(allowedLinks);
-        this.updateCheckedMenuCount();
-        this.successMessage = successMessage ?? '';
-        this.loadingMenu = false;
-      },
-      error: (err) => {
-        console.error('Erro ao carregar acessos do colaborador', err);
-        this.errorMessage = 'Nao foi possivel carregar os acessos deste colaborador.';
-        this.loadingMenu = false;
-      },
-    });
-  }
-
-  toggleNode(node: AccessTreeNode, checked: boolean): void {
-    node.checked = checked;
-    node.indeterminate = false;
-    this.setChildrenChecked(node, checked);
-    this.refreshTreeState();
-    this.updateCheckedMenuCount();
-  }
-
-  applyDefaultMenu(): void {
-    this.accessTree = this.buildTree(this.extractLinks(this.catalogMenu));
-    this.updateCheckedMenuCount();
-    this.successMessage = '';
-    this.errorMessage = '';
-  }
-
-  clearMenu(): void {
-    this.accessTree = this.buildTree(new Set<string>());
-    this.updateCheckedMenuCount();
-    this.successMessage = '';
-    this.errorMessage = '';
-  }
-
-  saveAccess(): void {
-    if (!this.selectedCollaborator) {
-      this.errorMessage = 'Selecione um colaborador antes de salvar.';
+    if (!collaborator?.id) {
+      this.errorMessage = 'Colaborador sem ID valido. Nao foi possivel carregar permissoes.';
       return;
     }
 
-    const menu = this.buildMenuFromTree(this.accessTree);
-    this.saving = true;
+    this.selectedCollaborator = collaborator;
+    this.effectivePermissionIds = new Set<number>();
+    this.resetOverrideEffects();
+    this.successMessage = '';
+    this.errorMessage = '';
+    this.loadUserPermissions(collaborator.id);
+  }
+
+  clearRoleSelection(): void {
+    this.selectedRole = undefined;
+    this.selectedRolePermissionIds = new Set<number>();
+    this.successMessage = '';
+    this.errorMessage = '';
+    this.loadingRolePermissions = false;
+    this.savingRolePermissions = false;
+  }
+
+  clearUserSelection(): void {
+    this.selectedCollaborator = undefined;
+    this.effectivePermissionIds = new Set<number>();
+    this.resetOverrideEffects();
+    this.successMessage = '';
+    this.errorMessage = '';
+    this.loadingUserPermissions = false;
+    this.savingUserOverrides = false;
+  }
+
+  toggleRolePermission(permission: Permission, checked: boolean): void {
+    const permissionId = Number(permission.id);
+
+    if (!permissionId) {
+      return;
+    }
+
+    if (checked) {
+      this.selectedRolePermissionIds.add(permissionId);
+    } else {
+      this.selectedRolePermissionIds.delete(permissionId);
+    }
+  }
+
+  isRolePermissionChecked(permission: Permission): boolean {
+    return this.selectedRolePermissionIds.has(Number(permission.id));
+  }
+
+  setAllRolePermissions(checked: boolean): void {
+    if (checked) {
+      this.selectedRolePermissionIds = new Set(this.permissions.map((permission) => Number(permission.id)));
+    } else {
+      this.selectedRolePermissionIds = new Set<number>();
+    }
+
+    this.successMessage = '';
+    this.errorMessage = '';
+  }
+
+  saveRolePermissions(): void {
+    if (!this.selectedRole) {
+      this.errorMessage = 'Selecione um perfil/cargo antes de salvar.';
+      return;
+    }
+
+    const permissionIds = Array.from(this.selectedRolePermissionIds);
+
+    this.savingRolePermissions = true;
     this.successMessage = '';
     this.errorMessage = '';
 
-    this.userMenuService.updateUserMenu(this.selectedCollaborator.id, menu).subscribe({
+    this.permissionsService.updateRolePermissions(this.selectedRole.id, permissionIds).subscribe({
       next: () => {
-        this.saving = false;
-        this.loadCollaboratorMenu(
-          this.selectedCollaborator!.id,
-          'Acessos salvos e confirmados com sucesso.'
-        );
+        this.savingRolePermissions = false;
+        this.successMessage = 'Permissoes do perfil/cargo salvas com sucesso.';
+        this.loadRolePermissions(this.selectedRole!.id, false);
       },
       error: (err) => {
-        console.error('Erro ao salvar acessos do colaborador', err);
-        this.errorMessage = 'Nao foi possivel salvar os acessos.';
-        this.saving = false;
+        console.error('Erro ao salvar permissoes do perfil/cargo', err);
+        this.errorMessage = 'Nao foi possivel salvar as permissoes do perfil/cargo.';
+        this.savingRolePermissions = false;
       },
     });
+  }
+
+  setOverrideEffect(permission: Permission, effect: OverrideEffect): void {
+    const permissionId = Number(permission.id);
+
+    if (!permissionId) {
+      return;
+    }
+
+    this.userOverrideEffects.set(permissionId, effect);
+    this.successMessage = '';
+    this.errorMessage = '';
+  }
+
+  getOverrideEffect(permission: Permission): OverrideEffect {
+    return this.userOverrideEffects.get(Number(permission.id)) ?? 'DEFAULT';
+  }
+
+  isEffectivePermission(permission: Permission): boolean {
+    return this.effectivePermissionIds.has(Number(permission.id));
+  }
+
+  saveUserOverrides(): void {
+    if (!this.selectedCollaborator) {
+      this.errorMessage = 'Selecione um colaborador antes de salvar excecoes.';
+      return;
+    }
+
+    const overrides: UserPermissionOverride[] = Array.from(this.userOverrideEffects.entries())
+      .filter(([, effect]) => effect === 'ALLOW' || effect === 'DENY')
+      .map(([permissionId, effect]) => ({
+        permissionId,
+        effect: effect as 'ALLOW' | 'DENY',
+      }));
+
+    this.savingUserOverrides = true;
+    this.successMessage = '';
+    this.errorMessage = '';
+
+    this.permissionsService.updateUserOverrides(this.selectedCollaborator.id, overrides).subscribe({
+      next: () => {
+        this.savingUserOverrides = false;
+        this.successMessage = 'Excecoes do colaborador salvas com sucesso.';
+        this.loadUserPermissions(this.selectedCollaborator!.id, false);
+      },
+      error: (err) => {
+        console.error('Erro ao salvar excecoes do colaborador', err);
+        this.errorMessage = 'Nao foi possivel salvar as excecoes do colaborador.';
+        this.savingUserOverrides = false;
+      },
+    });
+  }
+
+  trackRole(_: number, role: Cargos): number {
+    return role.id;
   }
 
   trackCollaborator(_: number, collaborator: EmployeeControlRow): number {
     return collaborator.id;
   }
 
-  trackNode(_: number, node: AccessTreeNode): string {
-    return `${node.item.id ?? ''}-${node.item.link ?? node.item.label ?? ''}`;
+  trackGroup(_: number, group: PermissionGroup): string {
+    return group.module;
   }
 
-  private buildTree(allowedLinks: Set<string>): AccessTreeNode[] {
-    const nodes = this.catalogMenu
-      .filter((item) => !item.isTitle)
-      .map((item) => this.toTreeNode(item, allowedLinks))
-      .filter((node) => this.hasConfigurableAccess(node));
-
-    this.updateNodesState(nodes);
-    return nodes;
+  trackPermission(_: number, permission: Permission): number {
+    return permission.id;
   }
 
-  private toTreeNode(item: MenuItem, allowedLinks: Set<string>): AccessTreeNode {
-    const children = (item.subItems ?? [])
-      .filter((child) => !child.isTitle)
-      .map((child) => this.toTreeNode(child, allowedLinks))
-      .filter((node) => this.hasConfigurableAccess(node));
-
-    return {
-      item,
-      checked: !!item.link && allowedLinks.has(this.normalizeLink(item.link)),
-      indeterminate: false,
-      children,
-    };
+  getPermissionKey(permission: Permission): string {
+    return permission.permissionKey ?? permission.permission_key ?? '';
   }
 
-  private setChildrenChecked(node: AccessTreeNode, checked: boolean): void {
-    for (const child of node.children) {
-      child.checked = checked;
-      child.indeterminate = false;
-      this.setChildrenChecked(child, checked);
-    }
+  get selectedRolePermissionCount(): number {
+    return this.selectedRolePermissionIds.size;
   }
 
-  private hasConfigurableAccess(node: AccessTreeNode): boolean {
-    return !!node.item.link || node.children.length > 0;
+  get effectivePermissionCount(): number {
+    return this.effectivePermissionIds.size;
   }
 
-  private refreshTreeState(): void {
-    this.updateNodesState(this.accessTree);
+  get overrideCount(): number {
+    return Array.from(this.userOverrideEffects.values())
+      .filter((effect) => effect === 'ALLOW' || effect === 'DENY')
+      .length;
   }
 
-  private updateNodesState(nodes: AccessTreeNode[]): void {
-    for (const node of nodes) {
-      this.updateNodesState(node.children);
-
-      if (!node.children.length) {
-        node.indeterminate = false;
-        continue;
-      }
-
-      const checkedChildren = node.children.filter((child) => child.checked).length;
-      const indeterminateChildren = node.children.some((child) => child.indeterminate);
-
-      node.checked = checkedChildren === node.children.length;
-      node.indeterminate = !node.checked && (checkedChildren > 0 || indeterminateChildren);
-    }
-  }
-
-  private updateCheckedMenuCount(): void {
-    this.checkedMenuCount = this.countCheckedLinks(this.accessTree);
-  }
-
-  private countCheckedLinks(nodes: AccessTreeNode[]): number {
-    return nodes.reduce((total, node) => {
-      const selfCount = node.item.link && node.checked ? 1 : 0;
-      return total + selfCount + this.countCheckedLinks(node.children);
-    }, 0);
-  }
-
-  private buildMenuFromTree(nodes: AccessTreeNode[]): MenuItem[] {
-    return nodes
-      .map((node) => this.buildMenuItemFromNode(node))
-      .filter((item): item is MenuItem => !!item);
-  }
-
-  private buildMenuItemFromNode(node: AccessTreeNode): MenuItem | null {
-    const children = this.buildMenuFromTree(node.children);
-    const hasDirectAccess = !!node.item.link && node.checked;
-
-    if (!hasDirectAccess && !children.length) {
-      return null;
+  private loadRolePermissions(roleId: number, showLoading = true): void {
+    if (showLoading) {
+      this.loadingRolePermissions = true;
     }
 
-    return {
-      ...node.item,
-      subItems: children.length ? children : undefined,
-    };
+    this.permissionsService.getRolePermissions(roleId).subscribe({
+      next: (rolePermissions) => {
+        this.selectedRolePermissionIds = new Set(
+          (rolePermissions ?? []).map((permission) => Number(permission.id))
+        );
+        this.loadingRolePermissions = false;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar permissoes do perfil/cargo', err);
+        this.errorMessage = 'Nao foi possivel carregar as permissoes deste perfil/cargo.';
+        this.loadingRolePermissions = false;
+      },
+    });
   }
 
-  private extractLinks(menu: MenuItem[]): Set<string> {
-    const links = new Set<string>();
+  private loadUserPermissions(userId: number, showLoading = true): void {
+    if (showLoading) {
+      this.loadingUserPermissions = true;
+    }
 
-    const walk = (items: MenuItem[]) => {
-      for (const item of items ?? []) {
-        if (item.link) {
-          links.add(this.normalizeLink(item.link));
+    forkJoin({
+      overrides: this.permissionsService.getUserOverrides(userId),
+      effective: this.permissionsService.getUserEffectivePermissions(userId),
+    }).subscribe({
+      next: ({ overrides, effective }) => {
+        this.resetOverrideEffects();
+
+        for (const override of overrides ?? []) {
+          const permissionId = Number(override.permissionId ?? override.permission_id);
+          if (permissionId && (override.effect === 'ALLOW' || override.effect === 'DENY')) {
+            this.userOverrideEffects.set(permissionId, override.effect);
+          }
         }
 
-        if (item.subItems?.length) {
-          walk(item.subItems);
-        }
+        this.effectivePermissionIds = new Set(
+          (effective ?? []).map((permission) => Number(permission.id))
+        );
+
+        this.loadingUserPermissions = false;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar permissoes efetivas/excecoes do colaborador', err);
+        this.errorMessage = 'Nao foi possivel carregar as permissoes deste colaborador.';
+        this.loadingUserPermissions = false;
+      },
+    });
+  }
+
+  private resetOverrideEffects(): void {
+    this.userOverrideEffects = new Map(
+      this.permissions.map((permission) => [Number(permission.id), 'DEFAULT' as OverrideEffect])
+    );
+  }
+
+  private groupPermissionsByModule(permissions: Permission[]): PermissionGroup[] {
+    const groups = new Map<string, Permission[]>();
+
+    for (const permission of permissions ?? []) {
+      const moduleName = permission.module || 'Geral';
+
+      if (!groups.has(moduleName)) {
+        groups.set(moduleName, []);
       }
-    };
 
-    walk(menu);
-    return links;
-  }
+      groups.get(moduleName)!.push(permission);
+    }
 
-  private normalizeMenuLinks(items: MenuItem[]): MenuItem[] {
-    const clone: MenuItem[] = JSON.parse(JSON.stringify(items || []));
-
-    const walk = (arr: MenuItem[]) => {
-      for (const item of arr) {
-        if (item.link) {
-          item.link = this.normalizeLink(item.link);
-        }
-
-        if (item.subItems?.length) {
-          walk(item.subItems);
-        }
-      }
-    };
-
-    walk(clone);
-    return clone;
-  }
-
-  private normalizeLink(link: string): string {
-    const trimmed = link.trim();
-    return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return Array.from(groups.entries())
+      .map(([module, modulePermissions]) => ({
+        module,
+        permissions: modulePermissions.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+      }))
+      .sort((a, b) => a.module.localeCompare(b.module, 'pt-BR'));
   }
 
   private normalizeSearch(value?: string | null): string {

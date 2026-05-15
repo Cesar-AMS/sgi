@@ -2,9 +2,16 @@
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
     <div>
       <h4 class="mb-1">Perfis e Acessos</h4>
-      <p class="text-muted mb-0">Controle visual dos menus liberados para cada colaborador.</p>
+      <p class="text-muted mb-0">
+        Controle real de permissões por perfil/cargo e exceções individuais por colaborador.
+      </p>
     </div>
-    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="loadCollaborators()" [disabled]="loadingCollaborators">
+
+    <button
+      type="button"
+      class="btn btn-outline-secondary btn-sm"
+      (click)="loadInitialData()"
+      [disabled]="loadingInitialData">
       Atualizar
     </button>
   </div>
@@ -17,112 +24,238 @@
     {{ successMessage }}
   </div>
 
-  <div class="row g-3">
-    <div class="col-12 col-xl-4">
-      <div class="access-panel">
-        <div class="access-panel-header">
-          <div>
-            <h5 class="mb-1">Colaboradores</h5>
-            <span class="text-muted small">{{ filteredCollaborators.length }} registro(s)</span>
-          </div>
+  <div *ngIf="loadingInitialData" class="text-muted text-center py-4">
+    Carregando dados de perfis, colaboradores e permissões...
+  </div>
+
+  <div *ngIf="!loadingInitialData" class="access-layout">
+    <div class="access-panel role-panel">
+      <div class="access-panel-header">
+        <div>
+          <h5 class="mb-1">Perfis / Cargos</h5>
+          <span class="text-muted small">{{ roles.length }} registro(s)</span>
+        </div>
+      </div>
+
+      <div *ngIf="!roles.length" class="empty-state">
+        Nenhum perfil/cargo encontrado.
+      </div>
+
+      <div *ngIf="roles.length" class="item-list role-list">
+        <button
+          type="button"
+          class="list-item"
+          *ngFor="let role of roles; trackBy: trackRole"
+          [class.active]="selectedRole?.id === role.id"
+          (click)="selectRole(role)">
+          <span class="item-title">{{ role.name }}</span>
+          <span class="item-meta">ID {{ role.id }} | {{ role.status ? 'Ativo' : 'Inativo' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="access-panel permissions-panel">
+      <div class="access-panel-header">
+        <div>
+          <h5 class="mb-1">Permissões por Perfil/Cargo</h5>
+
+          <span class="text-muted small" *ngIf="selectedRole">
+            {{ selectedRole.name }} | {{ selectedRolePermissionCount }} permissão(ões) marcada(s)
+          </span>
+
+          <span class="text-muted small" *ngIf="!selectedRole">
+            Selecione um perfil/cargo para configurar as permissões padrão.
+          </span>
         </div>
 
-        <div class="search-box mb-3">
-          <input
-            type="text"
-            class="form-control search"
-            name="accessSearch"
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="applySearch()"
-            placeholder="Pesquisar colaborador...">
-          <i class="ri-search-line search-icon"></i>
-        </div>
-
-        <div *ngIf="loadingCollaborators" class="text-muted text-center py-4">
-          Carregando colaboradores...
-        </div>
-
-        <div *ngIf="!loadingCollaborators && !filteredCollaborators.length" class="empty-state">
-          Nenhum colaborador encontrado.
-        </div>
-
-        <div *ngIf="!loadingCollaborators && filteredCollaborators.length" class="collaborator-list">
+        <div class="access-actions">
           <button
             type="button"
-            class="collaborator-item"
-            *ngFor="let collaborator of filteredCollaborators; trackBy: trackCollaborator"
-            [class.active]="selectedCollaborator?.id === collaborator.id"
-            (click)="selectCollaborator(collaborator)">
-            <span class="collaborator-name">{{ collaborator.name }}</span>
-            <span class="collaborator-meta">{{ collaborator.cargo }}</span>
-            <span class="collaborator-meta">{{ collaborator.employmentTypeLabel }} | {{ collaborator.status }}</span>
+            class="btn btn-outline-secondary btn-sm"
+            (click)="clearRoleSelection()"
+            [disabled]="!selectedRole || savingRolePermissions">
+            Limpar seleção
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            (click)="setAllRolePermissions(false)"
+            [disabled]="!selectedRole || loadingRolePermissions || savingRolePermissions">
+            Desmarcar tudo
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm"
+            (click)="setAllRolePermissions(true)"
+            [disabled]="!selectedRole || loadingRolePermissions || savingRolePermissions">
+            Marcar tudo
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            (click)="saveRolePermissions()"
+            [disabled]="!selectedRole || loadingRolePermissions || savingRolePermissions">
+            {{ savingRolePermissions ? 'Salvando...' : 'Salvar permissões do perfil' }}
           </button>
         </div>
       </div>
+
+      <div *ngIf="!selectedRole" class="empty-state">
+        Escolha um perfil/cargo na lista para visualizar e editar suas permissões.
+      </div>
+
+      <div *ngIf="selectedRole && loadingRolePermissions" class="text-muted text-center py-4">
+        Carregando permissões do perfil/cargo...
+      </div>
+
+      <div *ngIf="selectedRole && !loadingRolePermissions" class="permission-groups">
+        <div class="permission-group" *ngFor="let group of permissionGroups; trackBy: trackGroup">
+          <div class="permission-group-title">{{ group.module }}</div>
+
+          <label class="permission-row" *ngFor="let permission of group.permissions; trackBy: trackPermission">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              [checked]="isRolePermissionChecked(permission)"
+              (change)="toggleRolePermission(permission, $any($event.target).checked)">
+
+            <span class="permission-info">
+              <span class="permission-name">{{ permission.name }}</span>
+              <span class="permission-key">{{ getPermissionKey(permission) }}</span>
+              <span class="permission-description" *ngIf="permission.description">
+                {{ permission.description }}
+              </span>
+            </span>
+          </label>
+        </div>
+      </div>
     </div>
 
-    <div class="col-12 col-xl-8">
-      <div class="access-panel">
-        <div class="access-panel-header">
-          <div>
-            <h5 class="mb-1">Menus liberados</h5>
-            <span class="text-muted small" *ngIf="selectedCollaborator">
-              {{ selectedCollaborator.name }} | {{ checkedMenuCount }} menu(s) marcado(s)
-            </span>
-            <span class="text-muted small" *ngIf="!selectedCollaborator">
-              Selecione um colaborador para configurar.
-            </span>
-          </div>
-          <div class="d-flex flex-wrap gap-2">
-            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearSelection()" [disabled]="!selectedCollaborator || saving">
-              Limpar selecao
-            </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearMenu()" [disabled]="!selectedCollaborator || loadingMenu || saving">
-              Limpar menus
-            </button>
-            <button type="button" class="btn btn-outline-primary btn-sm" (click)="applyDefaultMenu()" [disabled]="!selectedCollaborator || loadingMenu || saving">
-              Aplicar menu padrao
-            </button>
-            <button type="button" class="btn btn-primary btn-sm" (click)="saveAccess()" [disabled]="!selectedCollaborator || loadingMenu || saving">
-              {{ saving ? 'Salvando...' : 'Salvar acessos' }}
-            </button>
-          </div>
+    <div class="access-panel collaborator-panel">
+      <div class="access-panel-header">
+        <div>
+          <h5 class="mb-1">Colaboradores</h5>
+          <span class="text-muted small">{{ filteredCollaborators.length }} registro(s)</span>
+        </div>
+      </div>
+
+      <div class="search-box mb-3">
+        <input
+          type="text"
+          class="form-control search"
+          name="accessSearch"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applySearch()"
+          placeholder="Pesquisar colaborador...">
+        <i class="ri-search-line search-icon"></i>
+      </div>
+
+      <div *ngIf="!filteredCollaborators.length" class="empty-state">
+        Nenhum colaborador encontrado.
+      </div>
+
+      <div *ngIf="filteredCollaborators.length" class="item-list collaborator-list">
+        <button
+          type="button"
+          class="list-item"
+          *ngFor="let collaborator of filteredCollaborators; trackBy: trackCollaborator"
+          [class.active]="selectedCollaborator?.id === collaborator.id"
+          (click)="selectCollaborator(collaborator)">
+          <span class="item-title">{{ collaborator.name }}</span>
+          <span class="item-meta">{{ collaborator.cargo }}</span>
+          <span class="item-meta">{{ collaborator.employmentTypeLabel }} | {{ collaborator.status }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="access-panel exceptions-panel">
+      <div class="access-panel-header">
+        <div>
+          <h5 class="mb-1">Exceções por Usuário</h5>
+
+          <span class="text-muted small" *ngIf="selectedCollaborator">
+            {{ selectedCollaborator.name }} |
+            {{ effectivePermissionCount }} efetiva(s) |
+            {{ overrideCount }} exceção(ões)
+          </span>
+
+          <span class="text-muted small" *ngIf="!selectedCollaborator">
+            Selecione um colaborador para consultar permissões efetivas e exceções.
+          </span>
         </div>
 
-        <div *ngIf="!selectedCollaborator" class="empty-state">
-          Escolha um colaborador na lista para visualizar e editar os acessos.
+        <div class="access-actions">
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            (click)="clearUserSelection()"
+            [disabled]="!selectedCollaborator || savingUserOverrides">
+            Limpar seleção
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            (click)="saveUserOverrides()"
+            [disabled]="!selectedCollaborator || loadingUserPermissions || savingUserOverrides">
+            {{ savingUserOverrides ? 'Salvando...' : 'Salvar exceções' }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="!selectedCollaborator" class="empty-state">
+        Escolha um colaborador na lista para visualizar permissões efetivas e configurar exceções.
+      </div>
+
+      <div *ngIf="selectedCollaborator && loadingUserPermissions" class="text-muted text-center py-4">
+        Carregando permissões efetivas e exceções...
+      </div>
+
+      <div *ngIf="selectedCollaborator && !loadingUserPermissions" class="permission-groups">
+        <div class="access-empty-note">
+          PADRÃO usa as permissões do perfil/cargo. PERMITIR adiciona acesso individual. NEGAR remove acesso individual.
         </div>
 
-        <div *ngIf="selectedCollaborator && loadingMenu" class="text-muted text-center py-4">
-          Carregando acessos...
-        </div>
+        <div class="permission-group" *ngFor="let group of permissionGroups; trackBy: trackGroup">
+          <div class="permission-group-title">{{ group.module }}</div>
 
-        <div *ngIf="selectedCollaborator && !loadingMenu" class="access-tree">
-          <div *ngIf="!checkedMenuCount" class="access-empty-note">
-            Este colaborador nao possui menus liberados no momento.
+          <div class="permission-row override-row" *ngFor="let permission of group.permissions; trackBy: trackPermission">
+            <div class="permission-info">
+              <span class="permission-name">
+                {{ permission.name }}
+                <span
+                  class="badge ms-2"
+                  [class.bg-success]="isEffectivePermission(permission)"
+                  [class.bg-secondary]="!isEffectivePermission(permission)">
+                  {{ isEffectivePermission(permission) ? 'Efetiva' : 'Sem acesso' }}
+                </span>
+              </span>
+
+              <span class="permission-key">{{ getPermissionKey(permission) }}</span>
+
+              <span class="permission-description" *ngIf="permission.description">
+                {{ permission.description }}
+              </span>
+            </div>
+
+            <select
+              class="form-select form-select-sm override-select"
+              [ngModel]="getOverrideEffect(permission)"
+              (ngModelChange)="setOverrideEffect(permission, $event)">
+              <option value="DEFAULT">Padrão</option>
+              <option value="ALLOW">Permitir</option>
+              <option value="DENY">Negar</option>
+            </select>
           </div>
-          <ng-container *ngTemplateOutlet="treeTemplate; context: { nodes: accessTree, level: 0 }"></ng-container>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<ng-template #treeTemplate let-nodes="nodes" let-level="level">
-  <div class="access-node" *ngFor="let node of nodes; trackBy: trackNode" [style.margin-left.rem]="level">
-    <label class="access-node-label">
-      <input
-        class="form-check-input"
-        type="checkbox"
-        [checked]="node.checked"
-        [indeterminate]="node.indeterminate"
-        (change)="toggleNode(node, $any($event.target).checked)">
-      <span class="access-node-text">{{ node.item.label }}</span>
-      <span *ngIf="node.item.badge" class="badge bg-secondary ms-2">{{ node.item.badge }}</span>
-    </label>
-
-    <div *ngIf="node.children.length" class="access-node-children">
-      <ng-container *ngTemplateOutlet="treeTemplate; context: { nodes: node.children, level: level + 1 }"></ng-container>
-    </div>
+  <div class="alert alert-warning mt-3" role="alert">
+    Esta tela configura permissões reais. O sidebar ainda não é filtrado por permissões nesta etapa.
   </div>
-</ng-template>
+</div>
