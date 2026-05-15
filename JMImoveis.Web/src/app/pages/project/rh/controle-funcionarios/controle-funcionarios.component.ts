@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ModalDirective } from 'ngx-bootstrap/modal';
-import { Cargos, Usuarios } from 'src/app/models/ContaBancaria';
+import { Cargos, Filial, Usuarios } from 'src/app/models/ContaBancaria';
 import { AdminAccessService } from 'src/app/core/services/admin-access.service';
 import { EmployeeControlRow, HrService } from 'src/app/core/services/hr.service';
 import { EmployeeDetails, EmployeeDetailsService } from 'src/app/core/services/employee-details.service';
@@ -13,7 +13,7 @@ type EmployeeForm = Partial<Usuarios> & {
   jobpositionId: number[];
 };
 
-type EmployeeTab = 'funcionarios' | 'externos';
+type EmployeeTab = 'funcionarios' | 'externos' | 'sem_registro';
 
 type EmploymentTypeOption = {
   value: string;
@@ -51,6 +51,7 @@ export class ControleFuncionariosComponent implements OnInit {
   rows: EmployeeControlRow[] = [];
   activeTab: EmployeeTab = 'funcionarios';
   roles: Cargos[] = [];
+  branches: Filial[] = [];
   managers: Usuarios[] = [];
   coordinators: Usuarios[] = [];
   employeeForm: EmployeeForm = this.createEmptyForm();
@@ -76,6 +77,7 @@ export class ControleFuncionariosComponent implements OnInit {
   employmentTypes: EmploymentTypeOption[] = [
     { value: 'FUNCIONARIO', label: 'Funcionário da empresa' },
     { value: 'PJ', label: 'Pessoa Jurídica / Colaborador externo' },
+    { value: 'SEM_REGISTRO', label: 'Sem registro' },
   ];
   employeeDocumentTypes: EmployeeDocumentTypeOption[] = [
     { value: 'RG_CPF', label: 'RG / CPF' },
@@ -92,6 +94,7 @@ export class ControleFuncionariosComponent implements OnInit {
   ];
   private readonly supportedEmploymentTypes = [
     'FUNCIONARIO',
+    'SEM_REGISTRO',
     'PJ',
     'PARCEIRO',
     'TERCEIRO',
@@ -136,6 +139,10 @@ export class ControleFuncionariosComponent implements OnInit {
       return this.externalRows;
     }
 
+    if (this.activeTab === 'sem_registro') {
+      return this.unregisteredRows;
+    }
+
     return this.employeeRows;
   }
 
@@ -147,12 +154,20 @@ export class ControleFuncionariosComponent implements OnInit {
     return this.rows.filter((row) => this.isExternalType(row.employmentType));
   }
 
+  get unregisteredRows(): EmployeeControlRow[] {
+    return this.rows.filter((row) => this.isUnregisteredType(row.employmentType));
+  }
+
   get employeeCount(): number {
     return this.employeeRows.length;
   }
 
   get externalCount(): number {
     return this.externalRows.length;
+  }
+
+  get unregisteredCount(): number {
+    return this.unregisteredRows.length;
   }
 
   changeTab(tab: EmployeeTab): void {
@@ -251,7 +266,7 @@ export class ControleFuncionariosComponent implements OnInit {
           return;
         }
 
-        this.activeTab = this.isExternalType(payload.employmentType) ? 'externos' : 'funcionarios';
+        this.activeTab = this.resolveTabByEmploymentType(payload.employmentType);
         this.employeeModal?.hide();
         this.loadEmployees();
       },
@@ -264,7 +279,7 @@ export class ControleFuncionariosComponent implements OnInit {
   }
 
   get shouldShowEmployeeDetails(): boolean {
-    return this.isEmployeeType(this.employeeForm.employmentType);
+    return this.isEmployeeLikeType(this.employeeForm.employmentType);
   }
 
   get shouldShowExternalDetails(): boolean {
@@ -272,6 +287,10 @@ export class ControleFuncionariosComponent implements OnInit {
   }
 
   get basicSectionTitle(): string {
+    if (this.isUnregisteredType(this.employeeForm.employmentType)) {
+      return 'Dados do Funcionario sem registro';
+    }
+
     return this.shouldShowEmployeeDetails
       ? 'Dados do Funcionario'
       : 'Dados da Pessoa Juridica / Colaborador Externo';
@@ -627,6 +646,13 @@ export class ControleFuncionariosComponent implements OnInit {
       error: (err) => console.error('Erro ao carregar gerentes', err),
     });
 
+    this.adminAccessService.listBranches().subscribe({
+      next: (branches) => {
+        this.branches = branches ?? [];
+      },
+      error: (err) => console.error('Erro ao carregar unidades/filiais', err),
+    });
+
     this.loadCoordinators();
   }
 
@@ -866,6 +892,7 @@ export class ControleFuncionariosComponent implements OnInit {
       ctpsState: this.normalizeText(this.employeeDetailsForm.ctpsState),
       ctpsIssueDate: this.normalizeDateInput(this.employeeDetailsForm.ctpsIssueDate),
       pisPasep: this.normalizeText(this.employeeDetailsForm.pisPasep),
+      susNumber: this.normalizeText(this.employeeDetailsForm.susNumber),
       voterTitle: this.normalizeText(this.employeeDetailsForm.voterTitle),
       voterZone: this.normalizeText(this.employeeDetailsForm.voterZone),
       voterSection: this.normalizeText(this.employeeDetailsForm.voterSection),
@@ -907,6 +934,7 @@ export class ControleFuncionariosComponent implements OnInit {
       hidden: false,
       employmentType: 'FUNCIONARIO',
       jobpositionId: [],
+      filial: undefined,
       managerId: undefined,
       coordenatorId: undefined,
       gestorId: undefined,
@@ -1001,7 +1029,7 @@ export class ControleFuncionariosComponent implements OnInit {
   }
 
   private saveEmployeeDetailsIfNeeded(userId: number, payload: Usuarios): Observable<{ userId: number; detailsSaved: boolean }> {
-    if (!this.isEmployeeType(payload.employmentType)) {
+    if (!this.isEmployeeLikeType(payload.employmentType)) {
       return of({ userId, detailsSaved: true });
     }
 
@@ -1015,7 +1043,7 @@ export class ControleFuncionariosComponent implements OnInit {
   }
 
   private saveDetailsByEmploymentType(userId: number, payload: Usuarios): Observable<{ userId: number; detailsSaved: boolean }> {
-    if (this.isEmployeeType(payload.employmentType)) {
+    if (this.isEmployeeLikeType(payload.employmentType)) {
       return this.saveEmployeeDetailsIfNeeded(userId, payload);
     }
 
@@ -1191,9 +1219,30 @@ export class ControleFuncionariosComponent implements OnInit {
     return this.normalizeEmploymentType(value) === 'FUNCIONARIO';
   }
 
+  private isUnregisteredType(value?: string | null): boolean {
+    return this.normalizeEmploymentType(value) === 'SEM_REGISTRO';
+  }
+
+  private isEmployeeLikeType(value?: string | null): boolean {
+    const normalized = this.normalizeEmploymentType(value);
+    return normalized === 'FUNCIONARIO' || normalized === 'SEM_REGISTRO';
+  }
+
   private isExternalType(value?: string | null): boolean {
     return ['PJ', 'PARCEIRO', 'TERCEIRO', 'CONTADOR', 'DIRETOR', 'OUTRO']
       .includes(this.normalizeEmploymentType(value));
+  }
+
+  private resolveTabByEmploymentType(value?: string | null): EmployeeTab {
+    if (this.isExternalType(value)) {
+      return 'externos';
+    }
+
+    if (this.isUnregisteredType(value)) {
+      return 'sem_registro';
+    }
+
+    return 'funcionarios';
   }
 
   private toDateInputValue(value?: string | null): string {

@@ -181,7 +181,7 @@ export class HrService {
       return 'FUNCIONARIO';
     }
 
-    return ['FUNCIONARIO', 'PJ', 'PARCEIRO', 'TERCEIRO', 'CONTADOR', 'DIRETOR', 'OUTRO'].includes(normalized)
+    return ['FUNCIONARIO', 'SEM_REGISTRO', 'PJ', 'PARCEIRO', 'TERCEIRO', 'CONTADOR', 'DIRETOR', 'OUTRO'].includes(normalized)
       ? normalized
       : 'OUTRO';
   }
@@ -189,6 +189,7 @@ export class HrService {
   private getEmploymentTypeLabel(employmentType?: string | null): string {
     const labels: Record<string, string> = {
       FUNCIONARIO: 'Funcionário',
+      SEM_REGISTRO: 'Sem registro',
       PJ: 'Pessoa Jurídica',
       PARCEIRO: 'Parceiro',
       TERCEIRO: 'Terceiro',

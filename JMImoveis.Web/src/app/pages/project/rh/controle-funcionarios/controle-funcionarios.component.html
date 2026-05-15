@@ -23,7 +23,7 @@
             class="nav-link"
             [class.active]="activeTab === 'funcionarios'"
             (click)="changeTab('funcionarios')">
-            Funcionários da empresa
+            Registro de Funcionários
             <span class="badge bg-light text-body ms-1">{{ employeeCount }}</span>
           </button>
         </li>
@@ -35,6 +35,16 @@
             (click)="changeTab('externos')">
             Pessoa Jurídica / Colaboradores externos
             <span class="badge bg-light text-body ms-1">{{ externalCount }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            type="button"
+            class="nav-link"
+            [class.active]="activeTab === 'sem_registro'"
+            (click)="changeTab('sem_registro')">
+            Sem registro
+            <span class="badge bg-light text-body ms-1">{{ unregisteredCount }}</span>
           </button>
         </li>
       </ul>
@@ -137,144 +147,201 @@
               </div>
             </div>
 
-            <div class="col-12 col-md-6">
+            <div *ngIf="shouldShowEmployeeDetails" class="col-12">
+              <div class="employee-details-block">
+                <h6>Dados principais</h6>
+                <div class="row g-3">
+                  <div class="col-12 col-md-3">
+                    <label class="form-label" for="employee-admission">Data de admissao</label>
+                    <input id="employee-admission" class="form-control" type="date" name="admissionDate" [(ngModel)]="employeeForm.admissionDate">
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label" for="employee-cpf">CPF <span class="text-danger">*</span></label>
+                    <input id="employee-cpf" class="form-control" name="cpf" [(ngModel)]="employeeForm.cpf" required>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label" for="employee-name">Nome <span class="text-danger">*</span></label>
+                    <input id="employee-name" class="form-control" name="name" [(ngModel)]="employeeForm.name" required>
+                  </div>
+
+                  <div class="col-12 col-md-4">
+                    <label class="form-label" for="employee-role">Cargo/Perfil <span class="text-danger">*</span></label>
+                    <select
+                      id="employee-role"
+                      class="form-control"
+                      name="jobpositionId"
+                      multiple
+                      [(ngModel)]="employeeForm.jobpositionId"
+                      (ngModelChange)="onRoleChange()"
+                      required
+                      [disabled]="loadingOptions">
+                      <option *ngFor="let role of roles" [ngValue]="role.id">{{ role.name }}</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label" for="employee-function-name">Funcao</label>
+                    <input id="employee-function-name" class="form-control" name="functionName" [(ngModel)]="employeeDetailsForm.functionName">
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label" for="employee-salary">Salario</label>
+                    <input id="employee-salary" class="form-control" type="number" min="0" step="0.01" name="salary" [(ngModel)]="employeeDetailsForm.salary">
+                  </div>
+
+                  <div class="col-12 col-md-6">
+                    <label class="form-label" for="employee-work-schedule-notes">Horario</label>
+                    <textarea id="employee-work-schedule-notes" class="form-control" rows="2" name="workScheduleNotes" [(ngModel)]="employeeDetailsForm.workScheduleNotes"></textarea>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label" for="employee-branch">Unidade</label>
+                    <select id="employee-branch" class="form-control" name="filial" [(ngModel)]="employeeForm.filial">
+                      <option [ngValue]="undefined">Selecione...</option>
+                      <option *ngFor="let branch of branches" [ngValue]="branch.id">{{ branch.name }}</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label" for="employee-transport-voucher-discount">VT Dia</label>
+                    <input id="employee-transport-voucher-discount" class="form-control" type="number" min="0" step="0.01" name="transportVoucherDiscount" [(ngModel)]="employeeDetailsForm.transportVoucherDiscount">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="shouldShowExternalDetails" class="col-12 col-md-6">
               <label class="form-label" for="employee-name">{{ nameFieldLabel }} <span class="text-danger">*</span></label>
               <input id="employee-name" class="form-control" name="name" [(ngModel)]="employeeForm.name" required>
             </div>
 
-            <div class="col-12 col-md-6">
-              <label class="form-label" for="employee-email">Email <span class="text-danger">*</span></label>
-              <input id="employee-email" class="form-control" type="email" name="email" [(ngModel)]="employeeForm.email" required>
-            </div>
-
-            <div class="col-12 col-md-4">
+            <div *ngIf="shouldShowExternalDetails" class="col-12 col-md-6">
               <label class="form-label" for="employee-cpf">{{ documentFieldLabel }} <span class="text-danger">*</span></label>
               <input id="employee-cpf" class="form-control" name="cpf" [(ngModel)]="employeeForm.cpf" required>
             </div>
 
-            <div class="col-12 col-md-4">
-              <label class="form-label" for="employee-phone">Telefone <span class="text-danger">*</span></label>
-              <input id="employee-phone" class="form-control" name="cellphone" [(ngModel)]="employeeForm.cellphone" required>
-            </div>
-
-            <div *ngIf="shouldShowEmployeeBasicFields" class="col-12 col-md-4">
-              <label class="form-label" for="employee-admission">Data de admissao</label>
-              <input id="employee-admission" class="form-control" type="date" name="admissionDate" [(ngModel)]="employeeForm.admissionDate">
+            <div class="col-12">
+              <div class="employee-details-block">
+                <h6>Contato</h6>
+                <div class="row g-3">
+                  <div class="col-12 col-md-4">
+                    <label class="form-label" for="employee-email">E-mail <span class="text-danger">*</span></label>
+                    <input id="employee-email" class="form-control" type="email" name="email" [(ngModel)]="employeeForm.email" required>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label" for="employee-phone">Telefone <span class="text-danger">*</span></label>
+                    <input id="employee-phone" class="form-control" name="cellphone" [(ngModel)]="employeeForm.cellphone" required>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label" for="employee-address">Endereco <span class="text-danger">*</span></label>
+                    <input id="employee-address" class="form-control" name="address" [(ngModel)]="employeeForm.address" required>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="col-12">
-              <label class="form-label" for="employee-address">Endereco <span class="text-danger">*</span></label>
-              <input id="employee-address" class="form-control" name="address" [(ngModel)]="employeeForm.address" required>
+              <div class="employee-details-block">
+                <h6>Acesso e situacao</h6>
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label" for="employee-password">
+                      {{ formMode === 'edit' ? 'Nova senha' : 'Senha inicial' }}
+                      <span *ngIf="formMode === 'new'" class="text-danger">*</span>
+                    </label>
+                    <input
+                      id="employee-password"
+                      class="form-control"
+                      type="password"
+                      name="password"
+                      [(ngModel)]="employeeForm.password"
+                      [required]="formMode === 'new'"
+                      autocomplete="new-password">
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label" for="employee-status">Situacao</label>
+                    <select id="employee-status" class="form-control" name="hidden" [(ngModel)]="employeeForm.hidden">
+                      <option [ngValue]="false">Ativo</option>
+                      <option [ngValue]="true">Desligado/Inativo</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="col-12 col-md-6">
-              <label class="form-label" for="employee-password">
-                {{ formMode === 'edit' ? 'Nova senha' : 'Senha inicial' }}
-                <span *ngIf="formMode === 'new'" class="text-danger">*</span>
-              </label>
-              <input
-                id="employee-password"
-                class="form-control"
-                type="password"
-                name="password"
-                [(ngModel)]="employeeForm.password"
-                [required]="formMode === 'new'"
-                autocomplete="new-password">
-            </div>
+            <div *ngIf="shouldShowEmployeeDetails" class="col-12">
+              <div class="employee-details-block">
+                <h6>Superior</h6>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <small class="text-muted">{{ hierarchyHelpText }}</small>
+                  </div>
 
-            <div class="col-12 col-md-6">
-              <label class="form-label" for="employee-status">Status</label>
-              <select id="employee-status" class="form-control" name="hidden" [(ngModel)]="employeeForm.hidden">
-                <option [ngValue]="false">Ativo</option>
-                <option [ngValue]="true">Inativo</option>
-              </select>
-            </div>
+                  <div *ngIf="shouldShowDirectorField" class="col-12 col-md-3">
+                    <label class="form-label" for="employee-director">
+                      Diretor <span class="text-danger">*</span>
+                    </label>
+                    <select
+                      id="employee-director"
+                      class="form-control"
+                      name="gestorIdDirector"
+                      [(ngModel)]="employeeForm.gestorId"
+                      (ngModelChange)="onDirectorChange()">
+                      <option [ngValue]="undefined">Selecione...</option>
+                      <option *ngFor="let director of directorOptions" [ngValue]="director.id">{{ director.name }}</option>
+                    </select>
+                  </div>
 
-            <div class="col-12 col-md-6">
-              <label class="form-label" for="employee-role">Cargo/Perfil <span class="text-danger">*</span></label>
-              <select
-                id="employee-role"
-                class="form-control"
-                name="jobpositionId"
-                multiple
-                [(ngModel)]="employeeForm.jobpositionId"
-                (ngModelChange)="onRoleChange()"
-                required
-                [disabled]="loadingOptions">
-                <option *ngFor="let role of roles" [ngValue]="role.id">{{ role.name }}</option>
-              </select>
-            </div>
+                  <div *ngIf="shouldShowGestorField" class="col-12 col-md-3">
+                    <label class="form-label" for="employee-gestor">
+                      Gestor <span class="text-danger">*</span>
+                    </label>
+                    <select
+                      id="employee-gestor"
+                      class="form-control"
+                      name="gestorId"
+                      [(ngModel)]="employeeForm.gestorId"
+                      (ngModelChange)="onGestorChange()">
+                      <option [ngValue]="undefined">Selecione...</option>
+                      <option *ngFor="let gestor of gestorOptions" [ngValue]="gestor.id">{{ gestor.name }}</option>
+                    </select>
+                  </div>
 
-            <div *ngIf="shouldShowEmployeeBasicFields" class="col-12">
-              <small class="text-muted">{{ hierarchyHelpText }}</small>
-            </div>
+                  <div *ngIf="shouldShowManagerField" class="col-12 col-md-3">
+                    <label class="form-label" for="employee-manager">
+                      Gerente
+                      <span *ngIf="isSelectedCoordinatorRole || isSelectedSellerRole" class="text-danger">*</span>
+                    </label>
+                    <select
+                      id="employee-manager"
+                      class="form-control"
+                      name="managerId"
+                      [(ngModel)]="employeeForm.managerId"
+                      (ngModelChange)="onManagerChange()">
+                      <option [ngValue]="undefined">Selecione...</option>
+                      <option *ngFor="let manager of managerOptions" [ngValue]="manager.id">{{ manager.name }}</option>
+                    </select>
+                  </div>
 
-            <div *ngIf="shouldShowDirectorField" class="col-12 col-md-3">
-              <label class="form-label" for="employee-director">
-                Diretor <span class="text-danger">*</span>
-              </label>
-              <select
-                id="employee-director"
-                class="form-control"
-                name="gestorIdDirector"
-                [(ngModel)]="employeeForm.gestorId"
-                (ngModelChange)="onDirectorChange()">
-                <option [ngValue]="undefined">Selecione...</option>
-                <option *ngFor="let director of directorOptions" [ngValue]="director.id">{{ director.name }}</option>
-              </select>
-            </div>
-
-            <div *ngIf="shouldShowGestorField" class="col-12 col-md-3">
-              <label class="form-label" for="employee-gestor">
-                Gestor <span class="text-danger">*</span>
-              </label>
-              <select
-                id="employee-gestor"
-                class="form-control"
-                name="gestorId"
-                [(ngModel)]="employeeForm.gestorId"
-                (ngModelChange)="onGestorChange()">
-                <option [ngValue]="undefined">Selecione...</option>
-                <option *ngFor="let gestor of gestorOptions" [ngValue]="gestor.id">{{ gestor.name }}</option>
-              </select>
-            </div>
-
-            <div *ngIf="shouldShowManagerField" class="col-12 col-md-3">
-              <label class="form-label" for="employee-manager">
-                Gerente
-                <span *ngIf="isSelectedCoordinatorRole || isSelectedSellerRole" class="text-danger">*</span>
-              </label>
-              <select
-                id="employee-manager"
-                class="form-control"
-                name="managerId"
-                [(ngModel)]="employeeForm.managerId"
-                (ngModelChange)="onManagerChange()">
-                <option [ngValue]="undefined">Selecione...</option>
-                <option *ngFor="let manager of managerOptions" [ngValue]="manager.id">{{ manager.name }}</option>
-              </select>
-            </div>
-
-            <div *ngIf="shouldShowCoordinatorField" class="col-12 col-md-3">
-              <label class="form-label" for="employee-coordinator">
-                Coordenador
-                <span *ngIf="isSelectedSellerRole" class="text-danger">*</span>
-              </label>
-              <select
-                id="employee-coordinator"
-                class="form-control"
-                name="coordenatorId"
-                [(ngModel)]="employeeForm.coordenatorId"
-                (ngModelChange)="onCoordinatorChange()">
-                <option [ngValue]="undefined">Selecione...</option>
-                <option *ngFor="let coordinator of coordinatorOptions" [ngValue]="coordinator.id">{{ coordinator.name }}</option>
-              </select>
+                  <div *ngIf="shouldShowCoordinatorField" class="col-12 col-md-3">
+                    <label class="form-label" for="employee-coordinator">
+                      Coordenador
+                      <span *ngIf="isSelectedSellerRole" class="text-danger">*</span>
+                    </label>
+                    <select
+                      id="employee-coordinator"
+                      class="form-control"
+                      name="coordenatorId"
+                      [(ngModel)]="employeeForm.coordenatorId"
+                      (ngModelChange)="onCoordinatorChange()">
+                      <option [ngValue]="undefined">Selecione...</option>
+                      <option *ngFor="let coordinator of coordinatorOptions" [ngValue]="coordinator.id">{{ coordinator.name }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div *ngIf="shouldShowEmployeeDetails" class="col-12">
               <div class="employee-details-section">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5 class="mb-0">Dados admissionais / trabalhistas</h5>
+                  <h5 class="mb-0">Dados complementares do registro</h5>
                   <span *ngIf="loadingEmployeeDetails" class="text-muted small">Carregando dados admissionais...</span>
                 </div>
 
@@ -371,6 +438,10 @@
                       <label class="form-label" for="employee-pis-pasep">PIS/PASEP</label>
                       <input id="employee-pis-pasep" class="form-control" name="pisPasep" [(ngModel)]="employeeDetailsForm.pisPasep">
                     </div>
+                    <div class="col-12 col-md-3">
+                      <label class="form-label" for="employee-sus-number">SUS</label>
+                      <input id="employee-sus-number" class="form-control" name="susNumber" [(ngModel)]="employeeDetailsForm.susNumber">
+                    </div>
 
                     <div class="col-12 col-md-3">
                       <label class="form-label" for="employee-voter-title">Titulo de eleitor</label>
@@ -396,7 +467,7 @@
                 </div>
 
                 <div class="employee-details-block">
-                  <h6>Dados admissionais</h6>
+                  <h6>Experiencia</h6>
                   <div class="row g-3">
                     <div class="col-12 col-md-3">
                       <label class="form-label" for="employee-first-job">Primeiro emprego?</label>
@@ -406,15 +477,6 @@
                         <option [ngValue]="false">Nao</option>
                       </select>
                     </div>
-                    <div class="col-12 col-md-3">
-                      <label class="form-label" for="employee-salary">Salario</label>
-                      <input id="employee-salary" class="form-control" type="number" min="0" step="0.01" name="salary" [(ngModel)]="employeeDetailsForm.salary">
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label class="form-label" for="employee-function-name">Funcao</label>
-                      <input id="employee-function-name" class="form-control" name="functionName" [(ngModel)]="employeeDetailsForm.functionName">
-                    </div>
-
                     <div class="col-12 col-md-3">
                       <label class="form-label" for="employee-monthly-workload">Carga horaria mensal</label>
                       <input id="employee-monthly-workload" class="form-control" type="number" min="0" step="0.01" name="monthlyWorkload" [(ngModel)]="employeeDetailsForm.monthlyWorkload">
@@ -427,31 +489,23 @@
                       <label class="form-label" for="employee-day-off">Dia de folga</label>
                       <input id="employee-day-off" class="form-control" name="dayOff" [(ngModel)]="employeeDetailsForm.dayOff">
                     </div>
-                    <div class="col-12 col-md-3">
-                      <label class="form-label" for="employee-transport-voucher-discount">Desconto vale transporte</label>
-                      <input id="employee-transport-voucher-discount" class="form-control" type="number" min="0" step="0.01" name="transportVoucherDiscount" [(ngModel)]="employeeDetailsForm.transportVoucherDiscount">
-                    </div>
 
                     <div class="col-12 col-md-3">
-                      <label class="form-label" for="employee-experience-contract-days">Experiencia em dias</label>
+                      <label class="form-label" for="employee-experience-contract-days">Contrato de experiencia (dias)</label>
                       <input id="employee-experience-contract-days" class="form-control" type="number" min="0" step="1" name="experienceContractDays" [(ngModel)]="employeeDetailsForm.experienceContractDays">
                     </div>
                     <div class="col-12 col-md-3">
-                      <label class="form-label" for="employee-experience-extension-days">Prorrogacao em dias</label>
+                      <label class="form-label" for="employee-experience-extension-days">Prorrogacao da experiencia (dias)</label>
                       <input id="employee-experience-extension-days" class="form-control" type="number" min="0" step="1" name="experienceExtensionDays" [(ngModel)]="employeeDetailsForm.experienceExtensionDays">
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label class="form-label" for="employee-work-schedule-notes">Horario/jornada de trabalho</label>
-                      <textarea id="employee-work-schedule-notes" class="form-control" rows="2" name="workScheduleNotes" [(ngModel)]="employeeDetailsForm.workScheduleNotes"></textarea>
                     </div>
                   </div>
                 </div>
 
                 <div class="employee-details-block mb-0">
-                  <h6>Dependentes e observacoes</h6>
+                  <h6>Dependente e observacoes</h6>
                   <div class="row g-3">
                     <div class="col-12 col-md-3">
-                      <label class="form-label" for="employee-has-dependents">Possui dependentes?</label>
+                      <label class="form-label" for="employee-has-dependents">Dependente?</label>
                       <select id="employee-has-dependents" class="form-control" name="hasDependents" [(ngModel)]="employeeDetailsForm.hasDependents">
                         <option [ngValue]="null">Selecione...</option>
                         <option [ngValue]="true">Sim</option>
@@ -459,7 +513,7 @@
                       </select>
                     </div>
                     <div class="col-12 col-md-9">
-                      <label class="form-label" for="employee-dependent-notes">Observacoes sobre dependentes</label>
+                      <label class="form-label" for="employee-dependent-notes">Dependente (nome, CPF, parentesco)</label>
                       <textarea id="employee-dependent-notes" class="form-control" rows="2" name="dependentNotes" [(ngModel)]="employeeDetailsForm.dependentNotes"></textarea>
                     </div>
                     <div class="col-12">

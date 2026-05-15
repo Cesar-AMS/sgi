@@ -438,6 +438,7 @@ namespace JMImoveisAPI.Repositories
             var allowedTypes = new HashSet<string>
             {
                 "FUNCIONARIO",
+                "SEM_REGISTRO",
                 "PJ",
                 "PARCEIRO",
                 "TERCEIRO",
