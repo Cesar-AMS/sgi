@@ -26,6 +26,7 @@ import { ControleUniformeComponent } from './rh/controle-uniforme/controle-unifo
 import { FeriasComponent } from './rh/ferias/ferias.component';
 import { FolhaPagamentosComponent } from './rh/folha-pagamentos/folha-pagamentos.component';
 import { ComparecimentosComponent as StandaloneComparecimentosComponent } from './comparecimentos/comparecimentos.component';
+import { PerfisAcessosComponent } from './configuracoes/perfis-acessos/perfis-acessos.component';
 import { VisitasComponent } from './visitas/visitas.component';
 import { CorretorComponent } from './vendas/corretor/corretor.component';
 import { DesistenciasComponent } from './vendas/desistencias/desistencias.component';
@@ -177,6 +178,10 @@ const routes: Routes = [
   {
     path: 'settings',
     component: GeraisComponent,
+  },
+  {
+    path: 'configuracoes/perfis-acessos',
+    component: PerfisAcessosComponent,
   },
   {
     path: 'construtora',

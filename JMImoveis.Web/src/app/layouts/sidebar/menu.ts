@@ -254,10 +254,9 @@ export const MENU: MenuItem[] = [
       {
         id: 93,
         label: 'Perfis e Acessos',
+        link: '/jm/configuracoes/perfis-acessos',
         parentId: 90,
-        disabled: true,
-        alwaysVisible: true,
-        badge: 'Interno',
+        permissionKey: 'admin.profiles.view',
       },
       {
         id: 94,

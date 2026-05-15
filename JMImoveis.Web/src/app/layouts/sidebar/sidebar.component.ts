@@ -4,9 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { MenuItem } from './menu.model';
 import { MENU } from './menu';
-import { UserMenuService } from 'src/app/core/services/user-menu.service';
-import { SessionService } from 'src/app/core/session/session.service';
-import { PermissionService } from 'src/app/core/permissions/permission.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -23,31 +20,16 @@ export class SidebarComponent {
 
   constructor(
     private router: Router,
-    private userMenuService: UserMenuService,
-    private sessionService: SessionService,
-    private permissionService: PermissionService,
     public translate: TranslateService
   ) {
     translate.setDefaultLang('en');
   }
 
   ngOnInit(): void {
-    const userId = this.sessionService.getCurrentUserId() ?? 0;
-
-    this.userMenuService.getUserMenu(userId).subscribe((userMenu: MenuItem[] | any) => {
-      const permissionState = this.permissionService.getCurrentPermissionState();
-      const hasPermissionContext =
-        permissionState.permissions.length > 0 || !!permissionState.profile;
-      const normalizedDomainMenu = this.normalizeMenuLinks(MENU);
-
-      // O menu do frontend passa a ser a fonte principal.
-      // O filtro por permissão só entra quando houver contexto de perfil/permissão.
-      this.menuItems = hasPermissionContext
-        ? this.permissionService.filterSidebarMenu(normalizedDomainMenu)
-        : normalizedDomainMenu;
-
-      setTimeout(() => this.initActiveMenu(), 0);
-    });
+    // A aplicacao de users.menu_json no sidebar fica para uma etapa futura.
+    // Nesta etapa o sidebar deve continuar usando o MENU oficial completo.
+    this.menuItems = this.normalizeMenuLinks(MENU);
+    setTimeout(() => this.initActiveMenu(), 0);
 
     this.router.events.subscribe((event) => {
       if (

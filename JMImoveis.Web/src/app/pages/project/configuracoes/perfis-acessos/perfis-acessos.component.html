@@ -1,0 +1,128 @@
+<div class="container-fluid py-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+    <div>
+      <h4 class="mb-1">Perfis e Acessos</h4>
+      <p class="text-muted mb-0">Controle visual dos menus liberados para cada colaborador.</p>
+    </div>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="loadCollaborators()" [disabled]="loadingCollaborators">
+      Atualizar
+    </button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success" role="alert">
+    {{ successMessage }}
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-4">
+      <div class="access-panel">
+        <div class="access-panel-header">
+          <div>
+            <h5 class="mb-1">Colaboradores</h5>
+            <span class="text-muted small">{{ filteredCollaborators.length }} registro(s)</span>
+          </div>
+        </div>
+
+        <div class="search-box mb-3">
+          <input
+            type="text"
+            class="form-control search"
+            name="accessSearch"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="applySearch()"
+            placeholder="Pesquisar colaborador...">
+          <i class="ri-search-line search-icon"></i>
+        </div>
+
+        <div *ngIf="loadingCollaborators" class="text-muted text-center py-4">
+          Carregando colaboradores...
+        </div>
+
+        <div *ngIf="!loadingCollaborators && !filteredCollaborators.length" class="empty-state">
+          Nenhum colaborador encontrado.
+        </div>
+
+        <div *ngIf="!loadingCollaborators && filteredCollaborators.length" class="collaborator-list">
+          <button
+            type="button"
+            class="collaborator-item"
+            *ngFor="let collaborator of filteredCollaborators; trackBy: trackCollaborator"
+            [class.active]="selectedCollaborator?.id === collaborator.id"
+            (click)="selectCollaborator(collaborator)">
+            <span class="collaborator-name">{{ collaborator.name }}</span>
+            <span class="collaborator-meta">{{ collaborator.cargo }}</span>
+            <span class="collaborator-meta">{{ collaborator.employmentTypeLabel }} | {{ collaborator.status }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-8">
+      <div class="access-panel">
+        <div class="access-panel-header">
+          <div>
+            <h5 class="mb-1">Menus liberados</h5>
+            <span class="text-muted small" *ngIf="selectedCollaborator">
+              {{ selectedCollaborator.name }} | {{ checkedMenuCount }} menu(s) marcado(s)
+            </span>
+            <span class="text-muted small" *ngIf="!selectedCollaborator">
+              Selecione um colaborador para configurar.
+            </span>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearSelection()" [disabled]="!selectedCollaborator || saving">
+              Limpar selecao
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearMenu()" [disabled]="!selectedCollaborator || loadingMenu || saving">
+              Limpar menus
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm" (click)="applyDefaultMenu()" [disabled]="!selectedCollaborator || loadingMenu || saving">
+              Aplicar menu padrao
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" (click)="saveAccess()" [disabled]="!selectedCollaborator || loadingMenu || saving">
+              {{ saving ? 'Salvando...' : 'Salvar acessos' }}
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="!selectedCollaborator" class="empty-state">
+          Escolha um colaborador na lista para visualizar e editar os acessos.
+        </div>
+
+        <div *ngIf="selectedCollaborator && loadingMenu" class="text-muted text-center py-4">
+          Carregando acessos...
+        </div>
+
+        <div *ngIf="selectedCollaborator && !loadingMenu" class="access-tree">
+          <div *ngIf="!checkedMenuCount" class="access-empty-note">
+            Este colaborador nao possui menus liberados no momento.
+          </div>
+          <ng-container *ngTemplateOutlet="treeTemplate; context: { nodes: accessTree, level: 0 }"></ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #treeTemplate let-nodes="nodes" let-level="level">
+  <div class="access-node" *ngFor="let node of nodes; trackBy: trackNode" [style.margin-left.rem]="level">
+    <label class="access-node-label">
+      <input
+        class="form-check-input"
+        type="checkbox"
+        [checked]="node.checked"
+        [indeterminate]="node.indeterminate"
+        (change)="toggleNode(node, $any($event.target).checked)">
+      <span class="access-node-text">{{ node.item.label }}</span>
+      <span *ngIf="node.item.badge" class="badge bg-secondary ms-2">{{ node.item.badge }}</span>
+    </label>
+
+    <div *ngIf="node.children.length" class="access-node-children">
+      <ng-container *ngTemplateOutlet="treeTemplate; context: { nodes: node.children, level: level + 1 }"></ng-container>
+    </div>
+  </div>
+</ng-template>

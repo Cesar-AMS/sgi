@@ -58,6 +58,7 @@ import { VendasListComponent } from '../vendas/vendas-list/vendas-list.component
 import { ComissoesComponent } from '../financeiro/comissoes/comissoes.component';
 import { FinanceiroDreComponent } from '../financeiro/dre/dre.component';
 import { FinanceiroFluxoCaixaComponent } from '../financeiro/fluxo-caixa/fluxo-caixa.component';
+import { PerfisAcessosComponent } from './configuracoes/perfis-acessos/perfis-acessos.component';
 @NgModule({
   declarations: [
     ViewCorretorComponent,
@@ -94,6 +95,7 @@ import { FinanceiroFluxoCaixaComponent } from '../financeiro/fluxo-caixa/fluxo-c
     ComissoesComponent,
     FinanceiroDreComponent,
     FinanceiroFluxoCaixaComponent,
+    PerfisAcessosComponent,
   ],
   imports: [
     CommonModule,
