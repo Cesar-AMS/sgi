@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS jmoficial.employee_details (
   ctps_state VARCHAR(2) NULL,
   ctps_issue_date DATE NULL,
   pis_pasep VARCHAR(30) NULL,
+  sus_number VARCHAR(40) NULL,
   voter_title VARCHAR(40) NULL,
   voter_zone VARCHAR(20) NULL,
   voter_section VARCHAR(20) NULL,

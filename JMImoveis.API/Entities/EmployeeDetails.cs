@@ -25,6 +25,7 @@ namespace JMImoveisAPI.Entities
         public string? CtpsState { get; set; }
         public DateTime? CtpsIssueDate { get; set; }
         public string? PisPasep { get; set; }
+        public string? SusNumber { get; set; }
         public string? VoterTitle { get; set; }
         public string? VoterZone { get; set; }
         public string? VoterSection { get; set; }

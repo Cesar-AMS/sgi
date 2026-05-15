@@ -25,6 +25,7 @@ export type EmployeeDetails = {
   ctpsState?: string | null;
   ctpsIssueDate?: string | null;
   pisPasep?: string | null;
+  susNumber?: string | null;
   voterTitle?: string | null;
   voterZone?: string | null;
   voterSection?: string | null;
