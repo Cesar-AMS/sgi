@@ -58,7 +58,7 @@
       </div>
 
       <div class="alert alert-info mb-3" role="alert">
-        Fluxo de criacao, bloqueio, reativacao e reset de senha sera implementado em etapa posterior.
+        Criacao de convite por e-mail e troca obrigatoria no primeiro login serao implementadas em etapa posterior.
       </div>
 
       <div *ngIf="!collaborators.length" class="empty-state">
@@ -121,6 +121,14 @@
                   <span *ngIf="getCredentialAccessEnabled(collaborator) === null" class="text-muted small">
                     Acao indisponivel
                   </span>
+
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    (click)="$event.preventDefault(); $event.stopPropagation(); openPasswordReset(collaborator)"
+                    [disabled]="savingPassword">
+                    {{ savingPassword && passwordCollaborator?.id === collaborator.id ? 'Salvando...' : 'Redefinir senha' }}
+                  </button>
                 </div>
               </td>
             </tr>
@@ -128,6 +136,72 @@
         </table>
       </div>
     </div>
+  </div>
+
+  <div
+    *ngIf="activeTab === 'credentials' && passwordCollaborator"
+    class="password-reset-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="passwordResetTitle">
+    <div class="password-reset-panel">
+        <div class="password-reset-header">
+          <div>
+            <h6 id="passwordResetTitle" class="mb-1">Redefinir senha</h6>
+            <div class="text-muted small">
+              {{ passwordCollaborator.name }} | {{ passwordCollaborator.email || 'Sem e-mail cadastrado' }}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            (click)="closePasswordReset()"
+            [disabled]="savingPassword">
+            Fechar
+          </button>
+        </div>
+
+        <div *ngIf="passwordErrorMessage" class="alert alert-danger py-2" role="alert">
+          {{ passwordErrorMessage }}
+        </div>
+
+        <div class="password-reset-fields">
+          <label class="form-label">
+            Nova senha
+            <input
+              type="password"
+              class="form-control"
+              name="credentialNewPassword"
+              [(ngModel)]="passwordForm.newPassword"
+              [disabled]="savingPassword"
+              autocomplete="new-password">
+          </label>
+
+          <label class="form-label">
+            Confirmar nova senha
+            <input
+              type="password"
+              class="form-control"
+              name="credentialConfirmPassword"
+              [(ngModel)]="passwordForm.confirmPassword"
+              [disabled]="savingPassword"
+              autocomplete="new-password">
+          </label>
+        </div>
+
+        <div class="password-reset-actions">
+          <span class="text-muted small">Minimo de {{ minimumPasswordLength }} caracteres.</span>
+
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            (click)="savePasswordReset()"
+            [disabled]="savingPassword">
+            {{ savingPassword ? 'Salvando...' : 'Salvar senha' }}
+          </button>
+        </div>
+      </div>
   </div>
 
   <div *ngIf="!loadingInitialData && activeTab === 'permissions'" class="access-layout">

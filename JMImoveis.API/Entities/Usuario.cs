@@ -52,6 +52,12 @@ namespace JMImoveisAPI.Entities
         public bool AccessEnabled { get; set; }
     }
 
+    public class UpdateUserPasswordRequest
+    {
+        public string? NewPassword { get; set; }
+        public string? ConfirmPassword { get; set; }
+    }
+
     public class MenuItemDto
     {
         public int Id { get; set; }

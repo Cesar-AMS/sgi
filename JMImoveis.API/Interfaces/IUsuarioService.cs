@@ -18,6 +18,7 @@ namespace JMImoveisAPI.Interfaces
         Task CreateAsync(Usuario entity);
         Task<bool> UpdateAsync(Usuario entity);
         Task<bool> UpdateAccessEnabledAsync(int id, bool accessEnabled);
+        Task<bool> UpdatePasswordAsync(int id, string? newPassword, string? confirmPassword);
         Task<bool> DeleteAsync(int id);
     }
 }

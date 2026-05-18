@@ -45,6 +45,7 @@ type HierarchyOption = {
 })
 export class ControleFuncionariosComponent implements OnInit {
   @ViewChild('employeeModal', { static: false }) employeeModal?: ModalDirective;
+  @ViewChild('employeeModalBody', { static: false }) employeeModalBody?: ElementRef<HTMLElement>;
   @ViewChild('employeeDocumentFileInput', { static: false }) employeeDocumentFileInput?: ElementRef<HTMLInputElement>;
 
   rows: EmployeeControlRow[] = [];
@@ -216,24 +217,24 @@ export class ControleFuncionariosComponent implements OnInit {
     this.formErrorMessage = '';
 
     if (!this.employeeForm.name?.trim() || !this.employeeForm.email?.trim()) {
-      this.formErrorMessage = 'Preencha nome e email.';
+      this.setFormError('Preencha nome e email.');
       return;
     }
 
     if (!this.employeeForm.cpf?.trim() || !this.employeeForm.cellphone?.trim() || !this.employeeForm.address?.trim()) {
-      this.formErrorMessage = 'Preencha CPF, telefone e endereco.';
+      this.setFormError('Preencha CPF, telefone e endereco.');
       return;
     }
 
     if (!this.employeeForm.jobpositionId?.length) {
-      this.formErrorMessage = 'Selecione pelo menos um cargo/perfil.';
+      this.setFormError('Selecione pelo menos um cargo/perfil.');
       return;
     }
 
     this.applyHierarchyBySelectedRole();
     const hierarchyError = this.validateCommercialHierarchy();
     if (hierarchyError) {
-      this.formErrorMessage = hierarchyError;
+      this.setFormError(hierarchyError);
       return;
     }
 
@@ -266,7 +267,7 @@ export class ControleFuncionariosComponent implements OnInit {
       error: (err) => {
         console.error('Erro ao salvar colaborador', err);
         this.saving = false;
-        this.formErrorMessage = err?.error?.message || 'Nao foi possivel salvar o colaborador.';
+        this.setFormError(err?.error?.message || 'Nao foi possivel salvar o colaborador.');
       },
     });
   }
@@ -730,6 +731,11 @@ export class ControleFuncionariosComponent implements OnInit {
     return null;
   }
 
+  private setFormError(message: string): void {
+    this.formErrorMessage = message;
+    setTimeout(() => this.employeeModalBody?.nativeElement.scrollTo({ top: 0, behavior: 'smooth' }));
+  }
+
   private applyManagerFromSelectedCoordinator(): void {
     const coordinatorId = this.normalizeOptionalNumber(this.employeeForm.coordenatorId);
     if (!coordinatorId) {
@@ -849,6 +855,7 @@ export class ControleFuncionariosComponent implements OnInit {
       ...this.employeeForm,
       jobpositionId: this.normalizeRoleIds(this.employeeForm.jobpositionId),
       hidden: !!this.employeeForm.hidden,
+      admissionDate: this.normalizeDateInput(this.employeeForm.admissionDate),
       employmentType: this.normalizeEmploymentType(this.employeeForm.employmentType),
       managerId: this.normalizeOptionalNumber(this.employeeForm.managerId),
       coordenatorId: this.normalizeOptionalNumber(this.employeeForm.coordenatorId),

@@ -46,9 +46,17 @@ export class PerfisAcessosComponent implements OnInit {
   savingRolePermissions = false;
   savingUserOverrides = false;
   updatingAccessIds = new Set<number>();
+  savingPassword = false;
 
   successMessage = '';
   errorMessage = '';
+  passwordErrorMessage = '';
+  passwordCollaborator?: EmployeeControlRow;
+  passwordForm = {
+    newPassword: '',
+    confirmPassword: '',
+  };
+  readonly minimumPasswordLength = 8;
 
   constructor(
     private hrService: HrService,
@@ -359,6 +367,91 @@ export class PerfisAcessosComponent implements OnInit {
     });
   }
 
+  openPasswordReset(collaborator: EmployeeControlRow): void {
+    if (this.savingPassword) {
+      return;
+    }
+
+    if (!collaborator?.id) {
+      this.errorMessage = 'Usuario sem ID valido. Nao foi possivel redefinir a senha.';
+      return;
+    }
+
+    this.passwordCollaborator = collaborator;
+    this.passwordForm = {
+      newPassword: '',
+      confirmPassword: '',
+    };
+    this.passwordErrorMessage = '';
+    this.successMessage = '';
+    this.errorMessage = '';
+  }
+
+  closePasswordReset(): void {
+    if (this.savingPassword) {
+      return;
+    }
+
+    this.passwordCollaborator = undefined;
+    this.passwordForm = {
+      newPassword: '',
+      confirmPassword: '',
+    };
+    this.passwordErrorMessage = '';
+  }
+
+  savePasswordReset(): void {
+    if (!this.passwordCollaborator?.id) {
+      this.passwordErrorMessage = 'Usuario sem ID valido. Nao foi possivel redefinir a senha.';
+      return;
+    }
+
+    const newPassword = this.passwordForm.newPassword ?? '';
+    const confirmPassword = this.passwordForm.confirmPassword ?? '';
+
+    if (!newPassword.trim()) {
+      this.passwordErrorMessage = 'Informe a nova senha.';
+      return;
+    }
+
+    if (!confirmPassword.trim()) {
+      this.passwordErrorMessage = 'Confirme a nova senha.';
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      this.passwordErrorMessage = 'A confirmacao da senha nao confere.';
+      return;
+    }
+
+    if (newPassword.length < this.minimumPasswordLength) {
+      this.passwordErrorMessage = `A senha deve ter pelo menos ${this.minimumPasswordLength} caracteres.`;
+      return;
+    }
+
+    this.savingPassword = true;
+    this.passwordErrorMessage = '';
+    this.successMessage = '';
+    this.errorMessage = '';
+
+    this.adminAccessService.updateUserPassword(
+      this.passwordCollaborator.id,
+      newPassword,
+      confirmPassword
+    ).subscribe({
+      next: () => {
+        this.savingPassword = false;
+        this.successMessage = 'Senha redefinida com sucesso.';
+        this.closePasswordReset();
+      },
+      error: (err) => {
+        console.error('Erro ao redefinir senha do usuario', err);
+        this.savingPassword = false;
+        this.passwordErrorMessage = this.resolvePasswordUpdateErrorMessage(err);
+      },
+    });
+  }
+
   private updateLocalCredentialAccess(userId: number, accessEnabled: boolean): void {
     const updateRow = (row: EmployeeControlRow) => {
       if (row.id === userId) {
@@ -388,6 +481,26 @@ export class PerfisAcessosComponent implements OnInit {
     }
 
     return 'Nao foi possivel alterar o status de acesso.';
+  }
+
+  private resolvePasswordUpdateErrorMessage(err: any): string {
+    if (err?.error?.message) {
+      return err.error.message;
+    }
+
+    if (err?.status === 401) {
+      return 'Usuario autenticado nao identificado para redefinir senha.';
+    }
+
+    if (err?.status === 403) {
+      return 'Usuario sem permissao para redefinir senha.';
+    }
+
+    if (err?.status === 404) {
+      return 'Usuario nao encontrado para redefinir senha.';
+    }
+
+    return 'Nao foi possivel redefinir a senha.';
   }
 
   private loadRolePermissions(roleId: number, showLoading = true): void {

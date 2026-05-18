@@ -143,6 +143,37 @@ namespace JMImoveisAPI.Controllers
             return updated ? Ok() : NotFound();
         }
 
+        [HttpPatch("{id}/password")]
+        public async Task<IActionResult> UpdatePassword(int id, [FromBody] UpdateUserPasswordRequest? request)
+        {
+            if (request is null)
+            {
+                return BadRequest(new { message = "Dados de senha nao informados." });
+            }
+
+            var authorizationResult = await AuthorizeCurrentUserForManageAccessAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            try
+            {
+                var updated = await _usuarioService.UpdatePasswordAsync(
+                    id,
+                    request.NewPassword,
+                    request.ConfirmPassword);
+
+                return updated
+                    ? Ok(new { message = "Senha redefinida com sucesso." })
+                    : NotFound(new { message = "Usuario nao encontrado." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

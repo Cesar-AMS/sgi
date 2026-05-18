@@ -222,10 +222,10 @@ namespace JMImoveisAPI.Repositories
         public async Task CreateAsync(Usuario entity)
         {
             const string insertUserSql = @"INSERT INTO users
-                    (email, password, name, cpf, address, cellphone, admission_date, created_at, hidden, jobpositionId,
+                    (email, password, name, cpf, address, cellphone, admission_date, created_at, hidden,
                      manager_id, coordenator_id, gestor_id, employment_type, access_enabled)
                 VALUES
-                    (@Email, @Password, @Name, @Cpf, @Address, @Cellphone, @AdmissionDate, @CreatedAt, @Hidden, @JobpositionId,
+                    (@Email, @Password, @Name, @Cpf, @Address, @Cellphone, @AdmissionDate, @CreatedAt, @Hidden,
                      @ManagerId, @CoordenatorId, @GestorId, @EmploymentType, @AccessEnabled);";
 
             const string insertUserBranchSql = @"INSERT INTO user_branches (branch_id, user_id, created_at, updated_at)
@@ -250,7 +250,6 @@ namespace JMImoveisAPI.Repositories
                     entity.AdmissionDate,
                     entity.CreatedAt,
                     entity.Hidden,
-                    JobpositionId = entity.JobpositionId?.FirstOrDefault(),
                     entity.ManagerId,
                     entity.CoordenatorId,
                     entity.GestorId,

@@ -92,6 +92,11 @@ namespace JMImoveisAPI.Services
             return await _usuarioGestaoService.UpdateAccessEnabledAsync(id, accessEnabled);
         }
 
+        public async Task<bool> UpdatePasswordAsync(int id, string? newPassword, string? confirmPassword)
+        {
+            return await _usuarioGestaoService.UpdatePasswordAsync(id, newPassword, confirmPassword);
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             return await _usuarioGestaoService.DeleteAsync(id);

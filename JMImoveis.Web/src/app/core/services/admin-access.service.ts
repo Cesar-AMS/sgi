@@ -68,6 +68,12 @@ export class AdminAccessService {
     });
   }
 
+  updateUserPassword(userId: number, newPassword: string, confirmPassword: string): Observable<unknown> {
+    return this.http.patch(`${this.usersUrl}/${userId}/password`, { newPassword, confirmPassword }, {
+      headers: this.authHeaders,
+    });
+  }
+
   listRoles(): Observable<Cargos[]> {
     return this.http.get<Cargos[]>(this.rolesUrl, {
       headers: this.authHeaders,

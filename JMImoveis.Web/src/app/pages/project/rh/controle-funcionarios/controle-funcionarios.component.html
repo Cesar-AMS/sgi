@@ -119,8 +119,8 @@
         <button type="button" class="btn-close" (click)="employeeModal.hide()"></button>
       </div>
 
-      <form #employeeFormRef="ngForm" (ngSubmit)="saveEmployee()">
-        <div class="modal-body employee-modal-body">
+      <form #employeeFormRef="ngForm" (ngSubmit)="saveEmployee()" novalidate>
+        <div #employeeModalBody class="modal-body employee-modal-body">
           <div *ngIf="formErrorMessage" class="alert alert-danger" role="alert">
             {{ formErrorMessage }}
           </div>
@@ -214,6 +214,35 @@
             <div *ngIf="shouldShowExternalDetails" class="col-12 col-md-6">
               <label class="form-label" for="employee-cpf">{{ documentFieldLabel }} <span class="text-danger">*</span></label>
               <input id="employee-cpf" class="form-control" name="cpf" [(ngModel)]="employeeForm.cpf" required>
+            </div>
+
+            <div *ngIf="shouldShowExternalDetails" class="col-12">
+              <div class="employee-details-block">
+                <h6>Dados profissionais</h6>
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label" for="employee-role-external">Cargo/Perfil <span class="text-danger">*</span></label>
+                    <select
+                      id="employee-role-external"
+                      class="form-control"
+                      name="jobpositionId"
+                      multiple
+                      [(ngModel)]="employeeForm.jobpositionId"
+                      (ngModelChange)="onRoleChange()"
+                      required
+                      [disabled]="loadingOptions">
+                      <option *ngFor="let role of roles" [ngValue]="role.id">{{ role.name }}</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label" for="employee-branch-external">Unidade</label>
+                    <select id="employee-branch-external" class="form-control" name="filial" [(ngModel)]="employeeForm.filial">
+                      <option [ngValue]="undefined">Selecione...</option>
+                      <option *ngFor="let branch of branches" [ngValue]="branch.id">{{ branch.name }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="col-12">
@@ -729,6 +758,9 @@
         </div>
 
         <div class="modal-footer">
+          <div *ngIf="formErrorMessage" class="employee-footer-error alert alert-danger mb-0" role="alert">
+            {{ formErrorMessage }}
+          </div>
           <button type="button" class="btn btn-light" (click)="employeeModal.hide()" [disabled]="saving">
             Cancelar
           </button>
