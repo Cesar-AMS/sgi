@@ -238,22 +238,8 @@
 
             <div class="col-12">
               <div class="employee-details-block">
-                <h6>Acesso e situacao</h6>
+                <h6>Situacao do colaborador</h6>
                 <div class="row g-3">
-                  <div class="col-12 col-md-6">
-                    <label class="form-label" for="employee-password">
-                      {{ formMode === 'edit' ? 'Nova senha' : 'Senha inicial' }}
-                      <span *ngIf="formMode === 'new'" class="text-danger">*</span>
-                    </label>
-                    <input
-                      id="employee-password"
-                      class="form-control"
-                      type="password"
-                      name="password"
-                      [(ngModel)]="employeeForm.password"
-                      [required]="formMode === 'new'"
-                      autocomplete="new-password">
-                  </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label" for="employee-status">Situacao</label>
                     <select id="employee-status" class="form-control" name="hidden" [(ngModel)]="employeeForm.hidden">

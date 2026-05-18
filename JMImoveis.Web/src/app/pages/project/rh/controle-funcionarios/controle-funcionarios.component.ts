@@ -9,7 +9,6 @@ import { EmployeeDocument, EmployeeDocumentsService } from 'src/app/core/service
 import { catchError, map, Observable, of, switchMap, throwError } from 'rxjs';
 
 type EmployeeForm = Partial<Usuarios> & {
-  password?: string;
   jobpositionId: number[];
 };
 
@@ -195,7 +194,7 @@ export class ControleFuncionariosComponent implements OnInit {
       next: (user) => {
         this.employeeForm = {
           ...user,
-          password: '',
+          password: undefined,
           employmentType: this.normalizeEmploymentType(user.employmentType),
           admissionDate: this.toDateInputValue(user.admissionDate),
           jobpositionId: this.normalizeRoleIds(user.jobpositionId),
@@ -231,11 +230,6 @@ export class ControleFuncionariosComponent implements OnInit {
       return;
     }
 
-    if (this.formMode === 'new' && !this.employeeForm.password?.trim()) {
-      this.formErrorMessage = 'Informe uma senha inicial para o colaborador.';
-      return;
-    }
-
     this.applyHierarchyBySelectedRole();
     const hierarchyError = this.validateCommercialHierarchy();
     if (hierarchyError) {
@@ -258,7 +252,6 @@ export class ControleFuncionariosComponent implements OnInit {
         if (!detailsSaved) {
           this.formMode = 'edit';
           this.employeeForm.id = userId;
-          this.employeeForm.password = '';
           this.formErrorMessage = this.isExternalType(payload.employmentType)
             ? 'Colaborador salvo, mas nao foi possivel salvar os dados de PJ/externo. Revise e tente salvar novamente.'
             : 'Colaborador salvo, mas nao foi possivel salvar os dados admissionais. Revise e tente salvar novamente.';
@@ -862,9 +855,7 @@ export class ControleFuncionariosComponent implements OnInit {
       gestorId: this.normalizeOptionalNumber(this.employeeForm.gestorId),
     } as Usuarios;
 
-    if (this.formMode === 'edit' && !this.employeeForm.password?.trim()) {
-      payload.password = '';
-    }
+    delete (payload as Partial<Usuarios>).password;
 
     return payload;
   }
@@ -926,7 +917,6 @@ export class ControleFuncionariosComponent implements OnInit {
     return {
       name: '',
       email: '',
-      password: '',
       cpf: '',
       cellphone: '',
       address: '',
