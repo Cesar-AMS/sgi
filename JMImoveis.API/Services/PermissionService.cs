@@ -87,14 +87,8 @@ namespace JMImoveisAPI.Services
                 return false;
             }
 
-            var permissions = await GetEffectiveUserPermissionsAsync(userId);
-            var permissionKeys = permissions
-                .Select(permission => permission.PermissionKey)
-                .Where(key => !string.IsNullOrWhiteSpace(key))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            return permissionKeys.Contains("sistema.admin.total")
-                || permissionKeys.Contains(permissionKey.Trim());
+            await ValidateUserAsync(userId);
+            return await _permissionRepository.UserHasPermissionAsync(userId, permissionKey.Trim());
         }
 
         private async Task ValidateRoleAsync(long roleId)

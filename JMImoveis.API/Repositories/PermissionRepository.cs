@@ -166,6 +166,89 @@ namespace JMImoveisAPI.Repositories
             return await conn.QueryAsync<Permission>(sql, new { UserId = userId });
         }
 
+        public async Task<bool> UserHasPermissionAsync(long userId, string permissionKey)
+        {
+            const string sql = @"
+                SELECT CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                          FROM jmoficial.permissions requested_permission
+                          JOIN jmoficial.user_permission_overrides requested_deny
+                            ON requested_deny.permission_id = requested_permission.id
+                         WHERE requested_permission.permission_key = @PermissionKey
+                           AND requested_permission.is_active = 1
+                           AND requested_deny.user_id = @UserId
+                           AND UPPER(requested_deny.effect) = 'DENY'
+                    ) THEN 0
+
+                    WHEN EXISTS (
+                        SELECT 1
+                          FROM jmoficial.permissions requested_permission
+                          JOIN jmoficial.user_permission_overrides requested_allow
+                            ON requested_allow.permission_id = requested_permission.id
+                         WHERE requested_permission.permission_key = @PermissionKey
+                           AND requested_permission.is_active = 1
+                           AND requested_allow.user_id = @UserId
+                           AND UPPER(requested_allow.effect) = 'ALLOW'
+                    ) THEN 1
+
+                    WHEN EXISTS (
+                        SELECT 1
+                          FROM jmoficial.permissions requested_permission
+                          JOIN jmoficial.role_permissions rp
+                            ON rp.permission_id = requested_permission.id
+                          JOIN jmoficial.user_roles ur
+                            ON ur.role_id = rp.role_id
+                         WHERE requested_permission.permission_key = @PermissionKey
+                           AND requested_permission.is_active = 1
+                           AND ur.user_id = @UserId
+                    ) THEN 1
+
+                    WHEN EXISTS (
+                        SELECT 1
+                          FROM jmoficial.permissions admin_permission
+                          JOIN jmoficial.user_permission_overrides admin_deny
+                            ON admin_deny.permission_id = admin_permission.id
+                         WHERE admin_permission.permission_key = 'sistema.admin.total'
+                           AND admin_permission.is_active = 1
+                           AND admin_deny.user_id = @UserId
+                           AND UPPER(admin_deny.effect) = 'DENY'
+                    ) THEN 0
+
+                    WHEN EXISTS (
+                        SELECT 1
+                          FROM jmoficial.permissions admin_permission
+                          JOIN jmoficial.user_permission_overrides admin_allow
+                            ON admin_allow.permission_id = admin_permission.id
+                         WHERE admin_permission.permission_key = 'sistema.admin.total'
+                           AND admin_permission.is_active = 1
+                           AND admin_allow.user_id = @UserId
+                           AND UPPER(admin_allow.effect) = 'ALLOW'
+                    ) THEN 1
+
+                    WHEN EXISTS (
+                        SELECT 1
+                          FROM jmoficial.permissions admin_permission
+                          JOIN jmoficial.role_permissions rp
+                            ON rp.permission_id = admin_permission.id
+                          JOIN jmoficial.user_roles ur
+                            ON ur.role_id = rp.role_id
+                         WHERE admin_permission.permission_key = 'sistema.admin.total'
+                           AND admin_permission.is_active = 1
+                           AND ur.user_id = @UserId
+                    ) THEN 1
+
+                    ELSE 0
+                END";
+
+            await using var conn = await _context.OpenConnectionAsync();
+            return await conn.ExecuteScalarAsync<int>(sql, new
+            {
+                UserId = userId,
+                PermissionKey = permissionKey
+            }) == 1;
+        }
+
         public async Task<bool> RoleExistsAsync(long roleId)
         {
             const string sql = "SELECT COUNT(1) FROM jmoficial.roles WHERE id = @RoleId";

@@ -10,6 +10,7 @@ namespace JMImoveisAPI.Interfaces
         Task<IEnumerable<UserPermissionOverride>> GetUserOverridesAsync(long userId);
         Task ReplaceUserOverridesAsync(long userId, IEnumerable<UserPermissionOverride> overrides);
         Task<IEnumerable<Permission>> GetEffectiveUserPermissionsAsync(long userId);
+        Task<bool> UserHasPermissionAsync(long userId, string permissionKey);
         Task<bool> RoleExistsAsync(long roleId);
         Task<bool> UserExistsAsync(long userId);
         Task<bool> PermissionsExistAsync(IEnumerable<long> permissionIds);
