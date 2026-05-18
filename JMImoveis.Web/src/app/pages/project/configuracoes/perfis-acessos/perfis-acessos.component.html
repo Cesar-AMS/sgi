@@ -28,7 +28,109 @@
     Carregando dados de perfis, colaboradores e permissões...
   </div>
 
-  <div *ngIf="!loadingInitialData" class="access-layout">
+  <div *ngIf="!loadingInitialData" class="access-tabs" role="tablist" aria-label="Perfis e acessos">
+    <button
+      type="button"
+      class="access-tab"
+      [class.active]="activeTab === 'credentials'"
+      (click)="changeTab('credentials')">
+      Credenciais / Login
+    </button>
+
+    <button
+      type="button"
+      class="access-tab"
+      [class.active]="activeTab === 'permissions'"
+      (click)="changeTab('permissions')">
+      Permissoes
+    </button>
+  </div>
+
+  <div *ngIf="!loadingInitialData && activeTab === 'credentials'" class="credentials-view">
+    <div class="access-panel credentials-summary">
+      <div class="access-panel-header">
+        <div>
+          <h5 class="mb-1">Credenciais / Login</h5>
+          <span class="text-muted small">
+            Esta aba sera usada para criar e administrar credenciais de acesso dos colaboradores cadastrados no RH.
+          </span>
+        </div>
+      </div>
+
+      <div class="alert alert-info mb-3" role="alert">
+        Fluxo de criacao, bloqueio, reativacao e reset de senha sera implementado em etapa posterior.
+      </div>
+
+      <div *ngIf="!collaborators.length" class="empty-state">
+        Nenhum colaborador encontrado para exibicao de credenciais.
+      </div>
+
+      <div *ngIf="collaborators.length" class="table-responsive">
+        <table class="table align-middle mb-0 credentials-table">
+          <thead class="table-light">
+            <tr>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Cargo/Funcao</th>
+              <th>Tipo de vinculo</th>
+              <th>Situacao</th>
+              <th>Status de acesso</th>
+              <th>Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let collaborator of collaborators; trackBy: trackCollaborator">
+              <td class="fw-semibold">{{ collaborator.name }}</td>
+              <td>{{ collaborator.email }}</td>
+              <td>{{ collaborator.cargo }}</td>
+              <td>{{ collaborator.employmentTypeLabel }}</td>
+              <td>
+                <span class="badge" [class.bg-success]="collaborator.status === 'Ativo'" [class.bg-secondary]="collaborator.status !== 'Ativo'">
+                  {{ collaborator.status }}
+                </span>
+              </td>
+              <td>
+                <span
+                  class="badge"
+                  [class.bg-success]="getCredentialAccessEnabled(collaborator) === true"
+                  [class.bg-danger]="getCredentialAccessEnabled(collaborator) === false"
+                  [class.bg-secondary]="getCredentialAccessEnabled(collaborator) === null">
+                  {{ getCredentialAccessStatus(collaborator) }}
+                </span>
+              </td>
+              <td>
+                <div class="credential-actions">
+                  <button
+                    *ngIf="getCredentialAccessEnabled(collaborator) === true"
+                    type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    (click)="updateCredentialAccess(collaborator, false)"
+                    [disabled]="isUpdatingAccess(collaborator)">
+                    {{ isUpdatingAccess(collaborator) ? 'Alterando...' : 'Bloquear acesso' }}
+                  </button>
+
+                  <button
+                    *ngIf="getCredentialAccessEnabled(collaborator) === false"
+                    type="button"
+                    class="btn btn-outline-success btn-sm"
+                    (click)="updateCredentialAccess(collaborator, true)"
+                    [disabled]="isUpdatingAccess(collaborator)">
+                    {{ isUpdatingAccess(collaborator) ? 'Alterando...' : 'Reativar acesso' }}
+                  </button>
+
+                  <span *ngIf="getCredentialAccessEnabled(collaborator) === null" class="text-muted small">
+                    Acao indisponivel
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loadingInitialData && activeTab === 'permissions'" class="access-layout">
     <div class="access-panel role-panel">
       <div class="access-panel-header">
         <div>
@@ -255,7 +357,7 @@
     </div>
   </div>
 
-  <div class="alert alert-warning mt-3" role="alert">
+  <div *ngIf="activeTab === 'permissions'" class="alert alert-warning mt-3" role="alert">
     Esta tela configura permissões reais. O sidebar ainda não é filtrado por permissões nesta etapa.
   </div>
 </div>

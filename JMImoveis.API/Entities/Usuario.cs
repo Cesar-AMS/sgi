@@ -9,6 +9,7 @@ namespace JMImoveisAPI.Entities
         public string? Password { get; set; }
         public string? RememberToken { get; set; }
         public bool? Hidden { get; set; }
+        public bool? AccessEnabled { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public string? Cpf { get; set; }
@@ -44,6 +45,11 @@ namespace JMImoveisAPI.Entities
         public string Nome { get; set; } = string.Empty;
         public string Cargo { get; set; } = string.Empty;
         public bool Status { get; set; }
+    }
+
+    public class UpdateUserAccessRequest
+    {
+        public bool AccessEnabled { get; set; }
     }
 
     public class MenuItemDto

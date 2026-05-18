@@ -2,6 +2,7 @@
 using JMImoveisAPI.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace JMImoveisAPI.Controllers
 {
@@ -9,11 +10,15 @@ namespace JMImoveisAPI.Controllers
     [Route("api/[controller]")]
     public class UsuarioController : ControllerBase
     {
-        private readonly IUsuarioService _usuarioService;
+        private const string ManageAccessPermission = "administracao.perfis_acessos.editar";
 
-        public UsuarioController(IUsuarioService usuarioService)
+        private readonly IUsuarioService _usuarioService;
+        private readonly IPermissionService _permissionService;
+
+        public UsuarioController(IUsuarioService usuarioService, IPermissionService permissionService)
         {
             _usuarioService = usuarioService;
+            _permissionService = permissionService;
         }
 
         [HttpGet("status/{status}")]
@@ -120,11 +125,56 @@ namespace JMImoveisAPI.Controllers
             return updated ? Ok() : NotFound();
         }
 
+        [HttpPatch("{id}/access-enabled")]
+        public async Task<IActionResult> UpdateAccessEnabled(int id, [FromBody] UpdateUserAccessRequest? request)
+        {
+            if (request is null)
+            {
+                return BadRequest(new { message = "Dados de acesso nao informados." });
+            }
+
+            var authorizationResult = await AuthorizeCurrentUserForManageAccessAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            var updated = await _usuarioService.UpdateAccessEnabledAsync(id, request.AccessEnabled);
+            return updated ? Ok() : NotFound();
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var deleted = await _usuarioService.DeleteAsync(id);
             return deleted ? Ok() : NotFound();
+        }
+
+        private async Task<IActionResult?> AuthorizeCurrentUserForManageAccessAsync()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!long.TryParse(userIdClaim, out var currentUserId) || currentUserId <= 0)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            try
+            {
+                var hasPermission = await _permissionService.UserHasPermissionAsync(
+                    currentUserId,
+                    ManageAccessPermission);
+
+                if (!hasPermission)
+                {
+                    return StatusCode(403, new { message = "Usuario sem permissao para alterar perfis e acessos." });
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao encontrado." });
+            }
+
+            return null;
         }
     }
 }

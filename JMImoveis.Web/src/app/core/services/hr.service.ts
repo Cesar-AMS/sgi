@@ -16,6 +16,7 @@ export type EmployeeControlRow = {
   gerente: string;
   coordenador: string;
   status: string;
+  accessEnabled?: boolean | null;
   employmentType: string;
   employmentTypeLabel: string;
   branch: string;
@@ -114,6 +115,7 @@ export class HrService {
       gerente: this.resolveUserName(user.managerName, usersById, user.managerId),
       coordenador: this.resolveUserName(user.coordenatorName, usersById, user.coordenatorId),
       status: user.hidden ? 'Inativo' : 'Ativo',
+      accessEnabled: this.resolveAccessEnabled(user),
       employmentType: this.normalizeEmploymentType(user.employmentType),
       employmentTypeLabel: this.getEmploymentTypeLabel(user.employmentType),
       branch: user.filial ? `Filial ${user.filial}` : '-',
@@ -134,6 +136,20 @@ export class HrService {
     }
 
     return usersById.get(userId)?.name || '-';
+  }
+
+  private resolveAccessEnabled(user: Usuarios): boolean | null {
+    const value = user.accessEnabled ?? user.access_enabled;
+
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'number') {
+      return value === 1;
+    }
+
+    return null;
   }
 
   private resolveUserRole(user: Usuarios, rolesById: Map<number, string>): string {

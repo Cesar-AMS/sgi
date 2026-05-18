@@ -10,6 +10,60 @@
   min-width: 0;
 }
 
+.access-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e6ebf1;
+}
+
+.access-tab {
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.access-tab:hover,
+.access-tab.active {
+  color: #405cf5;
+}
+
+.access-tab.active {
+  border-bottom-color: #405cf5;
+}
+
+.credentials-view {
+  min-width: 0;
+}
+
+.credentials-summary {
+  height: auto;
+}
+
+.credentials-table {
+  min-width: 920px;
+}
+
+.credentials-table th,
+.credentials-table td {
+  vertical-align: middle;
+}
+
+.credential-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 150px;
+}
+
+.credential-actions .btn {
+  white-space: nowrap;
+}
+
 .access-layout {
   display: grid;
   grid-template-columns: minmax(300px, 32%) minmax(0, 1fr);

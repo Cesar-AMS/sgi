@@ -115,6 +115,8 @@ export interface Usuarios  {
   password: string;
   rememberToken: string;
   hidden: boolean;
+  accessEnabled?: boolean;
+  access_enabled?: boolean | number;
   createdAt: string;
   updatedAt: string;
   cpf: string;

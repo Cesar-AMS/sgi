@@ -15,6 +15,7 @@ type PermissionGroup = {
 };
 
 type OverrideEffect = 'DEFAULT' | 'ALLOW' | 'DENY';
+type AccessTab = 'credentials' | 'permissions';
 
 @Component({
   selector: 'app-perfis-acessos',
@@ -22,6 +23,7 @@ type OverrideEffect = 'DEFAULT' | 'ALLOW' | 'DENY';
   styleUrls: ['./perfis-acessos.component.scss'],
 })
 export class PerfisAcessosComponent implements OnInit {
+  activeTab: AccessTab = 'permissions';
   roles: Cargos[] = [];
   collaborators: EmployeeControlRow[] = [];
   filteredCollaborators: EmployeeControlRow[] = [];
@@ -43,6 +45,7 @@ export class PerfisAcessosComponent implements OnInit {
   loadingUserPermissions = false;
   savingRolePermissions = false;
   savingUserOverrides = false;
+  updatingAccessIds = new Set<number>();
 
   successMessage = '';
   errorMessage = '';
@@ -286,6 +289,105 @@ export class PerfisAcessosComponent implements OnInit {
     return Array.from(this.userOverrideEffects.values())
       .filter((effect) => effect === 'ALLOW' || effect === 'DENY')
       .length;
+  }
+
+  changeTab(tab: AccessTab): void {
+    this.activeTab = tab;
+  }
+
+  getCredentialAccessStatus(collaborator: EmployeeControlRow): string {
+    const accessEnabled = this.getCredentialAccessEnabled(collaborator);
+
+    if (accessEnabled === true) {
+      return 'Ativo';
+    }
+
+    if (accessEnabled === false) {
+      return 'Bloqueado';
+    }
+
+    return 'Sem informacao';
+  }
+
+  getCredentialAccessEnabled(collaborator: EmployeeControlRow): boolean | null {
+    if (typeof collaborator.accessEnabled === 'boolean') {
+      return collaborator.accessEnabled;
+    }
+
+    return null;
+  }
+
+  isUpdatingAccess(collaborator: EmployeeControlRow): boolean {
+    return this.updatingAccessIds.has(collaborator.id);
+  }
+
+  updateCredentialAccess(collaborator: EmployeeControlRow, accessEnabled: boolean): void {
+    if (!collaborator?.id) {
+      this.errorMessage = 'Usuario sem ID valido. Nao foi possivel alterar o acesso.';
+      return;
+    }
+
+    if (this.getCredentialAccessEnabled(collaborator) === null) {
+      this.errorMessage = 'Status de acesso indisponivel para este usuario.';
+      return;
+    }
+
+    const action = accessEnabled ? 'reativar' : 'bloquear';
+    const confirmed = window.confirm(`Deseja ${action} o acesso deste usuario?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.updatingAccessIds.add(collaborator.id);
+    this.successMessage = '';
+    this.errorMessage = '';
+
+    this.adminAccessService.updateUserAccessEnabled(collaborator.id, accessEnabled).subscribe({
+      next: () => {
+        this.updateLocalCredentialAccess(collaborator.id, accessEnabled);
+        this.updatingAccessIds.delete(collaborator.id);
+        this.successMessage = accessEnabled
+          ? 'Acesso reativado com sucesso.'
+          : 'Acesso bloqueado com sucesso.';
+      },
+      error: (err) => {
+        console.error('Erro ao alterar status de acesso do usuario', err);
+        this.updatingAccessIds.delete(collaborator.id);
+        this.errorMessage = this.resolveAccessUpdateErrorMessage(err);
+      },
+    });
+  }
+
+  private updateLocalCredentialAccess(userId: number, accessEnabled: boolean): void {
+    const updateRow = (row: EmployeeControlRow) => {
+      if (row.id === userId) {
+        row.accessEnabled = accessEnabled;
+      }
+    };
+
+    this.collaborators.forEach(updateRow);
+    this.filteredCollaborators.forEach(updateRow);
+
+    if (this.selectedCollaborator?.id === userId) {
+      this.selectedCollaborator.accessEnabled = accessEnabled;
+    }
+  }
+
+  private resolveAccessUpdateErrorMessage(err: any): string {
+    if (err?.status === 401) {
+      return 'Usuario autenticado nao identificado para alterar acessos.';
+    }
+
+    if (err?.status === 403) {
+      return 'Usuario sem permissao para alterar credenciais de acesso.';
+    }
+
+    if (err?.status === 404) {
+      return 'Usuario nao encontrado para alterar acesso.';
+    }
+
+    return 'Nao foi possivel alterar o status de acesso.';
   }
 
   private loadRolePermissions(roleId: number, showLoading = true): void {

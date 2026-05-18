@@ -18,6 +18,7 @@ namespace JMImoveisAPI.Interfaces
         Task<IEnumerable<Usuario>> GetUsersByRoleAndBranchAsync(int branchId, int roleId, int status); // 0 - Exibir ativos, 1 - Exibir Ocultos, 2 - Exibir todos
         Task CreateAsync(Usuario entity);
         Task<bool> UpdateAsync(Usuario entity);
+        Task<bool> UpdateAccessEnabledAsync(int id, bool accessEnabled);
         Task<bool> DeleteAsync(int id);
 
         Task<Usuario?> GetByEmailAsync(string email);

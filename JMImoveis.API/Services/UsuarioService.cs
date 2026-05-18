@@ -87,6 +87,11 @@ namespace JMImoveisAPI.Services
             return await _usuarioGestaoService.UpdateAsync(entity);
         }
 
+        public async Task<bool> UpdateAccessEnabledAsync(int id, bool accessEnabled)
+        {
+            return await _usuarioGestaoService.UpdateAccessEnabledAsync(id, accessEnabled);
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             return await _usuarioGestaoService.DeleteAsync(id);

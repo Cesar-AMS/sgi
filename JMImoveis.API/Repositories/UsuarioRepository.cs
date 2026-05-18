@@ -50,6 +50,7 @@ namespace JMImoveisAPI.Repositories
                                 T0.manager_id as ""ManagerId"",
                                 T0.gestor_id as ""GestorId"",
                                 T0.employment_type as ""EmploymentType"",
+                                T0.access_enabled as ""AccessEnabled"",
                                 manager.name as ""ManagerName"",
                                 coordenator.name as ""CoordenatorName"",
                                 gestor.name as ""GestorName""
@@ -67,7 +68,10 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<Usuario?> GetByEmailAsync(string email)
         {
-            var sql = "SELECT * FROM users WHERE email = @email";
+            var sql = @"SELECT *,
+                               access_enabled as ""AccessEnabled""
+                          FROM users
+                         WHERE email = @email";
             await using var conn = await _context.OpenConnectionAsync();
             return await conn.QueryFirstOrDefaultAsync<Usuario>(sql, new { email });
         }
@@ -186,6 +190,7 @@ namespace JMImoveisAPI.Repositories
                                 T0.manager_id as ""ManagerId"",
                                 T0.gestor_id as ""GestorId"",
                                 T0.employment_type as ""EmploymentType"",
+                                T0.access_enabled as ""AccessEnabled"",
                                 manager.name as ""ManagerName"",
                                 coordenator.name as ""CoordenatorName"",
                                 gestor.name as ""GestorName""
@@ -218,10 +223,10 @@ namespace JMImoveisAPI.Repositories
         {
             const string insertUserSql = @"INSERT INTO users
                     (email, password, name, cpf, address, cellphone, admission_date, created_at, hidden, jobpositionId,
-                     manager_id, coordenator_id, gestor_id, employment_type)
+                     manager_id, coordenator_id, gestor_id, employment_type, access_enabled)
                 VALUES
                     (@Email, @Password, @Name, @Cpf, @Address, @Cellphone, @AdmissionDate, @CreatedAt, @Hidden, @JobpositionId,
-                     @ManagerId, @CoordenatorId, @GestorId, @EmploymentType);";
+                     @ManagerId, @CoordenatorId, @GestorId, @EmploymentType, @AccessEnabled);";
 
             const string insertUserBranchSql = @"INSERT INTO user_branches (branch_id, user_id, created_at, updated_at)
                                                  VALUES (@BranchId, @UserId, NOW(), NOW());";
@@ -249,7 +254,8 @@ namespace JMImoveisAPI.Repositories
                     entity.ManagerId,
                     entity.CoordenatorId,
                     entity.GestorId,
-                    EmploymentType = NormalizeEmploymentType(entity.EmploymentType)
+                    EmploymentType = NormalizeEmploymentType(entity.EmploymentType),
+                    AccessEnabled = entity.AccessEnabled ?? true
                 }, tx);
 
                 var userId = await conn.ExecuteScalarAsync<long>("SELECT LAST_INSERT_ID();", transaction: tx);
@@ -358,6 +364,16 @@ namespace JMImoveisAPI.Repositories
                 await tx.RollbackAsync();
                 throw;
             }
+        }
+
+        public async Task<bool> UpdateAccessEnabledAsync(int id, bool accessEnabled)
+        {
+            const string sql = @"UPDATE users
+                                    SET access_enabled = @AccessEnabled
+                                  WHERE id = @Id";
+
+            await using var conn = await _context.OpenConnectionAsync();
+            return await conn.ExecuteAsync(sql, new { Id = id, AccessEnabled = accessEnabled }) > 0;
         }
 
         public async Task<bool> DeleteAsync(int id)

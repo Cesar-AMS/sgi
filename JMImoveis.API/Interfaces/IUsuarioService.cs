@@ -17,6 +17,7 @@ namespace JMImoveisAPI.Interfaces
         Task UpdateMenuAsync(List<MenuItemDto> menu, int userId);
         Task CreateAsync(Usuario entity);
         Task<bool> UpdateAsync(Usuario entity);
+        Task<bool> UpdateAccessEnabledAsync(int id, bool accessEnabled);
         Task<bool> DeleteAsync(int id);
     }
 }

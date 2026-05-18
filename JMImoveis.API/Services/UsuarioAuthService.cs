@@ -31,6 +31,9 @@ namespace JMImoveisAPI.Services
             if (!BCrypt.Net.BCrypt.Verify(password, hash))
                 return (null, null);
 
+            if (user.AccessEnabled == false)
+                return (null, null);
+
             if (!user.Id.HasValue)
                 return (null, null);
 

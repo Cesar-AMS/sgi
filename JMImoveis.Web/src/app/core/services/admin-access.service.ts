@@ -62,6 +62,12 @@ export class AdminAccessService {
     });
   }
 
+  updateUserAccessEnabled(userId: number, accessEnabled: boolean): Observable<unknown> {
+    return this.http.patch(`${this.usersUrl}/${userId}/access-enabled`, { accessEnabled }, {
+      headers: this.authHeaders,
+    });
+  }
+
   listRoles(): Observable<Cargos[]> {
     return this.http.get<Cargos[]>(this.rolesUrl, {
       headers: this.authHeaders,
