@@ -7,13 +7,15 @@ using System.Security.Claims;
 [Route("api/[controller]")]
 public sealed class PropostasController : ControllerBase
 {
-    private readonly IProposalService _svc;
-    private readonly IUsuarioService _usuarioService;
+    private const string ApproveProposalPermission = "vendas.propostas.aprovar";
 
-    public PropostasController(IProposalService svc, IUsuarioService usuarioService)
+    private readonly IProposalService _svc;
+    private readonly IPermissionService _permissionService;
+
+    public PropostasController(IProposalService svc, IPermissionService permissionService)
     {
         _svc = svc;
-        _usuarioService = usuarioService;
+        _permissionService = permissionService;
     }
 
     [HttpPost]
@@ -98,9 +100,10 @@ public sealed class PropostasController : ControllerBase
     [HttpPatch("{id:long}/aprovar")]
     public async Task<IActionResult> Aprovar([FromRoute] long id, CancellationToken ct)
     {
-        if (!await UsuarioPodeValidarAsync())
+        var authorizationResult = await AuthorizeCurrentUserForProposalApprovalAsync();
+        if (authorizationResult != null)
         {
-            return Forbid();
+            return authorizationResult;
         }
 
         var result = await _svc.AprovarAsync(id, ct);
@@ -125,9 +128,10 @@ public sealed class PropostasController : ControllerBase
     [HttpPost("{id:long}/reprovar")]
     public async Task<IActionResult> ReprovarProposta([FromRoute] long id, CancellationToken ct)
     {
-        if (!await UsuarioPodeValidarAsync())
+        var authorizationResult = await AuthorizeCurrentUserForProposalApprovalAsync();
+        if (authorizationResult != null)
         {
-            return Forbid();
+            return authorizationResult;
         }
 
         var result = await _svc.ReprovarAsync(id, ct);
@@ -178,15 +182,38 @@ public sealed class PropostasController : ControllerBase
         };
     }
 
-    private async Task<bool> UsuarioPodeValidarAsync()
+    private async Task<IActionResult?> AuthorizeCurrentUserForProposalApprovalAsync()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!int.TryParse(userIdClaim, out var userId))
+        var currentUserId = GetCurrentUserId();
+        if (!currentUserId.HasValue)
         {
-            return false;
+            return Unauthorized(new { message = "Usuario autenticado nao identificado." });
         }
 
-        var user = await _usuarioService.GetByIdAsync(userId);
-        return user?.JobpositionId?.Any(id => id == 3 || id == 11) == true;
+        try
+        {
+            var hasPermission = await _permissionService.UserHasPermissionAsync(
+                currentUserId.Value,
+                ApproveProposalPermission);
+
+            if (!hasPermission)
+            {
+                return StatusCode(403, new { message = "Usuario sem permissao para aprovar ou reprovar propostas." });
+            }
+        }
+        catch (KeyNotFoundException)
+        {
+            return Unauthorized(new { message = "Usuario autenticado nao encontrado." });
+        }
+
+        return null;
+    }
+
+    private long? GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return long.TryParse(userIdClaim, out var userId) && userId > 0
+            ? userId
+            : null;
     }
 }
