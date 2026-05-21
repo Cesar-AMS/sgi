@@ -221,6 +221,10 @@
   margin-bottom: 1rem;
 }
 
+.leads-filter-card.filters-collapsed .leads-filter-header {
+  margin-bottom: 0;
+}
+
 .leads-filter-title {
   font-size: 0.95rem;
   font-weight: 700;
@@ -232,6 +236,29 @@
   font-size: 0.82rem;
   color: #8a8aa0;
   margin: 0.2rem 0 0;
+}
+
+.btn-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  border: 1px solid #e1e1e8;
+  border-radius: 0.65rem;
+  background-color: #fff;
+  color: #35354a;
+  font-size: 0.82rem;
+  font-weight: 600;
+  min-height: 36px;
+  padding: 0.35rem 0.65rem;
+}
+
+.btn-filter-toggle:hover,
+.btn-filter-toggle:focus {
+  border-color: #ff9a57;
+  color: #ff7a1a;
+  background-color: #fff8f3;
+  box-shadow: none;
 }
 
 .leads-filter-grid {
@@ -309,6 +336,15 @@
   .leads-filter-grid {
     grid-template-columns: 1fr;
     gap: 0.75rem;
+  }
+
+  .leads-filter-header {
+    flex-direction: column;
+  }
+
+  .btn-filter-toggle {
+    width: 100%;
+    justify-content: center;
   }
 
   .leads-filter-subtitle {

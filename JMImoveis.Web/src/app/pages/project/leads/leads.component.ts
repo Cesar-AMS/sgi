@@ -49,6 +49,7 @@ export class LeadsComponent {
 
   viewMode: 'list' | 'kanban' = 'list';
   isLoading = false;
+  filtersCollapsed = false;
 
   canEditLeadStatus = false;
 
@@ -235,6 +236,10 @@ export class LeadsComponent {
 
   setViewMode(mode: 'list' | 'kanban'): void {
     this.viewMode = mode;
+  }
+
+  toggleFilters(): void {
+    this.filtersCollapsed = !this.filtersCollapsed;
   }
 
   getLeadsByEtapaAtendimento(etapaAtendimento: LeadEtapaAtendimento): Lead[] {

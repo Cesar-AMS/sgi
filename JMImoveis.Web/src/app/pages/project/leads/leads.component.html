@@ -32,7 +32,11 @@
   </div>
 
   <!-- Filtros -->
-  <section class="leads-filter-card mb-3" aria-label="Filtros de leads">
+  <section
+    class="leads-filter-card mb-3"
+    [class.filters-collapsed]="filtersCollapsed"
+    aria-label="Filtros de leads"
+  >
     <div class="leads-filter-header">
       <div>
         <h3 class="leads-filter-title">Filtros</h3>
@@ -40,9 +44,28 @@
           Refine a busca por nome, status, equipe e período.
         </p>
       </div>
+
+      <button
+        type="button"
+        class="btn btn-filter-toggle"
+        (click)="toggleFilters()"
+        [attr.aria-expanded]="!filtersCollapsed"
+        aria-controls="leadsFilterContent"
+      >
+        <i
+          class="bi"
+          [ngClass]="filtersCollapsed ? 'bi-chevron-down' : 'bi-chevron-up'"
+          aria-hidden="true"
+        ></i>
+        {{ filtersCollapsed ? 'Mostrar filtros' : 'Ocultar filtros' }}
+      </button>
     </div>
 
-    <div class="leads-filter-grid">
+    <div
+      id="leadsFilterContent"
+      class="leads-filter-grid"
+      *ngIf="!filtersCollapsed"
+    >
       <div class="filter-field filter-field-search">
         <label class="form-label" for="leadSearchInput">Buscar lead</label>
         <div class="input-group flex-nowrap">
