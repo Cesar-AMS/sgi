@@ -325,37 +325,43 @@
             [attr.aria-label]="'Abrir detalhes do lead ' + lead.nome"
             [class.kanban-card-readonly]="!canEditLeadStatus"
           >
-            <div class="kanban-card-title">{{ lead.nome }}</div>
+            <div class="kanban-card-title" [title]="lead.nome">{{ lead.nome }}</div>
 
-            <div class="kanban-card-meta" *ngIf="lead.telefone">
-              {{ lead.telefone }}
+            <div class="kanban-card-meta-row">
+              <span class="kanban-card-meta" [title]="lead.telefone || ''">
+                {{ lead.telefone || 'Sem telefone' }}
+              </span>
+              <span class="kanban-card-dot" aria-hidden="true"></span>
+              <span class="kanban-card-status" [title]="lead.status">
+                {{ lead.status }}
+              </span>
             </div>
 
-            <div class="kanban-card-meta">
-              {{ lead.dataCriacao | date: 'shortDate' }}
+            <div class="kanban-card-meta-row">
+              <span class="kanban-card-meta">
+                {{ lead.dataCriacao | date: 'shortDate' }}
+              </span>
+              <span class="kanban-card-dot" aria-hidden="true"></span>
+              <span class="kanban-card-meta" [title]="selectNameSale(lead.vendedor)">
+                {{ selectNameSale(lead.vendedor) }}
+              </span>
             </div>
 
-            <div class="kanban-card-line">
-              <span>Status</span>
-              <strong>{{ lead.status }}</strong>
-            </div>
-
-            <div class="kanban-card-line">
-              <span>Vendedor</span>
-              <strong>{{ selectNameSale(lead.vendedor) }}</strong>
-            </div>
-
-            <div class="kanban-card-line">
-              <span>Origem</span>
-              <strong>{{ lead.fonte || '-' }}</strong>
-            </div>
-
-            <div class="kanban-card-interest" *ngIf="lead.imoveisInteresse">
-              {{ lead.imoveisInteresse }}
+            <div class="kanban-card-meta-row">
+              <span class="kanban-card-meta kanban-card-origin" [title]="lead.fonte || '-'">
+                {{ lead.fonte || '-' }}
+              </span>
+              <span
+                class="kanban-card-interest"
+                *ngIf="lead.imoveisInteresse"
+                [title]="lead.imoveisInteresse"
+              >
+                {{ lead.imoveisInteresse }}
+              </span>
             </div>
 
             <div class="kanban-card-drag-hint" *ngIf="canEditLeadStatus">
-              Arraste para alterar etapa
+              Arraste
             </div>
           </button>
 
