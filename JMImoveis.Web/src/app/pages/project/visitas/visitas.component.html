@@ -1,109 +1,154 @@
-<div class="visitas-wrapper container-fluid py-4">
-  <div class="d-flex justify-content-between align-items-start mb-4">
+<div class="visitas-wrapper container-fluid py-4" [class.agendamento-mode]="isAgendamentoMode()" [class.recepcao-mode]="isVisitasMode()">
+  <div class="visitas-header d-flex justify-content-between align-items-start mb-4">
     <div>
-      <h2 class="fw-bold mb-1">Visitas</h2>
-      <p class="text-muted mb-0">Painel de visitas.</p>
+      <h2 class="fw-bold mb-1">{{ getPageTitle() }}</h2>
+      <p class="text-muted mb-0">{{ getPageSubtitle() }}</p>
     </div>
 
-    <div class="d-flex gap-2">
-       <button class="btn btn-outline-success" type="button" (click)="exportExcel()">
-        <i class="bi bi-file-earmark-excel me-2"></i> Excel
+    <div class="d-flex gap-2 flex-wrap justify-content-end">
+       <button
+        class="btn btn-outline-success"
+        type="button"
+        (click)="exportExcel()"
+        [attr.aria-label]="getExportAriaLabel()"
+      >
+        <i class="bi bi-file-earmark-excel me-2" aria-hidden="true"></i> Excel
       </button>
-      <button class="btn btn-orange d-flex align-items-center" type="button" (click)="openCreateModal()">
-        <i class="bi bi-plus-lg me-2"></i>
-        Nova Visita
+      <button
+        class="btn btn-orange d-flex align-items-center"
+        type="button"
+        (click)="openCreateModal()"
+        [attr.aria-label]="getCreateAriaLabel()"
+      >
+        <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
+        {{ getPrimaryActionLabel() }}
       </button>
     </div>
   </div>
 
-   <ul class="nav nav-pills mb-3 flex-wrap gap-2">
-    <li class="nav-item">
+  <section class="visitas-operational-summary mb-3" [attr.aria-label]="isAgendamentoMode() ? 'Resumo operacional de agendamentos' : 'Resumo operacional de visitas'">
+    <div class="summary-card">
+      <span class="summary-label">{{ getSummaryLabel() }}</span>
+      <strong class="summary-value">{{ getSummaryValue() }}</strong>
+    </div>
+    <div class="summary-note">
+      {{ getSummaryNote() }}
+    </div>
+  </section>
+
+   <ul class="nav nav-pills mb-3 flex-wrap gap-2" [attr.aria-label]="isAgendamentoMode() ? 'Status dos agendamentos' : 'Status das visitas'">
+    <li class="nav-item" *ngIf="isVisitasMode()">
       <button
         type="button"
         class="nav-link"
-        [class.active]="statusFilter === 'Agendada'"
-        (click)="setStatusTab('Agendada')"
+        [class.active]="statusFilter === ''"
+        (click)="clearStatusFilter()"
+        aria-label="Filtrar visitas de hoje"
       >
-        Agendadas
+        Hoje
       </button>
     </li>
-
-    <li class="nav-item">
+    <li class="nav-item" *ngFor="let status of getStatusTabs()">
       <button
         type="button"
         class="nav-link"
-        [class.active]="statusFilter === 'Confirmada'"
-        (click)="setStatusTab('Confirmada')"
+        [class.active]="statusFilter === status"
+        (click)="setStatusTab(status)"
+        [attr.aria-label]="getStatusAriaLabel(status)"
       >
-        Confirmadas
-      </button>
-    </li>
-
-    <li class="nav-item">
-      <button
-        type="button"
-        class="nav-link"
-        [class.active]="statusFilter === 'Realizada'"
-        (click)="setStatusTab('Realizada')"
-      >
-        Realizadas
-      </button>
-    </li>
-
-    <li class="nav-item">
-      <button
-        type="button"
-        class="nav-link"
-        [class.active]="statusFilter === 'Cancelada'"
-        (click)="setStatusTab('Cancelada')"
-      >
-        Canceladas
+        {{ getStatusTabLabel(status) }}
       </button>
     </li>
   </ul>
 
-  <div class="d-flex align-items-center gap-2 flex-wrap flex-lg-nowrap mb-3 filter-bar">
-    <div class="flex-grow-1">
-      <div class="input-group">
-        <span class="input-group-text bg-white border-end-0">
-          <i class="bi bi-search text-muted"></i>
-        </span>
-        <input
-          type="text"
-          class="form-control border-start-0"
-          placeholder="Buscar por cliente..."
-          [(ngModel)]="nomeTerm"
-          (ngModelChange)="onFilterChange()"
-        />
+  <section class="visitas-filter-card mb-3" [attr.aria-label]="isAgendamentoMode() ? 'Filtros de agendamentos' : 'Filtros de visitas'">
+    <div class="visitas-filter-header">
+      <div>
+        <h3 class="visitas-filter-title">Filtros</h3>
+        <p class="visitas-filter-subtitle">{{ getFilterDescription() }}</p>
+        <p class="visitas-filter-subtitle d-none">
+          Refine as visitas por busca, status, equipe e período.
+        </p>
       </div>
     </div>
 
+    <div class="visitas-filter-grid">
+      <div class="filter-field filter-field-search">
+        <label class="form-label" for="visitSearchInput">{{ getSearchLabel() }}</label>
+        <div class="input-group flex-nowrap">
+        <span class="input-group-text" aria-hidden="true">
+          <i class="bi bi-search"></i>
+        </span>
+        <input
+          id="visitSearchInput"
+          type="text"
+          class="form-control"
+          placeholder="Buscar por cliente..."
+          [(ngModel)]="nomeTerm"
+          (ngModelChange)="onFilterChange()"
+          [attr.aria-label]="getSearchAriaLabel()"
+        />
+        </div>
+      </div>
 
-    <div class="flex-shrink-0">
-      <select class="form-select" [(ngModel)]="vendedorFilter" (ngModelChange)="onFilterChange()">
-        <option value="">Todos corretores</option>
-        <option *ngFor="let v of corretores" [value]="v.id">{{ v.name }}</option>
+
+      <div class="filter-field">
+        <label class="form-label" for="visitVendedorFilter">{{ getSellerFilterLabel() }}</label>
+      <select
+        id="visitVendedorFilter"
+        class="form-select"
+        [(ngModel)]="vendedorFilter"
+        (ngModelChange)="onSellerFilterChange()"
+        [disabled]="sellerFilterMode === 'mine'"
+        [attr.aria-label]="getSellerFilterAriaLabel()"
+      >
+        <option *ngIf="sellerFilterMode !== 'mine'" value="">Todos vendedores do escopo</option>
+        <option *ngFor="let v of visibleCorretores" [value]="v.id">{{ v.name }}</option>
+        <option *ngIf="sellerFilterMode === 'mine' && visibleCorretores.length === 0" [value]="currentUserId || ''">
+          Minhas visitas
+        </option>
       </select>
     </div>
 
-    <div class="flex-shrink-0">
-      <select class="form-select" [(ngModel)]="compareceuFilter" (ngModelChange)="onFilterChange()">
+      <div class="filter-field" *ngIf="isVisitasMode()">
+        <label class="form-label" for="visitCompareceuFilter">Comparecimento</label>
+      <select
+        id="visitCompareceuFilter"
+        class="form-select"
+        [(ngModel)]="compareceuFilter"
+        (ngModelChange)="onFilterChange()"
+        aria-label="Filtrar visitas por comparecimento"
+      >
         <option value="">Compareceu: Todos</option>
         <option value="sim">Compareceu: Sim</option>
         <option value="nao">Compareceu: Não</option>
       </select>
     </div>
 
-    <div class="flex-shrink-0">
-      <select class="form-select" [(ngModel)]="virouVendaFilter" (ngModelChange)="onFilterChange()">
+      <div class="filter-field" *ngIf="isVisitasMode()">
+        <label class="form-label" for="visitVirouVendaFilter">Virou venda</label>
+      <select
+        id="visitVirouVendaFilter"
+        class="form-select"
+        [(ngModel)]="virouVendaFilter"
+        (ngModelChange)="onFilterChange()"
+        aria-label="Filtrar visitas que viraram venda"
+      >
         <option value="">Virou venda: Todos</option>
         <option value="sim">Virou venda: Sim</option>
         <option value="nao">Virou venda: Não</option>
       </select>
     </div>
 
-    <div class="flex-shrink-0">
-      <select class="form-select" [(ngModel)]="dateRange" (ngModelChange)="onFilterChange()">
+      <div class="filter-field">
+        <label class="form-label" for="visitDateRangeFilter">Período</label>
+      <select
+        id="visitDateRangeFilter"
+        class="form-select"
+        [(ngModel)]="dateRange"
+        (ngModelChange)="onFilterChange()"
+        aria-label="Filtrar visitas por período"
+      >
         <option value="all">Todos períodos</option>
         <option value="today">Hoje</option>
         <option value="last7">Últimos 7 dias</option>
@@ -112,7 +157,8 @@
         <option value="thisYear">Este ano</option>
       </select>
     </div>
-  </div>
+    </div>
+  </section>
 
   <hr class="mt-0 mb-3" />
 
@@ -122,13 +168,16 @@
         <table class="table align-middle">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>Horário</th>
               <th>Cliente</th>
-              <th>Data e Hora</th>
-              <th>Corretor</th>
+              <th>Interesse</th>
+              <th>Origem</th>
+              <th>Vendedor</th>
+              <th>Coordenador</th>
+              <th>Gerente</th>
               <th>Status</th>
-              <th>Compareceu?</th>
-              <th>Virou venda?</th>
+              <th *ngIf="isVisitasMode()">Compareceu?</th>
+              <th *ngIf="isVisitasMode()">Virou venda?</th>
               <th>Observação</th>
               <th class="text-end">Ações</th>
             </tr>
@@ -140,27 +189,54 @@
               (click)="openEditModal(v)"
               style="cursor: pointer;"
               class="table-row-click"
+              [class.visit-today-row]="isToday(v.dataHoraISO)"
             >
-              <td class="text-muted">#{{ v.id }}</td>
-              <td class="fw-semibold">{{ v.nomeCliente }}</td>
-              <td>{{ formatDateShort(v.dataHoraISO) }}</td>
-              <td>{{ selectNameSale(v.vendedorId) }}</td>
+              <td class="visit-schedule-cell">
+                <div class="visit-time">{{ formatTimeOnly(v.dataHoraISO) }}</div>
+                <div class="text-muted small">{{ formatDateOnly(v.dataHoraISO) }}</div>
+                <span *ngIf="isToday(v.dataHoraISO)" class="badge today-badge">Hoje</span>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ v.nomeCliente }}</div>
+                <div class="text-muted small" *ngIf="v.telefone">{{ v.telefone }}</div>
+                <div class="text-muted small">
+                  #{{ v.id }}<span *ngIf="v.leadId"> · Lead #{{ v.leadId }}</span>
+                </div>
+              </td>
+              <td class="visit-info-cell">
+                <div class="text-truncate" [title]="v.imoveisInteresse || ''">
+                  {{ v.imoveisInteresse || '-' }}
+                </div>
+              </td>
+              <td class="visit-info-cell">
+                <div class="text-truncate" [title]="v.fonte || ''">
+                  {{ v.fonte || '-' }}
+                </div>
+              </td>
+              <td>{{ getVendedorNome(v) }}</td>
+              <td>{{ v.coordenadorNome || '-' }}</td>
+              <td>{{ v.gerenteNome || '-' }}</td>
 
               <!-- Mantive seus selects inline.
                    Importante: impedir o clique na linha quando mexer nos selects -->
               <td style="min-width: 150px;" (click)="$event.stopPropagation()">
+                <span class="status-pill" [ngClass]="getStatusClass(v.status)">
+                  {{ v.status }}
+                </span>
                 <select
                   class="form-select form-select-sm"
+                  aria-label="Alterar status da visita"
                   [ngModel]="v.status"
                   (ngModelChange)="updateStatus(v, $event)"
                 >
-                  <option *ngFor="let s of statusOptions" [ngValue]="s">{{ s }}</option>
+                  <option *ngFor="let s of getStatusOptionsForMode()" [ngValue]="s">{{ s }}</option>
                 </select>
               </td>
 
-              <td style="min-width: 140px;" (click)="$event.stopPropagation()">
+              <td *ngIf="isVisitasMode()" style="min-width: 140px;" (click)="$event.stopPropagation()">
                 <select
                   class="form-select form-select-sm"
+                  aria-label="Alterar comparecimento da visita"
                   [ngModel]="v.compareceu"
                   (ngModelChange)="updateCompareceu(v, $event)"
                 >
@@ -169,9 +245,10 @@
                 </select>
               </td>
 
-              <td style="min-width: 140px;" (click)="$event.stopPropagation()">
+              <td *ngIf="isVisitasMode()" style="min-width: 140px;" (click)="$event.stopPropagation()">
                 <select
                   class="form-select form-select-sm"
+                  aria-label="Alterar indicador de venda da visita"
                   [ngModel]="v.virouVenda"
                   (ngModelChange)="updateVirouVenda(v, $event)"
                 >
@@ -184,15 +261,46 @@
                 <div class="text-truncate" [title]="v.observacao || ''">{{ v.observacao || '-' }}</div>
               </td>
 
-              <!-- Botão remover: impedir abrir modal ao clicar -->
-              <td class="text-end" (click)="$event.stopPropagation()">
+              <!-- Botão cancelar: impedir abrir modal ao clicar -->
+              <td class="text-end actions-cell" (click)="$event.stopPropagation()">
+                <button
+                  *ngIf="hasValidLead(v)"
+                  class="btn btn-sm btn-outline-primary me-1"
+                  type="button"
+                  (click)="openLead(v)"
+                  title="Abrir lead"
+                  aria-label="Abrir detalhe do lead vinculado"
+                >
+                  Abrir lead
+                </button>
+                <button
+                  *ngIf="isAgendamentoMode() && v.status === 'Agendada'"
+                  class="btn btn-sm btn-outline-success me-1"
+                  type="button"
+                  (click)="confirmAgendamento(v)"
+                  title="Confirmar agendamento"
+                  aria-label="Confirmar agendamento"
+                >
+                  Confirmar
+                </button>
+                <button
+                  *ngIf="isVisitasMode() && v.status !== 'Realizada' && v.status !== 'Cancelada'"
+                  class="btn btn-sm btn-outline-success me-1"
+                  type="button"
+                  (click)="markAsRealizada(v)"
+                  title="Marcar como realizada"
+                  aria-label="Marcar visita como realizada"
+                >
+                  Realizar
+                </button>
                 <button
                   class="btn btn-sm btn-outline-danger"
                   type="button"
-                  (click)="remove(v)"
-                  title="Remover"
+                  (click)="cancel(v)"
+                  title="Cancelar visita"
+                  aria-label="Cancelar visita"
                 >
-                  <i class="bi bi-trash"></i>
+                  <i class="bi bi-x-circle"></i>
                 </button>
               </td>
             </tr>
@@ -202,11 +310,13 @@
 
       <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2" *ngIf="totalItems > 0">
         <div class="d-flex align-items-center gap-2">
-          <span class="text-muted small">Itens por página:</span>
+          <label class="text-muted small mb-0" for="visitsItemsPerPageSelect">Itens por página:</label>
           <select
+            id="visitsItemsPerPageSelect"
             class="form-select form-select-sm w-auto"
             [ngModel]="itemsPerPage"
             (ngModelChange)="onItemsPerPageChange($event)"
+            aria-label="Selecionar quantidade de visitas por página"
           >
             <option *ngFor="let n of perPageOptions" [value]="n">{{ n }}</option>
           </select>
@@ -232,65 +342,65 @@
   </ng-container>
 
   <ng-template #loadingTpl>
-    <div class="text-center text-muted py-5">Carregando visitas...</div>
+    <div class="text-center text-muted py-5">{{ getLoadingMessage() }}</div>
   </ng-template>
 
   <ng-template #emptyTpl>
     <div class="text-center text-muted py-5">
-      <p class="mb-0 fs-5">Nenhuma visita encontrada.</p>
+      <p class="mb-0 fs-5">{{ getEmptyMessage() }}</p>
     </div>
   </ng-template>
 </div>
 
 <!-- MODAL LATERAL -->
 <div class="modal-backdrop-custom" *ngIf="showCreateModal">
-  <div class="modal-panel">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="visitModalTitle">
     <div class="modal-header border-0 px-4 pt-4 pb-2">
-      <h5 class="modal-title fw-semibold">
-        {{ editingId ? 'Editar Visita' : 'Nova Visita' }}
+      <h5 id="visitModalTitle" class="modal-title fw-semibold">
+        {{ getModalTitle() }}
       </h5>
 
-      <button type="button" class="btn-close" aria-label="Close" (click)="closeCreateModal()"></button>
+      <button type="button" class="btn-close" aria-label="Fechar modal de visita" (click)="closeCreateModal()"></button>
     </div>
 
     <div class="modal-body px-4 pb-4">
       <form [formGroup]="createForm" (ngSubmit)="submitSave()">
         <div class="mb-3">
-          <label class="form-label">Nome do cliente</label>
-          <input type="text" class="form-control" placeholder="Ex: Maria Silva" formControlName="nomeCliente" />
+          <label class="form-label" for="visitClientName">Nome do cliente</label>
+          <input id="visitClientName" type="text" class="form-control" placeholder="Ex: Maria Silva" formControlName="nomeCliente" />
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Data e Hora</label>
-          <input type="datetime-local" class="form-control" formControlName="dataHora" />
+          <label class="form-label" for="visitDateTime">Data e Hora</label>
+          <input id="visitDateTime" type="datetime-local" class="form-control" formControlName="dataHora" />
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Corretor</label>
-          <select class="form-select" formControlName="vendedorId">
+          <label class="form-label" for="visitSeller">Corretor</label>
+          <select id="visitSeller" class="form-select" formControlName="vendedorId">
             <option value="">Selecione...</option>
             <option *ngFor="let v of corretores" [value]="v.id">{{ v.name }}</option>
           </select>
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Status</label>
-          <select class="form-select" formControlName="status">
-            <option *ngFor="let s of statusOptions" [ngValue]="s">{{ s }}</option>
+          <label class="form-label" for="visitStatus">Status</label>
+          <select id="visitStatus" class="form-select" formControlName="status">
+            <option *ngFor="let s of getStatusOptionsForMode()" [ngValue]="s">{{ s }}</option>
           </select>
         </div>
 
-        <div class="row g-3 mb-3">
+        <div class="row g-3 mb-3" *ngIf="isVisitasMode()">
           <div class="col-6">
-            <label class="form-label">Compareceu?</label>
-            <select class="form-select" formControlName="compareceu">
+            <label class="form-label" for="visitAttended">Compareceu?</label>
+            <select id="visitAttended" class="form-select" formControlName="compareceu">
               <option [ngValue]="true">Sim</option>
               <option [ngValue]="false">Não</option>
             </select>
           </div>
           <div class="col-6">
-            <label class="form-label">Virou venda?</label>
-            <select class="form-select" formControlName="virouVenda">
+            <label class="form-label" for="visitConvertedSale">Virou venda?</label>
+            <select id="visitConvertedSale" class="form-select" formControlName="virouVenda">
               <option [ngValue]="true">Sim</option>
               <option [ngValue]="false">Não</option>
             </select>
@@ -298,8 +408,9 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Observação</label>
+          <label class="form-label" for="visitNotes">Observação</label>
           <textarea
+            id="visitNotes"
             class="form-control"
             rows="3"
             placeholder="Detalhes da visita..."
@@ -307,18 +418,18 @@
           ></textarea>
         </div>
 
-        <!-- ✅ BLOCO DE BOTÕES ATUALIZADO (criar x editar) -->
         <div class="d-flex justify-content-between gap-2 mt-4">
-          <!-- Excluir só no modo edição -->
+          <!-- Cancelar visita só no modo edição -->
           <button
             *ngIf="editingId"
             type="button"
             class="btn btn-outline-danger"
             [disabled]="isSaving"
-            (click)="deleteEditing()"
+            (click)="cancelEditing()"
+            [attr.aria-label]="isAgendamentoMode() ? 'Cancelar agendamento' : 'Cancelar visita'"
           >
-            <i class="bi bi-trash me-2"></i>
-            Excluir
+            <i class="bi bi-x-circle me-2"></i>
+            {{ isAgendamentoMode() ? 'Cancelar agendamento' : 'Cancelar visita' }}
           </button>
 
           <div class="d-flex justify-content-end gap-2 ms-auto">

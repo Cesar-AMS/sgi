@@ -64,7 +64,7 @@
           class="d-block mb-3"
           [scheduleForm]="scheduleForm"
           [schedules]="schedules"
-          [scheduleStatusOptions]="scheduleStatusOptions"
+          [scheduleStatusOptions]="contactScheduleStatusOptions"
           (scheduleSubmitted)="saveSchedule('contato')"
           (scheduleStatusChanged)="handleContactScheduleStatusChange($event)"
         ></app-lead-agenda-section>
@@ -72,7 +72,7 @@
         <app-lead-visits-section
           [scheduleForm]="scheduleForm"
           [schedulesVisit]="schedulesVisit"
-          [scheduleStatusOptions]="scheduleStatusOptions"
+          [scheduleStatusOptions]="visitScheduleStatusOptions"
           (visitScheduleSubmitted)="saveSchedule('visita')"
           (visitStatusChanged)="handleVisitScheduleStatusChange($event)"
         ></app-lead-visits-section>

@@ -5,12 +5,20 @@ export type LeadStatus =
   | 'Ganhou'
   | 'Perdeu';
 
+export type LeadEtapaAtendimento =
+  | 'Sem atendimento'
+  | 'Em atendimento'
+  | 'Agendamento de retorno'
+  | 'Visita agendada'
+  | 'Visita concluída';
+
 export interface Lead {
   id: number;
   nome: string;
   email?: string;
   telefone?: string;
   status: LeadStatus;
+  etapaAtendimento?: LeadEtapaAtendimento | null;
   valor?: number;
   fonte?: string;
   imoveisInteresse?: string;
@@ -26,6 +34,7 @@ export interface CreateLeadRequest {
   email?: string;
   telefone?: string;
   status: LeadStatus | '';
+  etapaAtendimento?: LeadEtapaAtendimento | null;
   valor?: number | null;
   fonte?: string;
   imoveisInteresse?: string;

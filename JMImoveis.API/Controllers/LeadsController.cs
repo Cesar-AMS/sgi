@@ -1,6 +1,7 @@
 using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace JMImoveisAPI.Controllers
 {
@@ -8,11 +9,15 @@ namespace JMImoveisAPI.Controllers
     [ApiController]
     public class LeadsController : ControllerBase
     {
+        private const string ViewAllSchedulesPermission = "sistema.admin.total";
+        private const string EditLeadPermission = "atendimento.leads.editar";
         private readonly ILeadService _leadService;
+        private readonly IPermissionService _permissionService;
 
-        public LeadsController(ILeadService leadService)
+        public LeadsController(ILeadService leadService, IPermissionService permissionService)
         {
             _leadService = leadService;
+            _permissionService = permissionService;
         }
 
         [HttpGet("{leadId}/schedules")]
@@ -49,10 +54,33 @@ namespace JMImoveisAPI.Controllers
             [FromQuery] bool? compareceu,
             [FromQuery] bool? virouVenda,
             [FromQuery] string? startAt,
-            [FromQuery] string? finishAt)
-            => Ok(await _leadService.ListScheduleAsync(
-                q, vendedorId, status, compareceu, virouVenda, startAt, finishAt
+            [FromQuery] string? finishAt,
+            [FromQuery] string? tipoAgenda)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            bool canViewAll;
+            try
+            {
+                canViewAll = await _permissionService.UserHasPermissionAsync(
+                    currentUserId.Value,
+                    ViewAllSchedulesPermission);
+            }
+            catch (KeyNotFoundException)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao encontrado." });
+            }
+
+            return Ok(await _leadService.ListScheduleAsync(
+                q, vendedorId, status, compareceu, virouVenda, startAt, finishAt, tipoAgenda,
+                currentUserId.Value,
+                canViewAll
             ));
+        }
 
         [HttpPut("{leadId}/schedules/{scheduleId}/status")]
         public async Task<IActionResult> UpdateStatus(
@@ -103,11 +131,104 @@ namespace JMImoveisAPI.Controllers
             return Ok();
         }
 
+        [HttpPatch("{id:int}/status")]
+        public async Task<IActionResult> UpdateLeadStatus(int id, [FromBody] UpdateLeadStatusRequest request)
+        {
+            var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            try
+            {
+                var updated = await _leadService.UpdateLeadStatusAsync(id, request?.Status ?? string.Empty, GetCurrentUserDisplayName());
+                if (!updated)
+                {
+                    return NotFound(new { message = "Lead nao encontrado." });
+                }
+
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("{id:int}/etapa-atendimento")]
+        public async Task<IActionResult> UpdateLeadEtapaAtendimento(int id, [FromBody] UpdateLeadEtapaAtendimentoRequest request)
+        {
+            var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            try
+            {
+                var updated = await _leadService.UpdateLeadEtapaAtendimentoAsync(
+                    id,
+                    request?.EtapaAtendimento ?? string.Empty,
+                    GetCurrentUserDisplayName());
+
+                if (!updated)
+                {
+                    return NotFound(new { message = "Lead nao encontrado." });
+                }
+
+                return Ok();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpDelete]
         public async Task<IActionResult> DeleteLead(Lead lead)
         {
             await _leadService.DeleteLeadAsync(lead);
             return Ok();
+        }
+
+        private long? GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return long.TryParse(userIdClaim, out var userId) && userId > 0
+                ? userId
+                : null;
+        }
+
+        private string? GetCurrentUserDisplayName()
+            => User.FindFirst(ClaimTypes.Email)?.Value
+                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        private async Task<IActionResult?> AuthorizeCurrentUserForLeadEditAsync()
+        {
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            try
+            {
+                var hasPermission = await _permissionService.UserHasPermissionAsync(
+                    currentUserId.Value,
+                    EditLeadPermission);
+
+                if (!hasPermission)
+                {
+                    return StatusCode(403, new { message = "Usuario sem permissao para editar leads." });
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao encontrado." });
+            }
+
+            return null;
         }
     }
 }

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { CdkStepperModule } from '@angular/cdk/stepper';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
@@ -21,6 +22,7 @@ import { NgxCurrencyDirective } from 'ngx-currency';
 
 import { SharedModule } from 'src/app/shared/shared.module';
 import { ProjectRoutingModule } from './project-routing.module';
+import { AtendimentoRelatoriosComponent } from './atendimento-relatorios/atendimento-relatorios.component';
 import { AccountsPayableComponent } from './financeiro/accounts-payable/accounts-payable.component';
 import { AccountsReceivableComponent } from './financeiro/accounts-receivable/accounts-receivable.component';
 import { ClientListComponent } from './clientes/client-list/client-list.component';
@@ -59,6 +61,7 @@ import { ComissoesComponent } from '../financeiro/comissoes/comissoes.component'
 import { FinanceiroDreComponent } from '../financeiro/dre/dre.component';
 import { FinanceiroFluxoCaixaComponent } from '../financeiro/fluxo-caixa/fluxo-caixa.component';
 import { PerfisAcessosComponent } from './configuracoes/perfis-acessos/perfis-acessos.component';
+
 @NgModule({
   declarations: [
     ViewCorretorComponent,
@@ -66,6 +69,7 @@ import { PerfisAcessosComponent } from './configuracoes/perfis-acessos/perfis-ac
     ConstructorTransferComponent,
     CreditAnalysisComponent,
     DashboardHomeComponent,
+    AtendimentoRelatoriosComponent,
     VisitasComponent,
     LeadsComponent,
     LeadDetailsComponent,
@@ -118,6 +122,7 @@ import { PerfisAcessosComponent } from './configuracoes/perfis-acessos/perfis-ac
     NgxMaskDirective,
     NgxMaskPipe,
     CdkStepperModule,
+    DragDropModule,
     NgStepperModule,
     NgxCurrencyDirective,
     TranslateModule,
@@ -127,5 +132,3 @@ import { PerfisAcessosComponent } from './configuracoes/perfis-acessos/perfis-ac
   exports: [ModalVendaComponent],
 })
 export class ProjectModule {}
-
-

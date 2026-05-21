@@ -15,6 +15,128 @@
   }
 }
 
+.visitas-header {
+  gap: 1rem;
+}
+
+.visitas-operational-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: #fff;
+  border: 1px solid #e8e8ef;
+  border-radius: 1rem;
+  padding: 0.9rem 1rem;
+}
+
+.summary-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 170px;
+}
+
+.summary-label {
+  color: #606075;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.summary-value {
+  color: #252538;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.summary-note {
+  color: #737386;
+  font-size: 0.86rem;
+}
+
+.visitas-filter-card {
+  background-color: #fff;
+  border: 1px solid #e8e8ef;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.visitas-filter-header {
+  margin-bottom: 1rem;
+}
+
+.visitas-filter-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #252538;
+  margin: 0;
+}
+
+.visitas-filter-subtitle {
+  font-size: 0.82rem;
+  color: #8a8aa0;
+  margin: 0.2rem 0 0;
+}
+
+.visitas-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 2fr) repeat(4, minmax(160px, 1fr));
+  gap: 0.9rem;
+  align-items: end;
+}
+
+.filter-field {
+  min-width: 0;
+}
+
+.filter-field .form-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #606075;
+  margin-bottom: 0.35rem;
+}
+
+.filter-field .form-control,
+.filter-field .form-select,
+.filter-field .input-group-text {
+  min-height: 42px;
+  border-color: #dedee8;
+}
+
+.filter-field .input-group-text {
+  background-color: #fff8f3;
+  color: #ff7a1a;
+  border-right: 0;
+}
+
+.filter-field .input-group .form-control {
+  border-left: 0;
+}
+
+.filter-field .form-control:focus,
+.filter-field .form-select:focus {
+  border-color: #ff9a57;
+  box-shadow: 0 0 0 0.2rem rgba(255, 122, 26, 0.15);
+}
+
+.filter-field .input-group:focus-within .input-group-text {
+  background-color: #ff7a1a;
+  border-color: #ff7a1a;
+  color: #fff;
+}
+
+.nav-pills .nav-link {
+  border: 1px solid #e1e1e8;
+  color: #606075;
+  font-weight: 600;
+}
+
+.nav-pills .nav-link.active {
+  background-color: #ff7a1a;
+  border-color: #ff7a1a;
+  color: #fff;
+}
+
 .table thead th {
   font-size: 0.8rem;
   text-transform: uppercase;
@@ -25,6 +147,68 @@
 
 .table tbody td {
   vertical-align: middle;
+}
+
+.visit-today-row {
+  background-color: #fffdf7;
+}
+
+.visit-schedule-cell {
+  min-width: 110px;
+}
+
+.visit-info-cell {
+  max-width: 220px;
+  min-width: 150px;
+}
+
+.visit-time {
+  color: #252538;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.today-badge {
+  background-color: #fff3cd;
+  color: #7a5300;
+  font-weight: 700;
+  margin-top: 0.25rem;
+}
+
+.status-pill {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.35rem;
+  padding: 0.32rem 0.55rem;
+}
+
+.status-agendada {
+  background-color: #eef2ff;
+  color: #3730a3;
+}
+
+.status-confirmada {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.status-realizada {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.status-cancelada {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+.actions-cell {
+  min-width: 250px;
+  white-space: nowrap;
 }
 
 /* Modal lateral */
@@ -53,4 +237,45 @@
 
 .text-truncate {
   max-width: 100%;
+}
+
+@media (max-width: 1199.98px) {
+  .visitas-filter-grid {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .filter-field-search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .visitas-wrapper {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .visitas-header {
+    align-items: flex-start !important;
+    flex-direction: column;
+  }
+
+  .visitas-operational-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .visitas-filter-card {
+    padding: 0.9rem;
+    border-radius: 0.85rem;
+  }
+
+  .visitas-filter-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .visitas-filter-subtitle {
+    font-size: 0.78rem;
+  }
 }

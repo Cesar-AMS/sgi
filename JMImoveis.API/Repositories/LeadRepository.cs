@@ -40,12 +40,12 @@ namespace JMImoveisAPI.Repositories
 
         public async Task CreateLead(Lead lead)
         {
-            var sql = @"INSERT INTO leads (Nome, Email, Telefone,Status,
+            var sql = @"INSERT INTO leads (Nome, Email, Telefone, Status, EtapaAtendimento,
                                            Valor, Fonte, ImoveisInteresse,
                                            Vendedor, Coordenador, Gerente, Observacao)
                                         VALUES
                                         (
-                                            @Nome, @Email, @Telefone, @Status,
+                                            @Nome, @Email, @Telefone, @Status, @EtapaAtendimento,
                                             @Valor, @Fonte, @ImoveisInteresse,
                                             @Vendedor, @Coordenador, @Gerente, @Observacao);";
 
@@ -179,8 +179,8 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<int> CreateSchedule(CreateLeadScheduleRequest req)
         {
-            var sql = @"INSERT INTO LeadSchedules (LeadId, ScheduledAt, Note, Status)
-                        VALUES (@LeadId, @ScheduledAt, @Note, 'Pendente');
+            var sql = @"INSERT INTO LeadSchedules (LeadId, ScheduledAt, Note, Status, TipoAgenda)
+                        VALUES (@LeadId, @ScheduledAt, @Note, 'Pendente', @TipoAgenda);
 
                         SELECT LAST_INSERT_ID();";
 
@@ -188,75 +188,104 @@ namespace JMImoveisAPI.Repositories
             return await conn.ExecuteScalarAsync<int>(sql, req);
         }
 
-        public async Task<IEnumerable<VisitaDto>> ListScheduleAsync(string? q, int? vendedorId, string? status, bool? compareceu, bool? virouVenda, DateTime? startAt, DateTime? finishAt)
+        public async Task<IEnumerable<VisitaDto>> ListScheduleAsync(string? q, int? vendedorId, string? status, bool? compareceu, bool? virouVenda, DateTime? startAt, DateTime? finishAt, string tipoAgenda, long currentUserId, bool canViewAll)
         {
 
             await using var conn = await _context.OpenConnectionAsync();
 
             var sql = new StringBuilder(@"SELECT
-                                                Id,
-                                                LeadId,
-                                                UserId as VendedorId,
-                                                NameClient as NomeCliente,
-                                                ScheduledAt as DataHoraISO,
-                                                Note as Observacao,
-                                                Status,
-                                                compareceu AS Compareceu,
-                                                virouVenda AS VirouVenda,
-                                                CreatedAt,
-                                                UpdatedAt
-                                            FROM LeadSchedules
-                                            WHERE 1=1 AND IFNULL(TipoAgenda,'visita') = 'visita'
+                                                ls.Id,
+                                                ls.LeadId,
+                                                ls.UserId as VendedorId,
+                                                vendedor.name as VendedorNome,
+                                                COALESCE(NULLIF(ls.CoordenadorId, 0), NULLIF(vendedor.coordenator_id, 0)) as CoordenadorId,
+                                                coordenador.name as CoordenadorNome,
+                                                COALESCE(NULLIF(ls.GerenteId, 0), NULLIF(vendedor.manager_id, 0), NULLIF(coordenador.manager_id, 0)) as GerenteId,
+                                                gerente.name as GerenteNome,
+                                                ls.NameClient as NomeCliente,
+                                                l.Telefone as Telefone,
+                                                l.ImoveisInteresse as ImoveisInteresse,
+                                                l.Fonte as Fonte,
+                                                ls.ScheduledAt as DataHoraISO,
+                                                ls.Note as Observacao,
+                                                ls.Status,
+                                                IFNULL(ls.TipoAgenda,'visita') as TipoAgenda,
+                                                ls.compareceu AS Compareceu,
+                                                ls.virouVenda AS VirouVenda,
+                                                ls.CreatedAt,
+                                                ls.UpdatedAt
+                                            FROM LeadSchedules ls
+                                            LEFT JOIN leads l ON l.Id = ls.LeadId
+                                            LEFT JOIN users vendedor ON vendedor.id = ls.UserId
+                                            LEFT JOIN users coordenador ON coordenador.id = COALESCE(NULLIF(ls.CoordenadorId, 0), NULLIF(vendedor.coordenator_id, 0))
+                                            LEFT JOIN users gerente ON gerente.id = COALESCE(NULLIF(ls.GerenteId, 0), NULLIF(vendedor.manager_id, 0), NULLIF(coordenador.manager_id, 0))
+                                            WHERE 1=1 AND IFNULL(ls.TipoAgenda,'visita') = @tipoAgenda
                                             ");
 
             var p = new DynamicParameters();
+            p.Add("tipoAgenda", tipoAgenda);
+
+            if (!canViewAll)
+            {
+                sql.Append(@"
+                AND (
+                    ls.UserId = @currentUserId
+                    OR COALESCE(NULLIF(ls.CoordenadorId, 0), NULLIF(vendedor.coordenator_id, 0)) = @currentUserId
+                    OR COALESCE(NULLIF(ls.GerenteId, 0), NULLIF(vendedor.manager_id, 0), NULLIF(coordenador.manager_id, 0)) = @currentUserId
+                    OR NULLIF(vendedor.gestor_id, 0) = @currentUserId
+                    OR NULLIF(coordenador.gestor_id, 0) = @currentUserId
+                    OR NULLIF(gerente.gestor_id, 0) = @currentUserId
+                )
+                ");
+                p.Add("currentUserId", currentUserId);
+            }
 
             if (!string.IsNullOrWhiteSpace(q))
             {
                 sql.Append(@"AND (
-                    NameClient LIKE CONCAT('%', @q, '%')
-                 OR Note      LIKE CONCAT('%', @q, '%'))
+                    ls.NameClient LIKE CONCAT('%', @q, '%')
+                 OR ls.Note      LIKE CONCAT('%', @q, '%'))
                 ");
                 p.Add("q", q.Trim());
             }
 
             if (vendedorId.HasValue)
             {
-                sql.Append("\nAND UserId = @vendedorId");
+                sql.Append("\nAND ls.UserId = @vendedorId");
                 p.Add("vendedorId", vendedorId.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(status))
             {
-                sql.Append("\nAND Status = @status");
+                sql.Append("\nAND ls.Status = @status");
                 p.Add("status", status.Trim());
             }
 
             if (compareceu.HasValue)
             {
-                sql.Append("\nAND compareceu = @compareceu");
+                sql.Append("\nAND ls.compareceu = @compareceu");
                 p.Add("compareceu", compareceu.Value);
             }
 
             if (virouVenda.HasValue)
             {
-                sql.Append("\nAND virouVenda = @virouVenda");
+                sql.Append("\nAND ls.virouVenda = @virouVenda");
                 p.Add("virouVenda", virouVenda.Value);
             }
 
             if (startAt.HasValue)
             {
-                sql.Append("\nAND ScheduledAt >= @startAt");
+                sql.Append("\nAND ls.ScheduledAt >= @startAt");
                 p.Add("startAt", startAt.Value);
             }
 
             if (finishAt.HasValue)
             {
-                sql.Append("\nAND ScheduledAt <= @finishAt");
+                sql.Append("\nAND ls.ScheduledAt <= @finishAt");
                 p.Add("finishAt", finishAt.Value);
             }
 
-            sql.Append("\nORDER BY ScheduledAt DESC;");
+            sql.Append("\nORDER BY ls.ScheduledAt DESC;");
 
             return await conn.QueryAsync<VisitaDto>(sql.ToString(), p);
         }
@@ -306,6 +335,12 @@ namespace JMImoveisAPI.Repositories
                 p.Add("VirouVenda", patch.VirouVenda.Value);
             }
 
+            if (!string.IsNullOrWhiteSpace(patch.TipoAgenda))
+            {
+                sets.Add("TipoAgenda = @TipoAgenda");
+                p.Add("TipoAgenda", patch.TipoAgenda);
+            }
+
             if (patch.DataHoraISO.HasValue)
             {
                 var dt = patch.DataHoraISO.Value;
@@ -338,6 +373,7 @@ namespace JMImoveisAPI.Repositories
                                                  Email,
                                                  Telefone,
                                                  Status,
+                                                 EtapaAtendimento,
                                                  Valor,
                                                  Fonte,
                                                  ImoveisInteresse,
@@ -408,6 +444,7 @@ namespace JMImoveisAPI.Repositories
                                 Email,
                                 Telefone,
                                 Status,
+                                EtapaAtendimento,
                                 Valor,
                                 Fonte,
                                 ImoveisInteresse,
@@ -442,6 +479,84 @@ namespace JMImoveisAPI.Repositories
 
             await using var conn = await _context.OpenConnectionAsync();
             await conn.ExecuteAsync(sql, lead);
+        }
+
+        public async Task<bool> UpdateLeadStatus(int id, string status, CreateLeadActivityRequest activity)
+        {
+            const string updateSql = @"UPDATE leads
+                                       SET Status = @Status
+                                       WHERE Id = @Id;";
+
+            const string activitySql = @"INSERT INTO LeadActivities
+                                        (
+                                            LeadId,
+                                            DateTime,
+                                            Description,
+                                            Author,
+                                            Type
+                                        )
+                                        VALUES
+                                        (
+                                            @LeadId,
+                                            @DateTime,
+                                            @Description,
+                                            @Author,
+                                            @Type
+                                        );";
+
+            await using var conn = await _context.OpenConnectionAsync();
+            await using var transaction = await conn.BeginTransactionAsync();
+
+            var affectedRows = await conn.ExecuteAsync(updateSql, new { Id = id, Status = status }, transaction);
+            if (affectedRows == 0)
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+
+            await conn.ExecuteAsync(activitySql, activity, transaction);
+            await transaction.CommitAsync();
+
+            return true;
+        }
+
+        public async Task<bool> UpdateLeadEtapaAtendimento(int id, string etapaAtendimento, CreateLeadActivityRequest activity)
+        {
+            const string updateSql = @"UPDATE leads
+                                       SET EtapaAtendimento = @EtapaAtendimento
+                                       WHERE Id = @Id;";
+
+            const string activitySql = @"INSERT INTO LeadActivities
+                                        (
+                                            LeadId,
+                                            DateTime,
+                                            Description,
+                                            Author,
+                                            Type
+                                        )
+                                        VALUES
+                                        (
+                                            @LeadId,
+                                            @DateTime,
+                                            @Description,
+                                            @Author,
+                                            @Type
+                                        );";
+
+            await using var conn = await _context.OpenConnectionAsync();
+            await using var transaction = await conn.BeginTransactionAsync();
+
+            var affectedRows = await conn.ExecuteAsync(updateSql, new { Id = id, EtapaAtendimento = etapaAtendimento }, transaction);
+            if (affectedRows == 0)
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+
+            await conn.ExecuteAsync(activitySql, activity, transaction);
+            await transaction.CommitAsync();
+
+            return true;
         }
     }
 }

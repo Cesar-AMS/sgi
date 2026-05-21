@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+import { AtendimentoRelatoriosComponent } from './atendimento-relatorios/atendimento-relatorios.component';
 import { ClientListComponent } from './clientes/client-list/client-list.component';
 import { ComparecimentosComponent } from './comparecimentos/comparecimentos.component';
 import { GeraisComponent } from './configuracoes/gerais/gerais.component';
@@ -206,6 +207,8 @@ const routes: Routes = [
   {
     path: 'atendimento/leads/:id',
     component: LeadDetailsComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.leads.visualizar' },
   },
   {
     path: 'leads/:id',
@@ -249,12 +252,26 @@ const routes: Routes = [
   {
     path: 'visitas',
     component: VisitasComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.visitas.visualizar' },
   },
   {
     path: 'atendimento/agendamento',
     component: VisitasComponent,
     canActivate: [PermissionGuard],
     data: { permissionKey: 'atendimento.agendamento.visualizar' },
+  },
+  {
+    path: 'atendimento/visitas',
+    component: VisitasComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.visitas.visualizar' },
+  },
+  {
+    path: 'atendimento/relatorios',
+    component: AtendimentoRelatoriosComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.relatorios.visualizar' },
   },
   {
     path: 'comparecimento',

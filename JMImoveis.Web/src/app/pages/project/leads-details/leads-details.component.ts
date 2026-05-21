@@ -2,7 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Lead, LeadStatus } from 'src/app/models/lead';
-import { LeadActivity, LeadSchedule, LeadScheduleStatus, Usuarios } from 'src/app/models/ContaBancaria';
+import {
+  ContactScheduleStatus,
+  LeadActivity,
+  LeadSchedule,
+  LeadScheduleStatus,
+  Usuarios,
+  VisitScheduleStatus,
+} from 'src/app/models/ContaBancaria';
 import { ApiService } from 'src/app/core/services/api.service';
 import { LeadsService } from 'src/app/core/services/leads.service';
 import { LeadAgendaStatusChangeEvent } from './components/lead-agenda-section/lead-agenda-section.component';
@@ -25,10 +32,17 @@ export class LeadDetailsComponent implements OnInit {
 
   corretores: Usuarios[] = [];
 
-  scheduleStatusOptions: { label: string; value: LeadScheduleStatus }[] = [
+  contactScheduleStatusOptions: { label: string; value: ContactScheduleStatus }[] = [
     { label: 'Pendente', value: 'Pendente' },
     { label: 'Cumprido', value: 'Cumprido' },
     { label: 'Não cumprido', value: 'NaoCumprido' },
+  ];
+
+  visitScheduleStatusOptions: { label: string; value: VisitScheduleStatus }[] = [
+    { label: 'Agendada', value: 'Agendada' },
+    { label: 'Confirmada', value: 'Confirmada' },
+    { label: 'Realizada', value: 'Realizada' },
+    { label: 'Cancelada', value: 'Cancelada' },
   ];
 
   statusOptions: LeadStatus[] = [
@@ -109,7 +123,10 @@ export class LeadDetailsComponent implements OnInit {
         if (typeSchedule == 'visita') {
           this.schedulesVisit = (items || []).sort(
             (a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
-          );
+          ).map((item) => ({
+            ...item,
+            status: this.normalizeVisitScheduleStatus(item.status),
+          }));
         }
         else {
 
@@ -131,7 +148,7 @@ export class LeadDetailsComponent implements OnInit {
       nomeCliente: this.lead.nome,
       dataHoraISO: iso,
       vendedorId: this.lead.vendedor,
-      status: 'Agendada',
+      status: type === 'visita' ? 'Agendada' : 'Pendente',
       observacao: note || null,
       compareceu: false,
       virouVenda: false,
@@ -164,6 +181,24 @@ export class LeadDetailsComponent implements OnInit {
 
   handleVisitScheduleStatusChange(event: LeadVisitStatusChangeEvent): void {
     this.changeScheduleStatus(event.schedule, event.status);
+  }
+
+  private normalizeVisitScheduleStatus(status: LeadScheduleStatus): VisitScheduleStatus {
+    switch (status) {
+      case 'Pendente':
+        return 'Agendada';
+      case 'Cumprido':
+        return 'Realizada';
+      case 'NaoCumprido':
+        return 'Cancelada';
+      case 'Confirmada':
+      case 'Realizada':
+      case 'Cancelada':
+      case 'Agendada':
+        return status;
+      default:
+        return 'Agendada';
+    }
   }
 
 

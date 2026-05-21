@@ -1,19 +1,26 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { PageChangedEvent } from 'ngx-bootstrap/pagination';
 import { ToastrService } from 'ngx-toastr';
 import { ApiService } from 'src/app/core/services/api.service';
 import { LeadsService } from 'src/app/core/services/leads.service';
-import { LeadFilter, LeadSchedule, LeadScheduleStatus, Usuarios } from 'src/app/models/ContaBancaria';
-import { Lead, LeadStatus } from 'src/app/models/lead';
+import { PermissionsService } from 'src/app/core/services/permissions.service';
+import { SessionService } from 'src/app/core/session/session.service';
+import {
+  LeadFilter,
+  LeadSchedule,
+  LeadScheduleStatus,
+  Usuarios,
+} from 'src/app/models/ContaBancaria';
+import { Lead, LeadEtapaAtendimento, LeadStatus } from 'src/app/models/lead';
 import { exportToExcel } from 'src/app/shared/utils/excel-export';
-
 
 @Component({
   selector: 'app-leads',
   templateUrl: './leads.component.html',
-  styleUrl: './leads.component.scss'
+  styleUrl: './leads.component.scss',
 })
 export class LeadsComponent {
   leads: Lead[] = [];
@@ -28,7 +35,7 @@ export class LeadsComponent {
   gerentes: Usuarios[] = [];
   coordenatorsAll: Usuarios[] = [];
   corretores: Usuarios[] = [];
-  // filtros
+
   searchTerm = '';
   statusFilter = '';
   vendedorFilter = '';
@@ -38,13 +45,13 @@ export class LeadsComponent {
   dateTo = '';
 
   nomeTerm = '';
-  dateRange = 'last30'; // opção default de período
+  dateRange = 'last30';
 
-  // layout
-  viewMode: 'grid' | 'list' = 'grid';
+  viewMode: 'list' | 'kanban' = 'list';
   isLoading = false;
 
-  // modal
+  canEditLeadStatus = false;
+
   showCreateModal = false;
   createForm!: FormGroup;
 
@@ -56,6 +63,7 @@ export class LeadsComponent {
     { label: 'Cumprido', value: 'Cumprido' },
     { label: 'Não cumprido', value: 'NaoCumprido' },
   ];
+
   statusOptions: LeadStatus[] = [
     'Novo',
     'Em Contato',
@@ -64,47 +72,121 @@ export class LeadsComponent {
     'Perdeu',
   ];
 
+  etapaAtendimentoOptions: LeadEtapaAtendimento[] = [
+    'Sem atendimento',
+    'Em atendimento',
+    'Agendamento de retorno',
+    'Visita agendada',
+    'Visita concluída',
+  ];
+
   vendedoresMock = ['João', 'Maria', 'Carlos'];
   coordenadoresMock = ['Ana', 'Bruno'];
   gerentesMock = ['Fernanda', 'Ricardo'];
-  fontesMock = ['Facebook', 'Instagram', 'Indicação', 'Site', 'Ação de Rua', 'Placa', 'TikTok', 'Listas telefônicas'];
 
-  constructor(private fb: FormBuilder,
+  fontesMock = [
+    'Facebook',
+    'Instagram',
+    'Indicação',
+    'Site',
+    'Ação de Rua',
+    'Placa',
+    'TikTok',
+    'Listas telefônicas',
+  ];
+
+  constructor(
+    private fb: FormBuilder,
     private toast: ToastrService,
     private router: Router,
     private leadService: LeadsService,
-    private apiService: ApiService) { }
+    private apiService: ApiService,
+    private permissionsService: PermissionsService,
+    private sessionService: SessionService
+  ) {}
 
   ngOnInit(): void {
+    this.loadPermissions();
 
     this.apiService.getGerentes().subscribe((data) => {
-      this.gerentes = data
+      this.gerentes = data;
     });
 
     this.apiService.getCoordenadores().subscribe((data) => {
-      this.coordenatorsAll = data
+      this.coordenatorsAll = data;
     });
 
     this.apiService.getCorretores().subscribe((data) => {
-      console.log('corretores', data)
-      this.corretores = data
+      this.corretores = data;
     });
 
     this.buildForm();
     this.loadLeads();
-
   }
 
-  loadSchedules(leadId: number): void {
-    this.leadService.getSchedulesByLead(leadId,'visitas').subscribe({
-      next: (items) => {
-        this.schedules = (items || []).sort(
-          (a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
-        );
+  private loadPermissions(): void {
+    const currentUserId = this.sessionService.getCurrentUserId();
+
+    if (!currentUserId) {
+      this.canEditLeadStatus = false;
+      return;
+    }
+
+    this.permissionsService.getUserEffectivePermissions(currentUserId).subscribe({
+      next: (response: unknown) => {
+        const permissions = this.extractPermissionKeys(response);
+        this.canEditLeadStatus = permissions.includes('atendimento.leads.editar');
+      },
+      error: () => {
+        this.canEditLeadStatus = false;
       },
     });
   }
 
+  private extractPermissionKeys(response: unknown): string[] {
+    if (Array.isArray(response)) {
+      return response
+        .map((item: any) => {
+          if (typeof item === 'string') return item;
+          return item?.key || item?.permissionKey || item?.name || item?.code || '';
+        })
+        .filter(Boolean);
+    }
+
+    const data = response as any;
+
+    if (Array.isArray(data?.permissions)) {
+      return data.permissions
+        .map((item: any) => {
+          if (typeof item === 'string') return item;
+          return item?.key || item?.permissionKey || item?.name || item?.code || '';
+        })
+        .filter(Boolean);
+    }
+
+    if (Array.isArray(data?.items)) {
+      return data.items
+        .map((item: any) => {
+          if (typeof item === 'string') return item;
+          return item?.key || item?.permissionKey || item?.name || item?.code || '';
+        })
+        .filter(Boolean);
+    }
+
+    return [];
+  }
+
+  loadSchedules(leadId: number): void {
+    this.leadService.getSchedulesByLead(leadId, 'visitas').subscribe({
+      next: (items) => {
+        this.schedules = (items || []).sort(
+          (a, b) =>
+            new Date(b.scheduledAt).getTime() -
+            new Date(a.scheduledAt).getTime()
+        );
+      },
+    });
+  }
 
   getStartIndex(): number {
     if (this.totalItems === 0) return 0;
@@ -114,7 +196,6 @@ export class LeadsComponent {
   getEndIndex(): number {
     return Math.min(this.page * this.itemsPerPage, this.totalItems);
   }
-
 
   buildForm(): void {
     this.createForm = this.fb.group({
@@ -152,6 +233,83 @@ export class LeadsComponent {
     this.router.navigate(['/jm/atendimento/leads', id]);
   }
 
+  setViewMode(mode: 'list' | 'kanban'): void {
+    this.viewMode = mode;
+  }
+
+  getLeadsByEtapaAtendimento(etapaAtendimento: LeadEtapaAtendimento): Lead[] {
+    return this.leads.filter(
+      (lead) => this.getEffectiveEtapaAtendimento(lead) === etapaAtendimento
+    );
+  }
+
+  getEffectiveEtapaAtendimento(lead: Lead): LeadEtapaAtendimento {
+    if (lead.etapaAtendimento) {
+      return lead.etapaAtendimento;
+    }
+
+    return this.getFallbackEtapaAtendimento(lead.status);
+  }
+
+  getFallbackEtapaAtendimento(status: LeadStatus): LeadEtapaAtendimento {
+    const fallback: Record<LeadStatus, LeadEtapaAtendimento> = {
+      Novo: 'Sem atendimento',
+      'Em Contato': 'Em atendimento',
+      'Em Negociação': 'Em atendimento',
+      Ganhou: 'Visita concluída',
+      Perdeu: 'Em atendimento',
+    };
+
+    return fallback[status] || 'Sem atendimento';
+  }
+
+  getKanbanDropListId(etapaAtendimento: LeadEtapaAtendimento): string {
+    return `lead-kanban-${etapaAtendimento
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase()}`;
+  }
+
+  getKanbanConnectedDropLists(): string[] {
+    return this.etapaAtendimentoOptions.map((etapa) => this.getKanbanDropListId(etapa));
+  }
+
+  onLeadDropped(event: CdkDragDrop<Lead[]>, targetEtapaAtendimento: LeadEtapaAtendimento): void {
+    if (!this.canEditLeadStatus) {
+      this.toast.warning('Você não tem permissão para alterar a etapa do lead.');
+      return;
+    }
+
+    const lead = event.item.data as Lead | undefined;
+
+    if (!lead?.id) {
+      this.toast.error('Não foi possível identificar o lead movimentado.');
+      return;
+    }
+
+    const previousEtapaAtendimento = lead.etapaAtendimento ?? null;
+    const currentEtapaAtendimento = this.getEffectiveEtapaAtendimento(lead);
+
+    if (currentEtapaAtendimento === targetEtapaAtendimento) {
+      return;
+    }
+
+    this.leadService.updateLeadEtapaAtendimento(lead.id, targetEtapaAtendimento).subscribe({
+      next: () => {
+        lead.etapaAtendimento = targetEtapaAtendimento;
+        this.updatePagedLeads();
+        this.toast.success('Etapa do lead atualizada com sucesso.');
+      },
+      error: () => {
+        lead.etapaAtendimento = previousEtapaAtendimento;
+        this.updatePagedLeads();
+        this.toast.error('Não foi possível atualizar a etapa do lead.');
+      },
+    });
+  }
+
   onPageChanged(event: PageChangedEvent): void {
     this.page = event.page;
     this.itemsPerPage = event.itemsPerPage;
@@ -170,20 +328,17 @@ export class LeadsComponent {
     this.pagedLeads = this.leads.slice(startIndex, endIndex);
   }
 
-  selectNameSale(idvendedor: any) {
+  selectNameSale(idvendedor: any): string {
+    if (idvendedor === null || idvendedor === undefined || idvendedor === '') {
+      return '-';
+    }
 
-    if(idvendedor === null){
-      return '-'
-    }
-    
-    var x = this.corretores.find(it => it.id.toString().trim() === idvendedor.toString().trim())?.name
-    
-    if(x === null){
-      return '-'
-    }
-    return x
+    const name = this.corretores.find(
+      (it) => it.id.toString().trim() === idvendedor.toString().trim()
+    )?.name;
+
+    return name || '-';
   }
-
 
   applyFilters(): void {
     this.filteredLeads = this.leads.filter((lead) => {
@@ -204,7 +359,8 @@ export class LeadsComponent {
         !this.gerenteFilter || lead.gerente === this.gerenteFilter;
 
       const created = new Date(lead.dataCriacao).getTime();
-      const fromOk = !this.dateFrom || created >= new Date(this.dateFrom).getTime();
+      const fromOk =
+        !this.dateFrom || created >= new Date(this.dateFrom).getTime();
       const toOk = !this.dateTo || created <= new Date(this.dateTo).getTime();
 
       return (
@@ -233,7 +389,10 @@ export class LeadsComponent {
     };
   }
 
-  private getDatesFromRange(range: string): { startAt: string | null; finishAt: string | null } {
+  private getDatesFromRange(range: string): {
+    startAt: string | null;
+    finishAt: string | null;
+  } {
     const today = new Date();
     let start: Date | null = null;
     let finish: Date | null = null;
@@ -241,24 +400,52 @@ export class LeadsComponent {
     switch (range) {
       case 'today':
         start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        finish = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+        finish = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+          23,
+          59,
+          59
+        );
         break;
 
       case 'last7':
-        finish = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+        finish = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+          23,
+          59,
+          59
+        );
         start = new Date(finish);
         start.setDate(start.getDate() - 6);
         break;
 
       case 'last30':
-        finish = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+        finish = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+          23,
+          59,
+          59
+        );
         start = new Date(finish);
         start.setDate(start.getDate() - 29);
         break;
 
       case 'thisMonth':
         start = new Date(today.getFullYear(), today.getMonth(), 1);
-        finish = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+        finish = new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          0,
+          23,
+          59,
+          59
+        );
         break;
 
       case 'thisYear':
@@ -281,7 +468,6 @@ export class LeadsComponent {
     this.loadLeads();
   }
 
-
   openCreateModal(): void {
     this.showCreateModal = true;
   }
@@ -292,65 +478,54 @@ export class LeadsComponent {
   }
 
   submitCreate(): void {
-
-    console.log('entrei')
     if (this.createForm.invalid) {
       this.createForm.markAllAsTouched();
       return;
     }
 
-    console.log('ibh', this.createForm)
-
     this.leadService.createLead(this.createForm.value).subscribe({
-      next: (lead) => {
+      next: () => {
         this.applyFilters();
         this.closeCreateModal();
         this.loadLeads();
-        this.toast.success('Lead criado com sucesso!')
+        this.toast.success('Lead criado com sucesso!');
       },
     });
   }
 
   exportCsv(): void {
-    // aqui você pode chamar a API ou gerar localmente
     console.log('Exportar CSV');
   }
 
+  exportExcel(): void {
+    const data = (this.pagedLeads || []).map((r) => ({
+      ID: r.id,
+      Criacao: this.toBRDate(r.dataCriacao),
+      Vendedor: this.selectNameSale(r.vendedor),
+      Status: r.status,
+      Gerente: r.gerente,
+      Fonte: r.fonte,
+      ValorPendente: Number(r.valor ?? 0),
+    }));
 
-  
-exportExcel(): void {
-  const data = (this.pagedLeads || []).map(r => ({
-    ID: r.id,
-    Criacao: this.toBRDate(r.dataCriacao),
-    Vendedor: this.selectNameSale(r.vendedor),
-    Status: r.status,
-    Gerente: r.gerente,
-    Fonte: r.fonte,
-    ValorPendente: Number(r.valor ?? 0)
-  }));
+    exportToExcel(`leads_${this.today()}.xlsx`, 'Leads', data);
+  }
 
-  exportToExcel(
-    `leads_${this.today()}.xlsx`,
-    'Leads',
-    data
-  );
-}
+  private today(): string {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 
-private today(): string {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-private toBRDate(value?: string | null): string {
-  if (!value) return '';
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return value;
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yy = d.getFullYear();
-  return `${dd}/${mm}/${yy}`;
-}
+  private toBRDate(value?: string | null): string {
+    if (!value) return '';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return value;
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = d.getFullYear();
+    return `${dd}/${mm}/${yy}`;
+  }
 }

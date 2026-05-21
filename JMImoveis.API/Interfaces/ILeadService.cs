@@ -8,6 +8,8 @@ namespace JMImoveisAPI.Interfaces
         Task<Lead?> GetByIdAsync(int id);
         Task CreateLeadAsync(Lead lead);
         Task UpdateLeadAsync(Lead lead);
+        Task<bool> UpdateLeadStatusAsync(int id, string status, string? author);
+        Task<bool> UpdateLeadEtapaAtendimentoAsync(int id, string etapaAtendimento, string? author);
         Task DeleteLeadAsync(Lead lead);
         Task<IEnumerable<LeadActivity>> GetActivitiesByLeadIdAsync(int leadId);
         Task<int> CreateActivityAsync(CreateLeadActivityRequest request);
@@ -21,7 +23,10 @@ namespace JMImoveisAPI.Interfaces
             bool? compareceu,
             bool? virouVenda,
             string? startAt,
-            string? finishAt);
+            string? finishAt,
+            string? tipoAgenda,
+            long currentUserId,
+            bool canViewAll);
         Task UpdateScheduleStatusAsync(int leadId, int scheduleId, UpdateLeadScheduleStatusRequest request);
         Task<bool> UpdateScheduleAsync(int id, VisitaPatchRequest patch);
     }

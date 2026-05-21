@@ -19,8 +19,9 @@ export const MENU: MenuItem[] = [
     icon: 'ph-calendar-check',
     permissionKeys: [
       'atendimento.leads.visualizar',
-      'atendimento.clientes.visualizar',
       'atendimento.agendamento.visualizar',
+      'atendimento.visitas.visualizar',
+      'atendimento.relatorios.visualizar',
     ],
     subItems: [
       {
@@ -39,10 +40,17 @@ export const MENU: MenuItem[] = [
       },
       {
         id: 23,
-        label: 'Clientes',
-        link: '/jm/clientes',
+        label: 'Visitas',
+        link: '/jm/atendimento/visitas',
         parentId: 20,
-        permissionKey: 'atendimento.clientes.visualizar',
+        permissionKey: 'atendimento.visitas.visualizar',
+      },
+      {
+        id: 24,
+        label: 'Relat\u00f3rios',
+        link: '/jm/atendimento/relatorios',
+        parentId: 20,
+        permissionKey: 'atendimento.relatorios.visualizar',
       },
     ],
   },
@@ -91,6 +99,7 @@ export const MENU: MenuItem[] = [
     label: 'COMERCIAL',
     icon: 'ph-handshake',
     permissionKeys: [
+      'atendimento.clientes.visualizar',
       'vendas.dashboard.visualizar',
       'vendas.propostas.visualizar',
       'vendas.vendas.visualizar',
@@ -102,6 +111,13 @@ export const MENU: MenuItem[] = [
         link: '/jm/vendas/dashboard',
         parentId: 30,
         permissionKey: 'vendas.dashboard.visualizar',
+      },
+      {
+        id: 32,
+        label: 'Clientes',
+        link: '/jm/clientes',
+        parentId: 30,
+        permissionKey: 'atendimento.clientes.visualizar',
       },
       {
         id: 33,

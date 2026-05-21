@@ -1,0 +1,441 @@
+<div class="atendimento-relatorios-wrapper container-fluid py-4">
+  <div class="report-header mb-4">
+    <div>
+      <h2 class="fw-bold mb-2">Relat&oacute;rios de Atendimento</h2>
+      <p class="text-muted mb-0">
+        Primeira vis&atilde;o de leads, agendamentos, visitas e convers&otilde;es.
+      </p>
+    </div>
+
+    <div class="report-actions">
+      <div class="report-period">
+        {{ periodLabel }}
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="exportExcel()"
+        [disabled]="isLoading"
+      >
+        Exportar Excel
+      </button>
+    </div>
+  </div>
+
+  <section class="filters-panel mb-4" aria-label="Filtros de relat&oacute;rios de atendimento">
+    <div class="filters-grid">
+      <div class="filter-field">
+        <label class="form-label" for="reportDateRange">Per&iacute;odo</label>
+        <select
+          id="reportDateRange"
+          class="form-select"
+          [(ngModel)]="dateRange"
+          (ngModelChange)="onFilterChange()"
+          [disabled]="isLoading"
+          aria-label="Filtrar relat&oacute;rios por per&iacute;odo"
+        >
+          <option *ngFor="let option of dateRangeOptions; trackBy: trackByLabel" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label class="form-label" for="reportVendedor">Vendedor</label>
+        <select
+          id="reportVendedor"
+          class="form-select"
+          [(ngModel)]="vendedorFilter"
+          (ngModelChange)="onFilterChange()"
+          [disabled]="isLoading || isLoadingFilters"
+          aria-label="Filtrar relat&oacute;rios por vendedor"
+        >
+          <option value="">Todos vendedores</option>
+          <option *ngFor="let vendedor of corretores; trackBy: trackByName" [value]="vendedor.id">
+            {{ vendedor.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label class="form-label" for="reportCoordenador">Coordenador</label>
+        <select
+          id="reportCoordenador"
+          class="form-select"
+          [(ngModel)]="coordenadorFilter"
+          (ngModelChange)="onFilterChange()"
+          [disabled]="isLoading || isLoadingFilters"
+          aria-label="Filtrar relat&oacute;rios por coordenador"
+        >
+          <option value="">Todos coordenadores</option>
+          <option *ngFor="let coordenador of coordenadores; trackBy: trackByName" [value]="coordenador.id">
+            {{ coordenador.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label class="form-label" for="reportGerente">Gerente</label>
+        <select
+          id="reportGerente"
+          class="form-select"
+          [(ngModel)]="gerenteFilter"
+          (ngModelChange)="onFilterChange()"
+          [disabled]="isLoading || isLoadingFilters"
+          aria-label="Filtrar relat&oacute;rios por gerente"
+        >
+          <option value="">Todos gerentes</option>
+          <option *ngFor="let gerente of gerentes; trackBy: trackByName" [value]="gerente.id">
+            {{ gerente.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button
+          type="button"
+          class="btn btn-outline-secondary w-100"
+          (click)="clearFilters()"
+          [disabled]="isLoading"
+        >
+          Limpar filtros
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="filterErrorMessage" class="filters-warning">
+      {{ filterErrorMessage }}
+    </div>
+  </section>
+
+  <div *ngIf="isLoading" class="report-state">
+    Carregando relat&oacute;rios de atendimento...
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="alert alert-warning" role="alert">
+    {{ errorMessage }}
+  </div>
+
+  <ng-container *ngIf="!isLoading">
+    <div class="summary-grid mb-4">
+      <div class="summary-card" *ngFor="let card of summaryCards; trackBy: trackByLabel">
+        <span>{{ card.label }}</span>
+        <strong>{{ card.value }}</strong>
+        <small>{{ card.description }}</small>
+      </div>
+    </div>
+
+    <section class="conversion-section mb-4" aria-label="Indicadores de conversao">
+      <div class="section-title">
+        <h3>Indicadores de convers&atilde;o</h3>
+        <span>Taxas calculadas com os dados do filtro atual.</span>
+      </div>
+
+      <div class="conversion-grid">
+        <article class="conversion-card" *ngFor="let card of conversionCards; trackBy: trackByLabel">
+          <div>
+            <span>{{ card.label }}</span>
+            <strong>{{ card.percentage | number:'1.0-1' }}%</strong>
+          </div>
+          <small>{{ card.numerator }} de {{ card.denominator }}</small>
+          <p>{{ card.description }}</p>
+        </article>
+      </div>
+    </section>
+
+    <div *ngIf="!hasReportData" class="report-state">
+      Sem dados para o filtro selecionado.
+    </div>
+
+    <section *ngIf="hasReportData" class="funnel-section mb-4" aria-label="Funil por equipe">
+      <div class="section-title">
+        <h3>Funil por equipe</h3>
+        <span>Comparativo calculado com os dados do filtro atual.</span>
+      </div>
+
+      <div class="funnel-table mb-3">
+        <header>Funil por vendedor/agente</header>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Vendedor</th>
+                <th class="text-end">Leads</th>
+                <th class="text-end">Agendamentos</th>
+                <th class="text-end">Visitas</th>
+                <th class="text-end">Realizadas</th>
+                <th class="text-end">Compareceu</th>
+                <th class="text-end">Virou venda</th>
+                <th class="text-end">Lead &rarr; Agendamento</th>
+                <th class="text-end">Agendamento &rarr; Visita</th>
+                <th class="text-end">Visita &rarr; Venda</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of sellerFunnelRows; trackBy: trackByName">
+                <td>{{ row.name }}</td>
+                <td class="text-end">{{ row.leads }}</td>
+                <td class="text-end">{{ row.agendamentos }}</td>
+                <td class="text-end">{{ row.visitas }}</td>
+                <td class="text-end">{{ row.realizadas }}</td>
+                <td class="text-end">{{ row.compareceu }}</td>
+                <td class="text-end">{{ row.virouVenda }}</td>
+                <td class="text-end">{{ row.leadToAgendamento | number:'1.0-1' }}%</td>
+                <td class="text-end">{{ row.agendamentoToVisita | number:'1.0-1' }}%</td>
+                <td class="text-end">{{ row.visitaToVenda | number:'1.0-1' }}%</td>
+              </tr>
+              <tr *ngIf="sellerFunnelRows.length === 0">
+                <td colspan="10" class="empty-cell">Nenhum registro encontrado por vendedor.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="funnel-table mb-3">
+        <header>Funil por coordenador</header>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Coordenador</th>
+                <th class="text-end">Leads</th>
+                <th class="text-end">Agendamentos</th>
+                <th class="text-end">Visitas</th>
+                <th class="text-end">Realizadas</th>
+                <th class="text-end">Compareceu</th>
+                <th class="text-end">Virou venda</th>
+                <th class="text-end">Visita &rarr; Venda</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of coordinatorFunnelRows; trackBy: trackByName">
+                <td>{{ row.name }}</td>
+                <td class="text-end">{{ row.leads }}</td>
+                <td class="text-end">{{ row.agendamentos }}</td>
+                <td class="text-end">{{ row.visitas }}</td>
+                <td class="text-end">{{ row.realizadas }}</td>
+                <td class="text-end">{{ row.compareceu }}</td>
+                <td class="text-end">{{ row.virouVenda }}</td>
+                <td class="text-end">{{ row.visitaToVenda | number:'1.0-1' }}%</td>
+              </tr>
+              <tr *ngIf="coordinatorFunnelRows.length === 0">
+                <td colspan="8" class="empty-cell">Nenhum registro encontrado por coordenador.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="funnel-table">
+        <header>Funil por gerente</header>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Gerente</th>
+                <th class="text-end">Leads</th>
+                <th class="text-end">Agendamentos</th>
+                <th class="text-end">Visitas</th>
+                <th class="text-end">Realizadas</th>
+                <th class="text-end">Compareceu</th>
+                <th class="text-end">Virou venda</th>
+                <th class="text-end">Visita &rarr; Venda</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of managerFunnelRows; trackBy: trackByName">
+                <td>{{ row.name }}</td>
+                <td class="text-end">{{ row.leads }}</td>
+                <td class="text-end">{{ row.agendamentos }}</td>
+                <td class="text-end">{{ row.visitas }}</td>
+                <td class="text-end">{{ row.realizadas }}</td>
+                <td class="text-end">{{ row.compareceu }}</td>
+                <td class="text-end">{{ row.virouVenda }}</td>
+                <td class="text-end">{{ row.visitaToVenda | number:'1.0-1' }}%</td>
+              </tr>
+              <tr *ngIf="managerFunnelRows.length === 0">
+                <td colspan="8" class="empty-cell">Nenhum registro encontrado por gerente.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="hasReportData" class="ranking-section mb-4" aria-label="Ranking gerencial">
+      <div class="section-title">
+        <h3>Ranking gerencial</h3>
+        <span>Ranking calculado com base nos dados filtrados e dispon&iacute;veis no per&iacute;odo.</span>
+      </div>
+
+      <div class="ranking-grid">
+        <article class="ranking-card">
+          <header>Top vendedores por Leads</header>
+          <ol>
+            <li *ngFor="let row of topLeadSellers; trackBy: trackByPosition">
+              <span>{{ row.position }}</span>
+              <strong>{{ row.name }}</strong>
+              <em>{{ row.value }}</em>
+            </li>
+          </ol>
+          <p *ngIf="topLeadSellers.length === 0">N&atilde;o h&aacute; dados suficientes para calcular este ranking.</p>
+        </article>
+
+        <article class="ranking-card">
+          <header>Top vendedores por Agendamentos</header>
+          <ol>
+            <li *ngFor="let row of topScheduleSellers; trackBy: trackByPosition">
+              <span>{{ row.position }}</span>
+              <strong>{{ row.name }}</strong>
+              <em>{{ row.value }}</em>
+            </li>
+          </ol>
+          <p *ngIf="topScheduleSellers.length === 0">N&atilde;o h&aacute; dados suficientes para calcular este ranking.</p>
+        </article>
+
+        <article class="ranking-card">
+          <header>Top vendedores por Visitas</header>
+          <ol>
+            <li *ngFor="let row of topVisitSellers; trackBy: trackByPosition">
+              <span>{{ row.position }}</span>
+              <strong>{{ row.name }}</strong>
+              <em>{{ row.value }}</em>
+            </li>
+          </ol>
+          <p *ngIf="topVisitSellers.length === 0">N&atilde;o h&aacute; dados suficientes para calcular este ranking.</p>
+        </article>
+
+        <article class="ranking-card">
+          <header>Top vendedores por Virou venda</header>
+          <ol>
+            <li *ngFor="let row of topSaleSellers; trackBy: trackByPosition">
+              <span>{{ row.position }}</span>
+              <strong>{{ row.name }}</strong>
+              <em>{{ row.value }}</em>
+            </li>
+          </ol>
+          <p *ngIf="topSaleSellers.length === 0">N&atilde;o h&aacute; dados suficientes para calcular este ranking.</p>
+        </article>
+
+        <article class="ranking-card">
+          <header>Melhor convers&atilde;o Visita &rarr; Venda</header>
+          <ol>
+            <li *ngFor="let row of topVisitToSaleConversion; trackBy: trackByPosition">
+              <span>{{ row.position }}</span>
+              <strong>{{ row.name }}</strong>
+              <em>{{ row.value | number:'1.0-1' }}%</em>
+              <small>{{ row.detail }}</small>
+            </li>
+          </ol>
+          <p *ngIf="topVisitToSaleConversion.length === 0">N&atilde;o h&aacute; dados suficientes para calcular este ranking.</p>
+        </article>
+      </div>
+    </section>
+
+    <div *ngIf="hasReportData" class="row g-3">
+      <div class="col-12 col-xl-6">
+        <section class="report-panel">
+          <header>Leads por status</header>
+          <table class="table table-sm align-middle mb-0">
+            <tbody>
+              <tr *ngFor="let row of leadsByStatus; trackBy: trackByLabel">
+                <td>{{ row.label }}</td>
+                <td class="text-end">{{ row.total }}</td>
+              </tr>
+              <tr *ngIf="leadsByStatus.length === 0">
+                <td colspan="2" class="empty-cell">Nenhum registro encontrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <section class="report-panel">
+          <header>Leads por etapa de atendimento</header>
+          <table class="table table-sm align-middle mb-0">
+            <tbody>
+              <tr *ngFor="let row of leadsByEtapa; trackBy: trackByLabel">
+                <td>{{ row.label }}</td>
+                <td class="text-end">{{ row.total }}</td>
+              </tr>
+              <tr *ngIf="leadsByEtapa.length === 0">
+                <td colspan="2" class="empty-cell">Nenhum registro encontrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <section class="report-panel">
+          <header>Agendamentos por status</header>
+          <table class="table table-sm align-middle mb-0">
+            <tbody>
+              <tr *ngFor="let row of agendamentosByStatus; trackBy: trackByLabel">
+                <td>{{ row.label }}</td>
+                <td class="text-end">{{ row.total }}</td>
+              </tr>
+              <tr *ngIf="agendamentosByStatus.length === 0">
+                <td colspan="2" class="empty-cell">Nenhum registro encontrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <section class="report-panel">
+          <header>Visitas por status</header>
+          <table class="table table-sm align-middle mb-0">
+            <tbody>
+              <tr *ngFor="let row of visitasByStatus; trackBy: trackByLabel">
+                <td>{{ row.label }}</td>
+                <td class="text-end">{{ row.total }}</td>
+              </tr>
+              <tr *ngIf="visitasByStatus.length === 0">
+                <td colspan="2" class="empty-cell">Nenhum registro encontrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <section class="report-panel">
+          <header>Visitas por vendedor</header>
+          <table class="table table-sm align-middle mb-0">
+            <tbody>
+              <tr *ngFor="let row of visitasByVendedor; trackBy: trackByLabel">
+                <td>{{ row.label }}</td>
+                <td class="text-end">{{ row.total }}</td>
+              </tr>
+              <tr *ngIf="visitasByVendedor.length === 0">
+                <td colspan="2" class="empty-cell">Nenhum registro encontrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <section class="report-panel">
+          <header>Visitas por coordenador / gerente</header>
+          <table class="table table-sm align-middle mb-0">
+            <tbody>
+              <tr *ngFor="let row of visitasByGestao; trackBy: trackByLabel">
+                <td>{{ row.label }}</td>
+                <td class="text-end">{{ row.total }}</td>
+              </tr>
+              <tr *ngIf="visitasByGestao.length === 0">
+                <td colspan="2" class="empty-cell">Nenhum registro encontrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+  </ng-container>
+</div>

@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { LeadSchedule, LeadScheduleStatus } from 'src/app/models/ContaBancaria';
+import { ContactScheduleStatus, LeadSchedule } from 'src/app/models/ContaBancaria';
 
 export interface LeadAgendaStatusChangeEvent {
   schedule: LeadSchedule;
-  status: LeadScheduleStatus;
+  status: ContactScheduleStatus;
 }
 
 @Component({
@@ -15,7 +15,7 @@ export interface LeadAgendaStatusChangeEvent {
 export class LeadAgendaSectionComponent {
   @Input() scheduleForm!: FormGroup;
   @Input() schedules: LeadSchedule[] = [];
-  @Input() scheduleStatusOptions: { label: string; value: LeadScheduleStatus }[] = [];
+  @Input() scheduleStatusOptions: { label: string; value: ContactScheduleStatus }[] = [];
 
   @Output() scheduleSubmitted = new EventEmitter<void>();
   @Output() scheduleStatusChanged = new EventEmitter<LeadAgendaStatusChangeEvent>();

@@ -9,6 +9,7 @@ namespace JMImoveisAPI.Entities
         public string? Email { get; set; }
         public string? Telefone { get; set; }
         public string? Status { get; set; }
+        public string? EtapaAtendimento { get; set; }
         public decimal? Valor { get; set; }
         public string? Fonte { get; set; }
         public string? ImoveisInteresse { get; set; }
@@ -64,6 +65,16 @@ namespace JMImoveisAPI.Entities
         public string? Type { get; set; }
     }
 
+    public class UpdateLeadStatusRequest
+    {
+        public string Status { get; set; } = string.Empty;
+    }
+
+    public class UpdateLeadEtapaAtendimentoRequest
+    {
+        public string EtapaAtendimento { get; set; } = string.Empty;
+    }
+
     public class LeadSchedule
     {
         public int Id { get; set; }
@@ -84,6 +95,7 @@ namespace JMImoveisAPI.Entities
         public int UserId { get; set; }
         public DateTime ScheduledAt { get; set; }
         public string? Note { get; set; }
+        public string? TipoAgenda { get; set; }
     }
 
     public class LeadScheduleV3
@@ -127,10 +139,19 @@ namespace JMImoveisAPI.Entities
         public int Id { get; set; }
         public int? LeadId { get; set; }
         public int VendedorId { get; set; }          // vendedorId
+        public string? VendedorNome { get; set; }
+        public int? CoordenadorId { get; set; }
+        public string? CoordenadorNome { get; set; }
+        public int? GerenteId { get; set; }
+        public string? GerenteNome { get; set; }
         public string NomeCliente { get; set; } = string.Empty;   // nomeCliente
+        public string? Telefone { get; set; }
+        public string? ImoveisInteresse { get; set; }
+        public string? Fonte { get; set; }
         public DateTime DataHoraISO { get; set; }
         public string? Observacao { get; set; }        // observacao
         public string Status { get; set; } = string.Empty;
+        public string TipoAgenda { get; set; } = "visita";
         public bool Compareceu { get; set; }
         public bool VirouVenda { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -168,6 +189,9 @@ namespace JMImoveisAPI.Entities
 
         [JsonPropertyName("virouVenda")]
         public bool? VirouVenda { get; set; }
+
+        [JsonPropertyName("tipoAgenda")]
+        public string? TipoAgenda { get; set; }
     }
 
 }

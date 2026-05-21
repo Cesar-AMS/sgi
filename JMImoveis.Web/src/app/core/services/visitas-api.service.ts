@@ -18,6 +18,7 @@ export class VisitasApiService {
     virouVenda?: boolean;
     startAt?: string;
     finishAt?: string;
+    tipoAgenda?: string;
   }): Observable<Visita[]> {
     let params = new HttpParams();
 
@@ -53,7 +54,11 @@ export class VisitasApiService {
     virouVenda: boolean;
   }*/
 
-  remove(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}Leads/visitas/${id}`);
+  cancel(id: number): Observable<Visita> {
+    return this.update(id, { status: 'Cancelada' });
+  }
+
+  remove(id: number): Observable<Visita> {
+    return this.cancel(id);
   }
 }

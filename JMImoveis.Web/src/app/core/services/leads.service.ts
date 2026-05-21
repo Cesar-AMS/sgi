@@ -12,6 +12,8 @@ import {
   CreateLeadActivityRequest,
   CreateLeadRequest,
   Lead,
+  LeadEtapaAtendimento,
+  LeadStatus,
 } from 'src/app/models/lead';
 
 @Injectable({ providedIn: 'root' })
@@ -48,6 +50,29 @@ export class LeadsService {
     return this.http.patch<void>(this.baseUrl, lead, {
       headers: this.getAuthHeaders(),
     });
+  }
+
+  updateLeadStatus(leadId: number, status: LeadStatus): Observable<void> {
+    return this.http.patch<void>(
+      `${this.baseUrl}/${leadId}/status`,
+      { status },
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
+  }
+
+  updateLeadEtapaAtendimento(
+    leadId: number,
+    etapaAtendimento: LeadEtapaAtendimento
+  ): Observable<void> {
+    return this.http.patch<void>(
+      `${this.baseUrl}/${leadId}/etapa-atendimento`,
+      { etapaAtendimento },
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
   }
 
   getActivitiesByLead(leadId: number): Observable<LeadActivity[]> {

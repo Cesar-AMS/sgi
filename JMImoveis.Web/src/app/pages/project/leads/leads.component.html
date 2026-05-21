@@ -9,90 +9,180 @@
     </div>
 
     <div class="d-flex gap-2">
-
-      <button class="btn btn-outline-success" type="button" (click)="exportExcel()">
-        <i class="bi bi-file-earmark-excel me-2"></i> Excel
+      <button
+        class="btn btn-outline-success"
+        type="button"
+        (click)="exportExcel()"
+        aria-label="Exportar leads para Excel"
+      >
+        <i class="bi bi-file-earmark-excel me-2" aria-hidden="true"></i>
+        Excel
       </button>
 
-      <button class="btn btn-orange d-flex align-items-center" type="button" (click)="openCreateModal()">
-        <i class="bi bi-plus-lg me-2"></i>
+      <button
+        class="btn btn-orange d-flex align-items-center"
+        type="button"
+        (click)="openCreateModal()"
+        aria-label="Criar novo lead"
+      >
+        <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
         Novo Lead
       </button>
     </div>
   </div>
 
-  <!-- Filtros em uma linha -->
-  <div class="d-flex align-items-center gap-2 flex-wrap flex-lg-nowrap mb-3 filter-bar">
-    <!-- Busca por nome -->
-    <div class="flex-grow-1">
-      <div class="input-group">
-        <span class="input-group-text bg-white border-end-0">
-          <i class="bi bi-search text-muted"></i>
-        </span>
-        <input type="text" class="form-control border-start-0" placeholder="Buscar por nome..." [(ngModel)]="nomeTerm"
-          (ngModelChange)="onFilterChange()" />
+  <!-- Filtros -->
+  <section class="leads-filter-card mb-3" aria-label="Filtros de leads">
+    <div class="leads-filter-header">
+      <div>
+        <h3 class="leads-filter-title">Filtros</h3>
+        <p class="leads-filter-subtitle">
+          Refine a busca por nome, status, equipe e período.
+        </p>
       </div>
     </div>
 
-    <!-- Status -->
-    <div class="flex-shrink-0">
-      <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
-        <option value="">Todos status</option>
-        <option *ngFor="let s of statusOptions" [value]="s">
-          {{ s }}
-        </option>
-      </select>
-    </div>
+    <div class="leads-filter-grid">
+      <div class="filter-field filter-field-search">
+        <label class="form-label" for="leadSearchInput">Buscar lead</label>
+        <div class="input-group flex-nowrap">
+          <span class="input-group-text" aria-hidden="true">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            id="leadSearchInput"
+            type="text"
+            class="form-control"
+            placeholder="Buscar por nome..."
+            [(ngModel)]="nomeTerm"
+            (ngModelChange)="onFilterChange()"
+            aria-label="Buscar lead por nome"
+          />
+        </div>
+      </div>
 
-    <!-- Vendedor -->
-    <div class="flex-shrink-0">
-      <select class="form-select" [(ngModel)]="vendedorFilter" (ngModelChange)="onFilterChange()">
-        <option value="">Todos vendedores</option>
-        <option *ngFor="let v of corretores" [value]="v.id">
-          {{ v.name }}
-        </option>
-      </select>
-    </div>
+      <div class="filter-field">
+        <label class="form-label" for="leadStatusFilter">Status</label>
+        <select
+          id="leadStatusFilter"
+          class="form-select"
+          [(ngModel)]="statusFilter"
+          (ngModelChange)="onFilterChange()"
+          aria-label="Filtrar leads por status"
+        >
+          <option value="">Todos status</option>
+          <option *ngFor="let s of statusOptions" [value]="s">
+            {{ s }}
+          </option>
+        </select>
+      </div>
 
-    <!-- Coordenador -->
-    <div class="flex-shrink-0">
-      <select class="form-select" [(ngModel)]="coordenadorFilter" (ngModelChange)="onFilterChange()">
-        <option value="">Todos coordenadores</option>
-        <option *ngFor="let c of coordenatorsAll" [value]="c.id">
-          {{ c.name }}
-        </option>
-      </select>
-    </div>
+      <div class="filter-field">
+        <label class="form-label" for="leadDateRangeFilter">Período</label>
+        <select
+          id="leadDateRangeFilter"
+          class="form-select"
+          [(ngModel)]="dateRange"
+          (ngModelChange)="onFilterChange()"
+          aria-label="Filtrar leads por período"
+        >
+          <option value="all">Todos períodos</option>
+          <option value="today">Hoje</option>
+          <option value="last7">Últimos 7 dias</option>
+          <option value="last30">Últimos 30 dias</option>
+          <option value="thisMonth">Este mês</option>
+          <option value="thisYear">Este ano</option>
+        </select>
+      </div>
 
-    <!-- Gerente -->
-    <div class="flex-shrink-0">
-      <select class="form-select" [(ngModel)]="gerenteFilter" (ngModelChange)="onFilterChange()">
-        <option value="">Todos gerentes</option>
-        <option *ngFor="let g of gerentes" [value]="g.id">
-          {{ g.name }}
-        </option>
-      </select>
-    </div>
+      <div class="filter-field">
+        <label class="form-label" for="leadVendedorFilter">Vendedor</label>
+        <select
+          id="leadVendedorFilter"
+          class="form-select"
+          [(ngModel)]="vendedorFilter"
+          (ngModelChange)="onFilterChange()"
+          aria-label="Filtrar leads por vendedor"
+        >
+          <option value="">Todos vendedores</option>
+          <option *ngFor="let v of corretores" [value]="v.id">
+            {{ v.name }}
+          </option>
+        </select>
+      </div>
 
-    <!-- Range de datas -->
-    <div class="flex-shrink-0">
-      <select class="form-select" [(ngModel)]="dateRange" (ngModelChange)="onFilterChange()">
-        <option value="all">Todos períodos</option>
-        <option value="today">Hoje</option>
-        <option value="last7">Últimos 7 dias</option>
-        <option value="last30">Últimos 30 dias</option>
-        <option value="thisMonth">Este mês</option>
-        <option value="thisYear">Este ano</option>
-      </select>
+      <div class="filter-field">
+        <label class="form-label" for="leadCoordenadorFilter">Coordenador</label>
+        <select
+          id="leadCoordenadorFilter"
+          class="form-select"
+          [(ngModel)]="coordenadorFilter"
+          (ngModelChange)="onFilterChange()"
+          aria-label="Filtrar leads por coordenador"
+        >
+          <option value="">Todos coordenadores</option>
+          <option *ngFor="let c of coordenatorsAll" [value]="c.id">
+            {{ c.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label class="form-label" for="leadGerenteFilter">Gerente</label>
+        <select
+          id="leadGerenteFilter"
+          class="form-select"
+          [(ngModel)]="gerenteFilter"
+          (ngModelChange)="onFilterChange()"
+          aria-label="Filtrar leads por gerente"
+        >
+          <option value="">Todos gerentes</option>
+          <option *ngFor="let g of gerentes" [value]="g.id">
+            {{ g.name }}
+          </option>
+        </select>
+      </div>
     </div>
-  </div>
+  </section>
 
   <hr class="mt-0 mb-3" />
 
-  <!-- Lista de leads -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div
+      class="btn-group view-toggle-group"
+      role="group"
+      aria-label="Alternar visualizacao de leads"
+    >
+      <button
+        type="button"
+        class="btn btn-view-toggle"
+        [class.active]="viewMode === 'list'"
+        (click)="setViewMode('list')"
+        aria-label="Exibir leads em listagem"
+      >
+        Listagem
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-view-toggle"
+        [class.active]="viewMode === 'kanban'"
+        (click)="setViewMode('kanban')"
+        aria-label="Exibir leads em Kanban"
+      >
+        Kanban
+      </button>
+    </div>
+
+    <span class="text-muted small">
+      {{ totalItems }} lead{{ totalItems === 1 ? '' : 's' }}
+      encontrado{{ totalItems === 1 ? '' : 's' }}
+    </span>
+  </div>
+
   <ng-container *ngIf="!isLoading; else loadingTpl">
     <ng-container *ngIf="leads.length > 0; else emptyTpl">
-      <div class="table-responsive">
+      <div class="table-responsive" *ngIf="viewMode === 'list'; else kanbanTpl">
         <table class="table align-middle">
           <thead>
             <tr>
@@ -106,9 +196,17 @@
               <th>Data</th>
             </tr>
           </thead>
+
           <tbody>
-            <tr *ngFor="let lead of pagedLeads" (click)="openLeadDetails(lead.id)" style="cursor: pointer;"
-              class="table-row-click">
+            <tr
+              *ngFor="let lead of pagedLeads"
+              (click)="openLeadDetails(lead.id)"
+              style="cursor: pointer;"
+              class="table-row-click"
+              tabindex="0"
+              role="button"
+              [attr.aria-label]="'Abrir detalhes do lead ' + lead.nome"
+            >
               <td>{{ lead.nome }}</td>
               <td>
                 <span class="badge bg-status">{{ lead.status }}</span>
@@ -123,35 +221,139 @@
           </tbody>
         </table>
       </div>
-      <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2" *ngIf="totalItems > 0">
+
+      <div
+        class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2"
+        *ngIf="totalItems > 0 && viewMode === 'list'"
+      >
         <div class="d-flex align-items-center gap-2">
-          <span class="text-muted small">Itens por página:</span>
-          <select class="form-select form-select-sm w-auto" [ngModel]="itemsPerPage"
-            (ngModelChange)="onItemsPerPageChange($event)">
-            <option *ngFor="let n of perPageOptions" [value]="n">{{ n }}</option>
+          <label class="text-muted small mb-0" for="itemsPerPageSelect">
+            Itens por página:
+          </label>
+
+          <select
+            id="itemsPerPageSelect"
+            class="form-select form-select-sm w-auto"
+            [ngModel]="itemsPerPage"
+            (ngModelChange)="onItemsPerPageChange($event)"
+            aria-label="Selecionar quantidade de leads por página"
+          >
+            <option *ngFor="let n of perPageOptions" [value]="n">
+              {{ n }}
+            </option>
           </select>
+
           <span class="text-muted small">
-            Mostrando
-            {{ getStartIndex() }}
-            -
-            {{ getEndIndex() }}
+            Mostrando {{ getStartIndex() }} - {{ getEndIndex() }}
           </span>
         </div>
 
-        <pagination [totalItems]="totalItems" [(ngModel)]="page" [itemsPerPage]="itemsPerPage" [boundaryLinks]="true"
-          previousText="Anterior" nextText="Próximo" firstText="Primeira" lastText="Última" [directionLinks]="true"
-          [maxSize]="5" (pageChanged)="onPageChanged($event)" class="mb-0"></pagination>
+        <pagination
+          [totalItems]="totalItems"
+          [(ngModel)]="page"
+          [itemsPerPage]="itemsPerPage"
+          [boundaryLinks]="true"
+          previousText="Anterior"
+          nextText="Próximo"
+          firstText="Primeira"
+          lastText="Última"
+          [directionLinks]="true"
+          [maxSize]="5"
+          (pageChanged)="onPageChanged($event)"
+          class="mb-0"
+        ></pagination>
       </div>
-
     </ng-container>
   </ng-container>
 
-  <!-- Loading -->
-  <ng-template #loadingTpl>
-    <div class="text-center text-muted py-5">Carregando leads...</div>
+  <ng-template #kanbanTpl>
+    <div class="leads-kanban" aria-label="Kanban de leads">
+      <section
+        class="kanban-column"
+        *ngFor="let etapa of etapaAtendimentoOptions"
+        cdkDropList
+        [id]="getKanbanDropListId(etapa)"
+        [cdkDropListData]="getLeadsByEtapaAtendimento(etapa)"
+        [cdkDropListConnectedTo]="getKanbanConnectedDropLists()"
+        [cdkDropListDisabled]="!canEditLeadStatus"
+        (cdkDropListDropped)="onLeadDropped($event, etapa)"
+        [attr.aria-label]="'Coluna ' + etapa"
+      >
+        <header class="kanban-column-header">
+          <div>
+            <h3>{{ etapa }}</h3>
+            <span class="kanban-status-real">Etapa operacional</span>
+            <span>
+              {{ getLeadsByEtapaAtendimento(etapa).length }}
+              lead{{ getLeadsByEtapaAtendimento(etapa).length === 1 ? '' : 's' }}
+            </span>
+          </div>
+        </header>
+
+        <div class="kanban-card-list">
+          <button
+            type="button"
+            class="kanban-card"
+            *ngFor="let lead of getLeadsByEtapaAtendimento(etapa)"
+            cdkDrag
+            [cdkDragData]="lead"
+            [cdkDragDisabled]="!canEditLeadStatus"
+            (click)="openLeadDetails(lead.id)"
+            [attr.aria-label]="'Abrir detalhes do lead ' + lead.nome"
+            [class.kanban-card-readonly]="!canEditLeadStatus"
+          >
+            <div class="kanban-card-title">{{ lead.nome }}</div>
+
+            <div class="kanban-card-meta" *ngIf="lead.telefone">
+              {{ lead.telefone }}
+            </div>
+
+            <div class="kanban-card-meta">
+              {{ lead.dataCriacao | date: 'shortDate' }}
+            </div>
+
+            <div class="kanban-card-line">
+              <span>Status</span>
+              <strong>{{ lead.status }}</strong>
+            </div>
+
+            <div class="kanban-card-line">
+              <span>Vendedor</span>
+              <strong>{{ selectNameSale(lead.vendedor) }}</strong>
+            </div>
+
+            <div class="kanban-card-line">
+              <span>Origem</span>
+              <strong>{{ lead.fonte || '-' }}</strong>
+            </div>
+
+            <div class="kanban-card-interest" *ngIf="lead.imoveisInteresse">
+              {{ lead.imoveisInteresse }}
+            </div>
+
+            <div class="kanban-card-drag-hint" *ngIf="canEditLeadStatus">
+              Arraste para alterar etapa
+            </div>
+          </button>
+
+          <div class="kanban-empty" *ngIf="getLeadsByEtapaAtendimento(etapa).length === 0">
+            Nenhum lead nesta etapa.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="text-muted small mt-2" *ngIf="!canEditLeadStatus">
+      Você pode visualizar o Kanban, mas não possui permissão para mover cards.
+    </div>
   </ng-template>
 
-  <!-- Empty state -->
+  <ng-template #loadingTpl>
+    <div class="text-center text-muted py-5">
+      Carregando leads...
+    </div>
+  </ng-template>
+
   <ng-template #emptyTpl>
     <div class="text-center text-muted py-5">
       <p class="mb-0 fs-5">Nenhum lead encontrado.</p>
@@ -159,38 +361,69 @@
   </ng-template>
 </div>
 
-<!-- Mantém o modal de Novo Lead igual ao que já montamos antes -->
-<!-- ... -->
-
-
-<!-- MODAL DE NOVO LEAD (side panel) -->
+<!-- Modal de Novo Lead -->
 <div class="modal-backdrop-custom" *ngIf="showCreateModal">
-  <div class="modal-panel">
+  <div
+    class="modal-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="novoLeadModalTitle"
+  >
     <div class="modal-header border-0 px-4 pt-4 pb-2">
-      <h5 class="modal-title fw-semibold">Novo Lead</h5>
-      <button type="button" class="btn-close" aria-label="Close" (click)="closeCreateModal()"></button>
+      <h5 id="novoLeadModalTitle" class="modal-title fw-semibold">
+        Novo Lead
+      </h5>
+
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Fechar modal de novo lead"
+        (click)="closeCreateModal()"
+      ></button>
     </div>
 
     <div class="modal-body px-4 pb-4">
       <form [formGroup]="createForm" (ngSubmit)="submitCreate()">
         <div class="mb-3">
-          <label class="form-label">Nome</label>
-          <input type="text" class="form-control" placeholder="Nome do lead" formControlName="nome" />
+          <label class="form-label" for="leadNome">Nome</label>
+          <input
+            id="leadNome"
+            type="text"
+            class="form-control"
+            placeholder="Nome do lead"
+            formControlName="nome"
+          />
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-control" placeholder="Email do lead" formControlName="email" />
+          <label class="form-label" for="leadEmail">Email</label>
+          <input
+            id="leadEmail"
+            type="email"
+            class="form-control"
+            placeholder="Email do lead"
+            formControlName="email"
+          />
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Telefone</label>
-          <input type="text" class="form-control" placeholder="Telefone do lead" formControlName="telefone" />
+          <label class="form-label" for="leadTelefone">Telefone</label>
+          <input
+            id="leadTelefone"
+            type="text"
+            class="form-control"
+            placeholder="Telefone do lead"
+            formControlName="telefone"
+          />
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Status</label>
-          <select class="form-select" formControlName="status">
+          <label class="form-label" for="leadStatus">Status</label>
+          <select
+            id="leadStatus"
+            class="form-select"
+            formControlName="status"
+          >
             <option value="">Selecione...</option>
             <option *ngFor="let s of statusOptions" [value]="s">
               {{ s }}
@@ -200,12 +433,23 @@
 
         <div class="row g-3 mb-3">
           <div class="col-6">
-            <label class="form-label">Valor (R$)</label>
-            <input type="number" class="form-control" placeholder="Valor do lead" formControlName="valor" />
+            <label class="form-label" for="leadValor">Valor (R$)</label>
+            <input
+              id="leadValor"
+              type="number"
+              class="form-control"
+              placeholder="Valor do lead"
+              formControlName="valor"
+            />
           </div>
+
           <div class="col-6">
-            <label class="form-label">Fonte</label>
-            <select class="form-select" formControlName="fonte">
+            <label class="form-label" for="leadFonte">Fonte</label>
+            <select
+              id="leadFonte"
+              class="form-select"
+              formControlName="fonte"
+            >
               <option value="">Selecione...</option>
               <option *ngFor="let f of fontesMock" [value]="f">
                 {{ f }}
@@ -215,13 +459,26 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Imóveis de Interesse</label>
-          <input type="text" class="form-control" placeholder="Selecione..." formControlName="imoveisInteresse" />
+          <label class="form-label" for="leadInteresse">
+            Interesse do lead
+          </label>
+          <input
+            id="leadInteresse"
+            type="text"
+            class="form-control"
+            placeholder="Ex: apto 2 dorms, unidade 101, casa em condomínio..."
+            formControlName="imoveisInteresse"
+            aria-label="Interesse do lead"
+          />
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Vendedor</label>
-          <select class="form-select" formControlName="vendedor">
+          <label class="form-label" for="leadVendedor">Vendedor</label>
+          <select
+            id="leadVendedor"
+            class="form-select"
+            formControlName="vendedor"
+          >
             <option value="">Selecione...</option>
             <option *ngFor="let v of corretores" [value]="v.id">
               {{ v.name }}
@@ -230,15 +487,25 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label">Observação</label>
-          <textarea class="form-control" rows="3" placeholder="Observações sobre o lead"
-            formControlName="observacao"></textarea>
+          <label class="form-label" for="leadObservacao">Observação</label>
+          <textarea
+            id="leadObservacao"
+            class="form-control"
+            rows="3"
+            placeholder="Observações sobre o lead"
+            formControlName="observacao"
+          ></textarea>
         </div>
 
         <div class="d-flex justify-content-end gap-2 mt-4">
-          <button type="button" class="btn btn-outline-secondary" (click)="closeCreateModal()">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="closeCreateModal()"
+          >
             Cancelar
           </button>
+
           <button type="submit" class="btn btn-orange">
             Salvar
           </button>

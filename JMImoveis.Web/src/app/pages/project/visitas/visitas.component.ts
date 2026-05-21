@@ -1,12 +1,27 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { NavigationEnd, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { catchError, filter, forkJoin, of } from 'rxjs';
+import { SessionService } from 'src/app/core/session/session.service';
 import { ApiService } from 'src/app/core/services/api.service';
+import { Permission, PermissionsService } from 'src/app/core/services/permissions.service';
 import { VisitasApiService } from 'src/app/core/services/visitas-api.service';
 import { Usuarios } from 'src/app/models/ContaBancaria';
 import { Visita, VisitaStatus } from 'src/app/models/visita';
 import { exportToExcel } from 'src/app/shared/utils/excel-export';
 
+type VisitasScreenMode = 'agendamento' | 'visitas';
+type SchedulePayload = {
+  nomeCliente: string;
+  dataHoraISO: string;
+  vendedorId: string | null;
+  status: VisitaStatus;
+  observacao: string;
+  tipoAgenda: 'contato' | 'visita';
+  compareceu?: boolean;
+  virouVenda?: boolean;
+};
 
 @Component({
   selector: 'app-visitas',
@@ -14,12 +29,19 @@ import { exportToExcel } from 'src/app/shared/utils/excel-export';
   styleUrl: './visitas.component.scss'
 })
 export class VisitasComponent {
+screenMode: VisitasScreenMode = 'visitas';
 
 setStatusTab(status: 'Agendada' | 'Confirmada' | 'Realizada' | 'Cancelada') {
   this.statusFilter = status;
 
   this.page = 1;
 
+  this.onFilterChange();
+}
+
+clearStatusFilter(): void {
+  this.statusFilter = '';
+  this.page = 1;
   this.onFilterChange();
 }
   visitas: Visita[] = [];
@@ -42,9 +64,16 @@ isSaving = false;
 exportExcel(): void {
   const data = (this.paged || []).map(r => ({
     ID: r.id,
+    LeadId: r.leadId ?? '',
     Cliente: r.nomeCliente,
+    Telefone: r.telefone ?? '',
+    Interesse: r.imoveisInteresse ?? '',
+    Origem: r.fonte ?? '',
     DtAgendamento: this.toBRDate(r.dataHoraISO),
-    Corretor: this.selectNameSale(r.vendedorId),
+    Vendedor: this.getVendedorNome(r),
+    Coordenador: r.coordenadorNome ?? '',
+    Gerente: r.gerenteNome ?? '',
+    TipoAgenda: r.tipoAgenda ?? this.getCurrentTipoAgenda(),
     Status: r.status,
     Compareceu: r.compareceu === true? 'SIM': 'NÃO',
     VirouVenda: r.virouVenda === true? 'SIM': 'NÃO',
@@ -106,6 +135,10 @@ private isoToDatetimeLocal(iso: string): string {
   dateRange: 'all' | 'today' | 'last7' | 'last30' | 'thisMonth' | 'thisYear' = 'all';
 
   corretores: Usuarios[] = [];
+  visibleCorretores: Usuarios[] = [];
+  currentUserId: number | null = null;
+  canViewAllVisits = false;
+  sellerFilterMode: 'full' | 'mine' | 'scoped' = 'full';
   statusOptions: VisitaStatus[] = ['Agendada', 'Confirmada', 'Realizada', 'Cancelada'];
 
   isLoading = false;
@@ -117,20 +150,203 @@ private isoToDatetimeLocal(iso: string): string {
     private fb: FormBuilder,
     private toast: ToastrService,
     private api: ApiService,
-    private visitasApi: VisitasApiService
+    private visitasApi: VisitasApiService,
+    private router: Router,
+    private sessionService: SessionService,
+    private permissionsService: PermissionsService
   ) {}
 
   ngOnInit(): void {
-    this.buildForm();
+    this.applyScreenModeFromUrl();
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => {
+        const previousMode = this.screenMode;
+        this.applyScreenModeFromUrl();
 
-    // corretores (igual seu Leads)
-    this.api.getCorretores().subscribe({
-      next: (data) => (this.corretores = data || []),
-      error: () => (this.corretores = [])
+        if (previousMode !== this.screenMode) {
+          this.applyDefaultFiltersForMode();
+          this.loadVisitas();
+        }
+      });
+
+    this.buildForm();
+    this.currentUserId = this.sessionService.getCurrentUserId();
+
+    forkJoin({
+      corretores: this.api.getCorretores().pipe(catchError(() => of([] as Usuarios[]))),
+      permissions: this.currentUserId
+        ? this.permissionsService.getUserEffectivePermissions(this.currentUserId).pipe(catchError(() => of([] as Permission[])))
+        : of([] as Permission[])
+    }).subscribe({
+      next: ({ corretores, permissions }) => {
+        this.corretores = corretores || [];
+        this.canViewAllVisits = this.hasPermission(permissions, 'sistema.admin.total');
+        this.applySellerFilterScope();
+      },
+      error: () => {
+        this.corretores = [];
+        this.visibleCorretores = [];
+        this.applySellerFilterScope();
+      }
     });
 
-     this.statusFilter = 'Agendada';
+    this.applyDefaultFiltersForMode();
     this.loadVisitas();
+  }
+
+  private applyScreenModeFromUrl(): void {
+    this.screenMode = this.router.url.includes('/atendimento/agendamento')
+      ? 'agendamento'
+      : 'visitas';
+  }
+
+  private applyDefaultFiltersForMode(): void {
+    this.page = 1;
+    this.nomeTerm = '';
+    this.compareceuFilter = '';
+    this.virouVendaFilter = '';
+
+    if (this.screenMode === 'agendamento') {
+      this.statusFilter = 'Agendada';
+      this.dateRange = 'all';
+      return;
+    }
+
+    this.statusFilter = '';
+    this.dateRange = 'today';
+  }
+
+  isAgendamentoMode(): boolean {
+    return this.screenMode === 'agendamento';
+  }
+
+  isVisitasMode(): boolean {
+    return this.screenMode === 'visitas';
+  }
+
+  getPageTitle(): string {
+    return this.isAgendamentoMode() ? 'Agendamento' : 'Visitas';
+  }
+
+  getPageSubtitle(): string {
+    return this.isAgendamentoMode()
+      ? 'Painel de retornos, confirmacoes e marcacoes futuras.'
+      : 'Painel de recepcao, presenca e resultado das visitas.';
+  }
+
+  getPrimaryActionLabel(): string {
+    return this.isAgendamentoMode() ? 'Novo agendamento' : 'Nova visita';
+  }
+
+  getSummaryLabel(): string {
+    return this.isAgendamentoMode() ? 'Agendadas nos filtros' : 'Hoje nos filtros';
+  }
+
+  getSummaryValue(): number {
+    return this.isAgendamentoMode()
+      ? this.visitas.filter((visita) => visita.status === 'Agendada' || visita.status === 'Confirmada').length
+      : this.getTodayVisitsCount();
+  }
+
+  getSummaryNote(): string {
+    return this.isAgendamentoMode()
+      ? 'Acompanhe retornos, confirme horarios e cancele marcacoes quando necessario.'
+      : 'Acompanhe a chegada dos clientes e marque rapidamente as visitas realizadas.';
+  }
+
+  getStatusTabs(): VisitaStatus[] {
+    return this.isAgendamentoMode()
+      ? ['Agendada', 'Confirmada', 'Cancelada']
+      : ['Agendada', 'Confirmada', 'Realizada', 'Cancelada'];
+  }
+
+  getStatusOptionsForMode(): VisitaStatus[] {
+    return this.isAgendamentoMode()
+      ? ['Agendada', 'Confirmada', 'Cancelada']
+      : this.statusOptions;
+  }
+
+  getStatusTabLabel(status: VisitaStatus): string {
+    const labels: Record<VisitaStatus, string> = {
+      Agendada: 'Agendadas',
+      Confirmada: 'Confirmadas',
+      Realizada: 'Realizadas',
+      Cancelada: 'Canceladas',
+    };
+
+    return labels[status];
+  }
+
+  getFilterDescription(): string {
+    return this.isAgendamentoMode()
+      ? 'Refine os agendamentos por busca, status, equipe e periodo.'
+      : 'Refine as visitas por busca, status, equipe, comparecimento e periodo.';
+  }
+
+  getSearchLabel(): string {
+    return this.isAgendamentoMode() ? 'Buscar agendamento' : 'Buscar visita';
+  }
+
+  getSearchAriaLabel(): string {
+    return this.isAgendamentoMode()
+      ? 'Buscar agendamento por cliente'
+      : 'Buscar visita por cliente';
+  }
+
+  getExportAriaLabel(): string {
+    return this.isAgendamentoMode()
+      ? 'Exportar agendamentos para Excel'
+      : 'Exportar visitas para Excel';
+  }
+
+  getCreateAriaLabel(): string {
+    return this.isAgendamentoMode()
+      ? 'Criar novo agendamento'
+      : 'Criar nova visita';
+  }
+
+  getStatusAriaLabel(status: VisitaStatus): string {
+    return this.isAgendamentoMode()
+      ? `Filtrar agendamentos ${this.getStatusTabLabel(status).toLowerCase()}`
+      : `Filtrar visitas ${this.getStatusTabLabel(status).toLowerCase()}`;
+  }
+
+  getEmptyMessage(): string {
+    return this.isAgendamentoMode()
+      ? 'Nenhum agendamento encontrado para os filtros selecionados.'
+      : 'Nenhuma visita encontrada para os filtros selecionados.';
+  }
+
+  getLoadingMessage(): string {
+    return this.isAgendamentoMode() ? 'Carregando agendamentos...' : 'Carregando visitas...';
+  }
+
+  getModalTitle(): string {
+    if (this.editingId) {
+      return this.isAgendamentoMode() ? 'Editar agendamento' : 'Editar visita';
+    }
+
+    return this.isAgendamentoMode() ? 'Novo agendamento' : 'Nova visita';
+  }
+
+  private getCurrentTipoAgenda(): 'contato' | 'visita' {
+    return this.isAgendamentoMode() ? 'contato' : 'visita';
+  }
+
+  private applyTipoAgendaFilter(list: Visita[]): Visita[] {
+    const hasTipoAgendaInPayload = list.some((visita) => this.normalizeTipoAgenda(visita.tipoAgenda) !== '');
+
+    if (!hasTipoAgendaInPayload) {
+      return list;
+    }
+
+    const targetTipoAgenda = this.getCurrentTipoAgenda();
+    return list.filter((visita) => this.normalizeTipoAgenda(visita.tipoAgenda) === targetTipoAgenda);
+  }
+
+  private normalizeTipoAgenda(tipoAgenda?: string | null): string {
+    return String(tipoAgenda ?? '').trim().toLowerCase();
   }
 
   buildForm(): void {
@@ -157,13 +373,14 @@ private isoToDatetimeLocal(iso: string): string {
     status: this.statusFilter || undefined,
     compareceu: this.compareceuFilter ? (this.compareceuFilter === 'sim') : undefined,
     virouVenda: this.virouVendaFilter ? (this.virouVendaFilter === 'sim') : undefined,
+    tipoAgenda: this.getCurrentTipoAgenda(),
 
     // ✅ só envia quando não for "all"
     startAt: this.dateRange === 'all' ? undefined : (startAt || undefined),
     finishAt: this.dateRange === 'all' ? undefined : (finishAt || undefined),
   }).subscribe({
     next: (list) => {
-      this.visitas = list || [];
+      this.visitas = this.applyTipoAgendaFilter(list || []);
       this.totalItems = this.visitas.length;
       this.page = 1;
       this.applyAndPaginateLocal();
@@ -179,6 +396,14 @@ private isoToDatetimeLocal(iso: string): string {
 
   onFilterChange(): void {
     this.loadVisitas();
+  }
+
+  onSellerFilterChange(): void {
+    if (this.sellerFilterMode === 'mine') {
+      this.vendedorFilter = this.currentUserId ? String(this.currentUserId) : '';
+    }
+
+    this.onFilterChange();
   }
 
   // ---------- paginação local ----------
@@ -236,7 +461,7 @@ openEditModal(v: Visita): void {
     nomeCliente: v.nomeCliente,
     dataHora: dtLocal,
     vendedorId: v.vendedorId ?? '',
-    status: v.status,
+    status: this.getStatusOptionsForMode().includes(v.status) ? v.status : 'Agendada',
     observacao: v.observacao ?? '',
     compareceu: !!v.compareceu,
     virouVenda: !!v.virouVenda
@@ -258,19 +483,7 @@ openEditModal(v: Visita): void {
   }
 
   const form = this.createForm.value;
-
-  // datetime-local -> ISO
-  const iso = new Date(form.dataHora).toISOString();
-
-  const payload = {
-    nomeCliente: String(form.nomeCliente || '').trim(),
-    dataHoraISO: iso,
-    vendedorId: form.vendedorId ? String(form.vendedorId) : null,
-    status: form.status,
-    observacao: form.observacao || '',
-    compareceu: !!form.compareceu,
-    virouVenda: !!form.virouVenda,
-  };
+  const payload = this.buildSchedulePayload(form);
 
   this.isSaving = true;
 
@@ -330,13 +543,30 @@ openEditModal(v: Visita): void {
     });
   }
 
-  remove(visita: Visita): void {
-    this.visitasApi.remove(visita.id).subscribe({
+  markAsRealizada(visita: Visita): void {
+    this.updateStatus(visita, 'Realizada');
+  }
+
+  confirmAgendamento(visita: Visita): void {
+    this.updateStatus(visita, 'Confirmada');
+  }
+
+  hasValidLead(visita: Visita): boolean {
+    return Number(visita.leadId) > 0;
+  }
+
+  openLead(visita: Visita): void {
+    if (!this.hasValidLead(visita)) return;
+    this.router.navigate(['/jm/atendimento/leads', visita.leadId]);
+  }
+
+  cancel(visita: Visita): void {
+    this.visitasApi.cancel(visita.id).subscribe({
       next: () => {
-        this.toast.info('Visita removida');
+        this.toast.info('Visita cancelada');
         this.loadVisitas();
       },
-      error: () => this.toast.error('Erro ao remover')
+      error: () => this.toast.error('Erro ao cancelar visita')
     });
   }
 
@@ -347,6 +577,65 @@ openEditModal(v: Visita): void {
     return x || '-';
   }
 
+  getVendedorNome(visita: Visita): string {
+    return visita.vendedorNome || this.selectNameSale(visita.vendedorId);
+  }
+
+  getSellerFilterLabel(): string {
+    return this.sellerFilterMode === 'mine' ? 'Minhas visitas' : 'Vendedor';
+  }
+
+  getSellerFilterAriaLabel(): string {
+    return this.sellerFilterMode === 'mine'
+      ? 'Filtro fixo para minhas visitas'
+      : 'Filtrar visitas por vendedor';
+  }
+
+  private applySellerFilterScope(): void {
+    if (this.canViewAllVisits) {
+      this.sellerFilterMode = 'full';
+      this.visibleCorretores = this.corretores;
+      return;
+    }
+
+    const userId = this.currentUserId;
+    if (!userId) {
+      this.sellerFilterMode = 'mine';
+      this.visibleCorretores = [];
+      this.vendedorFilter = '';
+      return;
+    }
+
+    const managesTeam = this.corretores.some((seller) =>
+      this.sameId(seller.coordenatorId, userId)
+      || this.sameId(seller.managerId, userId)
+      || this.sameId(seller.gestorId, userId)
+    );
+
+    if (managesTeam) {
+      this.sellerFilterMode = 'scoped';
+      this.visibleCorretores = this.corretores;
+      return;
+    }
+
+    const currentSeller = this.corretores.find((seller) => this.sameId(seller.id, userId));
+    this.sellerFilterMode = 'mine';
+    this.visibleCorretores = currentSeller ? [currentSeller] : [];
+    this.vendedorFilter = String(userId);
+  }
+
+  private hasPermission(permissions: Permission[], permissionKey: string): boolean {
+    return (permissions ?? []).some((permission) =>
+      (permission.permissionKey ?? permission.permission_key) === permissionKey
+    );
+  }
+
+  private sameId(left: unknown, right: unknown): boolean {
+    const leftNumber = Number(left);
+    const rightNumber = Number(right);
+    return Number.isFinite(leftNumber) && Number.isFinite(rightNumber) && leftNumber > 0 && leftNumber === rightNumber;
+  }
+
   formatDateShort(iso: string): string {
     try {
       return new Date(iso).toLocaleString('pt-BR');
@@ -355,25 +644,95 @@ openEditModal(v: Visita): void {
     }
   }
 
-  deleteEditing(): void {
+  formatDateOnly(iso: string): string {
+    try {
+      return new Date(iso).toLocaleDateString('pt-BR');
+    } catch {
+      return iso;
+    }
+  }
+
+  formatTimeOnly(iso: string): string {
+    try {
+      return new Date(iso).toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return '--:--';
+    }
+  }
+
+  isToday(iso: string): boolean {
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return false;
+
+    const today = new Date();
+    return date.getFullYear() === today.getFullYear()
+      && date.getMonth() === today.getMonth()
+      && date.getDate() === today.getDate();
+  }
+
+  getTodayVisitsCount(): number {
+    return this.visitas.filter((visita) => this.isToday(visita.dataHoraISO)).length;
+  }
+
+  getStatusClass(status: VisitaStatus): string {
+    switch (status) {
+      case 'Confirmada':
+        return 'status-confirmada';
+      case 'Realizada':
+        return 'status-realizada';
+      case 'Cancelada':
+        return 'status-cancelada';
+      case 'Agendada':
+      default:
+        return 'status-agendada';
+    }
+  }
+
+  cancelEditing(): void {
   if (!this.editingId) return;
 
   const id = this.editingId;
   this.isSaving = true;
 
-  this.visitasApi.remove(id).subscribe({
+  this.visitasApi.cancel(id).subscribe({
     next: () => {
-      this.toast.info('Visita excluída');
+      this.toast.info('Visita cancelada');
       this.isSaving = false;
       this.closeCreateModal();
       this.loadVisitas();
     },
     error: (err) => {
       console.error(err);
-      this.toast.error('Erro ao excluir');
+      this.toast.error('Erro ao cancelar visita');
       this.isSaving = false;
     }
   });
+}
+
+private buildSchedulePayload(form: any): SchedulePayload {
+  const payload: SchedulePayload = {
+    nomeCliente: String(form.nomeCliente || '').trim(),
+    dataHoraISO: new Date(form.dataHora).toISOString(),
+    vendedorId: form.vendedorId ? String(form.vendedorId) : null,
+    status: this.normalizeStatusForMode(form.status),
+    observacao: form.observacao || '',
+    tipoAgenda: this.getCurrentTipoAgenda(),
+  };
+
+  if (this.isVisitasMode()) {
+    payload.compareceu = !!form.compareceu;
+    payload.virouVenda = !!form.virouVenda;
+  }
+
+  return payload;
+}
+
+private normalizeStatusForMode(status: VisitaStatus): VisitaStatus {
+  const allowedStatuses = this.getStatusOptionsForMode();
+  return allowedStatuses.includes(status) ? status : 'Agendada';
 }
 
 
