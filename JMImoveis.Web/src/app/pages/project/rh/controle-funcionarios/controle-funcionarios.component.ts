@@ -61,6 +61,18 @@ export class ControleFuncionariosComponent implements OnInit {
   employeeDocumentUploadForm: EmployeeDocumentUploadForm = this.createEmptyEmployeeDocumentUploadForm();
   selectedContractFile: File | null = null;
   selectedEmployeeDocumentFile: File | null = null;
+  selectedDirectorFilterId?: number | null;
+  workScheduleStart = '';
+  workScheduleEnd = '';
+  workScheduleObservation = '';
+  readonly currencyOptions = {
+    prefix: 'R$ ',
+    thousands: '.',
+    decimal: ',',
+    precision: 2,
+    allowNegative: false,
+    align: 'left',
+  };
   formMode: 'new' | 'edit' = 'new';
   loading = false;
   loadingOptions = false;
@@ -82,13 +94,13 @@ export class ControleFuncionariosComponent implements OnInit {
   employeeDocumentTypes: EmployeeDocumentTypeOption[] = [
     { value: 'RG_CPF', label: 'RG / CPF' },
     { value: 'CTPS', label: 'CTPS' },
-    { value: 'COMPROVANTE_RESIDENCIA', label: 'Comprovante de residencia' },
+    { value: 'COMPROVANTE_RESIDENCIA', label: 'Comprovante de residência' },
     { value: 'ATESTADO_ADMISSIONAL', label: 'Atestado admissional' },
     { value: 'FOTO_3X4', label: 'Foto 3x4' },
     { value: 'PIS_PASEP', label: 'PIS/PASEP' },
-    { value: 'TITULO_ELEITOR', label: 'Titulo de eleitor' },
+    { value: 'TITULO_ELEITOR', label: 'Título de eleitor' },
     { value: 'RESERVISTA', label: 'Reservista' },
-    { value: 'CERTIDAO', label: 'Certidao' },
+    { value: 'CERTIDAO', label: 'Certidão' },
     { value: 'DEPENDENTE', label: 'Documento de dependente' },
     { value: 'OUTRO', label: 'Outro' },
   ];
@@ -182,6 +194,8 @@ export class ControleFuncionariosComponent implements OnInit {
     this.externalDetailsForm = this.createEmptyExternalDetails();
     this.resetEmployeeDocuments();
     this.selectedContractFile = null;
+    this.selectedDirectorFilterId = undefined;
+    this.resetWorkScheduleFields();
     this.loadCoordinators();
     this.employeeModal?.show();
   }
@@ -200,6 +214,7 @@ export class ControleFuncionariosComponent implements OnInit {
           admissionDate: this.toDateInputValue(user.admissionDate),
           jobpositionId: this.normalizeRoleIds(user.jobpositionId),
         };
+        this.syncDirectorFilterFromSelectedGestor();
         this.loadCoordinators(user.managerId);
         this.employeeModal?.show();
         this.loadEmployeeDetails(user.id);
@@ -282,12 +297,12 @@ export class ControleFuncionariosComponent implements OnInit {
 
   get basicSectionTitle(): string {
     if (this.isUnregisteredType(this.employeeForm.employmentType)) {
-      return 'Dados do Funcionario sem registro';
+      return 'Identificação do funcionário sem registro';
     }
 
     return this.shouldShowEmployeeDetails
-      ? 'Dados do Funcionario'
-      : 'Dados da Pessoa Juridica / Colaborador Externo';
+      ? 'Identificação do funcionário'
+      : 'Identificação da Pessoa Jurídica / Colaborador externo';
   }
 
   get nameFieldLabel(): string {
@@ -339,25 +354,40 @@ export class ControleFuncionariosComponent implements OnInit {
   }
 
   get gestorOptions(): HierarchyOption[] {
-    return this.getHierarchyOptionsByRole('gestor');
+    const options = this.getHierarchyOptionsByRole('gestor');
+    const directorId = this.normalizeOptionalNumber(this.selectedDirectorFilterId);
+    return this.filterHierarchyOptionsByParent(options, 'gestorId', directorId);
   }
 
   get managerOptions(): HierarchyOption[] {
-    return this.getHierarchyOptionsByRole('gerente');
+    const options = this.getHierarchyOptionsByRole('gerente');
+    const gestorId = this.normalizeOptionalNumber(this.employeeForm.gestorId);
+    return this.filterHierarchyOptionsByParent(options, 'gestorId', gestorId);
   }
 
   get coordinatorOptions(): HierarchyOption[] {
     const options = this.getHierarchyOptionsByRole('coordenador');
     const managerId = this.normalizeOptionalNumber(this.employeeForm.managerId);
-    return managerId ? options.filter((option) => this.normalizeOptionalNumber(option.managerId) === managerId) : options;
+    return this.filterHierarchyOptionsByParent(options, 'managerId', managerId);
+  }
+
+  get selectedRoleId(): number | undefined {
+    return this.normalizeRoleIds(this.employeeForm.jobpositionId)[0];
   }
 
   get shouldShowDirectorField(): boolean {
     return this.shouldShowEmployeeBasicFields && this.isSelectedGestorRole;
   }
 
+  get shouldShowDirectorFilterField(): boolean {
+    return this.shouldShowEmployeeBasicFields
+      && (this.isSelectedManagerRole || this.isSelectedCoordinatorRole || this.isSelectedSellerRole || this.isSelectedOperationalRole)
+      && this.directorOptions.length > 0;
+  }
+
   get shouldShowGestorField(): boolean {
-    return this.shouldShowEmployeeBasicFields && this.isSelectedManagerRole;
+    return this.shouldShowEmployeeBasicFields
+      && (this.isSelectedManagerRole || this.isSelectedCoordinatorRole || this.isSelectedSellerRole || this.isSelectedOperationalRole);
   }
 
   get shouldShowManagerField(): boolean {
@@ -375,7 +405,7 @@ export class ControleFuncionariosComponent implements OnInit {
     }
 
     if (this.isSelectedDirectorRole) {
-      return 'Diretor e o topo da hierarquia.';
+      return 'Diretor é o topo da hierarquia.';
     }
 
     if (this.isSelectedGestorRole) {
@@ -402,10 +432,9 @@ export class ControleFuncionariosComponent implements OnInit {
   }
 
   onManagerChange(): void {
-    if (!this.isSelectedSellerRole && !this.isSelectedOperationalRole) {
-      this.employeeForm.coordenatorId = undefined;
-      return;
-    }
+    const managerId = this.normalizeOptionalNumber(this.employeeForm.managerId);
+    this.loadCoordinators(managerId);
+    this.employeeForm.coordenatorId = undefined;
 
     if (this.employeeForm.coordenatorId) {
       const coordinator = this.coordinatorOptions.find((option) => option.id === Number(this.employeeForm.coordenatorId));
@@ -419,22 +448,25 @@ export class ControleFuncionariosComponent implements OnInit {
     this.applyManagerFromSelectedCoordinator();
   }
 
-  onDirectorChange(): void {
-    if (this.isSelectedGestorRole) {
-      this.employeeForm.managerId = undefined;
-      this.employeeForm.coordenatorId = undefined;
-    }
+  onDirectorFilterChange(): void {
+    this.employeeForm.gestorId = undefined;
+    this.employeeForm.managerId = undefined;
+    this.employeeForm.coordenatorId = undefined;
   }
 
   onGestorChange(): void {
-    if (this.isSelectedManagerRole) {
-      this.employeeForm.managerId = undefined;
-      this.employeeForm.coordenatorId = undefined;
-    }
+    this.syncDirectorFilterFromSelectedGestor();
+    this.employeeForm.managerId = undefined;
+    this.employeeForm.coordenatorId = undefined;
   }
 
-  onRoleChange(): void {
+  onRoleChange(roleId?: number | null): void {
+    this.employeeForm.jobpositionId = roleId ? [Number(roleId)] : [];
     this.applyHierarchyBySelectedRole();
+  }
+
+  onWorkScheduleChange(): void {
+    this.employeeDetailsForm.workScheduleNotes = this.composeWorkScheduleNotes();
   }
 
   onEmploymentTypeChange(): void {
@@ -665,6 +697,7 @@ export class ControleFuncionariosComponent implements OnInit {
     }
 
     if (this.isSelectedDirectorRole) {
+      this.selectedDirectorFilterId = undefined;
       this.employeeForm.gestorId = undefined;
       this.employeeForm.managerId = undefined;
       this.employeeForm.coordenatorId = undefined;
@@ -672,20 +705,14 @@ export class ControleFuncionariosComponent implements OnInit {
     }
 
     if (this.isSelectedGestorRole) {
-      this.employeeForm.managerId = undefined;
-      this.employeeForm.coordenatorId = undefined;
       return;
     }
 
     if (this.isSelectedManagerRole) {
-      this.employeeForm.managerId = undefined;
-      this.employeeForm.coordenatorId = undefined;
       return;
     }
 
     if (this.isSelectedCoordinatorRole) {
-      this.employeeForm.gestorId = undefined;
-      this.employeeForm.coordenatorId = undefined;
       return;
     }
 
@@ -704,7 +731,7 @@ export class ControleFuncionariosComponent implements OnInit {
     }
 
     if (this.isSelectedGestorRole) {
-      return this.normalizeOptionalNumber(this.employeeForm.gestorId)
+      return this.normalizeOptionalNumber(this.selectedDirectorFilterId) || this.normalizeOptionalNumber(this.employeeForm.gestorId)
         ? null
         : 'Gestor deve estar vinculado a um diretor.';
     }
@@ -729,6 +756,33 @@ export class ControleFuncionariosComponent implements OnInit {
     }
 
     return null;
+  }
+
+  private filterHierarchyOptionsByParent(
+    options: HierarchyOption[],
+    parentKey: 'gestorId' | 'managerId',
+    parentId?: number | null
+  ): HierarchyOption[] {
+    if (!parentId) {
+      return options;
+    }
+
+    const filtered = options.filter((option) => this.normalizeOptionalNumber(option[parentKey]) === parentId);
+    return filtered.length ? filtered : options;
+  }
+
+  private syncDirectorFilterFromSelectedGestor(): void {
+    const gestorId = this.normalizeOptionalNumber(this.employeeForm.gestorId);
+    if (!gestorId || !this.shouldShowDirectorFilterField) {
+      return;
+    }
+
+    const gestor = this.getHierarchyOptionsByRole('gestor')
+      .find((option) => Number(option.id) === gestorId);
+    const directorId = this.normalizeOptionalNumber(gestor?.gestorId);
+    if (directorId) {
+      this.selectedDirectorFilterId = directorId;
+    }
   }
 
   private setFormError(message: string): void {
@@ -868,6 +922,8 @@ export class ControleFuncionariosComponent implements OnInit {
   }
 
   private buildEmployeeDetailsPayload(userId: number): EmployeeDetails {
+    this.onWorkScheduleChange();
+
     return {
       ...this.employeeDetailsForm,
       userId,
@@ -959,6 +1015,7 @@ export class ControleFuncionariosComponent implements OnInit {
 
   private loadEmployeeDetails(userId?: number): void {
     this.employeeDetailsForm = this.createEmptyEmployeeDetails();
+    this.resetWorkScheduleFields();
 
     if (!userId || !this.shouldShowEmployeeDetails) {
       return;
@@ -1077,11 +1134,11 @@ export class ControleFuncionariosComponent implements OnInit {
     const maxFileSize = 10 * 1024 * 1024;
 
     if (!allowedContentTypes.includes(file.type)) {
-      return 'Tipo de arquivo invalido. Envie PDF, JPG ou PNG.';
+      return 'Tipo de arquivo inválido. Envie PDF, JPG ou PNG.';
     }
 
     if (file.size > maxFileSize) {
-      return 'Arquivo deve ter no maximo 10 MB.';
+      return 'Arquivo deve ter no máximo 10 MB.';
     }
 
     return null;
@@ -1174,12 +1231,15 @@ export class ControleFuncionariosComponent implements OnInit {
   }
 
   private normalizeEmployeeDetailsForForm(details: EmployeeDetails): EmployeeDetails {
-    return {
+    const normalized = {
       ...details,
       rgIssueDate: this.toDateInputValue(details.rgIssueDate),
       birthDate: this.toDateInputValue(details.birthDate),
       ctpsIssueDate: this.toDateInputValue(details.ctpsIssueDate),
     };
+
+    this.syncWorkScheduleFields(normalized.workScheduleNotes);
+    return normalized;
   }
 
   private normalizeExternalDetailsForForm(details: ExternalCollaboratorDetails): ExternalCollaboratorDetails {
@@ -1205,6 +1265,48 @@ export class ControleFuncionariosComponent implements OnInit {
 
     const numberValue = Number(value);
     return Number.isFinite(numberValue) ? numberValue : null;
+  }
+
+  private resetWorkScheduleFields(): void {
+    this.workScheduleStart = '';
+    this.workScheduleEnd = '';
+    this.workScheduleObservation = '';
+  }
+
+  private syncWorkScheduleFields(value?: string | null): void {
+    this.resetWorkScheduleFields();
+
+    const text = value?.trim();
+    if (!text) {
+      return;
+    }
+
+    const match = text.match(/^(\d{2}:\d{2})\s*(?:às|as|-|a)\s*(\d{2}:\d{2})(?:,?\s*(.*))?$/i);
+    if (!match) {
+      this.workScheduleObservation = text;
+      return;
+    }
+
+    this.workScheduleStart = match[1];
+    this.workScheduleEnd = match[2];
+    this.workScheduleObservation = match[3]?.trim() ?? '';
+  }
+
+  private composeWorkScheduleNotes(): string | null {
+    const start = this.workScheduleStart?.trim();
+    const end = this.workScheduleEnd?.trim();
+    const observation = this.workScheduleObservation?.trim();
+
+    if (start && end) {
+      return observation ? `${start} às ${end}, ${observation}` : `${start} às ${end}`;
+    }
+
+    if (start || end) {
+      const partial = [start, end].filter(Boolean).join(' - ');
+      return observation ? `${partial}, ${observation}` : partial;
+    }
+
+    return observation || null;
   }
 
   private normalizeOptionalInteger(value: unknown): number | null {
