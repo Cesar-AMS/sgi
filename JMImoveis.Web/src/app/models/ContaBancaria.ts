@@ -301,7 +301,9 @@ export interface DreResponse {
   lines: DreLine[];
 }
 
-export type LeadScheduleStatus = 'Pendente' | 'Cumprido' | 'NaoCumprido';
+export type ContactScheduleStatus = 'Pendente' | 'Cumprido' | 'NaoCumprido';
+export type VisitScheduleStatus = 'Agendada' | 'Confirmada' | 'Realizada' | 'Cancelada';
+export type LeadScheduleStatus = ContactScheduleStatus | VisitScheduleStatus;
 
 export interface LeadSchedule {
   id: number;
