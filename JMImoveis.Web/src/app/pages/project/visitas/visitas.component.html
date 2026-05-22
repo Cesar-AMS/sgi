@@ -6,7 +6,7 @@
     </div>
 
     <div class="d-flex gap-2 flex-wrap justify-content-end">
-       <button
+      <button
         class="btn btn-outline-success"
         type="button"
         (click)="exportExcel()"
@@ -14,6 +14,7 @@
       >
         <i class="bi bi-file-earmark-excel me-2" aria-hidden="true"></i> Excel
       </button>
+
       <button
         class="btn btn-orange d-flex align-items-center"
         type="button"
@@ -26,17 +27,21 @@
     </div>
   </div>
 
-  <section class="visitas-operational-summary mb-3" [attr.aria-label]="isAgendamentoMode() ? 'Resumo operacional de agendamentos' : 'Resumo operacional de visitas'">
+  <section
+    class="visitas-operational-summary mb-3"
+    [attr.aria-label]="isAgendamentoMode() ? 'Resumo operacional de agendamentos' : 'Resumo operacional de visitas'"
+  >
     <div class="summary-card">
       <span class="summary-label">{{ getSummaryLabel() }}</span>
       <strong class="summary-value">{{ getSummaryValue() }}</strong>
     </div>
+
     <div class="summary-note">
       {{ getSummaryNote() }}
     </div>
   </section>
 
-   <ul class="nav nav-pills mb-3 flex-wrap gap-2" [attr.aria-label]="isAgendamentoMode() ? 'Status dos agendamentos' : 'Status das visitas'">
+  <ul class="nav nav-pills mb-3 flex-wrap gap-2" [attr.aria-label]="isAgendamentoMode() ? 'Status dos agendamentos' : 'Status das visitas'">
     <li class="nav-item" *ngIf="isVisitasMode()">
       <button
         type="button"
@@ -48,6 +53,7 @@
         Hoje
       </button>
     </li>
+
     <li class="nav-item" *ngFor="let status of getStatusTabs()">
       <button
         type="button"
@@ -61,7 +67,11 @@
     </li>
   </ul>
 
-  <section class="visitas-filter-card mb-3" [attr.aria-label]="isAgendamentoMode() ? 'Filtros de agendamentos' : 'Filtros de visitas'">
+  <section
+    class="visitas-filter-card mb-3"
+    [class.filters-collapsed]="filtersCollapsed"
+    [attr.aria-label]="isAgendamentoMode() ? 'Filtros de agendamentos' : 'Filtros de visitas'"
+  >
     <div class="visitas-filter-header">
       <div>
         <h3 class="visitas-filter-title">Filtros</h3>
@@ -70,93 +80,114 @@
           Refine as visitas por busca, status, equipe e período.
         </p>
       </div>
+
+      <button
+        *ngIf="isAgendamentoMode()"
+        type="button"
+        class="btn btn-filter-toggle"
+        (click)="toggleFilters()"
+        [attr.aria-expanded]="!filtersCollapsed"
+        aria-controls="visitasFilterContent"
+      >
+        <i
+          class="bi"
+          [ngClass]="filtersCollapsed ? 'bi-chevron-down' : 'bi-chevron-up'"
+          aria-hidden="true"
+        ></i>
+        {{ filtersCollapsed ? 'Mostrar filtros' : 'Ocultar filtros' }}
+      </button>
     </div>
 
-    <div class="visitas-filter-grid">
+    <div id="visitasFilterContent" class="visitas-filter-grid" *ngIf="!filtersCollapsed">
       <div class="filter-field filter-field-search">
         <label class="form-label" for="visitSearchInput">{{ getSearchLabel() }}</label>
+
         <div class="input-group flex-nowrap">
-        <span class="input-group-text" aria-hidden="true">
-          <i class="bi bi-search"></i>
-        </span>
-        <input
-          id="visitSearchInput"
-          type="text"
-          class="form-control"
-          placeholder="Buscar por cliente..."
-          [(ngModel)]="nomeTerm"
-          (ngModelChange)="onFilterChange()"
-          [attr.aria-label]="getSearchAriaLabel()"
-        />
+          <span class="input-group-text" aria-hidden="true">
+            <i class="bi bi-search"></i>
+          </span>
+
+          <input
+            id="visitSearchInput"
+            type="text"
+            class="form-control"
+            placeholder="Buscar por cliente..."
+            [(ngModel)]="nomeTerm"
+            (ngModelChange)="onFilterChange()"
+            [attr.aria-label]="getSearchAriaLabel()"
+          />
         </div>
       </div>
 
-
       <div class="filter-field">
         <label class="form-label" for="visitVendedorFilter">{{ getSellerFilterLabel() }}</label>
-      <select
-        id="visitVendedorFilter"
-        class="form-select"
-        [(ngModel)]="vendedorFilter"
-        (ngModelChange)="onSellerFilterChange()"
-        [disabled]="sellerFilterMode === 'mine'"
-        [attr.aria-label]="getSellerFilterAriaLabel()"
-      >
-        <option *ngIf="sellerFilterMode !== 'mine'" value="">Todos vendedores do escopo</option>
-        <option *ngFor="let v of visibleCorretores" [value]="v.id">{{ v.name }}</option>
-        <option *ngIf="sellerFilterMode === 'mine' && visibleCorretores.length === 0" [value]="currentUserId || ''">
-          Minhas visitas
-        </option>
-      </select>
-    </div>
+
+        <select
+          id="visitVendedorFilter"
+          class="form-select"
+          [(ngModel)]="vendedorFilter"
+          (ngModelChange)="onSellerFilterChange()"
+          [disabled]="sellerFilterMode === 'mine'"
+          [attr.aria-label]="getSellerFilterAriaLabel()"
+        >
+          <option *ngIf="sellerFilterMode !== 'mine'" value="">Todos vendedores do escopo</option>
+          <option *ngFor="let v of visibleCorretores" [value]="v.id">{{ v.name }}</option>
+          <option *ngIf="sellerFilterMode === 'mine' && visibleCorretores.length === 0" [value]="currentUserId || ''">
+            Minhas visitas
+          </option>
+        </select>
+      </div>
 
       <div class="filter-field" *ngIf="isVisitasMode()">
         <label class="form-label" for="visitCompareceuFilter">Comparecimento</label>
-      <select
-        id="visitCompareceuFilter"
-        class="form-select"
-        [(ngModel)]="compareceuFilter"
-        (ngModelChange)="onFilterChange()"
-        aria-label="Filtrar visitas por comparecimento"
-      >
-        <option value="">Compareceu: Todos</option>
-        <option value="sim">Compareceu: Sim</option>
-        <option value="nao">Compareceu: Não</option>
-      </select>
-    </div>
+
+        <select
+          id="visitCompareceuFilter"
+          class="form-select"
+          [(ngModel)]="compareceuFilter"
+          (ngModelChange)="onFilterChange()"
+          aria-label="Filtrar visitas por comparecimento"
+        >
+          <option value="">Compareceu: Todos</option>
+          <option value="sim">Compareceu: Sim</option>
+          <option value="nao">Compareceu: Não</option>
+        </select>
+      </div>
 
       <div class="filter-field" *ngIf="isVisitasMode()">
         <label class="form-label" for="visitVirouVendaFilter">Virou venda</label>
-      <select
-        id="visitVirouVendaFilter"
-        class="form-select"
-        [(ngModel)]="virouVendaFilter"
-        (ngModelChange)="onFilterChange()"
-        aria-label="Filtrar visitas que viraram venda"
-      >
-        <option value="">Virou venda: Todos</option>
-        <option value="sim">Virou venda: Sim</option>
-        <option value="nao">Virou venda: Não</option>
-      </select>
-    </div>
+
+        <select
+          id="visitVirouVendaFilter"
+          class="form-select"
+          [(ngModel)]="virouVendaFilter"
+          (ngModelChange)="onFilterChange()"
+          aria-label="Filtrar visitas que viraram venda"
+        >
+          <option value="">Virou venda: Todos</option>
+          <option value="sim">Virou venda: Sim</option>
+          <option value="nao">Virou venda: Não</option>
+        </select>
+      </div>
 
       <div class="filter-field">
         <label class="form-label" for="visitDateRangeFilter">Período</label>
-      <select
-        id="visitDateRangeFilter"
-        class="form-select"
-        [(ngModel)]="dateRange"
-        (ngModelChange)="onFilterChange()"
-        aria-label="Filtrar visitas por período"
-      >
-        <option value="all">Todos períodos</option>
-        <option value="today">Hoje</option>
-        <option value="last7">Últimos 7 dias</option>
-        <option value="last30">Últimos 30 dias</option>
-        <option value="thisMonth">Este mês</option>
-        <option value="thisYear">Este ano</option>
-      </select>
-    </div>
+
+        <select
+          id="visitDateRangeFilter"
+          class="form-select"
+          [(ngModel)]="dateRange"
+          (ngModelChange)="onFilterChange()"
+          aria-label="Filtrar visitas por período"
+        >
+          <option value="all">Todos períodos</option>
+          <option value="today">Hoje</option>
+          <option value="last7">Últimos 7 dias</option>
+          <option value="last30">Últimos 30 dias</option>
+          <option value="thisMonth">Este mês</option>
+          <option value="thisYear">Este ano</option>
+        </select>
+      </div>
     </div>
   </section>
 
@@ -186,58 +217,68 @@
           <tbody>
             <tr
               *ngFor="let v of paged"
-              (click)="openEditModal(v)"
-              style="cursor: pointer;"
-              class="table-row-click"
+              (click)="v.leadId && openLead(v)"
+              [class.table-row-click]="!!v.leadId"
+              [class.table-row-disabled]="!v.leadId"
               [class.visit-today-row]="isToday(v.dataHoraISO)"
+              [attr.aria-label]="v.leadId ? 'Abrir painel do cliente vinculado' : 'Registro sem lead vinculado'"
             >
               <td class="visit-schedule-cell">
                 <div class="visit-time">{{ formatTimeOnly(v.dataHoraISO) }}</div>
                 <div class="text-muted small">{{ formatDateOnly(v.dataHoraISO) }}</div>
                 <span *ngIf="isToday(v.dataHoraISO)" class="badge today-badge">Hoje</span>
               </td>
+
               <td>
                 <div class="fw-semibold">{{ v.nomeCliente }}</div>
                 <div class="text-muted small" *ngIf="v.telefone">{{ v.telefone }}</div>
                 <div class="text-muted small">
                   #{{ v.id }}<span *ngIf="v.leadId"> · Lead #{{ v.leadId }}</span>
+                  <span *ngIf="!v.leadId" class="no-lead-link">Sem lead vinculado</span>
                 </div>
               </td>
+
               <td class="visit-info-cell">
                 <div class="text-truncate" [title]="v.imoveisInteresse || ''">
                   {{ v.imoveisInteresse || '-' }}
                 </div>
               </td>
+
               <td class="visit-info-cell">
                 <div class="text-truncate" [title]="v.fonte || ''">
                   {{ v.fonte || '-' }}
                 </div>
               </td>
+
               <td>{{ getVendedorNome(v) }}</td>
               <td>{{ v.coordenadorNome || '-' }}</td>
               <td>{{ v.gerenteNome || '-' }}</td>
 
-              <!-- Mantive seus selects inline.
-                   Importante: impedir o clique na linha quando mexer nos selects -->
-              <td style="min-width: 150px;" (click)="$event.stopPropagation()">
+              <td style="min-width: 150px;">
                 <span class="status-pill" [ngClass]="getStatusClass(v.status)">
                   {{ v.status }}
                 </span>
+
                 <select
+                  *ngIf="isVisitasMode()"
                   class="form-select form-select-sm"
                   aria-label="Alterar status da visita"
                   [ngModel]="v.status"
+                  (click)="$event.stopPropagation()"
+                  (change)="$event.stopPropagation()"
                   (ngModelChange)="updateStatus(v, $event)"
                 >
                   <option *ngFor="let s of getStatusOptionsForMode()" [ngValue]="s">{{ s }}</option>
                 </select>
               </td>
 
-              <td *ngIf="isVisitasMode()" style="min-width: 140px;" (click)="$event.stopPropagation()">
+              <td *ngIf="isVisitasMode()" style="min-width: 140px;">
                 <select
                   class="form-select form-select-sm"
                   aria-label="Alterar comparecimento da visita"
                   [ngModel]="v.compareceu"
+                  (click)="$event.stopPropagation()"
+                  (change)="$event.stopPropagation()"
                   (ngModelChange)="updateCompareceu(v, $event)"
                 >
                   <option [ngValue]="true">Sim</option>
@@ -245,11 +286,13 @@
                 </select>
               </td>
 
-              <td *ngIf="isVisitasMode()" style="min-width: 140px;" (click)="$event.stopPropagation()">
+              <td *ngIf="isVisitasMode()" style="min-width: 140px;">
                 <select
                   class="form-select form-select-sm"
                   aria-label="Alterar indicador de venda da visita"
                   [ngModel]="v.virouVenda"
+                  (click)="$event.stopPropagation()"
+                  (change)="$event.stopPropagation()"
                   (ngModelChange)="updateVirouVenda(v, $event)"
                 >
                   <option [ngValue]="true">Sim</option>
@@ -258,49 +301,53 @@
               </td>
 
               <td class="text-muted" style="max-width: 320px;">
-                <div class="text-truncate" [title]="v.observacao || ''">{{ v.observacao || '-' }}</div>
+                <div class="text-truncate" [title]="v.observacao || ''">
+                  {{ v.observacao || '-' }}
+                </div>
               </td>
 
-              <!-- Botão cancelar: impedir abrir modal ao clicar -->
               <td class="text-end actions-cell" (click)="$event.stopPropagation()">
                 <button
-                  *ngIf="hasValidLead(v)"
                   class="btn btn-sm btn-outline-primary me-1"
                   type="button"
-                  (click)="openLead(v)"
-                  title="Abrir lead"
-                  aria-label="Abrir detalhe do lead vinculado"
+                  (click)="$event.stopPropagation(); openEditModal(v)"
+                  [attr.title]="isAgendamentoMode() ? 'Editar agendamento' : 'Editar visita'"
+                  [attr.aria-label]="isAgendamentoMode() ? 'Editar agendamento' : 'Editar visita'"
                 >
-                  Abrir lead
+                  Editar
                 </button>
+
                 <button
                   *ngIf="isAgendamentoMode() && v.status === 'Agendada'"
                   class="btn btn-sm btn-outline-success me-1"
                   type="button"
-                  (click)="confirmAgendamento(v)"
+                  (click)="$event.stopPropagation(); confirmAgendamento(v)"
                   title="Confirmar agendamento"
                   aria-label="Confirmar agendamento"
                 >
                   Confirmar
                 </button>
+
                 <button
                   *ngIf="isVisitasMode() && v.status !== 'Realizada' && v.status !== 'Cancelada'"
                   class="btn btn-sm btn-outline-success me-1"
                   type="button"
-                  (click)="markAsRealizada(v)"
+                  (click)="$event.stopPropagation(); markAsRealizada(v)"
                   title="Marcar como realizada"
                   aria-label="Marcar visita como realizada"
                 >
                   Realizar
                 </button>
+
                 <button
                   class="btn btn-sm btn-outline-danger"
                   type="button"
-                  (click)="cancel(v)"
-                  title="Cancelar visita"
-                  aria-label="Cancelar visita"
+                  (click)="$event.stopPropagation(); cancel(v)"
+                  [attr.title]="isAgendamentoMode() ? 'Cancelar agendamento' : 'Cancelar visita'"
+                  [attr.aria-label]="isAgendamentoMode() ? 'Cancelar agendamento' : 'Cancelar visita'"
                 >
                   <i class="bi bi-x-circle"></i>
+                  <span *ngIf="isAgendamentoMode()" class="ms-1">Cancelar</span>
                 </button>
               </td>
             </tr>
@@ -311,6 +358,7 @@
       <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2" *ngIf="totalItems > 0">
         <div class="d-flex align-items-center gap-2">
           <label class="text-muted small mb-0" for="visitsItemsPerPageSelect">Itens por página:</label>
+
           <select
             id="visitsItemsPerPageSelect"
             class="form-select form-select-sm w-auto"
@@ -320,6 +368,7 @@
           >
             <option *ngFor="let n of perPageOptions" [value]="n">{{ n }}</option>
           </select>
+
           <span class="text-muted small">Mostrando {{ getStartIndex() }} - {{ getEndIndex() }}</span>
         </div>
 
@@ -352,7 +401,6 @@
   </ng-template>
 </div>
 
-<!-- MODAL LATERAL -->
 <div class="modal-backdrop-custom" *ngIf="showCreateModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="visitModalTitle">
     <div class="modal-header border-0 px-4 pt-4 pb-2">
@@ -360,19 +408,50 @@
         {{ getModalTitle() }}
       </h5>
 
-      <button type="button" class="btn-close" aria-label="Fechar modal de visita" (click)="closeCreateModal()"></button>
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Fechar modal de visita"
+        (click)="closeCreateModal()"
+      ></button>
     </div>
 
     <div class="modal-body px-4 pb-4">
+      <p class="schedule-lead-link-note" *ngIf="isAgendamentoMode() && !editingId">
+        Ao salvar, o sistema cria ou vincula um Lead mínimo para abrir o Painel do Cliente.
+      </p>
+
       <form [formGroup]="createForm" (ngSubmit)="submitSave()">
         <div class="mb-3">
           <label class="form-label" for="visitClientName">Nome do cliente</label>
-          <input id="visitClientName" type="text" class="form-control" placeholder="Ex: Maria Silva" formControlName="nomeCliente" />
+          <input
+            id="visitClientName"
+            type="text"
+            class="form-control"
+            placeholder="Ex: Maria Silva"
+            formControlName="nomeCliente"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="visitClientPhone">Telefone</label>
+          <input
+            id="visitClientPhone"
+            type="text"
+            class="form-control"
+            placeholder="Ex: (11) 99999-9999"
+            formControlName="telefone"
+          />
         </div>
 
         <div class="mb-3">
           <label class="form-label" for="visitDateTime">Data e Hora</label>
-          <input id="visitDateTime" type="datetime-local" class="form-control" formControlName="dataHora" />
+          <input
+            id="visitDateTime"
+            type="datetime-local"
+            class="form-control"
+            formControlName="dataHora"
+          />
         </div>
 
         <div class="mb-3">
@@ -398,6 +477,7 @@
               <option [ngValue]="false">Não</option>
             </select>
           </div>
+
           <div class="col-6">
             <label class="form-label" for="visitConvertedSale">Virou venda?</label>
             <select id="visitConvertedSale" class="form-select" formControlName="virouVenda">
@@ -419,7 +499,6 @@
         </div>
 
         <div class="d-flex justify-content-between gap-2 mt-4">
-          <!-- Cancelar visita só no modo edição -->
           <button
             *ngIf="editingId"
             type="button"

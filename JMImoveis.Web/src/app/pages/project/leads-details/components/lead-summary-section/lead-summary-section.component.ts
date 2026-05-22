@@ -14,12 +14,16 @@ export class LeadSummarySectionComponent {
   @Input() infoForm!: FormGroup;
   @Input() corretores: Usuarios[] = [];
   @Input() statusOptions: LeadStatus[] = [];
+  @Input() canViewTransferHistory = false;
+  @Input() transferHistoryExpanded = false;
 
   @Output() backRequested = new EventEmitter<void>();
   @Output() callRequested = new EventEmitter<void>();
   @Output() whatsappRequested = new EventEmitter<void>();
   @Output() emailRequested = new EventEmitter<void>();
+  @Output() schedulingRequested = new EventEmitter<void>();
   @Output() editToggled = new EventEmitter<void>();
+  @Output() transferHistoryRequested = new EventEmitter<void>();
   @Output() infoSubmitted = new EventEmitter<void>();
   @Output() saleRequested = new EventEmitter<void>();
 

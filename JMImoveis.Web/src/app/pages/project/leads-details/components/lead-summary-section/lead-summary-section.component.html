@@ -1,13 +1,17 @@
 <ng-container *ngIf="lead">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <button class="btn btn-link text-decoration-none px-0 mb-2" (click)="backRequested.emit()">
+  <div class="lead-summary-header">
+    <div class="lead-summary-title-area">
+      <button
+        class="btn btn-link text-decoration-none px-0 lead-back-button"
+        type="button"
+        (click)="backRequested.emit()"
+      >
         <i class="bi bi-arrow-left"></i>
         <span class="ms-1">Voltar</span>
       </button>
 
-      <div class="d-flex align-items-center gap-3">
-        <div>
+      <div class="lead-title-row">
+        <div class="lead-title-text">
           <h3 class="fw-bold mb-0">{{ lead.nome }}</h3>
           <div class="text-muted small">
             {{ lead.imoveisInteresse || 'Lead' }}
@@ -17,26 +21,40 @@
       </div>
     </div>
 
-    <div class="d-flex gap-2">
-      <button type="button" class="btn btn-outline-secondary d-flex align-items-center" (click)="callRequested.emit()">
-        <i class="bi bi-telephone me-2"></i> Ligar
+    <div class="lead-operational-actions" aria-label="Ações operacionais do lead">
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary lead-action-button"
+        (click)="schedulingRequested.emit()"
+      >
+        <i class="bi bi-calendar-plus"></i>
+        Agendamento
       </button>
-      <button type="button" class="btn btn-outline-success d-flex align-items-center" (click)="whatsappRequested.emit()">
-        <i class="bi bi-whatsapp me-2"></i> WhatsApp
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary lead-action-button"
+        (click)="editToggled.emit()"
+      >
+        <i class="bi bi-pencil-square"></i>
+        Editar
       </button>
-      <button type="button" class="btn btn-outline-secondary d-flex align-items-center" (click)="editToggled.emit()">
-        <i class="bi bi-pencil-square me-2"></i> Editar
-      </button>
-      <button type="button" class="btn btn-outline-secondary d-flex align-items-center" (click)="emailRequested.emit()">
-        <i class="bi bi-envelope me-2"></i> Email
-      </button>
-      <button type="button" class="btn btn-outline-primary d-flex align-items-center" (click)="saleRequested.emit()">
-        <i class="bi bi-arrow-right-circle me-2"></i> Ir para Vendas
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary lead-action-button"
+        [class.is-active]="transferHistoryExpanded"
+        [attr.aria-expanded]="transferHistoryExpanded"
+        *ngIf="canViewTransferHistory"
+        (click)="transferHistoryRequested.emit()"
+      >
+        <i class="bi bi-clock-history"></i>
+        Histórico de Transferência
       </button>
     </div>
   </div>
 
-  <div class="card shadow-sm border-0">
+  <ng-content select="[lead-transfer-history-panel]"></ng-content>
+
+  <div class="card shadow-sm border-0 lead-info-card">
     <div class="card-body">
       <h5 class="card-title mb-3">Informações do Lead</h5>
 

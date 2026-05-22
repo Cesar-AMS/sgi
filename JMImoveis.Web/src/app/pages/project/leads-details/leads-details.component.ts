@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Lead, LeadStatus } from 'src/app/models/lead';
+import { CreateLeadActivityRequest, Lead, LeadDocument, LeadStatus, LeadTransferHistory } from 'src/app/models/lead';
 import {
   ContactScheduleStatus,
   LeadActivity,
@@ -12,8 +12,20 @@ import {
 } from 'src/app/models/ContaBancaria';
 import { ApiService } from 'src/app/core/services/api.service';
 import { LeadsService } from 'src/app/core/services/leads.service';
+import { Permission, PermissionsService } from 'src/app/core/services/permissions.service';
+import { SessionService } from 'src/app/core/session/session.service';
 import { LeadAgendaStatusChangeEvent } from './components/lead-agenda-section/lead-agenda-section.component';
 import { LeadVisitStatusChangeEvent } from './components/lead-visits-section/lead-visits-section.component';
+
+type LeadSchedulingKind = 'followup' | 'visita' | 'reuniao';
+type OperationalInteractionType =
+  | 'Ligação realizada'
+  | 'Cliente não respondeu'
+  | 'Cliente pediu retorno'
+  | 'Cliente demonstrou interesse'
+  | 'Cliente agendou visita'
+  | 'Cliente sem interesse'
+  | 'Observação';
 
 @Component({
   selector: 'app-lead-details',
@@ -21,14 +33,37 @@ import { LeadVisitStatusChangeEvent } from './components/lead-visits-section/lea
   styleUrls: ['./leads-details.component.scss'],
 })
 export class LeadDetailsComponent implements OnInit {
+  private readonly backRoutes: Record<string, string> = {
+    leads: '/jm/atendimento/leads/listagem',
+    agendamento: '/jm/atendimento/agendamento',
+    visitas: '/jm/atendimento/visitas',
+  };
+
   lead?: Lead;
   isLoading = false;
 
-  activeTab: 'info' | 'docs' | 'proposal' | 'schedule' = 'info';
+  activeTab: 'info' | 'docs' = 'info';
   isEditing = false;
 
   infoForm!: FormGroup;
   activityForm!: FormGroup;
+  operationalTimelineForm!: FormGroup;
+  quickScheduleForm!: FormGroup;
+  showSchedulingModal = false;
+  isSavingSchedule = false;
+  scheduleErrorMessage = '';
+  isSavingInteraction = false;
+  timelineErrorMessage = '';
+  timelineSuccessMessage = '';
+  leadDocuments: LeadDocument[] = [];
+  documentErrorMessage = '';
+  isLoadingDocuments = false;
+  isUploadingDocuments = false;
+  canViewTransferHistory = false;
+  showTransferHistoryPanel = false;
+  isLoadingTransferHistory = false;
+  transferHistoryErrorMessage = '';
+  transferHistoryItems: LeadTransferHistory[] = [];
 
   corretores: Usuarios[] = [];
 
@@ -53,6 +88,16 @@ export class LeadDetailsComponent implements OnInit {
     'Perdeu',
   ];
 
+  operationalInteractionTypes: OperationalInteractionType[] = [
+    'Ligação realizada',
+    'Cliente não respondeu',
+    'Cliente pediu retorno',
+    'Cliente demonstrou interesse',
+    'Cliente agendou visita',
+    'Cliente sem interesse',
+    'Observação',
+  ];
+
   private buildScheduleForm(): void {
     this.scheduleForm = this.fb.group({
       date: [new Date().toISOString().substring(0, 10), Validators.required],
@@ -72,18 +117,22 @@ export class LeadDetailsComponent implements OnInit {
     private router: Router,
     private fb: FormBuilder,
     private leadService: LeadsService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private permissionsService: PermissionsService,
+    private sessionService: SessionService
   ) { }
 
   ngOnInit(): void {
     this.buildForms();
     this.buildScheduleForm();
+    this.loadTransferHistoryPermission();
 
 
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
       this.loadLead(id);
       this.loadActivities(id);
+      this.loadLeadDocuments(id);
       this.loadSchedules(id, 'visita');
       this.loadSchedules(id, 'contato');
     }
@@ -113,6 +162,18 @@ export class LeadDetailsComponent implements OnInit {
       date: [new Date().toISOString().substring(0, 10), Validators.required],
       time: ['09:00', Validators.required],
       description: ['', Validators.required],
+    });
+
+    this.operationalTimelineForm = this.fb.group({
+      type: ['', Validators.required],
+      description: [''],
+    });
+
+    this.quickScheduleForm = this.fb.group({
+      type: ['followup' as LeadSchedulingKind, Validators.required],
+      date: [new Date().toISOString().substring(0, 10), Validators.required],
+      time: ['09:00', Validators.required],
+      note: [''],
     });
   }
 
@@ -244,12 +305,330 @@ export class LeadDetailsComponent implements OnInit {
     });
   }
 
-  goBack(): void {
-    this.router.navigate(['/jm/atendimento/leads/listagem']);
+  onLeadDocumentsSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+
+    if (!files.length || !this.lead) {
+      return;
+    }
+
+    this.documentErrorMessage = '';
+    this.isUploadingDocuments = true;
+
+    this.leadService.uploadLeadDocuments(this.lead.id, files).subscribe({
+      next: (response) => {
+        this.isUploadingDocuments = false;
+        this.leadDocuments = (response.data || []).map((document) => ({ ...document, isEditing: false }))
+          .concat(
+            this.leadDocuments.map((document) => ({
+              ...document,
+              isEditing: document.isEditing ?? false,
+            }))
+          );
+        input.value = '';
+      },
+      error: () => {
+        this.isUploadingDocuments = false;
+        this.documentErrorMessage = 'Não foi possível anexar os documentos. Verifique o tipo e o tamanho dos arquivos.';
+        input.value = '';
+      },
+    });
   }
 
-  setTab(tab: 'info' | 'docs' | 'proposal' | 'schedule'): void {
+  loadLeadDocuments(leadId: number): void {
+    this.isLoadingDocuments = true;
+    this.documentErrorMessage = '';
+
+    this.leadService.getLeadDocuments(leadId).subscribe({
+      next: (documents) => {
+        this.leadDocuments = (documents || []).map((document) => ({ ...document, isEditing: false }));
+        this.isLoadingDocuments = false;
+      },
+      error: () => {
+        this.documentErrorMessage = 'Não foi possível carregar os documentos do lead.';
+        this.isLoadingDocuments = false;
+      },
+    });
+  }
+
+  toggleDocumentEdit(document: LeadDocument): void {
+    document.isEditing = !document.isEditing;
+  }
+
+  saveLeadDocumentMetadata(document: LeadDocument): void {
+    if (!this.lead) return;
+
+    this.leadService.updateLeadDocument(this.lead.id, document.id, {
+      displayName: document.displayName,
+      description: document.description || null,
+    }).subscribe({
+      next: (updated) => {
+        this.leadDocuments = this.leadDocuments.map((item) =>
+          item.id === updated.id ? { ...updated, isEditing: false } : item
+        );
+      },
+      error: () => {
+        this.documentErrorMessage = 'Não foi possível atualizar o documento.';
+      },
+    });
+  }
+
+  removeLeadDocument(document: LeadDocument): void {
+    if (!this.lead) return;
+
+    this.leadService.deleteLeadDocument(this.lead.id, document.id).subscribe({
+      next: () => {
+        this.leadDocuments = this.leadDocuments.filter((item) => item.id !== document.id);
+      },
+      error: () => {
+        this.documentErrorMessage = 'Não foi possível remover o documento.';
+      },
+    });
+  }
+
+  openLeadDocument(document: LeadDocument): void {
+    if (!this.lead) return;
+
+    this.leadService.downloadLeadDocument(this.lead.id, document.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      },
+      error: () => {
+        this.documentErrorMessage = 'Não foi possível abrir o documento.';
+      },
+    });
+  }
+
+  getDocumentIcon(document: LeadDocument): string {
+    if (document.contentType.startsWith('image/')) return 'bi-file-earmark-image';
+    if (document.contentType === 'application/pdf') return 'bi-file-earmark-pdf';
+    return 'bi-file-earmark-text';
+  }
+
+  formatFileSize(size: number): string {
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  goBack(): void {
+    const origin = this.route.snapshot.queryParamMap.get('from') || 'leads';
+    const targetRoute = this.backRoutes[origin] || this.backRoutes['leads'];
+
+    this.router.navigate([targetRoute]);
+  }
+
+  setTab(tab: 'info' | 'docs'): void {
     this.activeTab = tab;
+  }
+
+  openLeadScheduling(): void {
+    this.scheduleErrorMessage = '';
+    this.showSchedulingModal = true;
+    this.quickScheduleForm.reset({
+      type: 'followup',
+      date: new Date().toISOString().substring(0, 10),
+      time: '09:00',
+      note: '',
+    });
+  }
+
+  closeLeadScheduling(): void {
+    if (this.isSavingSchedule) return;
+
+    this.showSchedulingModal = false;
+    this.scheduleErrorMessage = '';
+  }
+
+  openTransferHistory(): void {
+    if (!this.lead || !this.canViewTransferHistory) {
+      return;
+    }
+
+    if (this.showTransferHistoryPanel) {
+      this.closeTransferHistory();
+      return;
+    }
+
+    this.showTransferHistoryPanel = true;
+    this.loadTransferHistory(this.lead.id);
+  }
+
+  closeTransferHistory(): void {
+    this.showTransferHistoryPanel = false;
+    this.transferHistoryErrorMessage = '';
+  }
+
+  loadTransferHistory(leadId: number): void {
+    if (!this.canViewTransferHistory) {
+      return;
+    }
+
+    this.isLoadingTransferHistory = true;
+    this.transferHistoryErrorMessage = '';
+
+    this.leadService.getLeadTransferHistory(leadId).subscribe({
+      next: (items) => {
+        this.transferHistoryItems = items || [];
+        this.isLoadingTransferHistory = false;
+      },
+      error: () => {
+        this.transferHistoryItems = [];
+        this.isLoadingTransferHistory = false;
+        this.transferHistoryErrorMessage = 'Não foi possível carregar o histórico de transferência.';
+      },
+    });
+  }
+
+  hasTransferChange(item: LeadTransferHistory, type: 'seller' | 'coordinator' | 'manager'): boolean {
+    if (type === 'seller') {
+      return item.previousSellerId !== item.newSellerId;
+    }
+
+    if (type === 'coordinator') {
+      return item.previousCoordinatorId !== item.newCoordinatorId;
+    }
+
+    return item.previousManagerId !== item.newManagerId;
+  }
+
+  formatTransferName(name?: string | null, id?: number | null): string {
+    if (name && name.trim()) {
+      return name;
+    }
+
+    if (id) {
+      return `ID ${id}`;
+    }
+
+    return 'Sem responsável';
+  }
+
+  saveOperationalInteraction(): void {
+    if (!this.lead) {
+      return;
+    }
+
+    this.timelineSuccessMessage = '';
+    const type = this.operationalTimelineForm.get('type')?.value as OperationalInteractionType | '';
+    const description = String(this.operationalTimelineForm.get('description')?.value ?? '').trim();
+
+    if (!type) {
+      this.operationalTimelineForm.get('type')?.markAsTouched();
+      this.timelineErrorMessage = 'Selecione o tipo da interação.';
+      return;
+    }
+
+    if (type === 'Observação' && !description) {
+      this.operationalTimelineForm.get('description')?.markAsTouched();
+      this.timelineErrorMessage = 'Informe a observação para registrar esta interação.';
+      return;
+    }
+
+    const payload: CreateLeadActivityRequest = {
+      leadId: this.lead.id,
+      dateTime: new Date().toISOString(),
+      type,
+      description: description || type,
+    };
+
+    this.isSavingInteraction = true;
+    this.timelineErrorMessage = '';
+
+    this.leadService.addActivity(this.lead.id, payload).subscribe({
+      next: () => {
+        this.isSavingInteraction = false;
+        this.timelineSuccessMessage = 'Interação registrada com sucesso.';
+        this.clearOperationalInteractionForm();
+        this.loadActivities(this.lead?.id ?? 0);
+      },
+      error: () => {
+        this.isSavingInteraction = false;
+        this.timelineErrorMessage = 'Não foi possível registrar a interação. Tente novamente.';
+      },
+    });
+  }
+
+  clearOperationalInteractionForm(): void {
+    this.operationalTimelineForm.reset({
+      type: '',
+      description: '',
+    });
+    this.timelineErrorMessage = '';
+  }
+
+  isObservationInteractionSelected(): boolean {
+    return this.operationalTimelineForm.get('type')?.value === 'Observação';
+  }
+
+  saveQuickSchedule(): void {
+    if (!this.lead) {
+      return;
+    }
+
+    if (this.quickScheduleForm.invalid) {
+      this.quickScheduleForm.markAllAsTouched();
+      this.scheduleErrorMessage = 'Informe o tipo, a data e o horário do agendamento.';
+      return;
+    }
+
+    const form = this.quickScheduleForm.value;
+    const type = form.type as LeadSchedulingKind;
+    const tipoAgenda = this.getTipoAgendaFromSchedulingKind(type);
+    const status = 'Agendada';
+    const label = this.getSchedulingKindLabel(type);
+    const note = String(form.note ?? '').trim();
+    const iso = new Date(`${form.date}T${form.time}:00`).toISOString();
+    const vendedorId = Number(this.lead.vendedor) || this.sessionService.getCurrentUserId() || 0;
+
+    const payload = {
+      nomeCliente: this.lead.nome,
+      dataHoraISO: iso,
+      vendedorId,
+      status,
+      observacao: note ? `${label}: ${note}` : label,
+      compareceu: false,
+      virouVenda: false,
+      tipoAgenda,
+    };
+
+    this.isSavingSchedule = true;
+    this.scheduleErrorMessage = '';
+
+    this.leadService.createScheduleV3(this.lead.id, payload).subscribe({
+      next: () => {
+        this.isSavingSchedule = false;
+        this.showSchedulingModal = false;
+        this.quickScheduleForm.reset({
+          type: 'followup',
+          date: new Date().toISOString().substring(0, 10),
+          time: '09:00',
+          note: '',
+        });
+        this.loadSchedules(this.lead?.id ?? 0, tipoAgenda);
+      },
+      error: () => {
+        this.isSavingSchedule = false;
+        this.scheduleErrorMessage = 'Não foi possível salvar o agendamento. Confira os dados e tente novamente.';
+      },
+    });
+  }
+
+  private getTipoAgendaFromSchedulingKind(kind: LeadSchedulingKind): 'contato' | 'visita' {
+    return kind === 'visita' ? 'visita' : 'contato';
+  }
+
+  private getSchedulingKindLabel(kind: LeadSchedulingKind): string {
+    const labels: Record<LeadSchedulingKind, string> = {
+      followup: 'Retorno / Follow-up',
+      visita: 'Visita',
+      reuniao: 'Reunião',
+    };
+
+    return labels[kind];
   }
 
   toggleEdit(): void {
@@ -284,6 +663,41 @@ export class LeadDetailsComponent implements OnInit {
         this.isEditing = false;
       },
     });
+  }
+
+  private loadTransferHistoryPermission(): void {
+    const currentUserId = this.sessionService.getCurrentUserId();
+    if (!currentUserId) {
+      this.canViewTransferHistory = false;
+      return;
+    }
+
+    this.permissionsService.getUserEffectivePermissions(currentUserId).subscribe({
+      next: (permissions) => {
+        const permissionKeys = this.extractPermissionKeys(permissions);
+        this.canViewTransferHistory =
+          permissionKeys.has('atendimento.leads.transferencias.visualizar') ||
+          permissionKeys.has('sistema.admin.total');
+
+        if (!this.canViewTransferHistory) {
+          this.showTransferHistoryPanel = false;
+          this.transferHistoryItems = [];
+        }
+      },
+      error: () => {
+        this.canViewTransferHistory = false;
+        this.showTransferHistoryPanel = false;
+        this.transferHistoryItems = [];
+      },
+    });
+  }
+
+  private extractPermissionKeys(permissions: Permission[]): Set<string> {
+    return new Set(
+      (permissions || [])
+        .map((permission) => permission.permissionKey || permission.permission_key || '')
+        .filter((permissionKey) => !!permissionKey)
+    );
   }
 
   // ações rápidas – por enquanto só console.log, depois integra

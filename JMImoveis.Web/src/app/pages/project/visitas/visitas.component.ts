@@ -14,6 +14,7 @@ import { exportToExcel } from 'src/app/shared/utils/excel-export';
 type VisitasScreenMode = 'agendamento' | 'visitas';
 type SchedulePayload = {
   nomeCliente: string;
+  telefone?: string | null;
   dataHoraISO: string;
   vendedorId: string | null;
   status: VisitaStatus;
@@ -30,6 +31,7 @@ type SchedulePayload = {
 })
 export class VisitasComponent {
 screenMode: VisitasScreenMode = 'visitas';
+filtersCollapsed = false;
 
 setStatusTab(status: 'Agendada' | 'Confirmada' | 'Realizada' | 'Cancelada') {
   this.statusFilter = status;
@@ -210,11 +212,17 @@ private isoToDatetimeLocal(iso: string): string {
     if (this.screenMode === 'agendamento') {
       this.statusFilter = 'Agendada';
       this.dateRange = 'all';
+      this.filtersCollapsed = true;
       return;
     }
 
     this.statusFilter = '';
     this.dateRange = 'today';
+    this.filtersCollapsed = false;
+  }
+
+  toggleFilters(): void {
+    this.filtersCollapsed = !this.filtersCollapsed;
   }
 
   isAgendamentoMode(): boolean {
@@ -226,13 +234,13 @@ private isoToDatetimeLocal(iso: string): string {
   }
 
   getPageTitle(): string {
-    return this.isAgendamentoMode() ? 'Agendamento' : 'Visitas';
+    return this.isAgendamentoMode() ? 'Fila de Agendamentos' : 'Controle de Visitas';
   }
 
   getPageSubtitle(): string {
     return this.isAgendamentoMode()
-      ? 'Painel de retornos, confirmacoes e marcacoes futuras.'
-      : 'Painel de recepcao, presenca e resultado das visitas.';
+      ? 'Acompanhe retornos, follow-ups, reuniões e contatos agendados com clientes.'
+      : 'Acompanhe clientes previstos para visita, confirmações, comparecimentos e resultados da recepção.';
   }
 
   getPrimaryActionLabel(): string {
@@ -240,7 +248,7 @@ private isoToDatetimeLocal(iso: string): string {
   }
 
   getSummaryLabel(): string {
-    return this.isAgendamentoMode() ? 'Agendadas nos filtros' : 'Hoje nos filtros';
+    return this.isAgendamentoMode() ? 'Compromissos agendados' : 'Hoje nos filtros';
   }
 
   getSummaryValue(): number {
@@ -251,7 +259,7 @@ private isoToDatetimeLocal(iso: string): string {
 
   getSummaryNote(): string {
     return this.isAgendamentoMode()
-      ? 'Acompanhe retornos, confirme horarios e cancele marcacoes quando necessario.'
+      ? 'Fila operacional para confirmar contatos, acompanhar retornos e cancelar compromissos quando necessário.'
       : 'Acompanhe a chegada dos clientes e marque rapidamente as visitas realizadas.';
   }
 
@@ -280,8 +288,8 @@ private isoToDatetimeLocal(iso: string): string {
 
   getFilterDescription(): string {
     return this.isAgendamentoMode()
-      ? 'Refine os agendamentos por busca, status, equipe e periodo.'
-      : 'Refine as visitas por busca, status, equipe, comparecimento e periodo.';
+      ? 'Refine os compromissos por cliente, status, equipe e período.'
+      : 'Refine as visitas por busca, status, equipe, comparecimento e período.';
   }
 
   getSearchLabel(): string {
@@ -352,6 +360,7 @@ private isoToDatetimeLocal(iso: string): string {
   buildForm(): void {
     this.createForm = this.fb.group({
       nomeCliente: ['', Validators.required],
+      telefone: [''],
       dataHora: ['', Validators.required], // datetime-local
       vendedorId: [''],
       status: ['Agendada' as VisitaStatus, Validators.required],
@@ -441,6 +450,7 @@ private isoToDatetimeLocal(iso: string): string {
 
   this.createForm.reset({
     nomeCliente: '',
+    telefone: '',
     dataHora: '',
     vendedorId: '',
     status: 'Agendada',
@@ -459,6 +469,7 @@ openEditModal(v: Visita): void {
 
   this.createForm.reset({
     nomeCliente: v.nomeCliente,
+    telefone: v.telefone ?? '',
     dataHora: dtLocal,
     vendedorId: v.vendedorId ?? '',
     status: this.getStatusOptionsForMode().includes(v.status) ? v.status : 'Agendada',
@@ -557,7 +568,9 @@ openEditModal(v: Visita): void {
 
   openLead(visita: Visita): void {
     if (!this.hasValidLead(visita)) return;
-    this.router.navigate(['/jm/atendimento/leads', visita.leadId]);
+    this.router.navigate(['/jm/atendimento/leads', visita.leadId], {
+      queryParams: { from: this.isAgendamentoMode() ? 'agendamento' : 'visitas' },
+    });
   }
 
   cancel(visita: Visita): void {
@@ -715,6 +728,7 @@ openEditModal(v: Visita): void {
 private buildSchedulePayload(form: any): SchedulePayload {
   const payload: SchedulePayload = {
     nomeCliente: String(form.nomeCliente || '').trim(),
+    telefone: form.telefone ? String(form.telefone).trim() : null,
     dataHoraISO: new Date(form.dataHora).toISOString(),
     vendedorId: form.vendedorId ? String(form.vendedorId) : null,
     status: this.normalizeStatusForMode(form.status),

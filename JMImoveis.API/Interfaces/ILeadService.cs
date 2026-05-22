@@ -6,8 +6,8 @@ namespace JMImoveisAPI.Interfaces
     {
         Task<IEnumerable<Lead>> GetAllByFiltersAsync(LeadFilter filter);
         Task<Lead?> GetByIdAsync(int id);
-        Task CreateLeadAsync(Lead lead);
-        Task UpdateLeadAsync(Lead lead);
+        Task<int> CreateLeadAsync(Lead lead);
+        Task UpdateLeadAsync(Lead lead, long? changedByUserId = null);
         Task<bool> UpdateLeadStatusAsync(int id, string status, string? author);
         Task<bool> UpdateLeadEtapaAtendimentoAsync(int id, string etapaAtendimento, string? author);
         Task DeleteLeadAsync(Lead lead);

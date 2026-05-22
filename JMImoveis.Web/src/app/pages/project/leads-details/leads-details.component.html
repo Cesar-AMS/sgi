@@ -1,29 +1,34 @@
 <div class="lead-details-wrapper container-fluid py-4" *ngIf="lead; else loadingTpl">
-  <ul class="nav nav-tabs mb-3">
-    <li class="nav-item">
-      <button class="nav-link" [class.active]="activeTab === 'info'" (click)="setTab('info')" type="button">
-        Informações
-      </button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" [class.active]="activeTab === 'docs'" (click)="setTab('docs')" type="button">
-        Documentos
-      </button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" [class.active]="activeTab === 'proposal'" (click)="setTab('proposal')" type="button">
-        Proposta
-      </button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" [class.active]="activeTab === 'schedule'" (click)="setTab('schedule')" type="button">
-        Agendamentos
-      </button>
-    </li>
-  </ul>
+  <div class="row">
+    <div class="col-12 col-xl-10 mx-auto lead-tabs-column">
+      <p class="lead-panel-description">Painel do cliente</p>
+      <ul class="nav nav-tabs lead-detail-tabs mb-3">
+        <li class="nav-item">
+          <button
+            class="nav-link"
+            [class.active]="activeTab === 'info'"
+            (click)="setTab('info')"
+            type="button"
+          >
+            Informações
+          </button>
+        </li>
+        <li class="nav-item">
+          <button
+            class="nav-link"
+            [class.active]="activeTab === 'docs'"
+            (click)="setTab('docs')"
+            type="button"
+          >
+            Documentos
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
 
   <div class="row">
-    <div class="col-lg-8 mb-3">
+    <div class="col-12 col-xl-10 mx-auto mb-3 lead-main-column">
       <div *ngIf="activeTab === 'info'">
         <app-lead-summary-section
           [lead]="lead"
@@ -31,64 +36,397 @@
           [infoForm]="infoForm"
           [corretores]="corretores"
           [statusOptions]="statusOptions"
+          [canViewTransferHistory]="canViewTransferHistory"
+          [transferHistoryExpanded]="showTransferHistoryPanel"
           (backRequested)="goBack()"
-          (callRequested)="callLead()"
-          (whatsappRequested)="whatsappLead()"
-          (emailRequested)="emailLead()"
+          (schedulingRequested)="openLeadScheduling()"
           (editToggled)="toggleEdit()"
+          (transferHistoryRequested)="openTransferHistory()"
           (infoSubmitted)="saveInfo()"
-          (saleRequested)="openSaleFlow()"
-        ></app-lead-summary-section>
+        >
+          <section
+            lead-transfer-history-panel
+            class="card shadow-sm border-0 transfer-history-panel mb-3"
+            *ngIf="showTransferHistoryPanel && canViewTransferHistory"
+          >
+            <div class="card-body">
+              <div class="transfer-history-panel-header">
+                <div>
+                  <h5 class="mb-0">Histórico de Transferência</h5>
+                  <span class="text-muted small">Mudanças de responsáveis do lead</span>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  (click)="closeTransferHistory()"
+                >
+                  Recolher
+                </button>
+              </div>
+
+              <div class="transfer-history-loading" *ngIf="isLoadingTransferHistory">
+                Carregando histórico...
+              </div>
+
+              <div class="transfer-history-error" *ngIf="transferHistoryErrorMessage">
+                {{ transferHistoryErrorMessage }}
+              </div>
+
+              <div
+                class="transfer-history-list"
+                *ngIf="!isLoadingTransferHistory && !transferHistoryErrorMessage && transferHistoryItems.length > 0; else noTransferHistoryTpl"
+              >
+                <article class="transfer-history-item" *ngFor="let item of transferHistoryItems">
+                  <div class="transfer-history-date">
+                    Transferência em {{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                  </div>
+                  <div class="transfer-history-author">
+                    Alterado por: {{ item.changedByUserName || 'Sistema' }}
+                  </div>
+
+                  <div class="transfer-history-change" *ngIf="hasTransferChange(item, 'seller')">
+                    <strong>Agente:</strong>
+                    {{ formatTransferName(item.previousSellerName, item.previousSellerId) }}
+                    <span>&rarr;</span>
+                    {{ formatTransferName(item.newSellerName, item.newSellerId) }}
+                  </div>
+
+                  <div class="transfer-history-change" *ngIf="hasTransferChange(item, 'coordinator')">
+                    <strong>Coordenador:</strong>
+                    {{ formatTransferName(item.previousCoordinatorName, item.previousCoordinatorId) }}
+                    <span>&rarr;</span>
+                    {{ formatTransferName(item.newCoordinatorName, item.newCoordinatorId) }}
+                  </div>
+
+                  <div class="transfer-history-change" *ngIf="hasTransferChange(item, 'manager')">
+                    <strong>Gerente:</strong>
+                    {{ formatTransferName(item.previousManagerName, item.previousManagerId) }}
+                    <span>&rarr;</span>
+                    {{ formatTransferName(item.newManagerName, item.newManagerId) }}
+                  </div>
+                </article>
+              </div>
+
+              <ng-template #noTransferHistoryTpl>
+                <div
+                  class="transfer-history-empty"
+                  *ngIf="!isLoadingTransferHistory && !transferHistoryErrorMessage"
+                >
+                  Nenhuma transferência registrada para este lead.
+                </div>
+              </ng-template>
+            </div>
+          </section>
+        </app-lead-summary-section>
+
+        <section class="operational-timeline card shadow-sm border-0 mt-3">
+          <div class="card-body">
+            <div class="timeline-header">
+              <div>
+                <h5 class="mb-1">Linha do Tempo do Atendimento</h5>
+                <p class="text-muted mb-0">
+                  Registre aqui cada interação operacional com este cliente.
+                </p>
+              </div>
+            </div>
+
+            <form
+              class="timeline-form"
+              [formGroup]="operationalTimelineForm"
+              (ngSubmit)="saveOperationalInteraction()"
+            >
+              <div class="row g-3">
+                <div class="col-md-5">
+                  <label class="form-label" for="operationalInteractionType">
+                    Tipo da interação
+                  </label>
+                  <select
+                    id="operationalInteractionType"
+                    class="form-select"
+                    formControlName="type"
+                  >
+                    <option value="">Selecione...</option>
+                    <option *ngFor="let type of operationalInteractionTypes" [value]="type">
+                      {{ type }}
+                    </option>
+                  </select>
+                  <div
+                    class="invalid-feedback d-block"
+                    *ngIf="operationalTimelineForm.get('type')?.touched && operationalTimelineForm.get('type')?.invalid"
+                  >
+                    Selecione o tipo da interação.
+                  </div>
+                </div>
+
+                <div class="col-md-7">
+                  <label class="form-label" for="operationalInteractionDescription">
+                    Observação
+                  </label>
+                  <textarea
+                    id="operationalInteractionDescription"
+                    class="form-control"
+                    rows="2"
+                    formControlName="description"
+                    placeholder="Complemento opcional sobre o atendimento..."
+                  ></textarea>
+                  <div
+                    class="invalid-feedback d-block"
+                    *ngIf="isObservationInteractionSelected() && operationalTimelineForm.get('description')?.touched && !operationalTimelineForm.get('description')?.value"
+                  >
+                    Informe a observação.
+                  </div>
+                </div>
+              </div>
+
+              <div class="timeline-feedback timeline-feedback-error" *ngIf="timelineErrorMessage">
+                {{ timelineErrorMessage }}
+              </div>
+              <div class="timeline-feedback timeline-feedback-success" *ngIf="timelineSuccessMessage">
+                {{ timelineSuccessMessage }}
+              </div>
+
+              <div class="timeline-actions">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="clearOperationalInteractionForm()"
+                  [disabled]="isSavingInteraction"
+                >
+                  Limpar
+                </button>
+                <button type="submit" class="btn btn-orange" [disabled]="isSavingInteraction">
+                  {{ isSavingInteraction ? 'Registrando...' : 'Registrar interação' }}
+                </button>
+              </div>
+            </form>
+
+            <div class="timeline-list" *ngIf="activities.length > 0; else noTimelineItemsTpl">
+              <article class="timeline-item" *ngFor="let act of activities">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <div class="timeline-item-header">
+                    <strong>{{ act.type || 'Interação' }}</strong>
+                    <span>{{ act.dateTime | date: 'dd/MM/yyyy HH:mm' }}</span>
+                  </div>
+                  <p class="timeline-description mb-1">{{ act.description }}</p>
+                  <div class="timeline-author">
+                    {{ act.author || 'Sistema' }}
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <ng-template #noTimelineItemsTpl>
+              <div class="timeline-empty">
+                Nenhuma interação registrada para este lead.
+              </div>
+            </ng-template>
+          </div>
+        </section>
       </div>
 
       <div *ngIf="activeTab === 'docs'">
-        <div class="card shadow-sm border-0">
+        <div class="card shadow-sm border-0 lead-documents-card">
           <div class="card-body">
-            <h5 class="card-title mb-3">Documentos</h5>
-            <p class="text-muted mb-0">Em breve vamos implementar o upload e listagem de documentos do lead.</p>
+            <div class="documents-header">
+              <div>
+                <h5 class="card-title mb-1">Documentos do Cliente</h5>
+                <p class="text-muted mb-0">
+                  Anexe aqui os documentos enviados pelo cliente via WhatsApp ou outros canais.
+                </p>
+              </div>
+
+              <label class="btn btn-orange documents-upload-button" for="leadDocumentsInput">
+                <i class="bi bi-paperclip me-1"></i>
+                {{ isUploadingDocuments ? 'Anexando...' : 'Anexar documentos' }}
+              </label>
+              <input
+                id="leadDocumentsInput"
+                type="file"
+                class="visually-hidden"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                [disabled]="isUploadingDocuments"
+                (change)="onLeadDocumentsSelected($event)"
+              />
+            </div>
+
+            <div class="documents-error" *ngIf="documentErrorMessage">
+              {{ documentErrorMessage }}
+            </div>
+
+            <div class="documents-loading" *ngIf="isLoadingDocuments">
+              Carregando documentos...
+            </div>
+
+            <div class="documents-list" *ngIf="!isLoadingDocuments && leadDocuments.length > 0; else noLeadDocumentsTpl">
+              <article class="document-card" *ngFor="let document of leadDocuments">
+                <div class="document-preview">
+                  <i class="bi" [ngClass]="getDocumentIcon(document)" aria-hidden="true"></i>
+                </div>
+
+                <div class="document-content">
+                  <ng-container *ngIf="document.isEditing; else documentReadTpl">
+                    <label class="form-label" [for]="'documentName' + document.id">Nome do documento</label>
+                    <input
+                      class="form-control form-control-sm mb-2"
+                      [id]="'documentName' + document.id"
+                      [(ngModel)]="document.displayName"
+                      placeholder="Nome do documento"
+                    />
+                    <label class="form-label" [for]="'documentDescription' + document.id">Descrição</label>
+                    <textarea
+                      class="form-control form-control-sm"
+                      [id]="'documentDescription' + document.id"
+                      [(ngModel)]="document.description"
+                      rows="2"
+                      placeholder="Ex: RG frente, comprovante de renda..."
+                    ></textarea>
+                  </ng-container>
+
+                  <ng-template #documentReadTpl>
+                    <h6 class="document-title" [title]="document.displayName">{{ document.displayName || document.originalFileName }}</h6>
+                    <p class="document-description" *ngIf="document.description; else noDescriptionTpl">
+                      {{ document.description }}
+                    </p>
+                    <ng-template #noDescriptionTpl>
+                      <p class="document-description text-muted">Sem descrição.</p>
+                    </ng-template>
+                  </ng-template>
+
+                  <div class="document-meta">
+                    <span>{{ document.originalFileName }}</span>
+                    <span>{{ formatFileSize(document.fileSize) }}</span>
+                    <span>{{ document.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                  </div>
+                </div>
+
+                <div class="document-actions">
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    (click)="openLeadDocument(document)"
+                  >
+                    Visualizar
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    (click)="toggleDocumentEdit(document)"
+                    *ngIf="!document.isEditing"
+                  >
+                    Editar nome
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    (click)="saveLeadDocumentMetadata(document)"
+                    *ngIf="document.isEditing"
+                  >
+                    Salvar
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    (click)="removeLeadDocument(document)"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </article>
+            </div>
+
+            <ng-template #noLeadDocumentsTpl>
+              <div class="documents-empty" *ngIf="!isLoadingDocuments">
+                Nenhum documento anexado nesta sessão.
+              </div>
+            </ng-template>
           </div>
         </div>
       </div>
+    </div>
 
-      <div *ngIf="activeTab === 'proposal'">
-        <div class="card shadow-sm border-0">
-          <div class="card-body">
-            <h5 class="card-title mb-3">Proposta</h5>
-            <p class="text-muted mb-0">Aqui depois você pode exibir os dados da proposta vinculada ao lead.</p>
+  </div>
+</div>
+
+<div class="modal-backdrop-custom" *ngIf="showSchedulingModal">
+  <div
+    class="schedule-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="leadSchedulingModalTitle"
+  >
+    <div class="schedule-modal-header">
+      <div>
+        <h5 id="leadSchedulingModalTitle" class="mb-1">Novo agendamento</h5>
+        <p class="text-muted mb-0">Registre uma próxima ação para este lead.</p>
+      </div>
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Fechar modal de agendamento"
+        (click)="closeLeadScheduling()"
+      ></button>
+    </div>
+
+    <form [formGroup]="quickScheduleForm" (ngSubmit)="saveQuickSchedule()">
+      <div class="schedule-modal-body">
+        <div class="mb-3">
+          <label class="form-label" for="quickScheduleType">Tipo de agendamento</label>
+          <select id="quickScheduleType" class="form-select" formControlName="type">
+            <option value="followup">Retorno / Follow-up</option>
+            <option value="visita">Visita</option>
+            <option value="reuniao">Reunião</option>
+          </select>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="quickScheduleDate">Data</label>
+            <input id="quickScheduleDate" type="date" class="form-control" formControlName="date" />
+            <div class="invalid-feedback d-block" *ngIf="quickScheduleForm.get('date')?.touched && quickScheduleForm.get('date')?.invalid">
+              Informe a data.
+            </div>
           </div>
+          <div class="col-md-6">
+            <label class="form-label" for="quickScheduleTime">Horário</label>
+            <input id="quickScheduleTime" type="time" class="form-control" formControlName="time" />
+            <div class="invalid-feedback d-block" *ngIf="quickScheduleForm.get('time')?.touched && quickScheduleForm.get('time')?.invalid">
+              Informe o horário.
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label" for="quickScheduleNote">Observação</label>
+          <textarea
+            id="quickScheduleNote"
+            class="form-control"
+            rows="3"
+            formControlName="note"
+            placeholder="Descreva o combinado com o cliente..."
+          ></textarea>
+        </div>
+
+        <div class="schedule-error" *ngIf="scheduleErrorMessage">
+          {{ scheduleErrorMessage }}
         </div>
       </div>
 
-      <div *ngIf="activeTab === 'schedule'">
-        <app-lead-agenda-section
-          class="d-block mb-3"
-          [scheduleForm]="scheduleForm"
-          [schedules]="schedules"
-          [scheduleStatusOptions]="contactScheduleStatusOptions"
-          (scheduleSubmitted)="saveSchedule('contato')"
-          (scheduleStatusChanged)="handleContactScheduleStatusChange($event)"
-        ></app-lead-agenda-section>
-
-        <app-lead-visits-section
-          [scheduleForm]="scheduleForm"
-          [schedulesVisit]="schedulesVisit"
-          [scheduleStatusOptions]="visitScheduleStatusOptions"
-          (visitScheduleSubmitted)="saveSchedule('visita')"
-          (visitStatusChanged)="handleVisitScheduleStatusChange($event)"
-        ></app-lead-visits-section>
+      <div class="schedule-modal-footer">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="closeLeadScheduling()"
+          [disabled]="isSavingSchedule"
+        >
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-orange" [disabled]="isSavingSchedule">
+          {{ isSavingSchedule ? 'Salvando...' : 'Salvar agendamento' }}
+        </button>
       </div>
-    </div>
-
-    <div class="col-lg-4">
-      <app-lead-activities-section
-        [activities]="activities"
-        [isAddingActivity]="isAddingActivity"
-        [activityForm]="activityForm"
-        (addRequested)="startAddActivity()"
-        (addCanceled)="cancelAddActivity()"
-        (activitySubmitted)="saveActivity()"
-      ></app-lead-activities-section>
-    </div>
+    </form>
   </div>
 </div>
 

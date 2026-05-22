@@ -11,13 +11,19 @@ namespace JMImoveisAPI.Controllers
     {
         private const string ViewAllSchedulesPermission = "sistema.admin.total";
         private const string EditLeadPermission = "atendimento.leads.editar";
+        private const string ViewLeadTransferHistoryPermission = "atendimento.leads.transferencias.visualizar";
         private readonly ILeadService _leadService;
         private readonly IPermissionService _permissionService;
+        private readonly ILeadTransferHistoryService _leadTransferHistoryService;
 
-        public LeadsController(ILeadService leadService, IPermissionService permissionService)
+        public LeadsController(
+            ILeadService leadService,
+            IPermissionService permissionService,
+            ILeadTransferHistoryService leadTransferHistoryService)
         {
             _leadService = leadService;
             _permissionService = permissionService;
+            _leadTransferHistoryService = leadTransferHistoryService;
         }
 
         [HttpGet("{leadId}/schedules")]
@@ -113,6 +119,29 @@ namespace JMImoveisAPI.Controllers
         public async Task<IActionResult> GetById(int id)
             => Ok(await _leadService.GetByIdAsync(id));
 
+        [HttpGet("{leadId:int}/transfer-history")]
+        public async Task<IActionResult> GetTransferHistory(int leadId)
+        {
+            var authorizationResult = await AuthorizeCurrentUserForLeadTransferHistoryAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            try
+            {
+                return Ok(await _leadTransferHistoryService.GetByLeadIdAsync(leadId));
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         [HttpPost("report")]
         public async Task<IActionResult> GetReportLead(LeadFilter filter)
             => Ok(await _leadService.GetAllByFiltersAsync(filter));
@@ -120,14 +149,14 @@ namespace JMImoveisAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateLead(Lead lead)
         {
-            await _leadService.CreateLeadAsync(lead);
-            return Ok();
+            var id = await _leadService.CreateLeadAsync(lead);
+            return Ok(new { id });
         }
 
         [HttpPatch]
         public async Task<IActionResult> UpdateLead(Lead lead)
         {
-            await _leadService.UpdateLeadAsync(lead);
+            await _leadService.UpdateLeadAsync(lead, GetCurrentUserId());
             return Ok();
         }
 
@@ -221,6 +250,33 @@ namespace JMImoveisAPI.Controllers
                 if (!hasPermission)
                 {
                     return StatusCode(403, new { message = "Usuario sem permissao para editar leads." });
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao encontrado." });
+            }
+
+            return null;
+        }
+
+        private async Task<IActionResult?> AuthorizeCurrentUserForLeadTransferHistoryAsync()
+        {
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            try
+            {
+                var canViewTransferHistory = await _permissionService.UserHasPermissionAsync(
+                    currentUserId.Value,
+                    ViewLeadTransferHistoryPermission);
+
+                if (!canViewTransferHistory)
+                {
+                    return StatusCode(403, new { message = "Usuario sem permissao para visualizar historico de transferencia." });
                 }
             }
             catch (KeyNotFoundException)

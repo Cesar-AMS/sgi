@@ -25,10 +25,14 @@ namespace JMImoveisAPI.Services
         };
 
         private readonly ILeadRepository _leadRepository;
+        private readonly ILeadTransferHistoryService _leadTransferHistoryService;
 
-        public LeadService(ILeadRepository leadRepository)
+        public LeadService(
+            ILeadRepository leadRepository,
+            ILeadTransferHistoryService leadTransferHistoryService)
         {
             _leadRepository = leadRepository;
+            _leadTransferHistoryService = leadTransferHistoryService;
         }
 
         public Task<IEnumerable<Lead>> GetAllByFiltersAsync(LeadFilter filter)
@@ -37,11 +41,30 @@ namespace JMImoveisAPI.Services
         public async Task<Lead?> GetByIdAsync(int id)
             => await _leadRepository.GetLeadById(id);
 
-        public Task CreateLeadAsync(Lead lead)
-            => _leadRepository.CreateLead(lead);
+        public Task<int> CreateLeadAsync(Lead lead)
+        {
+            lead.Status = string.IsNullOrWhiteSpace(lead.Status) ? "Novo" : lead.Status;
+            lead.EtapaAtendimento = string.IsNullOrWhiteSpace(lead.EtapaAtendimento)
+                ? "Sem atendimento"
+                : lead.EtapaAtendimento;
 
-        public Task UpdateLeadAsync(Lead lead)
-            => _leadRepository.UpdateLead(lead);
+            return _leadRepository.CreateLeadAndReturnId(lead);
+        }
+
+        public async Task UpdateLeadAsync(Lead lead, long? changedByUserId = null)
+        {
+            var previousLead = await _leadRepository.GetLeadById(lead.Id);
+
+            await _leadRepository.UpdateLead(lead);
+
+            if (previousLead != null)
+            {
+                await _leadTransferHistoryService.RegisterIfResponsibleChangedAsync(
+                    previousLead,
+                    lead,
+                    changedByUserId);
+            }
+        }
 
         public async Task<bool> UpdateLeadStatusAsync(int id, string status, string? author)
         {
@@ -138,7 +161,8 @@ namespace JMImoveisAPI.Services
 
             request.TipoAgenda = NormalizeTipoAgenda(request.TipoAgenda);
 
-            await _leadRepository.InsertAsync(request, leadId);
+            var effectiveLeadId = await EnsureScheduleLeadIdAsync(request, leadId);
+            await _leadRepository.InsertAsync(request, effectiveLeadId);
             return (true, null);
         }
 
@@ -210,6 +234,31 @@ namespace JMImoveisAPI.Services
             return normalized is "contato" or "visita"
                 ? normalized
                 : null;
+        }
+
+        private async Task<int> EnsureScheduleLeadIdAsync(LeadScheduleRequest request, int? leadId)
+        {
+            if (leadId.HasValue && leadId.Value > 0)
+            {
+                return leadId.Value;
+            }
+
+            if (request.LeadId.HasValue && request.LeadId.Value > 0)
+            {
+                return request.LeadId.Value;
+            }
+
+            var lead = new Lead
+            {
+                Nome = request.NomeCliente?.Trim() ?? string.Empty,
+                Telefone = string.IsNullOrWhiteSpace(request.Telefone) ? null : request.Telefone.Trim(),
+                Status = "Novo",
+                EtapaAtendimento = request.TipoAgenda == "visita" ? "Visita agendada" : "Agendamento de retorno",
+                Vendedor = request.VendedorId > 0 ? request.VendedorId.ToString() : null,
+                Observacao = request.Observacao
+            };
+
+            return await _leadRepository.CreateLeadAndReturnId(lead);
         }
 
         private static string NormalizeLeadStatus(string? status)

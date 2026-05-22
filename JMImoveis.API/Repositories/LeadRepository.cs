@@ -481,6 +481,24 @@ namespace JMImoveisAPI.Repositories
             await conn.ExecuteAsync(sql, lead);
         }
 
+        public async Task<int> CreateLeadAndReturnId(Lead lead)
+        {
+            var sql = @"INSERT INTO leads (Nome, Email, Telefone, Status, EtapaAtendimento,
+                                           Valor, Fonte, ImoveisInteresse,
+                                           Vendedor, Coordenador, Gerente, Observacao)
+                                        VALUES
+                                        (
+                                            @Nome, @Email, @Telefone, @Status, @EtapaAtendimento,
+                                            @Valor, @Fonte, @ImoveisInteresse,
+                                            @Vendedor, @Coordenador, @Gerente, @Observacao
+                                        );
+
+                        SELECT LAST_INSERT_ID();";
+
+            await using var conn = await _context.OpenConnectionAsync();
+            return await conn.ExecuteScalarAsync<int>(sql, lead);
+        }
+
         public async Task<bool> UpdateLeadStatus(int id, string status, CreateLeadActivityRequest activity)
         {
             const string updateSql = @"UPDATE leads

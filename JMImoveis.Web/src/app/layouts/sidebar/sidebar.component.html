@@ -37,7 +37,7 @@
                 <li class="nav-item">
                     @if(hasItems(item)){
                         <!-- 'has-arrow': !item.badge, -->
-                    <a href="javascript:void(0);" class="nav-link menu-link" [attr.data-menu-id]="item.id" [ngClass]="{'has-dropdown': item.badge,'show': item.isOpen, 'menu-disabled': isDisabled(item)}" [attr.title]="isPermissionDisabled(item) ? 'Sem permissão' : null" aria-expanded="false" (click)="toggleItem($event,item)">
+                    <a href="javascript:void(0);" class="nav-link menu-link" [attr.data-menu-id]="item.id" [ngClass]="{'has-dropdown': item.badge,'show': item.isOpen, 'menu-disabled': isDisabled(item)}" [attr.title]="isPermissionDisabled(item) ? 'Sem permissão' : null" [attr.aria-expanded]="item.isOpen ? 'true' : 'false'" (click)="toggleItem($event,item)">
                         <i class="{{ item.icon }}"></i>
                         <span> {{ item.label | translate }}</span>
                         @if(item.badge){<span class="badge badge-pill bg-danger">{{item.badge | translate}}</span>}
@@ -119,7 +119,7 @@
                         @if(item.badge){<span class="badge badge-pill bg-secondary">{{item.badge | translate}}</span>}
                     </a>
                     }@else {
-                    <a [routerLink]="item.link" class="side-nav-link-ref nav-link menu-link" (click)="toggleParentItem($event,item)">
+                    <a [routerLink]="item.link" class="side-nav-link-ref nav-link menu-link" (click)="updateActive($event)">
                         @if(item.icon){<i class="bx {{ item.icon }} icon nav-icon" class=""></i>}
                         <span class=""> {{ item.label | translate }} </span>
                         @if(item.badge){<span class="badge badge-pill bg-secondary">{{item.badge | translate}}</span>}

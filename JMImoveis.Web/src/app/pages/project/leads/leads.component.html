@@ -4,7 +4,7 @@
     <div>
       <h2 class="fw-bold mb-1">Leads</h2>
       <p class="text-muted mb-0">
-        Gerencie seus leads e oportunidades de vendas.
+        Base geral de leads para consulta, acompanhamento e organização do funil de atendimento.
       </p>
     </div>
 
@@ -228,7 +228,7 @@
               class="table-row-click"
               tabindex="0"
               role="button"
-              [attr.aria-label]="'Abrir detalhes do lead ' + lead.nome"
+              [attr.aria-label]="'Abrir painel do cliente ' + lead.nome"
             >
               <td>{{ lead.nome }}</td>
               <td>
@@ -322,7 +322,7 @@
             [cdkDragData]="lead"
             [cdkDragDisabled]="!canEditLeadStatus"
             (click)="openLeadDetails(lead.id)"
-            [attr.aria-label]="'Abrir detalhes do lead ' + lead.nome"
+            [attr.aria-label]="'Abrir painel do cliente ' + lead.nome"
             [class.kanban-card-readonly]="!canEditLeadStatus"
           >
             <div class="kanban-card-title" [title]="lead.nome">{{ lead.nome }}</div>
@@ -412,6 +412,10 @@
     </div>
 
     <div class="modal-body px-4 pb-4">
+      <p class="lead-panel-create-note">
+        Ao salvar, será criado o Painel do Cliente para acompanhamento, agendamentos e documentos.
+      </p>
+
       <form [formGroup]="createForm" (ngSubmit)="submitCreate()">
         <div class="mb-3">
           <label class="form-label" for="leadNome">Nome</label>

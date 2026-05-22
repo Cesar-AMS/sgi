@@ -125,6 +125,7 @@ namespace JMImoveisAPI.Entities
     {
         public int? LeadId { get; set; }
         public string? NomeCliente { get; set; }
+        public string? Telefone { get; set; }
         public DateTime DataHoraISO { get; set; }
         public int VendedorId { get; set; }
         public string? Status { get; set; }

@@ -55,4 +55,41 @@ export interface CreateLeadActivityRequest {
   leadId: number;
   dateTime: string; // ISO
   description: string;
+  type?: string;
+}
+
+export interface LeadDocument {
+  id: number;
+  leadId: number;
+  originalFileName: string;
+  displayName: string;
+  description?: string | null;
+  contentType: string;
+  fileSize: number;
+  uploadedByUserId?: number | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  deletedAt?: string | null;
+  isEditing?: boolean;
+}
+
+export interface LeadTransferHistory {
+  id: number;
+  leadId: number;
+  previousSellerId?: number | null;
+  newSellerId?: number | null;
+  previousCoordinatorId?: number | null;
+  newCoordinatorId?: number | null;
+  previousManagerId?: number | null;
+  newManagerId?: number | null;
+  changedByUserId?: number | null;
+  changeReason?: string | null;
+  createdAt: string;
+  previousSellerName?: string | null;
+  newSellerName?: string | null;
+  previousCoordinatorName?: string | null;
+  newCoordinatorName?: string | null;
+  previousManagerName?: string | null;
+  newManagerName?: string | null;
+  changedByUserName?: string | null;
 }

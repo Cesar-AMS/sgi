@@ -55,7 +55,7 @@ export class SidebarComponent {
     const userId = this.resolveCurrentUserId();
 
     if (!userId) {
-      this.applyFullMenuFallback();
+      this.applySafeMenuFallback();
       return;
     }
 
@@ -65,8 +65,8 @@ export class SidebarComponent {
         setTimeout(() => this.initActiveMenu(), 0);
       },
       error: (err) => {
-        console.warn('Nao foi possivel carregar permissoes efetivas. Usando MENU oficial.', err);
-        this.applyFullMenuFallback();
+        console.warn('Nao foi possivel carregar permissoes efetivas. Menu ocultado por seguranca.', err);
+        this.applySafeMenuFallback();
       },
     });
   }
@@ -116,7 +116,7 @@ export class SidebarComponent {
     const officialMenu = this.normalizeMenuLinks(MENU);
     const permissionKeys = this.extractPermissionKeys(permissions);
 
-    if (!permissionKeys.size || permissionKeys.has('sistema.admin.total')) {
+    if (permissionKeys.has('sistema.admin.total')) {
       return officialMenu;
     }
 
@@ -167,8 +167,8 @@ export class SidebarComponent {
     return keys;
   }
 
-  private applyFullMenuFallback(): void {
-    this.menuItems = this.normalizeMenuLinks(MENU);
+  private applySafeMenuFallback(): void {
+    this.menuItems = [];
     setTimeout(() => this.initActiveMenu(), 0);
   }
 
@@ -265,37 +265,36 @@ export class SidebarComponent {
     });
   }
 
-  toggleItem(event: any, item: any) {
+  toggleItem(event: Event, item: MenuItem): void {
     event.preventDefault();
-    item.isOpen = !item.isOpen;
-    const isCurrentMenuId = event.target.closest('a.nav-link');
+    event.stopPropagation();
 
-    if (!isCurrentMenuId) {
+    if (this.isDisabled(item) || !this.hasItems(item)) {
       return;
     }
 
-    isCurrentMenuId.setAttribute('aria-expanded', item.isOpen.toString());
+    const shouldOpen = !item.isOpen;
 
-    if (item.isOpen) {
-      this.menuItems.forEach((menuItem: any) => {
-        if (menuItem !== item) {
-          menuItem.isOpen = false;
-          const otherMenuId = document.querySelector(`[data-menu-id="${menuItem.id}"]`);
+    this.menuItems.forEach((menuItem: MenuItem) => {
+      if (menuItem !== item) {
+        menuItem.isOpen = false;
+      }
+    });
 
-          if (otherMenuId) {
-            otherMenuId.setAttribute('aria-expanded', 'false');
-          }
-        }
-      });
-    }
+    item.isOpen = shouldOpen;
   }
 
   toggleSubItem(event: any) {
     event.preventDefault();
+    event.stopPropagation();
     const isCurrentMenuId = event.target.closest('a.nav-link') as HTMLElement | null;
     const isMenu = isCurrentMenuId?.nextElementSibling as HTMLElement | null;
 
     if (!isCurrentMenuId || !isMenu) {
+      return;
+    }
+
+    if (isCurrentMenuId.classList.contains('menu-disabled')) {
       return;
     }
 
@@ -321,10 +320,15 @@ export class SidebarComponent {
 
   toggleExtraSubItem(event: any) {
     event.preventDefault();
+    event.stopPropagation();
     const isCurrentMenuId = event.target.closest('a.nav-link') as HTMLElement | null;
     const isMenu = isCurrentMenuId?.nextElementSibling as HTMLElement | null;
 
     if (!isCurrentMenuId || !isMenu) {
+      return;
+    }
+
+    if (isCurrentMenuId.classList.contains('menu-disabled')) {
       return;
     }
 
@@ -421,22 +425,39 @@ export class SidebarComponent {
     this.activateParentDropdown(target);
   }
 
-  initActiveMenu() {
+  initActiveMenu(): void {
     const pathName = window.location.pathname;
+
+    this.menuItems.forEach((item: MenuItem) => {
+      item.isOpen = this.itemContainsRoute(item, pathName);
+    });
+
     const ul = document.getElementById('navbar-nav');
-    if (ul) {
-      const items = Array.from(ul.querySelectorAll('a.nav-link'));
-      let activeItems = items.filter((x: any) => x.classList.contains('active'));
-      this.removeActivation(activeItems);
-
-      let matchingMenuItem = items.find((x: any) => {
-        return x.pathname === pathName;
-      });
-
-      if (matchingMenuItem) {
-        this.activateParentDropdown(matchingMenuItem);
-      }
+    if (!ul) {
+      return;
     }
+
+    const items = Array.from(ul.querySelectorAll('a.nav-link'));
+    const activeItems = items.filter((x: any) => x.classList.contains('active'));
+    this.removeActivation(activeItems);
+
+    const matchingMenuItem = items.find((x: any) => x.pathname === pathName);
+
+    if (matchingMenuItem) {
+      this.activateParentDropdown(matchingMenuItem);
+    }
+  }
+
+  private itemContainsRoute(item: MenuItem, pathName: string): boolean {
+    if (item.link === pathName) {
+      return true;
+    }
+
+    if (!item.subItems?.length) {
+      return false;
+    }
+
+    return item.subItems.some((subItem) => this.itemContainsRoute(subItem, pathName));
   }
 
   hasItems(item: MenuItem): boolean {

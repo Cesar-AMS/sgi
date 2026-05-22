@@ -49,7 +49,7 @@ export class LeadsComponent {
 
   viewMode: 'list' | 'kanban' = 'list';
   isLoading = false;
-  filtersCollapsed = false;
+  filtersCollapsed = true;
 
   canEditLeadStatus = false;
 
@@ -203,7 +203,8 @@ export class LeadsComponent {
       nome: ['', Validators.required],
       email: ['', [Validators.email]],
       telefone: [''],
-      status: ['', Validators.required],
+      status: ['Novo', Validators.required],
+      etapaAtendimento: ['Sem atendimento'],
       valor: [null],
       fonte: [''],
       imoveisInteresse: [''],
@@ -231,7 +232,9 @@ export class LeadsComponent {
   }
 
   openLeadDetails(id: number): void {
-    this.router.navigate(['/jm/atendimento/leads', id]);
+    this.router.navigate(['/jm/atendimento/leads', id], {
+      queryParams: { from: 'leads' },
+    });
   }
 
   setViewMode(mode: 'list' | 'kanban'): void {
@@ -475,6 +478,10 @@ export class LeadsComponent {
 
   openCreateModal(): void {
     this.showCreateModal = true;
+    this.createForm.patchValue({
+      status: this.createForm.get('status')?.value || 'Novo',
+      etapaAtendimento: this.createForm.get('etapaAtendimento')?.value || 'Sem atendimento',
+    });
   }
 
   closeCreateModal(): void {
@@ -488,7 +495,13 @@ export class LeadsComponent {
       return;
     }
 
-    this.leadService.createLead(this.createForm.value).subscribe({
+    const payload = {
+      ...this.createForm.value,
+      status: this.createForm.value.status || 'Novo',
+      etapaAtendimento: this.createForm.value.etapaAtendimento || 'Sem atendimento',
+    };
+
+    this.leadService.createLead(payload).subscribe({
       next: () => {
         this.applyFilters();
         this.closeCreateModal();

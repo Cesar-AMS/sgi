@@ -4,7 +4,8 @@ namespace JMImoveisAPI.Interfaces
 {
     public interface ILeadRepository
     {
-        Task CreateLead(Lead lead);     
+        Task CreateLead(Lead lead);
+        Task<int> CreateLeadAndReturnId(Lead lead);
         Task<IEnumerable<Lead>> GetAllByFilters(LeadFilter filter);
         Task<Lead> GetLeadById(int id);
         Task UpdateLead(Lead lead);
