@@ -156,6 +156,12 @@ namespace JMImoveisAPI.Controllers
         [HttpPatch]
         public async Task<IActionResult> UpdateLead(Lead lead)
         {
+            var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
             await _leadService.UpdateLeadAsync(lead, GetCurrentUserId());
             return Ok();
         }
