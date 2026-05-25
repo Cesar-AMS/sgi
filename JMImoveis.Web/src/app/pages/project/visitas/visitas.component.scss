@@ -133,11 +133,22 @@
 .filter-field .input-group-text {
   background-color: #fff8f3;
   color: #ff7a1a;
-  border-right: 0;
 }
 
 .filter-field .input-group .form-control {
+  border-right: 0;
+}
+
+.filter-field .btn-search {
+  cursor: pointer;
   border-left: 0;
+}
+
+.filter-field .btn-search:hover,
+.filter-field .btn-search:focus {
+  background-color: #ff7a1a;
+  border-color: #ff7a1a;
+  color: #fff;
 }
 
 .filter-field .form-control:focus,

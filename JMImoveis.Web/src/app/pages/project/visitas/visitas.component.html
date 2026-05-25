@@ -103,10 +103,6 @@
         <label class="form-label" for="visitSearchInput">{{ getSearchLabel() }}</label>
 
         <div class="input-group flex-nowrap">
-          <span class="input-group-text" aria-hidden="true">
-            <i class="bi bi-search"></i>
-          </span>
-
           <input
             id="visitSearchInput"
             type="text"
@@ -114,8 +110,18 @@
             placeholder="Buscar por cliente..."
             [(ngModel)]="nomeTerm"
             (ngModelChange)="onFilterChange()"
+            (keyup.enter)="search()"
             [attr.aria-label]="getSearchAriaLabel()"
           />
+
+          <button
+            class="input-group-text btn-search"
+            type="button"
+            (click)="search()"
+            [attr.aria-label]="getSearchAriaLabel()"
+          >
+            <i class="bi bi-search" aria-hidden="true"></i>
+          </button>
         </div>
       </div>
 

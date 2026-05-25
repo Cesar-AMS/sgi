@@ -145,6 +145,7 @@ private isoToDatetimeLocal(iso: string): string {
   statusOptions: VisitaStatus[] = ['Agendada', 'Confirmada', 'Realizada', 'Cancelada'];
 
   isLoading = false;
+  private loadRequestId = 0;
 
   showCreateModal = false;
   createForm!: FormGroup;
@@ -347,23 +348,6 @@ private isoToDatetimeLocal(iso: string): string {
     return this.isVisitasMode() ? 'visita' : undefined;
   }
 
-  private applyTipoAgendaFilter(list: Visita[]): Visita[] {
-    const hasTipoAgendaInPayload = list.some((visita) => this.normalizeTipoAgenda(visita.tipoAgenda) !== '');
-
-    if (!hasTipoAgendaInPayload) {
-      return this.isAgendamentoMode() ? list : [];
-    }
-
-    if (this.isAgendamentoMode()) {
-      return list.filter((visita) => {
-        const tipoAgenda = this.normalizeTipoAgenda(visita.tipoAgenda);
-        return tipoAgenda === 'contato' || tipoAgenda === 'visita';
-      });
-    }
-
-    return list.filter((visita) => this.normalizeTipoAgenda(visita.tipoAgenda) === 'visita');
-  }
-
   private normalizeTipoAgenda(tipoAgenda?: string | null): string {
     return String(tipoAgenda ?? '').trim().toLowerCase();
   }
@@ -389,11 +373,13 @@ private isoToDatetimeLocal(iso: string): string {
   // ---------- carregamento ----------
  loadVisitas(): void {
   this.isLoading = true;
+  const requestId = ++this.loadRequestId;
 
   const { startAt, finishAt } = this.getDatesFromRange(this.dateRange);
+  const q = this.nomeTerm.trim();
 
   this.visitasApi.list({
-    q: this.nomeTerm || undefined,
+    q: q || undefined,
     vendedorId: this.vendedorFilter || undefined,
     status: this.statusFilter || undefined,
     compareceu: this.compareceuFilter ? (this.compareceuFilter === 'sim') : undefined,
@@ -405,13 +391,21 @@ private isoToDatetimeLocal(iso: string): string {
     finishAt: this.dateRange === 'all' ? undefined : (finishAt || undefined),
   }).subscribe({
     next: (list) => {
-      this.visitas = this.applyTipoAgendaFilter(list || []);
+      if (requestId !== this.loadRequestId) {
+        return;
+      }
+
+      this.visitas = list || [];
       this.totalItems = this.visitas.length;
       this.page = 1;
       this.applyAndPaginateLocal();
       this.isLoading = false;
     },
     error: (err) => {
+      if (requestId !== this.loadRequestId) {
+        return;
+      }
+
       console.error(err);
       this.isLoading = false;
     },
@@ -419,8 +413,13 @@ private isoToDatetimeLocal(iso: string): string {
 }
 
 
-  onFilterChange(): void {
+  search(): void {
+    this.page = 1;
     this.loadVisitas();
+  }
+
+  onFilterChange(): void {
+    this.search();
   }
 
   onSellerFilterChange(): void {

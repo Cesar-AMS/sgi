@@ -202,7 +202,7 @@ namespace JMImoveisAPI.Repositories
                                                 coordenador.name as CoordenadorNome,
                                                 COALESCE(NULLIF(ls.GerenteId, 0), NULLIF(vendedor.manager_id, 0), NULLIF(coordenador.manager_id, 0)) as GerenteId,
                                                 gerente.name as GerenteNome,
-                                                ls.NameClient as NomeCliente,
+                                                COALESCE(NULLIF(ls.NameClient, ''), l.Nome) as NomeCliente,
                                                 l.Telefone as Telefone,
                                                 l.ImoveisInteresse as ImoveisInteresse,
                                                 l.Fonte as Fonte,
@@ -251,9 +251,19 @@ namespace JMImoveisAPI.Repositories
 
             if (!string.IsNullOrWhiteSpace(q))
             {
-                sql.Append(@"AND (
-                    ls.NameClient LIKE CONCAT('%', @q, '%')
-                 OR ls.Note      LIKE CONCAT('%', @q, '%'))
+                sql.Append(@"
+                AND (
+                    COALESCE(NULLIF(ls.NameClient, ''), l.Nome) LIKE CONCAT('%', @q, '%')
+                    OR l.Nome LIKE CONCAT('%', @q, '%')
+                    OR l.Telefone LIKE CONCAT('%', @q, '%')
+                    OR l.ImoveisInteresse LIKE CONCAT('%', @q, '%')
+                    OR l.Fonte LIKE CONCAT('%', @q, '%')
+                    OR vendedor.name LIKE CONCAT('%', @q, '%')
+                    OR coordenador.name LIKE CONCAT('%', @q, '%')
+                    OR gerente.name LIKE CONCAT('%', @q, '%')
+                    OR ls.Note LIKE CONCAT('%', @q, '%')
+                    OR CAST(ls.LeadId AS CHAR) LIKE CONCAT('%', @q, '%')
+                )
                 ");
                 p.Add("q", q.Trim());
             }
