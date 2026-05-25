@@ -192,6 +192,31 @@
   flex: 0 0 auto;
 }
 
+.role-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.role-search-box .search {
+  min-width: 0;
+  padding-left: 2.2rem;
+}
+
+.role-search-box .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.role-search-clear {
+  flex: 0 0 auto;
+  min-height: 38px;
+  white-space: nowrap;
+}
+
 .item-list {
   display: flex;
   flex-direction: column;

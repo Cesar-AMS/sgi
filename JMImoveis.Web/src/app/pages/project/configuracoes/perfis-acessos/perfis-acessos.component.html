@@ -209,7 +209,7 @@
       <div class="access-panel-header">
         <div>
           <h5 class="mb-1">Perfis / Cargos</h5>
-          <span class="text-muted small">{{ roles.length }} registro(s)</span>
+          <span class="text-muted small">{{ roleCounterLabel }}</span>
         </div>
       </div>
 
@@ -217,7 +217,31 @@
         Nenhum perfil/cargo encontrado.
       </div>
 
-      <div *ngIf="roles.length" class="item-list role-list grouped-role-list">
+      <div *ngIf="roles.length" class="search-box role-search-box mb-3">
+        <input
+          type="text"
+          class="form-control search"
+          name="roleSearch"
+          [(ngModel)]="roleSearchTerm"
+          placeholder="Pesquisar perfil/cargo..."
+          aria-label="Pesquisar perfil ou cargo">
+        <i class="ri-search-line search-icon"></i>
+
+        <button
+          *ngIf="roleSearchTerm"
+          type="button"
+          class="btn btn-outline-secondary btn-sm role-search-clear"
+          (click)="clearRoleSearch()"
+          aria-label="Limpar busca de perfil ou cargo">
+          Limpar
+        </button>
+      </div>
+
+      <div *ngIf="roles.length && !filteredRoles.length" class="empty-state">
+        Nenhum perfil/cargo encontrado para a busca.
+      </div>
+
+      <div *ngIf="filteredRoles.length" class="item-list role-list grouped-role-list">
         <section class="role-group-section" *ngFor="let group of groupedRoles; trackBy: trackRoleGroup">
           <div class="role-group-heading">
             <span>{{ group.label }}</span>
