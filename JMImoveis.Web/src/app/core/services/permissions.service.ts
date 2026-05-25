@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, finalize, of, shareReplay, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export interface Permission {
@@ -27,6 +27,8 @@ export interface UserPermissionOverride {
 })
 export class PermissionsService {
   private readonly apiUrl = `${environment.backendApiUrl}permissions`;
+  private readonly effectivePermissionsCache = new Map<number, Permission[]>();
+  private readonly effectivePermissionsRequests = new Map<number, Observable<Permission[]>>();
 
   constructor(private http: HttpClient) {}
 
@@ -53,7 +55,9 @@ export class PermissionsService {
       permissionIds
     }, {
       headers: this.authHeaders,
-    });
+    }).pipe(
+      tap(() => this.clearEffectivePermissionsCache())
+    );
   }
 
   getUserOverrides(userId: number): Observable<UserPermissionOverride[]> {
@@ -67,12 +71,42 @@ export class PermissionsService {
       overrides
     }, {
       headers: this.authHeaders,
-    });
+    }).pipe(
+      tap(() => this.clearEffectivePermissionsCache(userId))
+    );
   }
 
   getUserEffectivePermissions(userId: number): Observable<Permission[]> {
-    return this.http.get<Permission[]>(`${this.apiUrl}/users/${userId}/effective`, {
+    const cached = this.effectivePermissionsCache.get(userId);
+    if (cached) {
+      return of(cached);
+    }
+
+    const currentRequest = this.effectivePermissionsRequests.get(userId);
+    if (currentRequest) {
+      return currentRequest;
+    }
+
+    const request = this.http.get<Permission[]>(`${this.apiUrl}/users/${userId}/effective`, {
       headers: this.authHeaders,
-    });
+    }).pipe(
+      tap((permissions) => this.effectivePermissionsCache.set(userId, permissions ?? [])),
+      finalize(() => this.effectivePermissionsRequests.delete(userId)),
+      shareReplay(1)
+    );
+
+    this.effectivePermissionsRequests.set(userId, request);
+    return request;
+  }
+
+  clearEffectivePermissionsCache(userId?: number): void {
+    if (userId) {
+      this.effectivePermissionsCache.delete(userId);
+      this.effectivePermissionsRequests.delete(userId);
+      return;
+    }
+
+    this.effectivePermissionsCache.clear();
+    this.effectivePermissionsRequests.clear();
   }
 }

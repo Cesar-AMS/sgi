@@ -18,7 +18,7 @@ export class PermissionGuard {
 
   canActivate(
     route: ActivatedRouteSnapshot,
-    _state: RouterStateSnapshot
+    state: RouterStateSnapshot
   ): Observable<boolean | UrlTree> | boolean | UrlTree {
     const permissionKey = route.data?.['permissionKey'] as string | undefined;
 
@@ -28,13 +28,13 @@ export class PermissionGuard {
 
     const userId = this.resolveCurrentUserId();
     if (!userId) {
-      return this.router.createUrlTree(['/jm/dashboard']);
+      return this.blockAccess(state);
     }
 
     if (this.cachedUserId === userId && this.cachedPermissionKeys) {
       return this.hasPermission(this.cachedPermissionKeys, permissionKey)
         ? true
-        : this.router.createUrlTree(['/jm/dashboard']);
+        : this.blockAccess(state);
     }
 
     return this.permissionsService.getUserEffectivePermissions(userId).pipe(
@@ -45,10 +45,17 @@ export class PermissionGuard {
 
         return this.hasPermission(permissionKeys, permissionKey)
           ? true
-          : this.router.createUrlTree(['/jm/dashboard']);
+          : this.blockAccess(state);
       }),
-      catchError(() => of(true))
+      catchError(() => of(this.blockAccess(state)))
     );
+  }
+
+  private blockAccess(state: RouterStateSnapshot): false | UrlTree {
+    const currentPath = (state.url || '').split('?')[0];
+    return currentPath === '/jm/dashboard'
+      ? false
+      : this.router.createUrlTree(['/jm/dashboard']);
   }
 
   private hasPermission(permissionKeys: Set<string>, permissionKey: string): boolean {
