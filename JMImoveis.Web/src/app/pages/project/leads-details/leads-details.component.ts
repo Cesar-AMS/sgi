@@ -310,6 +310,12 @@ export class LeadDetailsComponent implements OnInit {
 
   onLeadDocumentsSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
+
+    if (!this.ensureCanEditLeads('documents')) {
+      input.value = '';
+      return;
+    }
+
     const files = Array.from(input.files || []);
 
     if (!files.length || !this.lead) {
@@ -356,10 +362,13 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   toggleDocumentEdit(document: LeadDocument): void {
+    if (!this.ensureCanEditLeads('documents')) return;
+
     document.isEditing = !document.isEditing;
   }
 
   saveLeadDocumentMetadata(document: LeadDocument): void {
+    if (!this.ensureCanEditLeads('documents')) return;
     if (!this.lead) return;
 
     this.leadService.updateLeadDocument(this.lead.id, document.id, {
@@ -378,6 +387,7 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   removeLeadDocument(document: LeadDocument): void {
+    if (!this.ensureCanEditLeads('documents')) return;
     if (!this.lead) return;
 
     this.leadService.deleteLeadDocument(this.lead.id, document.id).subscribe({
@@ -513,6 +523,8 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   saveOperationalInteraction(): void {
+    if (!this.ensureCanEditLeads('timeline')) return;
+
     if (!this.lead) {
       return;
     }
@@ -717,12 +729,21 @@ export class LeadDetailsComponent implements OnInit {
     );
   }
 
-  private ensureCanEditLeads(): boolean {
+  private ensureCanEditLeads(context: 'schedule' | 'documents' | 'timeline' = 'schedule'): boolean {
     if (this.canEditLeads) {
       return true;
     }
 
-    this.scheduleErrorMessage = 'Voce nao tem permissao para editar leads.';
+    const message = 'Voce nao tem permissao para editar leads.';
+
+    if (context === 'documents') {
+      this.documentErrorMessage = message;
+    } else if (context === 'timeline') {
+      this.timelineErrorMessage = message;
+    } else {
+      this.scheduleErrorMessage = message;
+    }
+
     return false;
   }
 
@@ -761,6 +782,8 @@ export class LeadDetailsComponent implements OnInit {
   // ---- Atividades ----
 
   startAddActivity(): void {
+    if (!this.ensureCanEditLeads('timeline')) return;
+
     this.isAddingActivity = true;
     this.activityForm.reset({
       date: new Date().toISOString().substring(0, 10),
@@ -774,6 +797,7 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   saveActivity(): void {
+    if (!this.ensureCanEditLeads('timeline')) return;
     if (!this.lead || this.activityForm.invalid) return;
 
     const { date, time, description } = this.activityForm.value;

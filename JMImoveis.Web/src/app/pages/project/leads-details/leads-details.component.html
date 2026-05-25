@@ -135,6 +135,7 @@
               class="timeline-form"
               [formGroup]="operationalTimelineForm"
               (ngSubmit)="saveOperationalInteraction()"
+              *ngIf="canEditLeads"
             >
               <div class="row g-3">
                 <div class="col-md-5">
@@ -237,7 +238,11 @@
                 </p>
               </div>
 
-              <label class="btn btn-orange documents-upload-button" for="leadDocumentsInput">
+              <label
+                class="btn btn-orange documents-upload-button"
+                for="leadDocumentsInput"
+                *ngIf="canEditLeads"
+              >
                 <i class="bi bi-paperclip me-1"></i>
                 {{ isUploadingDocuments ? 'Anexando...' : 'Anexar documentos' }}
               </label>
@@ -247,7 +252,7 @@
                 class="visually-hidden"
                 multiple
                 accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                [disabled]="isUploadingDocuments"
+                [disabled]="isUploadingDocuments || !canEditLeads"
                 (change)="onLeadDocumentsSelected($event)"
               />
             </div>
@@ -267,7 +272,7 @@
                 </div>
 
                 <div class="document-content">
-                  <ng-container *ngIf="document.isEditing; else documentReadTpl">
+                  <ng-container *ngIf="document.isEditing && canEditLeads; else documentReadTpl">
                     <label class="form-label" [for]="'documentName' + document.id">Nome do documento</label>
                     <input
                       class="form-control form-control-sm mb-2"
@@ -314,7 +319,7 @@
                     type="button"
                     class="btn btn-outline-secondary btn-sm"
                     (click)="toggleDocumentEdit(document)"
-                    *ngIf="!document.isEditing"
+                    *ngIf="canEditLeads && !document.isEditing"
                   >
                     Editar nome
                   </button>
@@ -322,7 +327,7 @@
                     type="button"
                     class="btn btn-outline-secondary btn-sm"
                     (click)="saveLeadDocumentMetadata(document)"
-                    *ngIf="document.isEditing"
+                    *ngIf="canEditLeads && document.isEditing"
                   >
                     Salvar
                   </button>
@@ -330,6 +335,7 @@
                     type="button"
                     class="btn btn-outline-danger btn-sm"
                     (click)="removeLeadDocument(document)"
+                    *ngIf="canEditLeads"
                   >
                     Remover
                   </button>
