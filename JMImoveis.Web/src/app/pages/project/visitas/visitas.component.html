@@ -16,6 +16,7 @@
       </button>
 
       <button
+        *ngIf="canManageCurrentMode()"
         class="btn btn-orange d-flex align-items-center"
         type="button"
         (click)="openCreateModal()"
@@ -266,7 +267,7 @@
                 </span>
 
                 <select
-                  *ngIf="isVisitasMode()"
+                  *ngIf="isVisitasMode() && canEditVisits"
                   class="form-select form-select-sm"
                   aria-label="Alterar status da visita"
                   [ngModel]="v.status"
@@ -280,6 +281,7 @@
 
               <td *ngIf="isVisitasMode()" style="min-width: 140px;">
                 <select
+                  *ngIf="canEditVisits; else readonlyCompareceuTpl"
                   class="form-select form-select-sm"
                   aria-label="Alterar comparecimento da visita"
                   [ngModel]="v.compareceu"
@@ -290,10 +292,15 @@
                   <option [ngValue]="true">Sim</option>
                   <option [ngValue]="false">Não</option>
                 </select>
+
+                <ng-template #readonlyCompareceuTpl>
+                  <span class="text-muted">{{ v.compareceu ? 'Sim' : 'Nao' }}</span>
+                </ng-template>
               </td>
 
               <td *ngIf="isVisitasMode()" style="min-width: 140px;">
                 <select
+                  *ngIf="canEditVisits; else readonlyVirouVendaTpl"
                   class="form-select form-select-sm"
                   aria-label="Alterar indicador de venda da visita"
                   [ngModel]="v.virouVenda"
@@ -304,6 +311,10 @@
                   <option [ngValue]="true">Sim</option>
                   <option [ngValue]="false">Não</option>
                 </select>
+
+                <ng-template #readonlyVirouVendaTpl>
+                  <span class="text-muted">{{ v.virouVenda ? 'Sim' : 'Nao' }}</span>
+                </ng-template>
               </td>
 
               <td class="text-muted" style="max-width: 320px;">
@@ -314,6 +325,7 @@
 
               <td class="text-end actions-cell" (click)="$event.stopPropagation()">
                 <button
+                  *ngIf="canManageCurrentMode()"
                   class="btn btn-sm btn-outline-primary me-1"
                   type="button"
                   (click)="$event.stopPropagation(); openEditModal(v)"
@@ -335,7 +347,7 @@
                 </button>
 
                 <button
-                  *ngIf="isVisitasMode() && v.status !== 'Realizada' && v.status !== 'Cancelada'"
+                  *ngIf="isVisitasMode() && canEditVisits && v.status !== 'Realizada' && v.status !== 'Cancelada'"
                   class="btn btn-sm btn-outline-success me-1"
                   type="button"
                   (click)="$event.stopPropagation(); markAsRealizada(v)"
@@ -346,6 +358,7 @@
                 </button>
 
                 <button
+                  *ngIf="canManageCurrentMode()"
                   class="btn btn-sm btn-outline-danger"
                   type="button"
                   (click)="$event.stopPropagation(); cancel(v)"

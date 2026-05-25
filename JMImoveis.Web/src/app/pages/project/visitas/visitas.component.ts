@@ -142,6 +142,7 @@ private isoToDatetimeLocal(iso: string): string {
   visibleCorretores: Usuarios[] = [];
   currentUserId: number | null = null;
   canViewAllVisits = false;
+  canEditVisits = false;
   sellerFilterMode: 'full' | 'mine' | 'scoped' = 'full';
   statusOptions: VisitaStatus[] = ['Agendada', 'Confirmada', 'Realizada', 'Cancelada'];
 
@@ -186,12 +187,15 @@ private isoToDatetimeLocal(iso: string): string {
     }).subscribe({
       next: ({ corretores, permissions }) => {
         this.corretores = corretores || [];
-        this.canViewAllVisits = this.hasPermission(permissions, 'sistema.admin.total');
+        const isAdmin = this.hasPermission(permissions, 'sistema.admin.total');
+        this.canViewAllVisits = isAdmin;
+        this.canEditVisits = isAdmin || this.hasPermission(permissions, 'atendimento.visitas.editar');
         this.applySellerFilterScope();
       },
       error: () => {
         this.corretores = [];
         this.visibleCorretores = [];
+        this.canEditVisits = false;
         this.applySellerFilterScope();
       }
     });
@@ -349,6 +353,10 @@ private isoToDatetimeLocal(iso: string): string {
     return this.isVisitasMode() ? 'visita' : undefined;
   }
 
+  canManageCurrentMode(): boolean {
+    return this.isAgendamentoMode() || this.canEditVisits;
+  }
+
   private normalizeTipoAgenda(tipoAgenda?: string | null): string {
     return String(tipoAgenda ?? '').trim().toLowerCase();
   }
@@ -462,6 +470,10 @@ private isoToDatetimeLocal(iso: string): string {
 
   // ---------- ações ----------
  openCreateModal(): void {
+  if (!this.ensureCanManageCurrentMode()) {
+    return;
+  }
+
   this.editingId = null;
   this.showCreateModal = true;
 
@@ -480,6 +492,10 @@ private isoToDatetimeLocal(iso: string): string {
 }
 
 openEditModal(v: Visita): void {
+  if (!this.ensureCanManageCurrentMode()) {
+    return;
+  }
+
   this.editingId = v.id;
   this.showCreateModal = true;
 
@@ -509,6 +525,10 @@ openEditModal(v: Visita): void {
 
 
   submitSave(): void {
+  if (!this.ensureCanManageCurrentMode()) {
+    return;
+  }
+
   if (this.createForm.invalid) {
     this.createForm.markAllAsTouched();
     return;
@@ -555,6 +575,10 @@ openEditModal(v: Visita): void {
 
 
   updateCompareceu(visita: Visita, value: boolean): void {
+    if (!this.ensureCanManageCurrentMode()) {
+      return;
+    }
+
     this.visitasApi.update(visita.id, { compareceu: value }).subscribe({
       next: () => this.loadVisitas(),
       error: () => this.toast.error('Erro ao atualizar compareceu')
@@ -562,6 +586,10 @@ openEditModal(v: Visita): void {
   }
 
   updateVirouVenda(visita: Visita, value: boolean): void {
+    if (!this.ensureCanManageCurrentMode()) {
+      return;
+    }
+
     this.visitasApi.update(visita.id, { virouVenda: value }).subscribe({
       next: () => this.loadVisitas(),
       error: () => this.toast.error('Erro ao atualizar virou venda')
@@ -569,6 +597,10 @@ openEditModal(v: Visita): void {
   }
 
   updateStatus(visita: Visita, value: VisitaStatus): void {
+    if (!this.ensureCanManageCurrentMode()) {
+      return;
+    }
+
     this.visitasApi.update(visita.id, { status: value }).subscribe({
       next: () => this.loadVisitas(),
       error: () => this.toast.error('Erro ao atualizar status')
@@ -576,6 +608,10 @@ openEditModal(v: Visita): void {
   }
 
   markAsRealizada(visita: Visita): void {
+    if (!this.ensureCanManageCurrentMode()) {
+      return;
+    }
+
     this.updateStatus(visita, 'Realizada');
   }
 
@@ -595,6 +631,10 @@ openEditModal(v: Visita): void {
   }
 
   cancel(visita: Visita): void {
+    if (!this.ensureCanManageCurrentMode()) {
+      return;
+    }
+
     this.visitasApi.cancel(visita.id).subscribe({
       next: () => {
         this.toast.info('Visita cancelada');
@@ -664,6 +704,15 @@ openEditModal(v: Visita): void {
     );
   }
 
+  private ensureCanManageCurrentMode(): boolean {
+    if (this.canManageCurrentMode()) {
+      return true;
+    }
+
+    this.toast.warning('Usuario sem permissao para editar visitas.');
+    return false;
+  }
+
   private sameId(left: unknown, right: unknown): boolean {
     const leftNumber = Number(left);
     const rightNumber = Number(right);
@@ -726,6 +775,10 @@ openEditModal(v: Visita): void {
   }
 
   cancelEditing(): void {
+  if (!this.ensureCanManageCurrentMode()) {
+    return;
+  }
+
   if (!this.editingId) return;
 
   const id = this.editingId;
