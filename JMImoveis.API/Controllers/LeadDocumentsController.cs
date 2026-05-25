@@ -9,11 +9,17 @@ namespace JMImoveisAPI.Controllers
     [Route("api/Leads/{leadId:int}/documents")]
     public class LeadDocumentsController : ControllerBase
     {
-        private readonly ILeadDocumentService _service;
+        private const string EditLeadPermission = "atendimento.leads.editar";
 
-        public LeadDocumentsController(ILeadDocumentService service)
+        private readonly ILeadDocumentService _service;
+        private readonly IPermissionService _permissionService;
+
+        public LeadDocumentsController(
+            ILeadDocumentService service,
+            IPermissionService permissionService)
         {
             _service = service;
+            _permissionService = permissionService;
         }
 
         [HttpGet]
@@ -41,6 +47,12 @@ namespace JMImoveisAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Upload([FromRoute] int leadId, [FromForm] List<IFormFile> files)
         {
+            var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
             var currentUserId = GetCurrentUserId();
             if (!currentUserId.HasValue)
             {
@@ -68,6 +80,12 @@ namespace JMImoveisAPI.Controllers
             [FromRoute] long documentId,
             [FromBody] UpdateLeadDocumentRequest request)
         {
+            var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
             if (!GetCurrentUserId().HasValue)
             {
                 return Unauthorized(new { message = "Usuario autenticado nao identificado." });
@@ -115,6 +133,12 @@ namespace JMImoveisAPI.Controllers
         [HttpDelete("{documentId:long}")]
         public async Task<IActionResult> Delete([FromRoute] int leadId, [FromRoute] long documentId)
         {
+            var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
             if (!GetCurrentUserId().HasValue)
             {
                 return Unauthorized(new { message = "Usuario autenticado nao identificado." });
@@ -135,6 +159,22 @@ namespace JMImoveisAPI.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
+        }
+
+        private async Task<IActionResult?> AuthorizeCurrentUserForLeadEditAsync()
+        {
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            var hasPermission = await _permissionService.UserHasPermissionAsync(
+                currentUserId.Value,
+                EditLeadPermission
+            );
+
+            return hasPermission ? null : Forbid();
         }
 
         private long? GetCurrentUserId()
