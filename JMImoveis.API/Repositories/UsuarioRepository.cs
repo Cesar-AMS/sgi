@@ -1,6 +1,7 @@
 using Dapper;
 using JMImoveisAPI.Configurations;
 using JMImoveisAPI.Entities;
+using JMImoveisAPI.Helpers;
 using JMImoveisAPI.Interfaces;
 using System.Collections.Generic;
 using System.Data;
@@ -78,13 +79,19 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<IEnumerable<Usuario>> GetCorretoresAsync()
         {
-            var sql = $@"select distinct t0.* from users t0
-                        inner join user_roles t1 on t0.id = t1.user_id 
-                        where t1.role_id in (2,4,9) and t0.hidden = 0
+            const string sql = @"select distinct t0.* from users t0
+                        inner join user_roles t1 on t0.id = t1.user_id
+                        inner join roles r on r.id = t1.role_id
+                        where t0.hidden = 0
+                          and (t1.role_id in @SellerLegacyRoleIds or r.name in @SellerRoleNames)
                         order by 2";
 
             await using var conn = await _context.OpenConnectionAsync();
-            return await conn.QueryAsync<Usuario>(sql);
+            return await conn.QueryAsync<Usuario>(sql, new
+            {
+                CommercialRoleGroups.SellerLegacyRoleIds,
+                CommercialRoleGroups.SellerRoleNames
+            });
         }
 
         public async Task<IEnumerable<Usuario>> GetUsersByRoleAndBranchAsync(int branchId, int roleId, int status)
@@ -163,24 +170,36 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<IEnumerable<Usuario>> GetGerentesAsync()
         {
-            var sql = $@"select distinct t0.* from users t0
-                            inner join user_roles t1 on t0.id = t1.user_id 
-                            where t1.role_id = 3 and t0.hidden = 0
+            const string sql = @"select distinct t0.* from users t0
+                            inner join user_roles t1 on t0.id = t1.user_id
+                            inner join roles r on r.id = t1.role_id
+                            where t0.hidden = 0
+                              and (t1.role_id in @ManagerLegacyRoleIds or r.name in @ManagerRoleNames)
                             order by 2;";
 
             await using var conn = await _context.OpenConnectionAsync();
-            return await conn.QueryAsync<Usuario>(sql);
+            return await conn.QueryAsync<Usuario>(sql, new
+            {
+                CommercialRoleGroups.ManagerLegacyRoleIds,
+                CommercialRoleGroups.ManagerRoleNames
+            });
         }
 
         public async Task<IEnumerable<Usuario>> GetCoordenadoresAsync()
         {
-            var sql = $@"select distinct t0.* from users t0
-                        inner join user_roles t1 on t0.id = t1.user_id 
-                        where t1.role_id = 11 and t0.hidden = 0
+            const string sql = @"select distinct t0.* from users t0
+                        inner join user_roles t1 on t0.id = t1.user_id
+                        inner join roles r on r.id = t1.role_id
+                        where t0.hidden = 0
+                          and (t1.role_id in @CoordinatorLegacyRoleIds or r.name in @CoordinatorRoleNames)
                         order by 2;";
 
             await using var conn = await _context.OpenConnectionAsync();
-            return await conn.QueryAsync<Usuario>(sql);
+            return await conn.QueryAsync<Usuario>(sql, new
+            {
+                CommercialRoleGroups.CoordinatorLegacyRoleIds,
+                CommercialRoleGroups.CoordinatorRoleNames
+            });
         }
 
         public async Task<Usuario?> GetByIdAsync(int id)

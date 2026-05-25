@@ -1,4 +1,5 @@
 ﻿using JMImoveisAPI.Entities;
+using JMImoveisAPI.Helpers;
 using JMImoveisAPI.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -60,7 +61,7 @@ namespace JMImoveisAPI.Controllers
                 return NotFound("Usuário não encontrado.");
             }
 
-            var perfil = (user.JobpositionId?.Contains(3) ?? false) ? "GERENTE" : "DIRETOR";
+            var perfil = CommercialRoleGroups.HasManagerRole(user) ? "GERENTE" : "DIRETOR";
             var gerenteId = perfil == "GERENTE" ? user.Id : user.ManagerId;
 
             return Ok(new

@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using JMImoveisAPI.Configurations;
 using JMImoveisAPI.Entities;
+using JMImoveisAPI.Helpers;
 using JMImoveisAPI.Interfaces;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.Extensions.Options;
@@ -33,10 +34,17 @@ namespace JMImoveisAPI.Repositories
                                     -- 0) Managers (opções)
                                     SELECT u.id, u.name
                                     FROM jm.users u
-                                    WHERE u.jobpositionId = 3 /* gerente */
+                                    WHERE u.jobpositionId IN @ManagerLegacyRoleIds
+                                       OR EXISTS (
+                                            SELECT 1
+                                            FROM jm.user_roles ur
+                                            INNER JOIN jm.roles r ON r.id = ur.role_id
+                                            WHERE ur.user_id = u.id
+                                              AND (ur.role_id IN @ManagerLegacyRoleIds OR r.name IN @ManagerRoleNames)
+                                       )
                                     ORDER BY u.name;
 
-                                    -- 1) Salários - CORRETORES (notes='SALARIO', reference=user_id, jobposition=2)
+                                    -- 1) Salários - CORRETORES (notes='SALARIO', reference=user_id, cargo comercial)
                                     SELECT u.name AS Name,
                                       SUM(CASE WHEN YEAR(base_date)=@year AND MONTH(base_date)=1  THEN p.amount ELSE 0 END) AS m1,
                                       SUM(CASE WHEN YEAR(base_date)=@year AND MONTH(base_date)=2  THEN p.amount ELSE 0 END) AS m2,
@@ -57,7 +65,14 @@ namespace JMImoveisAPI.Repositories
                                     ) p
                                     JOIN jm.users u
                                       ON u.id = CAST(p.reference AS UNSIGNED)
-                                    WHERE u.jobpositionId = 2 /* corretor */
+                                    WHERE (u.jobpositionId IN @SellerLegacyRoleIds
+                                       OR EXISTS (
+                                            SELECT 1
+                                            FROM jm.user_roles ur
+                                            INNER JOIN jm.roles r ON r.id = ur.role_id
+                                            WHERE ur.user_id = u.id
+                                              AND (ur.role_id IN @SellerLegacyRoleIds OR r.name IN @SellerRoleNames)
+                                       ))
                                       AND base_date BETWEEN @yearStart AND @yearEnd
                                       AND (@managerId IS NULL OR u.gerente_id = @managerId)
                                     GROUP BY u.name
@@ -84,7 +99,14 @@ namespace JMImoveisAPI.Repositories
                                     ) p
                                     JOIN jm.users u
                                       ON u.id = CAST(p.reference AS UNSIGNED)
-                                    WHERE u.jobpositionId = 3 /* gerente */
+                                    WHERE (u.jobpositionId IN @ManagerLegacyRoleIds
+                                       OR EXISTS (
+                                            SELECT 1
+                                            FROM jm.user_roles ur
+                                            INNER JOIN jm.roles r ON r.id = ur.role_id
+                                            WHERE ur.user_id = u.id
+                                              AND (ur.role_id IN @ManagerLegacyRoleIds OR r.name IN @ManagerRoleNames)
+                                       ))
                                       AND base_date BETWEEN @yearStart AND @yearEnd
                                       AND (@managerId IS NULL OR u.id = @managerId)
                                     GROUP BY u.name
@@ -183,7 +205,11 @@ namespace JMImoveisAPI.Repositories
                 yearEnd,
                 managerId,
                 catRealtor = _optCorretor.CategoryRealtor,
-                catManager = _optCorretor.CategoryManager
+                catManager = _optCorretor.CategoryManager,
+                CommercialRoleGroups.SellerLegacyRoleIds,
+                CommercialRoleGroups.SellerRoleNames,
+                CommercialRoleGroups.ManagerLegacyRoleIds,
+                CommercialRoleGroups.ManagerRoleNames
             });
 
             // managers
