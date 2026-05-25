@@ -107,14 +107,20 @@ const routes: Routes = [
   {
     path: 'credit-analysis/:saleId',
     component: CreditAnalysisComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'comercial.propostas.analisar_credito' },
   },
   {
     path: 'contracts/:saleId',
     component: ContractComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'comercial.contratos.editar' },
   },
   {
     path: 'constructor-transfer/:saleId',
     component: ConstructorTransferComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'financeiro.repasses.editar' },
   },
   {
     path: 'financeiro/centro-custo',
@@ -290,6 +296,8 @@ const routes: Routes = [
   {
     path: 'comparecimento',
     component: StandaloneComparecimentosComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'rh.comparecimentos.editar' },
   },
   {
     path: 'propostas',
