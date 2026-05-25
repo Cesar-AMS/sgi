@@ -133,7 +133,15 @@ namespace JMImoveisAPI.Controllers
 
         [HttpPost("{leadId}/activities")]
         public async Task<IActionResult> CreateLeadsActivitiesById(CreateLeadActivityRequest lead)
-            => Ok(await _leadService.CreateActivityAsync(lead));
+        {
+            var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            return Ok(await _leadService.CreateActivityAsync(lead));
+        }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
