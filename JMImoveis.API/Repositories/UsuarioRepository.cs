@@ -231,8 +231,14 @@ namespace JMImoveisAPI.Repositories
             const string insertUserBranchSql = @"INSERT INTO user_branches (branch_id, user_id, created_at, updated_at)
                                                  VALUES (@BranchId, @UserId, NOW(), NOW());";
 
-            const string insertUserRoleSql = @"INSERT INTO user_roles (role_id, user_id, created_at, updated_at)
-                                               VALUES (@RoleId, @UserId, NOW(), NOW());";
+            const string insertUserRoleSql = @"INSERT IGNORE INTO user_roles (role_id, user_id, created_at, updated_at)
+                                               SELECT @RoleId, @UserId, NOW(), NOW()
+                                               WHERE NOT EXISTS (
+                                                   SELECT 1
+                                                     FROM user_roles
+                                                    WHERE user_id = @UserId
+                                                      AND role_id = @RoleId
+                                               );";
 
             await using var conn = await _context.OpenConnectionAsync();
             await using var tx = await conn.BeginTransactionAsync();
@@ -343,8 +349,14 @@ namespace JMImoveisAPI.Repositories
 
                 if (entity.JobpositionId != null && entity.JobpositionId.Any())
                 {
-                    const string sqlInsertJob = @"insert into user_roles (role_id, user_id, created_at, updated_at)
-                                                 values (@RoleId, @UserId, now(), now());";
+                    const string sqlInsertJob = @"insert ignore into user_roles (role_id, user_id, created_at, updated_at)
+                                                 select @RoleId, @UserId, now(), now()
+                                                 where not exists (
+                                                     select 1
+                                                       from user_roles
+                                                      where user_id = @UserId
+                                                        and role_id = @RoleId
+                                                 );";
 
                     var roleIds = NormalizeRoleIds(entity.JobpositionId);
                     var roles = roleIds.Select(roleId => new { RoleId = roleId, UserId = entity.Id });
