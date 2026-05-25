@@ -45,6 +45,7 @@ export class PerfisAcessosComponent implements OnInit {
   userOverrideEffects = new Map<number, OverrideEffect>();
 
   searchTerm = '';
+  roleSearchTerm = '';
 
   loadingInitialData = false;
   loadingRolePermissions = false;
@@ -88,7 +89,7 @@ export class PerfisAcessosComponent implements OnInit {
         this.collaborators = collaborators ?? [];
         this.roles = (roles ?? [])
           .filter((role) => role?.id)
-          .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+          .sort((a, b) => this.normalizeSearch(a.name).localeCompare(this.normalizeSearch(b.name), 'pt-BR'));
         this.permissions = permissions ?? [];
         this.permissionGroups = this.groupPermissionsByModule(this.permissions);
         this.resetOverrideEffects();
@@ -299,8 +300,40 @@ export class PerfisAcessosComponent implements OnInit {
     return this.selectedRolePermissionIds.size;
   }
 
+  get filteredRoles(): Cargos[] {
+    const term = this.normalizeSearch(this.roleSearchTerm);
+
+    if (!term) {
+      return [...this.roles];
+    }
+
+    return this.roles.filter((role) => {
+      const statusLabel = role.status ? 'Ativo' : 'Inativo';
+      const haystack = [
+        role.name,
+        role.id?.toString(),
+        statusLabel,
+        this.getRoleGroupLabel(role),
+      ].map((value) => this.normalizeSearch(value)).join(' ');
+
+      return haystack.includes(term);
+    });
+  }
+
+  get roleCounterLabel(): string {
+    if (!this.normalizeSearch(this.roleSearchTerm)) {
+      return `${this.roles.length} registro(s)`;
+    }
+
+    return `${this.filteredRoles.length} de ${this.roles.length} registro(s)`;
+  }
+
   get groupedRoles(): RoleGroup[] {
-    return this.buildRoleGroups(this.roles);
+    return this.buildRoleGroups(this.filteredRoles);
+  }
+
+  clearRoleSearch(): void {
+    this.roleSearchTerm = '';
   }
 
   get effectivePermissionCount(): number {
@@ -557,7 +590,7 @@ export class PerfisAcessosComponent implements OnInit {
     return groups
       .map((group) => ({
         ...group,
-        roles: [...group.roles].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR')),
+        roles: [...group.roles].sort((a, b) => this.normalizeSearch(a.name).localeCompare(this.normalizeSearch(b.name), 'pt-BR')),
       }))
       .filter((group) => group.roles.length > 0);
   }
@@ -702,7 +735,7 @@ export class PerfisAcessosComponent implements OnInit {
     const groups = new Map<string, Permission[]>();
 
     for (const permission of permissions ?? []) {
-      const moduleName = permission.module || 'Geral';
+      const moduleName = this.getPermissionDisplayModule(permission);
 
       if (!groups.has(moduleName)) {
         groups.set(moduleName, []);
@@ -717,6 +750,16 @@ export class PerfisAcessosComponent implements OnInit {
         permissions: modulePermissions.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
       }))
       .sort((a, b) => a.module.localeCompare(b.module, 'pt-BR'));
+  }
+
+  private getPermissionDisplayModule(permission: Permission): string {
+    const permissionKey = this.getPermissionKey(permission);
+
+    if (permissionKey.startsWith('atendimento.clientes.')) {
+      return 'Comercial';
+    }
+
+    return permission.module || 'Geral';
   }
 
   private normalizeSearch(value?: string | null): string {
