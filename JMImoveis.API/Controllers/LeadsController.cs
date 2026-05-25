@@ -32,7 +32,15 @@ namespace JMImoveisAPI.Controllers
 
         [HttpPost("{leadId}/schedules")]
         public async Task<IActionResult> CreateLeadsActivitiesById(CreateLeadScheduleRequest lead)
-            => Ok(await _leadService.CreateScheduleAsync(lead));
+        {
+            var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            return Ok(await _leadService.CreateScheduleAsync(lead));
+        }
 
         [HttpPost("schedule")]
         public async Task<IActionResult> Create([FromBody] LeadScheduleRequest request)
@@ -46,6 +54,12 @@ namespace JMImoveisAPI.Controllers
         [HttpPost("{leadId}/schedule/v2")]
         public async Task<IActionResult> CreateV2([FromBody] LeadScheduleRequest request, int leadId)
         {
+            var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
             var (isValid, errorMessage, id, effectiveLeadId) = await _leadService.CreateScheduleAsync(request, leadId);
             if (!isValid) return BadRequest(errorMessage);
 
@@ -94,6 +108,12 @@ namespace JMImoveisAPI.Controllers
             int scheduleId,
             [FromBody] UpdateLeadScheduleStatusRequest request)
         {
+            var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
             await _leadService.UpdateScheduleStatusAsync(leadId, scheduleId, request);
             return NoContent();
         }
