@@ -63,6 +63,8 @@ const routes: Routes = [
   {
     path: 'vendas/visao-geral',
     component: VisaoGeralComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'vendas.dashboard.visualizar' },
   },
   {
     path: 'vendas/new',
@@ -79,10 +81,14 @@ const routes: Routes = [
   {
     path: 'vendas/corretor',
     component: CorretorComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'vendas.vendas.visualizar' },
   },
   {
     path: 'vendas/corretor/view/:id',
     component: ViewCorretorComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'vendas.vendas.visualizar' },
   },
   {
     path: 'vendas/desistencias',
@@ -236,18 +242,26 @@ const routes: Routes = [
   {
     path: 'construtora',
     component: ConstrutoraComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'cadastros.construtoras.visualizar' },
   },
   {
     path: 'empreendimentos',
     component: CadastroComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'cadastros.empreendimentos.visualizar' },
   },
   {
     path: 'unidades',
     component: EspelhoComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'vendas.unidades.visualizar' },
   },
   {
     path: 'empreendimentos/gerenciar/:id',
     component: AdminEmpreendimentoComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'cadastros.empreendimentos.editar' },
   },
   {
     path: 'visitas',
