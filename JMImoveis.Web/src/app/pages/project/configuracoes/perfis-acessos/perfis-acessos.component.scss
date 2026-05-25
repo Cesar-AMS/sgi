@@ -206,6 +206,53 @@
   max-height: none;
 }
 
+.grouped-role-list {
+  gap: 0.85rem;
+}
+
+.role-group-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.role-group-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0.2rem;
+  color: #374151;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.role-group-heading small {
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.role-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid #d8dee8;
+  border-radius: 999px;
+  color: #4b5563;
+  background: #f7f9fc;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .collaborator-list {
   flex: 1 1 auto;
   max-height: none;
@@ -354,6 +401,11 @@
   border-radius: 6px;
   background: #fafbfc;
   font-size: 0.875rem;
+}
+
+.role-permission-warning {
+  flex: 0 0 auto;
+  margin-bottom: 1rem;
 }
 
 @media (max-width: 768px) {

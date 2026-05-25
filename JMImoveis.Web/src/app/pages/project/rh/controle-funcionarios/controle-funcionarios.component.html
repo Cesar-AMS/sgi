@@ -349,11 +349,16 @@
                       [disabled]="loadingOptions"
                       aria-describedby="employee-hierarchy-help employee-role-help">
                       <option [ngValue]="undefined">Selecione...</option>
-                      <option *ngFor="let role of roles" [ngValue]="role.id">{{ role.name }}</option>
+                      <optgroup *ngFor="let group of roleGroups" [label]="group.label">
+                        <option *ngFor="let role of group.roles" [ngValue]="role.id">{{ role.name }}</option>
+                      </optgroup>
                     </select>
                     <small id="employee-role-help" class="text-muted d-block mt-1">
                       O cargo selecionado pode herdar permissões configuradas em Administração &gt; Perfis e Acessos.
                     </small>
+                    <div class="employee-role-note" role="note">
+                      Cargos oficiais novos ainda podem estar sem permissoes. Acesso e permissoes sao definidos em Administracao &gt; Perfis e Acessos.
+                    </div>
                   </div>
                 </div>
               </div>

@@ -14,6 +14,11 @@ type PermissionGroup = {
   permissions: Permission[];
 };
 
+type RoleGroup = {
+  label: string;
+  roles: Cargos[];
+};
+
 type OverrideEffect = 'DEFAULT' | 'ALLOW' | 'DENY';
 type AccessTab = 'credentials' | 'permissions';
 
@@ -35,6 +40,7 @@ export class PerfisAcessosComponent implements OnInit {
   selectedCollaborator?: EmployeeControlRow;
 
   selectedRolePermissionIds = new Set<number>();
+  rolePermissionCountById = new Map<number, number>();
   effectivePermissionIds = new Set<number>();
   userOverrideEffects = new Map<number, OverrideEffect>();
 
@@ -277,6 +283,10 @@ export class PerfisAcessosComponent implements OnInit {
     return group.module;
   }
 
+  trackRoleGroup(_: number, group: RoleGroup): string {
+    return group.label;
+  }
+
   trackPermission(_: number, permission: Permission): number {
     return permission.id;
   }
@@ -289,6 +299,10 @@ export class PerfisAcessosComponent implements OnInit {
     return this.selectedRolePermissionIds.size;
   }
 
+  get groupedRoles(): RoleGroup[] {
+    return this.buildRoleGroups(this.roles);
+  }
+
   get effectivePermissionCount(): number {
     return this.effectivePermissionIds.size;
   }
@@ -297,6 +311,30 @@ export class PerfisAcessosComponent implements OnInit {
     return Array.from(this.userOverrideEffects.values())
       .filter((effect) => effect === 'ALLOW' || effect === 'DENY')
       .length;
+  }
+
+  getRoleBadges(role: Cargos): string[] {
+    const badges: string[] = [];
+    const groupLabel = this.getRoleGroupLabel(role);
+
+    if (groupLabel === 'Cargos oficiais') {
+      badges.push('oficial');
+    }
+
+    if (groupLabel === 'Cargos antigos em uso') {
+      badges.push('legado');
+    }
+
+    if (groupLabel === 'Cargos operacionais') {
+      badges.push('operacional');
+    }
+
+    const permissionCount = this.rolePermissionCountById.get(Number(role.id));
+    if (permissionCount === 0) {
+      badges.push('sem permissoes');
+    }
+
+    return badges;
   }
 
   changeTab(tab: AccessTab): void {
@@ -503,6 +541,104 @@ export class PerfisAcessosComponent implements OnInit {
     return 'Nao foi possivel redefinir a senha.';
   }
 
+  private buildRoleGroups(roles: Cargos[]): RoleGroup[] {
+    const groups: RoleGroup[] = [
+      { label: 'Cargos oficiais', roles: [] },
+      { label: 'Cargos operacionais', roles: [] },
+      { label: 'Cargos antigos em uso', roles: [] },
+      { label: 'Outros cargos', roles: [] },
+    ];
+    const byLabel = new Map(groups.map((group) => [group.label, group]));
+
+    for (const role of roles ?? []) {
+      byLabel.get(this.getRoleGroupLabel(role))?.roles.push(role);
+    }
+
+    return groups
+      .map((group) => ({
+        ...group,
+        roles: [...group.roles].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR')),
+      }))
+      .filter((group) => group.roles.length > 0);
+  }
+
+  private getRoleGroupLabel(role: Cargos): string {
+    const name = this.normalizeSearch(role.name || '');
+
+    if ([
+      'servicos gerais',
+      'limpeza',
+      'limpeza - chefe',
+      'recepcionista',
+      'secretaria',
+      'controle de visitas',
+      'empreendimentos',
+      'mudar - empreendimentos',
+    ].includes(name)) {
+      return 'Cargos operacionais';
+    }
+
+    if ([
+      'diretor comercial',
+      'corretor',
+      'corretor parceiro',
+      'atendente',
+      'gerente',
+      'coordenador',
+      'gestor',
+      'vendedor',
+      'analista financeiro junior',
+      'analista financeiro pleno',
+      'analista financeiro senior',
+      'diretor financeiro',
+      'analista de rh junior',
+      'analista de rh pleno',
+      'analista de rh senior',
+      'analista de ti junior',
+      'analista de ti pleno',
+      'analista de ti senior',
+      'contas a pagar',
+    ].includes(name)) {
+      return 'Cargos antigos em uso';
+    }
+
+    if ([
+      'cfo',
+      'coordenador financeiro',
+      'analista financeiro',
+      'assistente financeiro',
+      'contas a receber',
+      'tesouraria',
+      'controladoria / dre',
+      'correspondente bancario',
+      'coordenador de rh',
+      'analista de rh',
+      'assistente de rh',
+      'departamento pessoal',
+      'recrutamento e selecao',
+      'coordenador de ti',
+      'analista de sistemas',
+      'analista de suporte',
+      'infraestrutura / redes',
+      'desenvolvedor / automacao',
+      'coordenador de marketing',
+      'analista de marketing',
+      'social media',
+      'designer / criativo',
+      'trafego pago',
+      'compras',
+      'gestor comercial',
+      'gerente comercial',
+      'coordenador comercial',
+      'agente lider',
+      'agente',
+    ].includes(name)) {
+      return 'Cargos oficiais';
+    }
+
+    return 'Outros cargos';
+  }
+
   private loadRolePermissions(roleId: number, showLoading = true): void {
     if (showLoading) {
       this.loadingRolePermissions = true;
@@ -510,9 +646,9 @@ export class PerfisAcessosComponent implements OnInit {
 
     this.permissionsService.getRolePermissions(roleId).subscribe({
       next: (rolePermissions) => {
-        this.selectedRolePermissionIds = new Set(
-          (rolePermissions ?? []).map((permission) => Number(permission.id))
-        );
+        const permissionIds = (rolePermissions ?? []).map((permission) => Number(permission.id));
+        this.selectedRolePermissionIds = new Set(permissionIds);
+        this.rolePermissionCountById.set(Number(roleId), permissionIds.length);
         this.loadingRolePermissions = false;
       },
       error: (err) => {

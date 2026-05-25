@@ -217,16 +217,26 @@
         Nenhum perfil/cargo encontrado.
       </div>
 
-      <div *ngIf="roles.length" class="item-list role-list">
-        <button
-          type="button"
-          class="list-item"
-          *ngFor="let role of roles; trackBy: trackRole"
-          [class.active]="selectedRole?.id === role.id"
-          (click)="selectRole(role)">
-          <span class="item-title">{{ role.name }}</span>
-          <span class="item-meta">ID {{ role.id }} | {{ role.status ? 'Ativo' : 'Inativo' }}</span>
-        </button>
+      <div *ngIf="roles.length" class="item-list role-list grouped-role-list">
+        <section class="role-group-section" *ngFor="let group of groupedRoles; trackBy: trackRoleGroup">
+          <div class="role-group-heading">
+            <span>{{ group.label }}</span>
+            <small>{{ group.roles.length }} cargo(s)</small>
+          </div>
+
+          <button
+            type="button"
+            class="list-item"
+            *ngFor="let role of group.roles; trackBy: trackRole"
+            [class.active]="selectedRole?.id === role.id"
+            (click)="selectRole(role)">
+            <span class="item-title">{{ role.name }}</span>
+            <span class="item-meta">ID {{ role.id }} | {{ role.status ? 'Ativo' : 'Inativo' }}</span>
+            <span class="role-badges" *ngIf="getRoleBadges(role).length">
+              <span class="role-badge" *ngFor="let badge of getRoleBadges(role)">{{ badge }}</span>
+            </span>
+          </button>
+        </section>
       </div>
     </div>
 
@@ -281,6 +291,10 @@
 
       <div *ngIf="!selectedRole" class="empty-state">
         Escolha um perfil/cargo na lista para visualizar e editar suas permissões.
+      </div>
+
+      <div class="access-empty-note role-permission-warning" role="note">
+        Cargos novos podem nascer sem permissoes configuradas.
       </div>
 
       <div *ngIf="selectedRole && loadingRolePermissions" class="text-muted text-center py-4">
