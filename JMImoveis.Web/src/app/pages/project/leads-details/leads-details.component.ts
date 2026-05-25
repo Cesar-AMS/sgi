@@ -59,6 +59,7 @@ export class LeadDetailsComponent implements OnInit {
   documentErrorMessage = '';
   isLoadingDocuments = false;
   isUploadingDocuments = false;
+  canEditLeads = false;
   canViewTransferHistory = false;
   showTransferHistoryPanel = false;
   isLoadingTransferHistory = false;
@@ -125,7 +126,7 @@ export class LeadDetailsComponent implements OnInit {
   ngOnInit(): void {
     this.buildForms();
     this.buildScheduleForm();
-    this.loadTransferHistoryPermission();
+    this.loadLeadPermissions();
 
 
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -200,6 +201,7 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   saveSchedule(type: 'contato' | 'visita'): void {
+    if (!this.ensureCanEditLeads()) return;
     if (!this.lead || this.scheduleForm.invalid) return;
 
     const { date, time, note } = this.scheduleForm.value;
@@ -225,6 +227,7 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   changeScheduleStatus(item: LeadSchedule, status: LeadScheduleStatus): void {
+    if (!this.ensureCanEditLeads()) return;
     if (!this.lead) return;
 
     const payload = { id: item.id, leadId: this.lead.id, status };
@@ -426,6 +429,8 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   openLeadScheduling(): void {
+    if (!this.ensureCanEditLeads()) return;
+
     this.scheduleErrorMessage = '';
     this.showSchedulingModal = true;
     this.quickScheduleForm.reset({
@@ -565,6 +570,8 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   saveQuickSchedule(): void {
+    if (!this.ensureCanEditLeads()) return;
+
     if (!this.lead) {
       return;
     }
@@ -632,6 +639,10 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   toggleEdit(): void {
+    if (!this.canEditLeads) {
+      return;
+    }
+
     this.isEditing = !this.isEditing;
 
     if (!this.isEditing && this.lead) {
@@ -641,6 +652,7 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   saveInfo(): void {
+    if (!this.ensureCanEditLeads()) return;
     if (!this.lead || this.infoForm.invalid) return;
 
     const form = this.infoForm.value;
@@ -665,9 +677,10 @@ export class LeadDetailsComponent implements OnInit {
     });
   }
 
-  private loadTransferHistoryPermission(): void {
+  private loadLeadPermissions(): void {
     const currentUserId = this.sessionService.getCurrentUserId();
     if (!currentUserId) {
+      this.canEditLeads = false;
       this.canViewTransferHistory = false;
       return;
     }
@@ -675,6 +688,9 @@ export class LeadDetailsComponent implements OnInit {
     this.permissionsService.getUserEffectivePermissions(currentUserId).subscribe({
       next: (permissions) => {
         const permissionKeys = this.extractPermissionKeys(permissions);
+        this.canEditLeads =
+          permissionKeys.has('atendimento.leads.editar') ||
+          permissionKeys.has('sistema.admin.total');
         this.canViewTransferHistory =
           permissionKeys.has('atendimento.leads.transferencias.visualizar') ||
           permissionKeys.has('sistema.admin.total');
@@ -685,6 +701,7 @@ export class LeadDetailsComponent implements OnInit {
         }
       },
       error: () => {
+        this.canEditLeads = false;
         this.canViewTransferHistory = false;
         this.showTransferHistoryPanel = false;
         this.transferHistoryItems = [];
@@ -698,6 +715,15 @@ export class LeadDetailsComponent implements OnInit {
         .map((permission) => permission.permissionKey || permission.permission_key || '')
         .filter((permissionKey) => !!permissionKey)
     );
+  }
+
+  private ensureCanEditLeads(): boolean {
+    if (this.canEditLeads) {
+      return true;
+    }
+
+    this.scheduleErrorMessage = 'Voce nao tem permissao para editar leads.';
+    return false;
   }
 
   // ações rápidas – por enquanto só console.log, depois integra

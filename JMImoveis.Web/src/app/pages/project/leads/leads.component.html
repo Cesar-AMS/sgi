@@ -24,6 +24,7 @@
         type="button"
         (click)="openCreateModal()"
         aria-label="Criar novo lead"
+        *ngIf="canEditLeads"
       >
         <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
         Novo Lead
@@ -298,7 +299,7 @@
         [id]="getKanbanDropListId(etapa)"
         [cdkDropListData]="getLeadsByEtapaAtendimento(etapa)"
         [cdkDropListConnectedTo]="getKanbanConnectedDropLists()"
-        [cdkDropListDisabled]="!canEditLeadStatus"
+        [cdkDropListDisabled]="!canEditLeads"
         (cdkDropListDropped)="onLeadDropped($event, etapa)"
         [attr.aria-label]="'Coluna ' + etapa"
       >
@@ -320,10 +321,10 @@
             *ngFor="let lead of getLeadsByEtapaAtendimento(etapa)"
             cdkDrag
             [cdkDragData]="lead"
-            [cdkDragDisabled]="!canEditLeadStatus"
+            [cdkDragDisabled]="!canEditLeads"
             (click)="openLeadDetails(lead.id)"
             [attr.aria-label]="'Abrir painel do cliente ' + lead.nome"
-            [class.kanban-card-readonly]="!canEditLeadStatus"
+            [class.kanban-card-readonly]="!canEditLeads"
           >
             <div class="kanban-card-title" [title]="lead.nome">{{ lead.nome }}</div>
 
@@ -360,7 +361,7 @@
               </span>
             </div>
 
-            <div class="kanban-card-drag-hint" *ngIf="canEditLeadStatus">
+            <div class="kanban-card-drag-hint" *ngIf="canEditLeads">
               Arraste
             </div>
           </button>
@@ -372,7 +373,7 @@
       </section>
     </div>
 
-    <div class="text-muted small mt-2" *ngIf="!canEditLeadStatus">
+    <div class="text-muted small mt-2" *ngIf="!canEditLeads">
       Você pode visualizar o Kanban, mas não possui permissão para mover cards.
     </div>
   </ng-template>
@@ -539,7 +540,7 @@
             Cancelar
           </button>
 
-          <button type="submit" class="btn btn-orange">
+          <button type="submit" class="btn btn-orange" [disabled]="!canEditLeads">
             Salvar
           </button>
         </div>

@@ -14,6 +14,7 @@ export class LeadSummarySectionComponent {
   @Input() infoForm!: FormGroup;
   @Input() corretores: Usuarios[] = [];
   @Input() statusOptions: LeadStatus[] = [];
+  @Input() canEditLeads = false;
   @Input() canViewTransferHistory = false;
   @Input() transferHistoryExpanded = false;
 

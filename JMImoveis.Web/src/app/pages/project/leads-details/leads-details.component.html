@@ -36,6 +36,7 @@
           [infoForm]="infoForm"
           [corretores]="corretores"
           [statusOptions]="statusOptions"
+          [canEditLeads]="canEditLeads"
           [canViewTransferHistory]="canViewTransferHistory"
           [transferHistoryExpanded]="showTransferHistoryPanel"
           (backRequested)="goBack()"
@@ -349,7 +350,7 @@
   </div>
 </div>
 
-<div class="modal-backdrop-custom" *ngIf="showSchedulingModal">
+<div class="modal-backdrop-custom" *ngIf="showSchedulingModal && canEditLeads">
   <div
     class="schedule-modal"
     role="dialog"
@@ -422,7 +423,7 @@
         >
           Cancelar
         </button>
-        <button type="submit" class="btn btn-orange" [disabled]="isSavingSchedule">
+        <button type="submit" class="btn btn-orange" [disabled]="isSavingSchedule || !canEditLeads">
           {{ isSavingSchedule ? 'Salvando...' : 'Salvar agendamento' }}
         </button>
       </div>

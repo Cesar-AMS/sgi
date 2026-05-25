@@ -26,6 +26,7 @@
         type="button"
         class="btn btn-sm btn-outline-secondary lead-action-button"
         (click)="schedulingRequested.emit()"
+        *ngIf="canEditLeads"
       >
         <i class="bi bi-calendar-plus"></i>
         Agendamento
@@ -34,6 +35,7 @@
         type="button"
         class="btn btn-sm btn-outline-secondary lead-action-button"
         (click)="editToggled.emit()"
+        *ngIf="canEditLeads"
       >
         <i class="bi bi-pencil-square"></i>
         Editar
@@ -76,6 +78,7 @@
       </div>
 
       <ng-template #editInfoTpl>
+        <ng-container *ngIf="canEditLeads">
         <form [formGroup]="infoForm" (ngSubmit)="infoSubmitted.emit()" class="row g-3">
           <div class="col-md-6"><label class="form-label">Nome</label><input type="text" class="form-control" formControlName="nome" /></div>
           <div class="col-md-6"><label class="form-label">E-mail</label><input type="email" class="form-control" formControlName="email" /></div>
@@ -105,6 +108,7 @@
             <button type="submit" class="btn btn-orange">Salvar</button>
           </div>
         </form>
+        </ng-container>
       </ng-template>
     </div>
   </div>

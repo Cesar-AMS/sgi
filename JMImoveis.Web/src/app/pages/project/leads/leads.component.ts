@@ -51,7 +51,7 @@ export class LeadsComponent {
   isLoading = false;
   filtersCollapsed = true;
 
-  canEditLeadStatus = false;
+  canEditLeads = false;
 
   showCreateModal = false;
   createForm!: FormGroup;
@@ -129,17 +129,19 @@ export class LeadsComponent {
     const currentUserId = this.sessionService.getCurrentUserId();
 
     if (!currentUserId) {
-      this.canEditLeadStatus = false;
+      this.canEditLeads = false;
       return;
     }
 
     this.permissionsService.getUserEffectivePermissions(currentUserId).subscribe({
       next: (response: unknown) => {
         const permissions = this.extractPermissionKeys(response);
-        this.canEditLeadStatus = permissions.includes('atendimento.leads.editar');
+        this.canEditLeads =
+          permissions.includes('atendimento.leads.editar') ||
+          permissions.includes('sistema.admin.total');
       },
       error: () => {
-        this.canEditLeadStatus = false;
+        this.canEditLeads = false;
       },
     });
   }
@@ -285,7 +287,7 @@ export class LeadsComponent {
   }
 
   onLeadDropped(event: CdkDragDrop<Lead[]>, targetEtapaAtendimento: LeadEtapaAtendimento): void {
-    if (!this.canEditLeadStatus) {
+    if (!this.canEditLeads) {
       this.toast.warning('Você não tem permissão para alterar a etapa do lead.');
       return;
     }
@@ -477,6 +479,11 @@ export class LeadsComponent {
   }
 
   openCreateModal(): void {
+    if (!this.canEditLeads) {
+      this.toast.warning('Voce nao tem permissao para criar leads.');
+      return;
+    }
+
     this.showCreateModal = true;
     this.createForm.patchValue({
       status: this.createForm.get('status')?.value || 'Novo',
@@ -490,6 +497,11 @@ export class LeadsComponent {
   }
 
   submitCreate(): void {
+    if (!this.canEditLeads) {
+      this.toast.warning('Voce nao tem permissao para criar leads.');
+      return;
+    }
+
     if (this.createForm.invalid) {
       this.createForm.markAllAsTouched();
       return;
