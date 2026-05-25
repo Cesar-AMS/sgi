@@ -336,7 +336,7 @@
                 </button>
 
                 <button
-                  *ngIf="isAgendamentoMode() && v.status === 'Agendada'"
+                  *ngIf="isAgendamentoMode() && canEditSchedule && v.status === 'Agendada'"
                   class="btn btn-sm btn-outline-success me-1"
                   type="button"
                   (click)="$event.stopPropagation(); confirmAgendamento(v)"

@@ -143,6 +143,7 @@ private isoToDatetimeLocal(iso: string): string {
   currentUserId: number | null = null;
   canViewAllVisits = false;
   canEditVisits = false;
+  canEditSchedule = false;
   sellerFilterMode: 'full' | 'mine' | 'scoped' = 'full';
   statusOptions: VisitaStatus[] = ['Agendada', 'Confirmada', 'Realizada', 'Cancelada'];
 
@@ -190,12 +191,14 @@ private isoToDatetimeLocal(iso: string): string {
         const isAdmin = this.hasPermission(permissions, 'sistema.admin.total');
         this.canViewAllVisits = isAdmin;
         this.canEditVisits = isAdmin || this.hasPermission(permissions, 'atendimento.visitas.editar');
+        this.canEditSchedule = isAdmin || this.hasPermission(permissions, 'atendimento.agendamento.editar');
         this.applySellerFilterScope();
       },
       error: () => {
         this.corretores = [];
         this.visibleCorretores = [];
         this.canEditVisits = false;
+        this.canEditSchedule = false;
         this.applySellerFilterScope();
       }
     });
@@ -354,7 +357,7 @@ private isoToDatetimeLocal(iso: string): string {
   }
 
   canManageCurrentMode(): boolean {
-    return this.isAgendamentoMode() || this.canEditVisits;
+    return this.isAgendamentoMode() ? this.canEditSchedule : this.canEditVisits;
   }
 
   private normalizeTipoAgenda(tipoAgenda?: string | null): string {
@@ -709,7 +712,8 @@ openEditModal(v: Visita): void {
       return true;
     }
 
-    this.toast.warning('Usuario sem permissao para editar visitas.');
+    const target = this.isAgendamentoMode() ? 'agendamentos' : 'visitas';
+    this.toast.warning(`Usuario sem permissao para editar ${target}.`);
     return false;
   }
 
