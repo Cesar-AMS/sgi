@@ -502,11 +502,15 @@ export class LeadsComponent {
     };
 
     this.leadService.createLead(payload).subscribe({
-      next: () => {
+      next: (response) => {
         this.applyFilters();
         this.closeCreateModal();
         this.loadLeads();
         this.toast.success('Lead criado com sucesso!');
+
+        if (response?.id) {
+          this.openLeadDetails(response.id);
+        }
       },
     });
   }

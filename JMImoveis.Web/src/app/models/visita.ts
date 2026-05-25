@@ -14,7 +14,7 @@ export interface Visita {
   coordenadorNome?: string | null;
   gerenteId?: number | null;
   gerenteNome?: string | null;
-  tipoAgenda?: string | null;
+  tipoAgenda?: 'contato' | 'visita' | null;
 
   status: VisitaStatus;
   observacao: string;

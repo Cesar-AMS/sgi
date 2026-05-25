@@ -180,7 +180,7 @@ namespace JMImoveisAPI.Services
         {
             DateTime? start = TryParseIsoDate(startAt);
             DateTime? finish = TryParseIsoDate(finishAt);
-            var normalizedTipoAgenda = NormalizeTipoAgenda(tipoAgenda);
+            var normalizedTipoAgenda = NormalizeOptionalTipoAgenda(tipoAgenda);
 
             return _leadRepository.ListScheduleAsync(
                 q, vendedorId, status, compareceu, virouVenda, start, finish, normalizedTipoAgenda, currentUserId, canViewAll
@@ -217,12 +217,12 @@ namespace JMImoveisAPI.Services
         private static string NormalizeTipoAgenda(string? tipoAgenda)
         {
             if (string.IsNullOrWhiteSpace(tipoAgenda))
-                return "visita";
+                return "contato";
 
             var normalized = tipoAgenda.Trim().ToLowerInvariant();
             return normalized is "contato" or "visita"
                 ? normalized
-                : "visita";
+                : "contato";
         }
 
         private static string? NormalizeOptionalTipoAgenda(string? tipoAgenda)

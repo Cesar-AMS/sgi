@@ -140,7 +140,7 @@ namespace JMImoveisAPI.Repositories
             var sql = @"SELECT Id, LeadId, ScheduledAt, Note, Status, CreatedAt, UpdatedAt
                             FROM LeadSchedules
                             WHERE LeadId = @LeadId
-                            AND IFNULL(TipoAgenda,'visita') = @TypeSchedule
+                            AND TipoAgenda = @TypeSchedule
                             ORDER BY ScheduledAt DESC;";
 
             await using var conn = await _context.OpenConnectionAsync();
@@ -188,7 +188,7 @@ namespace JMImoveisAPI.Repositories
             return await conn.ExecuteScalarAsync<int>(sql, req);
         }
 
-        public async Task<IEnumerable<VisitaDto>> ListScheduleAsync(string? q, int? vendedorId, string? status, bool? compareceu, bool? virouVenda, DateTime? startAt, DateTime? finishAt, string tipoAgenda, long currentUserId, bool canViewAll)
+        public async Task<IEnumerable<VisitaDto>> ListScheduleAsync(string? q, int? vendedorId, string? status, bool? compareceu, bool? virouVenda, DateTime? startAt, DateTime? finishAt, string? tipoAgenda, long currentUserId, bool canViewAll)
         {
 
             await using var conn = await _context.OpenConnectionAsync();
@@ -209,7 +209,7 @@ namespace JMImoveisAPI.Repositories
                                                 ls.ScheduledAt as DataHoraISO,
                                                 ls.Note as Observacao,
                                                 ls.Status,
-                                                IFNULL(ls.TipoAgenda,'visita') as TipoAgenda,
+                                                ls.TipoAgenda as TipoAgenda,
                                                 ls.compareceu AS Compareceu,
                                                 ls.virouVenda AS VirouVenda,
                                                 ls.CreatedAt,
@@ -219,11 +219,20 @@ namespace JMImoveisAPI.Repositories
                                             LEFT JOIN users vendedor ON vendedor.id = ls.UserId
                                             LEFT JOIN users coordenador ON coordenador.id = COALESCE(NULLIF(ls.CoordenadorId, 0), NULLIF(vendedor.coordenator_id, 0))
                                             LEFT JOIN users gerente ON gerente.id = COALESCE(NULLIF(ls.GerenteId, 0), NULLIF(vendedor.manager_id, 0), NULLIF(coordenador.manager_id, 0))
-                                            WHERE 1=1 AND IFNULL(ls.TipoAgenda,'visita') = @tipoAgenda
+                                            WHERE 1=1
                                             ");
 
             var p = new DynamicParameters();
-            p.Add("tipoAgenda", tipoAgenda);
+
+            if (!string.IsNullOrWhiteSpace(tipoAgenda))
+            {
+                sql.Append("\nAND ls.TipoAgenda = @tipoAgenda");
+                p.Add("tipoAgenda", tipoAgenda);
+            }
+            else
+            {
+                sql.Append("\nAND ls.TipoAgenda IN ('contato', 'visita')");
+            }
 
             if (!canViewAll)
             {

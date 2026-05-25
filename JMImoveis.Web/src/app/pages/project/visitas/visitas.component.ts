@@ -12,6 +12,7 @@ import { Visita, VisitaStatus } from 'src/app/models/visita';
 import { exportToExcel } from 'src/app/shared/utils/excel-export';
 
 type VisitasScreenMode = 'agendamento' | 'visitas';
+type TipoAgenda = 'contato' | 'visita';
 type SchedulePayload = {
   nomeCliente: string;
   telefone?: string | null;
@@ -19,7 +20,7 @@ type SchedulePayload = {
   vendedorId: string | null;
   status: VisitaStatus;
   observacao: string;
-  tipoAgenda: 'contato' | 'visita';
+  tipoAgenda: TipoAgenda;
   compareceu?: boolean;
   virouVenda?: boolean;
 };
@@ -75,7 +76,7 @@ exportExcel(): void {
     Vendedor: this.getVendedorNome(r),
     Coordenador: r.coordenadorNome ?? '',
     Gerente: r.gerenteNome ?? '',
-    TipoAgenda: r.tipoAgenda ?? this.getCurrentTipoAgenda(),
+    TipoAgenda: r.tipoAgenda ?? this.getDefaultTipoAgenda(),
     Status: r.status,
     Compareceu: r.compareceu === true? 'SIM': 'NÃO',
     VirouVenda: r.virouVenda === true? 'SIM': 'NÃO',
@@ -338,23 +339,37 @@ private isoToDatetimeLocal(iso: string): string {
     return this.isAgendamentoMode() ? 'Novo agendamento' : 'Nova visita';
   }
 
-  private getCurrentTipoAgenda(): 'contato' | 'visita' {
+  private getDefaultTipoAgenda(): TipoAgenda {
     return this.isAgendamentoMode() ? 'contato' : 'visita';
+  }
+
+  private getListTipoAgenda(): TipoAgenda | undefined {
+    return this.isVisitasMode() ? 'visita' : undefined;
   }
 
   private applyTipoAgendaFilter(list: Visita[]): Visita[] {
     const hasTipoAgendaInPayload = list.some((visita) => this.normalizeTipoAgenda(visita.tipoAgenda) !== '');
 
     if (!hasTipoAgendaInPayload) {
-      return list;
+      return this.isAgendamentoMode() ? list : [];
     }
 
-    const targetTipoAgenda = this.getCurrentTipoAgenda();
-    return list.filter((visita) => this.normalizeTipoAgenda(visita.tipoAgenda) === targetTipoAgenda);
+    if (this.isAgendamentoMode()) {
+      return list.filter((visita) => {
+        const tipoAgenda = this.normalizeTipoAgenda(visita.tipoAgenda);
+        return tipoAgenda === 'contato' || tipoAgenda === 'visita';
+      });
+    }
+
+    return list.filter((visita) => this.normalizeTipoAgenda(visita.tipoAgenda) === 'visita');
   }
 
   private normalizeTipoAgenda(tipoAgenda?: string | null): string {
     return String(tipoAgenda ?? '').trim().toLowerCase();
+  }
+
+  private normalizeTipoAgendaForForm(tipoAgenda?: string | null): TipoAgenda {
+    return this.normalizeTipoAgenda(tipoAgenda) === 'visita' ? 'visita' : 'contato';
   }
 
   buildForm(): void {
@@ -364,6 +379,7 @@ private isoToDatetimeLocal(iso: string): string {
       dataHora: ['', Validators.required], // datetime-local
       vendedorId: [''],
       status: ['Agendada' as VisitaStatus, Validators.required],
+      tipoAgenda: ['contato' as TipoAgenda, Validators.required],
       observacao: [''],
       compareceu: [false, Validators.required],
       virouVenda: [false, Validators.required],
@@ -382,7 +398,7 @@ private isoToDatetimeLocal(iso: string): string {
     status: this.statusFilter || undefined,
     compareceu: this.compareceuFilter ? (this.compareceuFilter === 'sim') : undefined,
     virouVenda: this.virouVendaFilter ? (this.virouVendaFilter === 'sim') : undefined,
-    tipoAgenda: this.getCurrentTipoAgenda(),
+    tipoAgenda: this.getListTipoAgenda(),
 
     // ✅ só envia quando não for "all"
     startAt: this.dateRange === 'all' ? undefined : (startAt || undefined),
@@ -454,6 +470,7 @@ private isoToDatetimeLocal(iso: string): string {
     dataHora: '',
     vendedorId: '',
     status: 'Agendada',
+    tipoAgenda: this.getDefaultTipoAgenda(),
     observacao: '',
     compareceu: false,
     virouVenda: false
@@ -473,6 +490,7 @@ openEditModal(v: Visita): void {
     dataHora: dtLocal,
     vendedorId: v.vendedorId ?? '',
     status: this.getStatusOptionsForMode().includes(v.status) ? v.status : 'Agendada',
+    tipoAgenda: this.normalizeTipoAgendaForForm(v.tipoAgenda),
     observacao: v.observacao ?? '',
     compareceu: !!v.compareceu,
     virouVenda: !!v.virouVenda
@@ -726,6 +744,10 @@ openEditModal(v: Visita): void {
 }
 
 private buildSchedulePayload(form: any): SchedulePayload {
+  const tipoAgenda = this.isVisitasMode()
+    ? 'visita'
+    : this.normalizeTipoAgendaForForm(form.tipoAgenda);
+
   const payload: SchedulePayload = {
     nomeCliente: String(form.nomeCliente || '').trim(),
     telefone: form.telefone ? String(form.telefone).trim() : null,
@@ -733,7 +755,7 @@ private buildSchedulePayload(form: any): SchedulePayload {
     vendedorId: form.vendedorId ? String(form.vendedorId) : null,
     status: this.normalizeStatusForMode(form.status),
     observacao: form.observacao || '',
-    tipoAgenda: this.getCurrentTipoAgenda(),
+    tipoAgenda,
   };
 
   if (this.isVisitasMode()) {

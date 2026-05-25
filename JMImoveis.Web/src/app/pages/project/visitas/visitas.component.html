@@ -469,6 +469,14 @@
           </select>
         </div>
 
+        <div class="mb-3" *ngIf="isAgendamentoMode()">
+          <label class="form-label" for="visitScheduleType">Tipo de compromisso</label>
+          <select id="visitScheduleType" class="form-select" formControlName="tipoAgenda">
+            <option value="contato">Retorno / follow-up / reunião / contato</option>
+            <option value="visita">Visita</option>
+          </select>
+        </div>
+
         <div class="row g-3 mb-3" *ngIf="isVisitasMode()">
           <div class="col-6">
             <label class="form-label" for="visitAttended">Compareceu?</label>
