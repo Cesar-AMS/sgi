@@ -149,6 +149,12 @@ namespace JMImoveisAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateLead(Lead lead)
         {
+            var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
             var id = await _leadService.CreateLeadAsync(lead);
             return Ok(new { id });
         }
