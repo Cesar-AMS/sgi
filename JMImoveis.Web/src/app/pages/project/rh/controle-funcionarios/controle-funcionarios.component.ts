@@ -38,6 +38,11 @@ type HierarchyOption = {
   gestorId?: number | null;
 };
 
+type RoleGroup = {
+  label: string;
+  roles: Cargos[];
+};
+
 @Component({
   selector: 'app-controle-funcionarios',
   templateUrl: './controle-funcionarios.component.html',
@@ -375,6 +380,10 @@ export class ControleFuncionariosComponent implements OnInit {
 
   get selectedRoleId(): number | undefined {
     return this.normalizeRoleIds(this.employeeForm.jobpositionId)[0];
+  }
+
+  get roleGroups(): RoleGroup[] {
+    return this.buildRoleGroups(this.roles);
   }
 
   get shouldShowDirectorField(): boolean {
@@ -888,6 +897,103 @@ export class ControleFuncionariosComponent implements OnInit {
 
   private hasRoleKind(roleNames: string[], roleKind: 'diretor' | 'gestor' | 'gerente' | 'coordenador'): boolean {
     return roleNames.some((roleName) => this.normalizeRoleName(roleName).includes(roleKind));
+  }
+
+  private buildRoleGroups(roles: Cargos[]): RoleGroup[] {
+    const groups: RoleGroup[] = [
+      { label: 'Comercial oficial', roles: [] },
+      { label: 'Administrativo / Financeiro', roles: [] },
+      { label: 'RH', roles: [] },
+      { label: 'TI', roles: [] },
+      { label: 'Marketing', roles: [] },
+      { label: 'Operacional', roles: [] },
+      { label: 'Outros', roles: [] },
+    ];
+    const byLabel = new Map(groups.map((group) => [group.label, group]));
+
+    for (const role of roles ?? []) {
+      byLabel.get(this.getRoleGroupLabel(role))?.roles.push(role);
+    }
+
+    return groups
+      .map((group) => ({
+        ...group,
+        roles: [...group.roles].sort((a, b) =>
+          this.normalizeRoleName(a.name || '').localeCompare(this.normalizeRoleName(b.name || ''), 'pt-BR')
+        ),
+      }))
+      .filter((group) => group.roles.length > 0);
+  }
+
+  private getRoleGroupLabel(role: Cargos): string {
+    const name = this.normalizeRoleName(role.name || '');
+
+    if ([
+      'gestor comercial',
+      'gerente comercial',
+      'coordenador comercial',
+      'agente lider',
+      'agente',
+    ].includes(name)) {
+      return 'Comercial oficial';
+    }
+
+    if ([
+      'cfo',
+      'coordenador financeiro',
+      'analista financeiro',
+      'assistente financeiro',
+      'contas a pagar',
+      'contas a receber',
+      'tesouraria',
+      'controladoria / dre',
+      'correspondente bancario',
+      'compras',
+    ].includes(name)) {
+      return 'Administrativo / Financeiro';
+    }
+
+    if ([
+      'coordenador de rh',
+      'analista de rh',
+      'assistente de rh',
+      'departamento pessoal',
+      'recrutamento e selecao',
+    ].includes(name)) {
+      return 'RH';
+    }
+
+    if ([
+      'coordenador de ti',
+      'analista de sistemas',
+      'analista de suporte',
+      'infraestrutura / redes',
+      'desenvolvedor / automacao',
+    ].includes(name)) {
+      return 'TI';
+    }
+
+    if ([
+      'coordenador de marketing',
+      'analista de marketing',
+      'social media',
+      'designer / criativo',
+      'trafego pago',
+    ].includes(name)) {
+      return 'Marketing';
+    }
+
+    if ([
+      'servicos gerais',
+      'limpeza',
+      'limpeza - chefe',
+      'recepcionista',
+      'secretaria',
+    ].includes(name)) {
+      return 'Operacional';
+    }
+
+    return 'Outros';
   }
 
   private isSellerRoleName(roleName: string): boolean {
