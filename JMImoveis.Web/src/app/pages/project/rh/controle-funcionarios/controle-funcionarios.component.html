@@ -49,6 +49,33 @@
         </li>
       </ul>
 
+      <div class="employee-search-bar mb-3">
+        <div class="employee-search-field">
+          <label class="form-label" for="employee-search">Buscar colaboradores</label>
+          <input
+            id="employee-search"
+            class="form-control"
+            type="search"
+            name="employeeSearch"
+            [(ngModel)]="searchTerm"
+            placeholder="Buscar por nome, CPF, cargo ou superior..."
+            aria-describedby="employee-search-help">
+          <small id="employee-search-help" class="text-muted">
+            A busca considera somente os colaboradores da aba atual.
+          </small>
+        </div>
+        <div class="employee-search-actions">
+          <button
+            *ngIf="searchTerm.trim()"
+            type="button"
+            class="btn btn-outline-secondary employee-search-clear"
+            (click)="clearSearch()"
+            aria-label="Limpar busca de colaboradores">
+            Limpar busca
+          </button>
+        </div>
+      </div>
+
       <div *ngIf="loading" class="text-muted py-4 text-center">
         Carregando colaboradores...
       </div>
@@ -62,7 +89,7 @@
       </div>
 
       <div *ngIf="!loading && !errorMessage && rows.length > 0 && filteredRows.length === 0" class="text-muted py-4 text-center">
-        Nenhum registro nesta aba.
+        {{ searchTerm.trim() ? 'Nenhum colaborador encontrado para a busca nesta aba.' : 'Nenhum registro nesta aba.' }}
       </div>
 
       <div *ngIf="!loading && !errorMessage && filteredRows.length > 0" class="table-responsive">
@@ -153,19 +180,20 @@
               <div class="employee-details-block">
                 <h6>Identificação do colaborador</h6>
                 <div class="row g-3">
-                  <div class="col-12 col-md-3">
-                    <label class="form-label" for="employee-cpf">CPF <span class="text-danger">*</span></label>
-                    <input id="employee-cpf" class="form-control" name="cpf" [(ngModel)]="employeeForm.cpf" required>
+                  <div class="col-12 col-md-3 order-md-2">
+                    <label class="form-label" for="employee-cpf">CPF</label>
+                    <input id="employee-cpf" class="form-control" name="cpf" [(ngModel)]="employeeForm.cpf">
                   </div>
-                  <div class="col-12 col-md-6">
+                  <div class="col-12 col-md-6 order-md-1">
                     <label class="form-label" for="employee-name">Nome <span class="text-danger">*</span></label>
-                    <input id="employee-name" class="form-control" name="name" [(ngModel)]="employeeForm.name" required>
+                    <input id="employee-name" class="form-control" name="name" [(ngModel)]="employeeForm.name" required aria-describedby="employee-name-help">
+                    <small id="employee-name-help" class="text-muted">Campo minimo para iniciar o cadastro.</small>
                   </div>
-                  <div class="col-12 col-md-3">
+                  <div class="col-12 col-md-3 order-md-3">
                     <label class="form-label" for="employee-admission">Data de admissão</label>
                     <input id="employee-admission" class="form-control" type="date" name="admissionDate" [(ngModel)]="employeeForm.admissionDate">
                   </div>
-                  <div class="col-12 col-md-3">
+                  <div class="col-12 col-md-3 order-md-4">
                     <label class="form-label" for="employee-status">Situação do colaborador</label>
                     <select id="employee-status" class="form-control" name="hidden" [(ngModel)]="employeeForm.hidden">
                       <option [ngValue]="false">Ativo</option>
@@ -180,30 +208,31 @@
               <div class="employee-details-block">
                 <h6>Identificação do colaborador</h6>
                 <div class="row g-3">
-                  <div class="col-12 col-md-3">
-                    <label class="form-label" for="external-cpf">{{ documentFieldLabel }} <span class="text-danger">*</span></label>
-                    <input id="external-cpf" class="form-control" name="cpf" [(ngModel)]="employeeForm.cpf" required>
+                  <div class="col-12 col-md-3 order-md-2">
+                    <label class="form-label" for="external-cpf">{{ documentFieldLabel }}</label>
+                    <input id="external-cpf" class="form-control" name="cpf" [(ngModel)]="employeeForm.cpf">
                   </div>
-                  <div class="col-12 col-md-5">
+                  <div class="col-12 col-md-5 order-md-1">
                     <label class="form-label" for="external-name">{{ nameFieldLabel }} <span class="text-danger">*</span></label>
-                    <input id="external-name" class="form-control" name="name" [(ngModel)]="employeeForm.name" required>
+                    <input id="external-name" class="form-control" name="name" [(ngModel)]="employeeForm.name" required aria-describedby="external-name-help">
+                    <small id="external-name-help" class="text-muted">Campo minimo para iniciar o cadastro.</small>
                   </div>
-                  <div class="col-12 col-md-2">
+                  <div class="col-12 col-md-2 order-md-3">
                     <label class="form-label" for="external-start-date">Data de entrada/início</label>
                     <input id="external-start-date" class="form-control" type="date" name="externalStartDate" [(ngModel)]="externalDetailsForm.startDate">
                   </div>
-                  <div class="col-12 col-md-2">
+                  <div class="col-12 col-md-2 order-md-4">
                     <label class="form-label" for="external-end-date">Data final/término</label>
                     <input id="external-end-date" class="form-control" type="date" name="externalEndDate" [(ngModel)]="externalDetailsForm.endDate">
                   </div>
-                  <div class="col-12 col-md-6">
+                  <div class="col-12 col-md-6 order-md-5">
                     <label class="form-label" for="employee-branch-external">Unidade</label>
                     <select id="employee-branch-external" class="form-control" name="filial" [(ngModel)]="employeeForm.filial">
                       <option [ngValue]="undefined">Selecione...</option>
                       <option *ngFor="let branch of branches" [ngValue]="branch.id">{{ branch.name }}</option>
                     </select>
                   </div>
-                  <div class="col-12 col-md-6">
+                  <div class="col-12 col-md-6 order-md-5">
                     <label class="form-label" for="external-status">Situação do colaborador</label>
                     <select id="external-status" class="form-control" name="hidden" [(ngModel)]="employeeForm.hidden">
                       <option [ngValue]="false">Ativo</option>
@@ -219,16 +248,16 @@
                 <h6>Contato</h6>
                 <div class="row g-3">
                   <div class="col-12 col-md-4">
-                    <label class="form-label" for="employee-email">E-mail <span class="text-danger">*</span></label>
-                    <input id="employee-email" class="form-control" type="email" name="email" [(ngModel)]="employeeForm.email" required>
+                    <label class="form-label" for="employee-email">E-mail</label>
+                    <input id="employee-email" class="form-control" type="email" name="email" [(ngModel)]="employeeForm.email">
                   </div>
                   <div class="col-12 col-md-4">
-                    <label class="form-label" for="employee-phone">Telefone <span class="text-danger">*</span></label>
-                    <input id="employee-phone" class="form-control" name="cellphone" [(ngModel)]="employeeForm.cellphone" required>
+                    <label class="form-label" for="employee-phone">Telefone</label>
+                    <input id="employee-phone" class="form-control" name="cellphone" [(ngModel)]="employeeForm.cellphone">
                   </div>
                   <div class="col-12 col-md-4">
-                    <label class="form-label" for="employee-address">Endereço <span class="text-danger">*</span></label>
-                    <input id="employee-address" class="form-control" name="address" [(ngModel)]="employeeForm.address" required>
+                    <label class="form-label" for="employee-address">Endereço</label>
+                    <input id="employee-address" class="form-control" name="address" [(ngModel)]="employeeForm.address">
                   </div>
                 </div>
               </div>
@@ -310,14 +339,13 @@
                   </div>
 
                   <div class="col-12 col-md-6">
-                    <label class="form-label" for="employee-role">Cargo/Função do funcionário <span class="text-danger">*</span></label>
+                    <label class="form-label" for="employee-role">Cargo/Função do funcionário</label>
                     <select
                       id="employee-role"
                       class="form-control"
                       name="jobpositionId"
                       [ngModel]="selectedRoleId"
                       (ngModelChange)="onRoleChange($event)"
-                      required
                       [disabled]="loadingOptions"
                       aria-describedby="employee-hierarchy-help employee-role-help">
                       <option [ngValue]="undefined">Selecione...</option>

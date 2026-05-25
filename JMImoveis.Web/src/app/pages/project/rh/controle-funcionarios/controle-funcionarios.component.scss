@@ -42,6 +42,50 @@
   white-space: nowrap;
 }
 
+.employee-search-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.employee-search-field {
+  flex: 1 1 auto;
+  max-width: 720px;
+  min-width: 0;
+}
+
+.employee-search-actions {
+  display: flex;
+  align-items: flex-start;
+  min-height: 62px;
+  padding-top: 1.95rem;
+}
+
+.employee-search-clear {
+  min-height: 38px;
+  white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+  .employee-search-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .employee-search-field {
+    max-width: none;
+  }
+
+  .employee-search-actions {
+    min-height: 0;
+    padding-top: 0;
+  }
+
+  .employee-search-clear {
+    width: 100%;
+  }
+}
+
 .employee-modal-body {
   max-height: 72vh;
   overflow-y: auto;

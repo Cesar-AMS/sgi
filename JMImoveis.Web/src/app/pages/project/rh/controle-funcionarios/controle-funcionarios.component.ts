@@ -6,7 +6,7 @@ import { EmployeeControlRow, HrService } from 'src/app/core/services/hr.service'
 import { EmployeeDetails, EmployeeDetailsService } from 'src/app/core/services/employee-details.service';
 import { ExternalCollaboratorDetails, ExternalCollaboratorDetailsService } from 'src/app/core/services/external-collaborator-details.service';
 import { EmployeeDocument, EmployeeDocumentsService } from 'src/app/core/services/employee-documents.service';
-import { catchError, map, Observable, of, switchMap, throwError } from 'rxjs';
+import { catchError, map, Observable, of, switchMap } from 'rxjs';
 
 type EmployeeForm = Partial<Usuarios> & {
   jobpositionId: number[];
@@ -50,6 +50,7 @@ export class ControleFuncionariosComponent implements OnInit {
 
   rows: EmployeeControlRow[] = [];
   activeTab: EmployeeTab = 'funcionarios';
+  searchTerm = '';
   roles: Cargos[] = [];
   branches: Filial[] = [];
   managers: Usuarios[] = [];
@@ -147,6 +148,18 @@ export class ControleFuncionariosComponent implements OnInit {
   }
 
   get filteredRows(): EmployeeControlRow[] {
+    const rows = this.rowsByActiveTab;
+    const term = this.normalizeSearchText(this.searchTerm);
+
+    if (!term) {
+      return rows;
+    }
+
+    return rows.filter((row) => this.getEmployeeSearchValues(row)
+      .some((value) => this.normalizeSearchText(value).includes(term)));
+  }
+
+  get rowsByActiveTab(): EmployeeControlRow[] {
     if (this.activeTab === 'externos') {
       return this.externalRows;
     }
@@ -184,6 +197,10 @@ export class ControleFuncionariosComponent implements OnInit {
 
   changeTab(tab: EmployeeTab): void {
     this.activeTab = tab;
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
   }
 
   openNewEmployee(): void {
@@ -231,27 +248,12 @@ export class ControleFuncionariosComponent implements OnInit {
   saveEmployee(): void {
     this.formErrorMessage = '';
 
-    if (!this.employeeForm.name?.trim() || !this.employeeForm.email?.trim()) {
-      this.setFormError('Preencha nome e email.');
-      return;
-    }
-
-    if (!this.employeeForm.cpf?.trim() || !this.employeeForm.cellphone?.trim() || !this.employeeForm.address?.trim()) {
-      this.setFormError('Preencha CPF, telefone e endereco.');
-      return;
-    }
-
-    if (!this.employeeForm.jobpositionId?.length) {
-      this.setFormError('Selecione pelo menos um cargo/perfil.');
+    if (!this.employeeForm.name?.trim()) {
+      this.setFormError('Informe pelo menos o nome do colaborador.');
       return;
     }
 
     this.applyHierarchyBySelectedRole();
-    const hierarchyError = this.validateCommercialHierarchy();
-    if (hierarchyError) {
-      this.setFormError(hierarchyError);
-      return;
-    }
 
     const payload = this.buildUserPayload();
     const request = this.formMode === 'edit'
@@ -721,43 +723,6 @@ export class ControleFuncionariosComponent implements OnInit {
     }
   }
 
-  private validateCommercialHierarchy(): string | null {
-    if (!this.shouldShowEmployeeBasicFields || !this.isSelectedCommercialRole) {
-      return null;
-    }
-
-    if (this.isSelectedDirectorRole) {
-      return null;
-    }
-
-    if (this.isSelectedGestorRole) {
-      return this.normalizeOptionalNumber(this.selectedDirectorFilterId) || this.normalizeOptionalNumber(this.employeeForm.gestorId)
-        ? null
-        : 'Gestor deve estar vinculado a um diretor.';
-    }
-
-    if (this.isSelectedManagerRole) {
-      return this.normalizeOptionalNumber(this.employeeForm.gestorId)
-        ? null
-        : 'Gerente deve estar vinculado a um gestor.';
-    }
-
-    if (this.isSelectedCoordinatorRole) {
-      return this.normalizeOptionalNumber(this.employeeForm.managerId)
-        ? null
-        : 'Coordenador deve estar vinculado a um gerente.';
-    }
-
-    if (this.isSelectedSellerRole) {
-      this.applyManagerFromSelectedCoordinator();
-      return this.normalizeOptionalNumber(this.employeeForm.coordenatorId) && this.normalizeOptionalNumber(this.employeeForm.managerId)
-        ? null
-        : 'Vendedor/Corretor deve estar vinculado a um coordenador e gerente.';
-    }
-
-    return null;
-  }
-
   private filterHierarchyOptionsByParent(
     options: HierarchyOption[],
     parentKey: 'gestorId' | 'managerId',
@@ -788,6 +753,47 @@ export class ControleFuncionariosComponent implements OnInit {
   private setFormError(message: string): void {
     this.formErrorMessage = message;
     setTimeout(() => this.employeeModalBody?.nativeElement.scrollTo({ top: 0, behavior: 'smooth' }));
+  }
+
+  private getEmployeeSearchValues(row: EmployeeControlRow): unknown[] {
+    const extendedRow = row as EmployeeControlRow & {
+      cpf?: string | null;
+      cpfCnpj?: string | null;
+      document?: string | null;
+      cellphone?: string | null;
+      phone?: string | null;
+      telefone?: string | null;
+      managerName?: string | null;
+      coordenatorName?: string | null;
+      coordinatorName?: string | null;
+    };
+
+    return [
+      row.name,
+      extendedRow.cpf,
+      extendedRow.cpfCnpj,
+      extendedRow.document,
+      row.cargo,
+      row.gerente,
+      row.coordenador,
+      extendedRow.managerName,
+      extendedRow.coordenatorName,
+      extendedRow.coordinatorName,
+      extendedRow.cellphone,
+      extendedRow.phone,
+      extendedRow.telefone,
+      row.email,
+      row.branch,
+      row.employmentTypeLabel,
+    ];
+  }
+
+  private normalizeSearchText(value: unknown): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLocaleLowerCase('pt-BR');
   }
 
   private applyManagerFromSelectedCoordinator(): void {
@@ -1181,13 +1187,19 @@ export class ControleFuncionariosComponent implements OnInit {
     }
 
     const email = payload.email?.trim().toLowerCase();
-    if (!email) {
-      return throwError(() => new Error('Nao foi possivel identificar o usuario criado.'));
-    }
+    const name = payload.name?.trim().toLowerCase();
 
     return this.adminAccessService.listUsersByStatus('all').pipe(
       map((users) => {
-        const created = (users ?? []).find((user) => user.email?.trim().toLowerCase() === email);
+        const created = (users ?? []).find((user) => {
+          const userEmail = user.email?.trim().toLowerCase();
+          const userName = user.name?.trim().toLowerCase();
+
+          return email
+            ? userEmail === email
+            : !!name && userName === name;
+        });
+
         if (!created?.id) {
           throw new Error('Nao foi possivel localizar o usuario criado para salvar os dados admissionais.');
         }
