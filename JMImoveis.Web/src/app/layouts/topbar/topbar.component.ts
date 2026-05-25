@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, Inject, ViewChild } from '@angular/core';
+import { Component, Output, EventEmitter, Inject, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { EventService } from 'src/app/core/services/event.service';
 import { LanguageService } from 'src/app/core/services/language.service';
@@ -12,7 +12,17 @@ import { RootReducerState } from 'src/app/store';
 import { Store } from '@ngrx/store';
 import { changeMode } from 'src/app/store/layouts/layout-action';
 import { getLayoutmode } from 'src/app/store/layouts/layout-selector';
-import { TokenStorageService } from 'src/app/core/services/token-storage.service';
+import { SessionService } from 'src/app/core/session/session.service';
+import { MENU } from '../sidebar/menu';
+import { MenuItem } from '../sidebar/menu.model';
+
+interface GlobalSearchItem {
+  label: string;
+  link: string;
+  path: string;
+  icon?: string;
+  searchableText: string;
+}
 
 @Component({
   selector: 'app-topbar',
@@ -29,6 +39,12 @@ export class TopbarComponent {
   countryName: any;
   cookieValue: any;
   userData: any;
+  loggedUserName = 'Usu\u00e1rio logado';
+  loggedUserEmail = '';
+  loggedUserProfile = '';
+  globalSearchTerm = '';
+  globalSearchResults: GlobalSearchItem[] = [];
+  isGlobalSearchOpen = false;
   cartData: any;
 
   element: any;
@@ -48,10 +64,13 @@ export class TopbarComponent {
   @Output() mobileMenuButtonClicked = new EventEmitter();
   @ViewChild('removeNotificationModal', { static: false }) removeNotificationModal?: ModalDirective;
   @ViewChild('removeCartModal', { static: false }) removeCartModal?: ModalDirective;
+  @ViewChild('globalSearchRoot', { static: false }) globalSearchRoot?: ElementRef<HTMLElement>;
   deleteid: any;
   totalNotify: number = 0;
   newNotify: number = 0;
   readNotify: number = 0;
+  private readonly maxGlobalSearchResults = 8;
+  private globalSearchItems: GlobalSearchItem[] = [];
 
   constructor(@Inject(DOCUMENT) private document: any,
     private eventService: EventService,
@@ -60,11 +79,16 @@ export class TopbarComponent {
     private router: Router,
     public _cookiesService: CookieService,
     public store: Store<RootReducerState>,
-    private TokenStorageService: TokenStorageService) { }
+    private sessionService: SessionService) { }
 
   ngOnInit(): void {
     this.element = document.documentElement;
-    this.userData = this.TokenStorageService.getUser();
+    this.globalSearchItems = this.buildGlobalSearchItems();
+    this.updateLoggedUserDisplay(this.sessionService.getCurrentUser());
+    this.authService.getUser(true).subscribe({
+      next: (user) => this.updateLoggedUserDisplay(user),
+      error: () => this.updateLoggedUserDisplay(this.sessionService.getCurrentUser()),
+    });
     this.cartData = cartList
     this.cartData.map((x: any) => {
       x['total'] = (x['qty'] * x['price']).toFixed(2)
@@ -96,6 +120,177 @@ export class TopbarComponent {
         this.readNotify = element.items.length
       }
     });
+  }
+
+  private updateLoggedUserDisplay(user: any): void {
+    const tokenPayload = this.decodeTokenPayload(this.sessionService.getToken());
+    const source = {
+      ...(tokenPayload ?? {}),
+      ...(user ?? {}),
+    };
+
+    this.userData = source;
+    this.loggedUserName = this.firstNonEmpty(
+      source?.nome,
+      source?.name,
+      source?.Name,
+      source?.username,
+      source?.firstName && source?.lastName ? `${source.firstName} ${source.lastName}` : source?.firstName,
+      source?.email,
+      source?.Email
+    ) ?? 'Usu\u00e1rio logado';
+    this.loggedUserEmail = this.firstNonEmpty(source?.email, source?.Email) ?? '';
+    this.loggedUserProfile = this.firstNonEmpty(
+      source?.perfil,
+      source?.profile,
+      source?.role,
+      source?.cargo
+    ) ?? '';
+  }
+
+  private firstNonEmpty(...values: unknown[]): string | null {
+    for (const value of values) {
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+
+    return null;
+  }
+
+  private decodeTokenPayload(token: string | null): any | null {
+    if (!token) {
+      return null;
+    }
+
+    const normalizedToken = token.replace(/^Bearer\s+/i, '').trim();
+    const payload = normalizedToken.split('.')[1];
+    if (!payload) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(atob(this.toBase64(payload)));
+    } catch {
+      return null;
+    }
+  }
+
+  private toBase64(value: string): string {
+    const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+    const padding = base64.length % 4;
+    return padding ? base64 + '='.repeat(4 - padding) : base64;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as Node | null;
+    const searchRoot = this.globalSearchRoot?.nativeElement;
+    if (target && searchRoot && !searchRoot.contains(target)) {
+      this.isGlobalSearchOpen = false;
+    }
+  }
+
+  onGlobalSearchInput(value: string): void {
+    this.globalSearchTerm = value;
+    this.updateGlobalSearchResults();
+  }
+
+  onGlobalSearchFocus(): void {
+    if (this.globalSearchTerm.trim()) {
+      this.updateGlobalSearchResults();
+    }
+  }
+
+  onGlobalSearchKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (this.globalSearchResults.length) {
+        this.navigateToGlobalSearchResult(this.globalSearchResults[0]);
+      }
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.isGlobalSearchOpen = false;
+    }
+  }
+
+  navigateToGlobalSearchResult(item: GlobalSearchItem, event?: Event): void {
+    event?.preventDefault();
+    this.router.navigateByUrl(item.link);
+    this.clearGlobalSearch();
+  }
+
+  clearGlobalSearch(): void {
+    this.globalSearchTerm = '';
+    this.globalSearchResults = [];
+    this.isGlobalSearchOpen = false;
+  }
+
+  private updateGlobalSearchResults(): void {
+    const term = this.normalizeSearchText(this.globalSearchTerm);
+
+    if (!term) {
+      this.globalSearchResults = [];
+      this.isGlobalSearchOpen = false;
+      return;
+    }
+
+    this.globalSearchResults = this.globalSearchItems
+      .filter((item) => item.searchableText.includes(term))
+      .slice(0, this.maxGlobalSearchResults);
+    this.isGlobalSearchOpen = true;
+  }
+
+  private buildGlobalSearchItems(): GlobalSearchItem[] {
+    const results: GlobalSearchItem[] = [];
+
+    const walk = (items: MenuItem[], trail: string[] = [], inheritedIcon?: string): void => {
+      for (const item of items || []) {
+        const label = this.safeText(item.label);
+        const icon = item.icon || inheritedIcon;
+
+        if (item.isTitle) {
+          walk(item.subItems || [], trail, icon);
+          continue;
+        }
+
+        const nextTrail = label ? [...trail, label] : trail;
+
+        if (item.link && !item.disabled) {
+          const path = trail.join(' / ');
+          const link = item.link.startsWith('/') ? item.link : `/${item.link}`;
+          results.push({
+            label,
+            link,
+            path,
+            icon,
+            searchableText: this.normalizeSearchText([label, path, link].join(' ')),
+          });
+        }
+
+        if (item.subItems?.length) {
+          walk(item.subItems, nextTrail, icon);
+        }
+      }
+    };
+
+    walk(MENU);
+    return results;
+  }
+
+  private safeText(value: unknown): string {
+    return typeof value === 'string' ? value.trim() : '';
+  }
+
+  private normalizeSearchText(value: string): string {
+    return (value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 
   windowScroll() {
@@ -235,56 +430,6 @@ export class TopbarComponent {
         this.document.msExitFullscreen();
       }
     }
-  }
-
-  // Search Topbar
-  Search() {
-    var searchOptions = document.getElementById("search-close-options") as HTMLAreaElement;
-    var dropdown = document.getElementById("search-dropdown") as HTMLAreaElement;
-    var input: any, filter: any, ul: any, li: any, a: any | undefined, i: any, txtValue: any;
-    input = document.getElementById("search-options") as HTMLAreaElement;
-    filter = input.value.toUpperCase();
-    var inputLength = filter.length;
-
-    if (inputLength > 0) {
-      dropdown.classList.add("show");
-      searchOptions.classList.remove("d-none");
-      var inputVal = input.value.toUpperCase();
-      var notifyItem = document.getElementsByClassName("notify-item");
-
-      Array.from(notifyItem).forEach(function (element: any) {
-        var notifiTxt = ''
-        if (element.querySelector("h6")) {
-          var spantext = element.getElementsByTagName("span")[0].innerText.toLowerCase()
-          var name = element.querySelector("h6").innerText.toLowerCase()
-          if (name.includes(inputVal)) {
-            notifiTxt = name
-          } else {
-            notifiTxt = spantext
-          }
-        } else if (element.getElementsByTagName("span")) {
-          notifiTxt = element.getElementsByTagName("span")[0].innerText.toLowerCase()
-        }
-        if (notifiTxt)
-          element.style.display = notifiTxt.includes(inputVal) ? "block" : "none";
-
-      });
-    } else {
-      dropdown.classList.remove("show");
-      searchOptions.classList.add("d-none");
-    }
-  }
-
-  /**
-   * Search Close Btn
-   */
-  closeBtn() {
-    var searchOptions = document.getElementById("search-close-options") as HTMLAreaElement;
-    var dropdown = document.getElementById("search-dropdown") as HTMLAreaElement;
-    var searchInputReponsive = document.getElementById("search-options") as HTMLInputElement;
-    dropdown.classList.remove("show");
-    searchOptions.classList.add("d-none");
-    searchInputReponsive.value = "";
   }
 
   // Remove Notification

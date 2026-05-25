@@ -31,86 +31,52 @@
                     </span>
                 </button>
 
-                <form class="app-search d-none d-md-inline-flex">
-                    <div class="position-relative">
-                        
-                        <input type="text" class="form-control" placeholder="Procurar..." autocomplete="off" id="search-options" value="" (keyup)="Search()">
+                <form #globalSearchRoot class="app-search global-search d-none d-md-inline-flex" role="search" (submit)="$event.preventDefault()">
+                    <div class="position-relative global-search__box">
+                        <input
+                            type="text"
+                            class="form-control"
+                            placeholder="Procurar..."
+                            autocomplete="off"
+                            id="search-options"
+                            aria-label="Buscar módulos e submódulos"
+                            [value]="globalSearchTerm"
+                            (input)="onGlobalSearchInput($any($event.target).value)"
+                            (focus)="onGlobalSearchFocus()"
+                            (keydown)="onGlobalSearchKeydown($event)">
                         <span class="mdi mdi-magnify search-widget-icon"></span>
-                        <span class="mdi mdi-close-circle search-widget-icon search-widget-icon-close d-none" id="search-close-options" (click)="closeBtn()"></span>
+                        <button
+                            *ngIf="globalSearchTerm"
+                            type="button"
+                            class="global-search__clear"
+                            aria-label="Limpar busca global"
+                            (click)="clearGlobalSearch()">
+                            <span class="mdi mdi-close-circle"></span>
+                        </button>
                     </div>
-                    <div class="dropdown-menu dropdown-menu-lg" id="search-dropdown">
+
+                    <div class="dropdown-menu dropdown-menu-lg global-search__dropdown show" *ngIf="isGlobalSearchOpen">
                         <ngx-simplebar style="max-height: 320px;">
-                            <!-- item-->
                             <div class="dropdown-header">
-                                <h6 class="text-overflow text-muted mb-0 text-uppercase">CLIENTES</h6>
+                                <h6 class="text-overflow text-muted mb-0 text-uppercase">Módulos</h6>
                             </div>
 
-                            <div class="dropdown-item bg-transparent text-wrap">
-                                <a routerLink="/" class="btn btn-subtle-secondary btn-sm btn-rounded me-1">CLIENTE XPTO <i class="mdi mdi-magnify"></i></a>
-                            </div>
-                            <!-- item-->
-                            <div class="dropdown-header mt-2">
-                                <h6 class="text-overflow text-muted mb-1 text-uppercase">Pages</h6>
-                            </div>
+                            <button
+                                *ngFor="let item of globalSearchResults"
+                                type="button"
+                                class="dropdown-item notify-item global-search__item"
+                                (click)="navigateToGlobalSearchResult(item, $event)">
+                                <i class="{{ item.icon || 'ri-search-line' }} align-middle fs-18 text-muted me-2"></i>
+                                <span class="global-search__item-text">
+                                    <span class="global-search__item-label">{{ item.label }}</span>
+                                    <span class="global-search__item-path" *ngIf="item.path">{{ item.path }}</span>
+                                </span>
+                            </button>
 
-                            <!-- item-->
-                            <a href="javascript:void(0);" class="dropdown-item notify-item">
-                                <i class="ri-bubble-chart-line align-middle fs-18 text-muted me-2"></i>
-                                <span>Analytics Dashboard</span>
-                            </a>
-
-                            <!-- item-->
-                            <a href="javascript:void(0);" class="dropdown-item notify-item">
-                                <i class="ri-lifebuoy-line align-middle fs-18 text-muted me-2"></i>
-                                <span>Help Center</span>
-                            </a>
-
-                            <!-- item-->
-                            <a href="javascript:void(0);" class="dropdown-item notify-item">
-                                <i class="ri-user-settings-line align-middle fs-18 text-muted me-2"></i>
-                                <span>My account settings</span>
-                            </a>
-
-                            <!-- item-->
-                            <div class="dropdown-header mt-2">
-                                <h6 class="text-overflow text-muted mb-2 text-uppercase">Members</h6>
-                            </div>
-
-                            <div class="notification-list">
-                                <!-- item -->
-                                <a href="javascript:void(0);" class="dropdown-item notify-item py-2">
-                                    <div class="d-flex">
-                                        <img src="assets/images/users/48/avatar-2.jpg" class="me-3 rounded-circle avatar-xs" alt="user-pic">
-                                        <div class="flex-1">
-                                            <h6 class="m-0">Angela Bernier</h6>
-                                            <span class="fs-11 mb-0 text-muted">Manager</span>
-                                        </div>
-                                    </div>
-                                </a>
-                                <!-- item -->
-                                <a href="javascript:void(0);" class="dropdown-item notify-item py-2">
-                                    <div class="d-flex">
-                                        <img src="assets/images/users/avatar-3.jpg" class="me-3 rounded-circle avatar-xs" alt="user-pic">
-                                        <div class="flex-1">
-                                            <h6 class="m-0">David Grasso</h6>
-                                            <span class="fs-11 mb-0 text-muted">Web Designer</span>
-                                        </div>
-                                    </div>
-                                </a>
-                                <!-- item -->
-                                <a href="javascript:void(0);" class="dropdown-item notify-item py-2">
-                                    <div class="d-flex">
-                                        <img src="assets/images/users/avatar-5.jpg" class="me-3 rounded-circle avatar-xs" alt="user-pic">
-                                        <div class="flex-1">
-                                            <h6 class="m-0">Mike Bunch</h6>
-                                            <span class="fs-11 mb-0 text-muted">React Developer</span>
-                                        </div>
-                                    </div>
-                                </a>
+                            <div *ngIf="!globalSearchResults.length" class="dropdown-item text-muted global-search__empty">
+                                Nenhum módulo encontrado.
                             </div>
                         </ngx-simplebar>
-
-                      
                     </div>
                 </form>
             </div>
@@ -143,8 +109,8 @@
                         <span class="d-flex align-items-center">
                             <img class="rounded-circle header-profile-user" src="https://img.freepik.com/vetores-premium/ilustracao-plana-vetorial-em-escala-de-cinza-avatar-perfil-de-usuario-icone-de-pessoa-imagem-de-perfil-de-silhueta-neutra-de-genero-adequado-para-perfis-de-midia-social-icones-protetores-de-tela-e-como-um-modelo-x9xa_719432-2210.jpg?semt=ais_hybrid&w=740&q=80" alt="Header Avatar">
                             <span class="text-start ms-xl-2">
-                                <span class="d-none d-xl-inline-block ms-1 fw-medium text-white user-name-text">Usuário Conectado</span>
-                                <span class="d-none d-xl-block ms-1 fs-sm user-name-sub-text">Admin</span>
+                                <span class="d-none d-xl-inline-block ms-1 fw-medium text-white user-name-text">{{ loggedUserName }}</span>
+                                <span class="d-none d-xl-block ms-1 fs-sm user-name-sub-text">{{ loggedUserEmail || loggedUserProfile }}</span>
                             </span>
                         </span>
                     </button>
