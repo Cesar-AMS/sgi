@@ -37,19 +37,19 @@ namespace JMImoveisAPI.Controllers
         [HttpPost("schedule")]
         public async Task<IActionResult> Create([FromBody] LeadScheduleRequest request)
         {
-            var (isValid, errorMessage) = await _leadService.CreateScheduleAsync(request, 0);
+            var (isValid, errorMessage, id, leadId) = await _leadService.CreateScheduleAsync(request, 0);
             if (!isValid) return BadRequest(errorMessage);
 
-            return Ok();
+            return Ok(new { id, leadId });
         }
 
         [HttpPost("{leadId}/schedule/v2")]
         public async Task<IActionResult> CreateV2([FromBody] LeadScheduleRequest request, int leadId)
         {
-            var (isValid, errorMessage) = await _leadService.CreateScheduleAsync(request, leadId);
+            var (isValid, errorMessage, id, effectiveLeadId) = await _leadService.CreateScheduleAsync(request, leadId);
             if (!isValid) return BadRequest(errorMessage);
 
-            return Ok();
+            return Ok(new { id, leadId = effectiveLeadId });
         }
 
         [HttpGet("schedule")]

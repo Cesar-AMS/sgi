@@ -440,6 +440,21 @@
         </div>
 
         <div class="mb-3">
+          <label class="form-label" for="visitLeadId">Lead existente (opcional)</label>
+          <input
+            id="visitLeadId"
+            type="number"
+            min="1"
+            class="form-control"
+            placeholder="Informe o ID do Lead se já existir"
+            formControlName="leadId"
+          />
+          <small class="text-muted">
+            Se ficar vazio, o sistema cria um Lead mínimo e libera o Painel do Cliente automaticamente.
+          </small>
+        </div>
+
+        <div class="mb-3">
           <label class="form-label" for="visitClientPhone">Telefone</label>
           <input
             id="visitClientPhone"

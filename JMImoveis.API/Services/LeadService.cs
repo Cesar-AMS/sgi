@@ -145,25 +145,25 @@ namespace JMImoveisAPI.Services
             return _leadRepository.CreateSchedule(request);
         }
 
-        public async Task<(bool IsValid, string? ErrorMessage)> CreateScheduleAsync(LeadScheduleRequest request, int? leadId)
+        public async Task<(bool IsValid, string? ErrorMessage, int? Id, int? LeadId)> CreateScheduleAsync(LeadScheduleRequest request, int? leadId)
         {
             if (request == null)
-                return (false, "Body inválido.");
+                return (false, "Body inválido.", null, null);
 
             if (string.IsNullOrWhiteSpace(request.NomeCliente))
-                return (false, "nomeCliente é obrigatório.");
+                return (false, "nomeCliente é obrigatório.", null, null);
 
             if (string.IsNullOrWhiteSpace(request.Status))
-                return (false, "status é obrigatório.");
+                return (false, "status é obrigatório.", null, null);
 
             if (request.VendedorId <= 0)
-                return (false, "vendedorId inválido.");
+                return (false, "vendedorId inválido.", null, null);
 
             request.TipoAgenda = NormalizeTipoAgenda(request.TipoAgenda);
 
             var effectiveLeadId = await EnsureScheduleLeadIdAsync(request, leadId);
-            await _leadRepository.InsertAsync(request, effectiveLeadId);
-            return (true, null);
+            var scheduleId = await _leadRepository.InsertAsync(request, effectiveLeadId);
+            return (true, null, scheduleId, effectiveLeadId);
         }
 
         public Task<IEnumerable<VisitaDto>> ListScheduleAsync(

@@ -4,6 +4,11 @@ import { Observable } from 'rxjs';
 import { Visita } from 'src/app/models/visita';
 import { BACKEND_API_URL } from './backend-api-url';
 
+export interface CreateScheduleResponse {
+  id: number;
+  leadId: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class VisitasApiService {
   private readonly baseUrl = `${BACKEND_API_URL}api/`;
@@ -32,9 +37,9 @@ export class VisitasApiService {
     return this.http.get<Visita[]>(`${this.baseUrl}Leads/schedule`, { params });
   }
 
-  create(payload: Omit<Visita, 'id'>): Observable<Visita> {
+  create(payload: Omit<Visita, 'id'>): Observable<CreateScheduleResponse> {
     
-    return this.http.post<Visita>(`${this.baseUrl}Leads/schedule`, payload);
+    return this.http.post<CreateScheduleResponse>(`${this.baseUrl}Leads/schedule`, payload);
   }
 
   update(id: number, patch: Partial<Visita>): Observable<Visita> {

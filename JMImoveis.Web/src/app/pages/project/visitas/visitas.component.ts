@@ -14,6 +14,7 @@ import { exportToExcel } from 'src/app/shared/utils/excel-export';
 type VisitasScreenMode = 'agendamento' | 'visitas';
 type TipoAgenda = 'contato' | 'visita';
 type SchedulePayload = {
+  leadId?: number | null;
   nomeCliente: string;
   telefone?: string | null;
   dataHoraISO: string;
@@ -359,6 +360,7 @@ private isoToDatetimeLocal(iso: string): string {
   buildForm(): void {
     this.createForm = this.fb.group({
       nomeCliente: ['', Validators.required],
+      leadId: [''],
       telefone: [''],
       dataHora: ['', Validators.required], // datetime-local
       vendedorId: [''],
@@ -465,6 +467,7 @@ private isoToDatetimeLocal(iso: string): string {
 
   this.createForm.reset({
     nomeCliente: '',
+    leadId: '',
     telefone: '',
     dataHora: '',
     vendedorId: '',
@@ -485,6 +488,7 @@ openEditModal(v: Visita): void {
 
   this.createForm.reset({
     nomeCliente: v.nomeCliente,
+    leadId: v.leadId ?? '',
     telefone: v.telefone ?? '',
     dataHora: dtLocal,
     vendedorId: v.vendedorId ?? '',
@@ -748,6 +752,7 @@ private buildSchedulePayload(form: any): SchedulePayload {
     : this.normalizeTipoAgendaForForm(form.tipoAgenda);
 
   const payload: SchedulePayload = {
+    leadId: form.leadId ? Number(form.leadId) : null,
     nomeCliente: String(form.nomeCliente || '').trim(),
     telefone: form.telefone ? String(form.telefone).trim() : null,
     dataHoraISO: new Date(form.dataHora).toISOString(),
