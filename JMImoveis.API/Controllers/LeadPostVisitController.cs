@@ -9,8 +9,8 @@ namespace JMImoveisAPI.Controllers
     [Route("api/[controller]")]
     public class LeadPostVisitController : ControllerBase
     {
-        private const string ViewLeadPermission = "atendimento.leads.visualizar";
-        private const string EditLeadPermission = "atendimento.leads.editar";
+        private const string ViewPostVisitPermission = "atendimento.posvisita.visualizar";
+        private const string EditPostVisitPermission = "atendimento.posvisita.editar";
 
         private readonly ILeadPostVisitService _service;
         private readonly IPermissionService _permissionService;
@@ -31,7 +31,7 @@ namespace JMImoveisAPI.Controllers
             [FromQuery] DateTime? followUpFrom,
             [FromQuery] DateTime? followUpTo)
         {
-            var authorizationResult = await AuthorizeCurrentUserAsync(ViewLeadPermission, "visualizar pos-visita.");
+            var authorizationResult = await AuthorizeCurrentUserAsync(ViewPostVisitPermission, "visualizar pos-visita.");
             if (authorizationResult != null)
             {
                 return authorizationResult;
@@ -50,7 +50,7 @@ namespace JMImoveisAPI.Controllers
         [HttpGet("lead/{leadId:int}")]
         public async Task<IActionResult> GetByLeadId([FromRoute] int leadId)
         {
-            var authorizationResult = await AuthorizeCurrentUserAsync(ViewLeadPermission, "visualizar pos-visita.");
+            var authorizationResult = await AuthorizeCurrentUserAsync(ViewPostVisitPermission, "visualizar pos-visita.");
             if (authorizationResult != null)
             {
                 return authorizationResult;
@@ -78,7 +78,7 @@ namespace JMImoveisAPI.Controllers
             [FromRoute] int leadId,
             [FromBody] LeadPostVisitRequest request)
         {
-            var authorizationResult = await AuthorizeCurrentUserAsync(EditLeadPermission, "editar pos-visita.");
+            var authorizationResult = await AuthorizeCurrentUserAsync(EditPostVisitPermission, "editar pos-visita.");
             if (authorizationResult != null)
             {
                 return authorizationResult;
@@ -103,7 +103,7 @@ namespace JMImoveisAPI.Controllers
             [FromRoute] int leadId,
             [FromBody] LeadPostVisitRequest request)
         {
-            var authorizationResult = await AuthorizeCurrentUserAsync(EditLeadPermission, "editar pos-visita.");
+            var authorizationResult = await AuthorizeCurrentUserAsync(EditPostVisitPermission, "editar pos-visita.");
             if (authorizationResult != null)
             {
                 return authorizationResult;
@@ -128,7 +128,7 @@ namespace JMImoveisAPI.Controllers
             [FromRoute] long id,
             [FromBody] UpdateLeadPostVisitStatusRequest request)
         {
-            var authorizationResult = await AuthorizeCurrentUserAsync(EditLeadPermission, "editar pos-visita.");
+            var authorizationResult = await AuthorizeCurrentUserAsync(EditPostVisitPermission, "editar pos-visita.");
             if (authorizationResult != null)
             {
                 return authorizationResult;
