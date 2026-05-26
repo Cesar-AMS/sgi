@@ -1,4 +1,4 @@
-﻿using JMImoveisAPI.Entities;
+using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +12,9 @@ namespace JMImoveisAPI.Controllers
     {
         private const string ViewPayablesPermission = "financeiro.contas_pagar.visualizar";
         private const string CreatePayablesPermission = "financeiro.contas_pagar.criar";
+        private const string EditPayablesPermission = "financeiro.contas_pagar.editar";
         private const string PayPayablesPermission = "financeiro.contas_pagar.pagar";
+        private const string CancelPayablesPermission = "financeiro.contas_pagar.cancelar";
 
         private readonly IAccountsPayableService _service;
         private readonly IPermissionService _permissionService;
@@ -24,8 +26,6 @@ namespace JMImoveisAPI.Controllers
             _service = service;
             _permissionService = permissionService;
         }
-
-
 
         [HttpGet]
         public async Task<IActionResult> GetPaged([FromQuery] AccountsPayableQuery q)
@@ -53,6 +53,19 @@ namespace JMImoveisAPI.Controllers
             return Ok(s);
         }
 
+        [HttpGet("{id:long}")]
+        public async Task<IActionResult> GetById(long id)
+        {
+            var authorizationResult = await AuthorizeCurrentUserAsync(ViewPayablesPermission, "visualizar contas a pagar.");
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            var item = await _service.GetByIdAsync(id);
+            return item == null ? NotFound() : Ok(item);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateAccountsPayableRequest req)
         {
@@ -73,6 +86,34 @@ namespace JMImoveisAPI.Controllers
             }
         }
 
+        [HttpPut("{id:long}")]
+        public async Task<IActionResult> Update(long id, [FromBody] UpdateAccountsPayableRequest req)
+        {
+            var authorizationResult = await AuthorizeCurrentUserAsync(EditPayablesPermission, "editar contas a pagar.");
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            try
+            {
+                await _service.UpdateAsync(id, req);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPost("{id:long}/settle")]
         public async Task<IActionResult> Settle(long id, [FromBody] SettleAccountsPayableRequest req)
         {
@@ -87,7 +128,39 @@ namespace JMImoveisAPI.Controllers
                 await _service.SettleAsync(id, req);
                 return Ok();
             }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
             catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPatch("{id:long}/cancel")]
+        public async Task<IActionResult> Cancel(long id, [FromBody] CancelAccountsPayableRequest req)
+        {
+            var authorizationResult = await AuthorizeCurrentUserAsync(CancelPayablesPermission, "cancelar contas a pagar.");
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            try
+            {
+                await _service.CancelAsync(id, req ?? new CancelAccountsPayableRequest());
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
             {
                 return BadRequest(ex.Message);
             }

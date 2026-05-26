@@ -43,12 +43,35 @@ namespace JMImoveisAPI.Entities
         public DateTime? PayDate { get; set; }
 
         public string Description { get; set; } = "";
-        public string Status { get; set; } = "WAITING"; // WAITING | PAID
+        public string Status { get; set; } = "WAITING"; // WAITING | PAID | CANCELLED | PROJECAO
         public string Category { get; set; } = "";
 
         public decimal Amount { get; set; }
         public decimal PendingAmount { get; set; }
 
+        public string? Observations { get; set; }
+    }
+
+    public class UpdateAccountsPayableRequest
+    {
+        public long? SaleId { get; set; }
+        public long? UserId { get; set; }
+
+        public DateTime? CreateDate { get; set; }
+        public DateTime? DueDate { get; set; }
+
+        public string Description { get; set; } = "";
+        public string Status { get; set; } = "WAITING"; // WAITING | PROJECAO
+        public string Category { get; set; } = "";
+
+        public decimal Amount { get; set; }
+        public decimal PendingAmount { get; set; }
+
+        public string? Observations { get; set; }
+    }
+
+    public class CancelAccountsPayableRequest
+    {
         public string? Observations { get; set; }
     }
 
