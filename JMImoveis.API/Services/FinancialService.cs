@@ -115,6 +115,9 @@ namespace JMImoveisAPI.Services
                     AND Status <> 'CANCELLED'",
                 new { SaleId = saleIdValue }, tx);
 
+            // Comissoes oficiais do piloto financeiro sao materializadas em
+            // jmoficial.accounts_payable usando o padrao de categoria COMISSAO_*.
+            // A baixa/pagamento deve ocorrer pelo fluxo oficial de Contas a Pagar.
             if (existingReceivables > 0 && existingCommissions > 0)
             {
                 tx.Commit();
@@ -200,6 +203,11 @@ namespace JMImoveisAPI.Services
                     Observations = string.Empty
                 });
             }
+
+            // Comissoes abaixo sao lancamentos financeiros oficiais em accounts_payable.
+            // EnterpriseCommissionRules define parametros por empreendimento; nao e lancamento.
+            // ProposalCommissionCalculator gera simulacao/resumo da proposta; nao efetua pagamento.
+            // O padrao oficial de categoria para comissoes e COMISSAO_*.
 
             // 2) Comissão Corretor
             if (sale.RealtorComission > 0 && sale.RealtorId > 0)
@@ -392,6 +400,8 @@ namespace JMImoveisAPI.Services
             if (receivables.Any())
                 await conn.ExecuteAsync(insertReceivableSql, receivables, tx);
 
+            // Inclui repasses e comissoes oficiais em accounts_payable.
+            // Itens COMISSAO_* devem ser pagos posteriormente via /api/accounts-payable/{id}/settle.
             if (payables.Any())
                 await conn.ExecuteAsync(insertPayableSql, payables, tx);
 
