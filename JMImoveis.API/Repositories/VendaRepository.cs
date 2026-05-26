@@ -11,6 +11,9 @@ using static Dapper.SqlMapper;
 
 namespace JMImoveisAPI.Repositories
 {
+    // ATENCAO FINANCEIRO: este repository ainda possui dependencias legadas em
+    // receivables/payables. Antes de usa-lo como fonte oficial de relatorios financeiros
+    // do piloto, migrar os pontos envolvidos para accounts_receivable/accounts_payable.
     public class VendaRepository : IVendaRepository
     {
         private readonly DapperContext _context;

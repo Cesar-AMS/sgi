@@ -7,6 +7,8 @@ using System.Globalization;
 
 namespace JMImoveisAPI.Services
 {
+    // LEGADO FINANCEIRO: servico paralelo que grava na base jm.receivables/jm.payables.
+    // Nao expandir para o piloto oficial sem decisao explicita de migracao para accounts_*.
     public class FinanceIntegrationService : IFinanceIntegrationService
     {
         private static DateTime? ParseDateFlexible(string? dt)

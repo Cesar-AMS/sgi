@@ -8,6 +8,10 @@ namespace JMImoveisAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    // LEGADO FINANCEIRO: este controller usa a base paralela receivables/payables.
+    // Para o piloto empresarial, a base oficial e accounts_receivable/accounts_payable.
+    // Preservar por compatibilidade ate uma migracao futura; nao usar como referencia
+    // para novas frentes financeiras.
     public class ReceivablesController : ControllerBase
     {
         private const string ViewReceivablesPermission = "financeiro.contas_receber.visualizar";

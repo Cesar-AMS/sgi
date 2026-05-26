@@ -8,6 +8,9 @@ using System.Data.Common;
 
 namespace JMImoveisAPI.Repositories
 {
+    // LEGADO FINANCEIRO: repository mantido por compatibilidade com receivables/payables.
+    // Novas funcionalidades do piloto devem usar AccountsReceivableRepository e
+    // AccountsPayableRepository, baseados em accounts_receivable/accounts_payable.
     public class ReceivableRepository : IReceivableRepository
     {
         private readonly string _cs;
