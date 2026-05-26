@@ -21,6 +21,7 @@ export const MENU: MenuItem[] = [
       'atendimento.leads.visualizar',
       'atendimento.agendamento.visualizar',
       'atendimento.visitas.visualizar',
+      'atendimento.posvisita.visualizar',
       'atendimento.relatorios.visualizar',
     ],
     subItems: [
@@ -50,7 +51,7 @@ export const MENU: MenuItem[] = [
         label: 'P\u00f3s-Visita',
         link: '/jm/atendimento/pos-visita',
         parentId: 20,
-        permissionKey: 'atendimento.leads.visualizar',
+        permissionKey: 'atendimento.posvisita.visualizar',
       },
       {
         id: 25,

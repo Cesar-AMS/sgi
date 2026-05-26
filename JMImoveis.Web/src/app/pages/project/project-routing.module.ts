@@ -227,7 +227,7 @@ const routes: Routes = [
     path: 'atendimento/pos-visita',
     component: PosVisitaComponent,
     canActivate: [PermissionGuard],
-    data: { permissionKey: 'atendimento.leads.visualizar' },
+    data: { permissionKey: 'atendimento.posvisita.visualizar' },
   },
   {
     path: 'leads/:id',
