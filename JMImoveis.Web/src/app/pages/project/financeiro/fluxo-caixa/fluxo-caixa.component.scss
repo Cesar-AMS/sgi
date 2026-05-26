@@ -28,7 +28,41 @@
   border-color: #bfdbfe;
 }
 
+.summary-card--realized-inflow {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.summary-card--realized-outflow {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.summary-card--realized-balance {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
 .summary-label {
   font-size: 0.875rem;
   color: #6b7280;
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.metric-card span {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.cash-flow-table {
+  min-width: 1280px;
 }

@@ -1,5 +1,5 @@
 <div class="container-fluid py-4">
-  <div class="d-flex justify-content-between align-items-start mb-4">
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
     <div>
       <h2 class="fw-bold mb-1">Fluxo de Caixa</h2>
       <p class="text-muted mb-0">
@@ -8,47 +8,171 @@
     </div>
   </div>
 
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label" for="cash-flow-from">Data inicial</label>
+          <input
+            id="cash-flow-from"
+            type="date"
+            class="form-control"
+            [value]="from"
+            (input)="setFrom($any($event.target).value)"
+          />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="cash-flow-to">Data final</label>
+          <input
+            id="cash-flow-to"
+            type="date"
+            class="form-control"
+            [value]="to"
+            (input)="setTo($any($event.target).value)"
+          />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="cash-flow-group-by">Agrupamento</label>
+          <select
+            id="cash-flow-group-by"
+            class="form-select"
+            [value]="groupBy"
+            (change)="setGroupBy($any($event.target).value)"
+          >
+            <option value="day">Diário</option>
+            <option value="month">Mensal</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-grid">
+          <button class="btn btn-primary" type="button" [disabled]="loading" (click)="loadCashFlow()">
+            {{ loading ? 'Carregando...' : 'Buscar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+    {{ errorMessage }}
+  </div>
+
   <div class="row g-3 mb-4">
     <div class="col-md-4">
       <div class="summary-card summary-card--inflow">
-        <span class="summary-label">Entradas</span>
-        <strong>{{ totalEntradas | currency: 'BRL' }}</strong>
+        <span class="summary-label">Entradas previstas</span>
+        <strong>{{ summary.expectedInflow | currency: 'BRL' }}</strong>
       </div>
     </div>
     <div class="col-md-4">
       <div class="summary-card summary-card--outflow">
-        <span class="summary-label">Saídas</span>
-        <strong>{{ totalSaidas | currency: 'BRL' }}</strong>
+        <span class="summary-label">Saídas previstas</span>
+        <strong>{{ summary.expectedOutflow | currency: 'BRL' }}</strong>
       </div>
     </div>
     <div class="col-md-4">
       <div class="summary-card summary-card--balance">
-        <span class="summary-label">Saldo do Período</span>
-        <strong>{{ saldoProjetado | currency: 'BRL' }}</strong>
+        <span class="summary-label">Saldo previsto</span>
+        <strong>{{ summary.expectedBalance | currency: 'BRL' }}</strong>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="summary-card summary-card--realized-inflow">
+        <span class="summary-label">Entradas realizadas</span>
+        <strong>{{ summary.realizedInflow | currency: 'BRL' }}</strong>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="summary-card summary-card--realized-outflow">
+        <span class="summary-label">Saídas realizadas</span>
+        <strong>{{ summary.realizedOutflow | currency: 'BRL' }}</strong>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="summary-card summary-card--realized-balance">
+        <span class="summary-label">Saldo realizado</span>
+        <strong>{{ summary.realizedBalance | currency: 'BRL' }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="metric-card">
+        <span>Entradas em aberto</span>
+        <strong>{{ summary.openInflow | currency: 'BRL' }}</strong>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card">
+        <span>Saídas em aberto</span>
+        <strong>{{ summary.openOutflow | currency: 'BRL' }}</strong>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card">
+        <span>Projeção entradas</span>
+        <strong>{{ summary.projectionInflow | currency: 'BRL' }}</strong>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card">
+        <span>Projeção saídas</span>
+        <strong>{{ summary.projectionOutflow | currency: 'BRL' }}</strong>
       </div>
     </div>
   </div>
 
   <div class="card border-0 shadow-sm">
     <div class="card-body">
-      <div class="table-responsive">
-        <table class="table align-middle mb-0">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="mb-0">Períodos</h5>
+        <span class="text-muted small">
+          {{ summary.receivableCount }} entradas · {{ summary.payableCount }} saídas
+        </span>
+      </div>
+
+      <div *ngIf="loading" class="text-muted py-4 text-center">
+        Carregando fluxo de caixa...
+      </div>
+
+      <div *ngIf="!loading && !periods.length" class="text-muted py-4 text-center">
+        Nenhum movimento encontrado para o período.
+      </div>
+
+      <div *ngIf="!loading && periods.length" class="table-responsive">
+        <table class="table align-middle mb-0 cash-flow-table">
           <thead class="table-light">
             <tr>
               <th>Período</th>
-              <th>Entradas</th>
-              <th>Saídas</th>
-              <th>Saldo</th>
+              <th>Entradas previstas</th>
+              <th>Saídas previstas</th>
+              <th>Saldo previsto</th>
+              <th>Entradas realizadas</th>
+              <th>Saídas realizadas</th>
+              <th>Saldo realizado</th>
+              <th>Em aberto entradas</th>
+              <th>Em aberto saídas</th>
+              <th>Projeção entradas</th>
+              <th>Projeção saídas</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let row of rows">
-              <td class="fw-semibold">{{ row.period }}</td>
-              <td>{{ row.entradas | currency: 'BRL' }}</td>
-              <td>{{ row.saidas | currency: 'BRL' }}</td>
-              <td [class.text-success]="row.saldo >= 0" [class.text-danger]="row.saldo < 0">
-                {{ row.saldo | currency: 'BRL' }}
+            <tr *ngFor="let row of periods">
+              <td class="fw-semibold">{{ formatPeriod(row) }}</td>
+              <td>{{ row.expectedInflow | currency: 'BRL' }}</td>
+              <td>{{ row.expectedOutflow | currency: 'BRL' }}</td>
+              <td [class.text-success]="row.expectedBalance >= 0" [class.text-danger]="row.expectedBalance < 0">
+                {{ row.expectedBalance | currency: 'BRL' }}
               </td>
+              <td>{{ row.realizedInflow | currency: 'BRL' }}</td>
+              <td>{{ row.realizedOutflow | currency: 'BRL' }}</td>
+              <td [class.text-success]="row.realizedBalance >= 0" [class.text-danger]="row.realizedBalance < 0">
+                {{ row.realizedBalance | currency: 'BRL' }}
+              </td>
+              <td>{{ row.openInflow | currency: 'BRL' }}</td>
+              <td>{{ row.openOutflow | currency: 'BRL' }}</td>
+              <td>{{ row.projectionInflow | currency: 'BRL' }}</td>
+              <td>{{ row.projectionOutflow | currency: 'BRL' }}</td>
             </tr>
           </tbody>
         </table>
