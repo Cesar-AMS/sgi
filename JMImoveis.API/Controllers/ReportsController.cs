@@ -2,6 +2,7 @@
 using JMImoveisAPI.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace JMImoveisAPI.Controllers
 {
@@ -9,11 +10,17 @@ namespace JMImoveisAPI.Controllers
     [ApiController]
     public class ReportsController : ControllerBase
     {
-        private readonly IReportsRepository _reportsRepository;
+        private const string ViewFinancialReportsPermission = "financeiro.relatorios.visualizar";
 
-        public ReportsController(IReportsRepository reportsRepository)
+        private readonly IReportsRepository _reportsRepository;
+        private readonly IPermissionService _permissionService;
+
+        public ReportsController(
+            IReportsRepository reportsRepository,
+            IPermissionService permissionService)
         {
             _reportsRepository = reportsRepository;
+            _permissionService = permissionService;
         }
 
         /// <summary>
@@ -24,6 +31,12 @@ namespace JMImoveisAPI.Controllers
         public async Task<ActionResult<IEnumerable<MonthlyBranchSalesReportV3>>> GetMonthlyBranchSales(
             [FromQuery] int? year)
         {
+            var authorizationResult = await AuthorizeCurrentUserAsync(ViewFinancialReportsPermission, "visualizar relatorios financeiros.");
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
             var result = await _reportsRepository.GetMonthlyBranchSalesAsync(year);
             return Ok(result);
         }
@@ -36,6 +49,12 @@ namespace JMImoveisAPI.Controllers
         public async Task<ActionResult<IEnumerable<UserMonthlyPayablesSummaryV3>>> GetUserMonthlyPayablesSummary(
             [FromQuery] int year)
         {
+            var authorizationResult = await AuthorizeCurrentUserAsync(ViewFinancialReportsPermission, "visualizar relatorios financeiros.");
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
             if (year <= 0)
                 return BadRequest("Ano inválido.");
 
@@ -51,6 +70,12 @@ namespace JMImoveisAPI.Controllers
         public async Task<ActionResult<IEnumerable<UserCategoryMonthlyPayablesSummaryV3>>> GetUserCategoryMonthlyPayables(
             [FromQuery] int year)
         {
+            var authorizationResult = await AuthorizeCurrentUserAsync(ViewFinancialReportsPermission, "visualizar relatorios financeiros.");
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
             if (year <= 0)
                 return BadRequest("Ano inválido.");
 
@@ -67,11 +92,49 @@ namespace JMImoveisAPI.Controllers
             long userId,
             [FromQuery] int? year)
         {
+            var authorizationResult = await AuthorizeCurrentUserAsync(ViewFinancialReportsPermission, "visualizar relatorios financeiros.");
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
             if (userId <= 0)
                 return BadRequest("UserId inválido.");
 
             var result = await _reportsRepository.GetUserPayablesDetailsAsync(userId, year);
             return Ok(result);
+        }
+
+        private async Task<ActionResult?> AuthorizeCurrentUserAsync(string permissionKey, string actionDescription)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            try
+            {
+                var hasPermission = await _permissionService.UserHasPermissionAsync(currentUserId.Value, permissionKey);
+                if (!hasPermission)
+                {
+                    return StatusCode(403, new { message = $"Usuario sem permissao para {actionDescription}" });
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao encontrado." });
+            }
+
+            return null;
+        }
+
+        private long? GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return long.TryParse(userIdClaim, out var userId) && userId > 0
+                ? userId
+                : null;
         }
     }
 }
