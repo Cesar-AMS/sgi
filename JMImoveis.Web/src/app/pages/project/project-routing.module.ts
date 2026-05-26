@@ -21,6 +21,7 @@ import { FluxoCaixaComponent } from './financeiro/fluxo-caixa/fluxo-caixa.compon
 import { ProjecaoComponent } from './financeiro/projecao/projecao.component';
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
 import { LeadsComponent } from './leads/leads.component';
+import { PosVisitaComponent } from './pos-visita/pos-visita.component';
 import { ControleFuncionariosComponent } from './rh/controle-funcionarios/controle-funcionarios.component';
 import { ControleFaltasComponent } from './rh/controle-faltas/controle-faltas.component';
 import { ControleUniformeComponent } from './rh/controle-uniforme/controle-uniforme.component';
@@ -219,6 +220,12 @@ const routes: Routes = [
   {
     path: 'atendimento/leads/:id',
     component: LeadDetailsComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.leads.visualizar' },
+  },
+  {
+    path: 'atendimento/pos-visita',
+    component: PosVisitaComponent,
     canActivate: [PermissionGuard],
     data: { permissionKey: 'atendimento.leads.visualizar' },
   },

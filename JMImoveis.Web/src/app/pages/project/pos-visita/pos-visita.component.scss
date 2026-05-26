@@ -1,0 +1,165 @@
+.pos-visita-wrapper {
+  min-height: 240px;
+}
+
+.page-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.record-count {
+  border: 1px solid #d8dee9;
+  border-radius: 8px;
+  color: #3a4759;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.5rem 0.75rem;
+  white-space: nowrap;
+}
+
+.filters-panel,
+.post-visit-panel {
+  background: #ffffff;
+  border: 1px solid #d8dee9;
+  border-radius: 8px;
+}
+
+.filters-panel {
+  padding: 1rem;
+}
+
+.filters-grid {
+  align-items: end;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.search-field {
+  grid-column: span 2;
+}
+
+.filter-field {
+  min-width: 0;
+}
+
+.filter-field .form-label {
+  color: #536173;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.filter-actions {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 150px;
+}
+
+.filters-warning {
+  color: #946200;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+.post-visit-panel {
+  overflow: hidden;
+}
+
+.post-visit-panel table {
+  min-width: 1180px;
+}
+
+.post-visit-panel th {
+  background: #f6f8fb;
+  color: #536173;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.75rem;
+  white-space: nowrap;
+}
+
+.post-visit-panel td {
+  color: #344054;
+  padding: 0.75rem;
+  vertical-align: top;
+}
+
+.post-visit-panel td strong,
+.post-visit-panel td span,
+.post-visit-panel td small {
+  display: block;
+}
+
+.post-visit-panel td strong {
+  color: #172033;
+  font-size: 0.9rem;
+}
+
+.post-visit-panel td small {
+  color: #6c7787;
+  font-size: 0.76rem;
+  margin-top: 0.15rem;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: #f8fafc;
+}
+
+.status-pill {
+  background: #eef2f6;
+  border-radius: 999px;
+  color: #3a4759;
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 0.25rem 0.55rem;
+  white-space: nowrap;
+}
+
+.status-proposta {
+  background: #e7f5ee;
+  color: #17663a;
+}
+
+.interaction-cell {
+  max-width: 260px;
+  white-space: normal;
+}
+
+.empty-cell,
+.list-state {
+  color: #6c7787;
+  text-align: center;
+}
+
+.empty-cell {
+  padding: 2rem !important;
+}
+
+.list-state {
+  border: 1px dashed #cbd3df;
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+@media (max-width: 767.98px) {
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .record-count {
+    width: 100%;
+  }
+
+  .search-field {
+    grid-column: span 1;
+  }
+}

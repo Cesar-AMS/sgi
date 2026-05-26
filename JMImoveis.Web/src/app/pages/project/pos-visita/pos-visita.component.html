@@ -1,0 +1,179 @@
+<div class="pos-visita-wrapper container-fluid py-4">
+  <div class="page-header mb-4">
+    <div>
+      <h2 class="fw-bold mb-2">P&oacute;s-Visita</h2>
+      <p class="text-muted mb-0">
+        Acompanhamento operacional de leads ap&oacute;s visita, recep&ccedil;&atilde;o ou agendamento.
+      </p>
+    </div>
+
+    <div class="record-count">
+      <span *ngIf="!hasActiveFilters()">{{ postVisits.length }} registro(s)</span>
+      <span *ngIf="hasActiveFilters()">{{ postVisits.length }} resultado(s)</span>
+    </div>
+  </div>
+
+  <section class="filters-panel mb-4" aria-label="Filtros de pos-visita">
+    <div class="filters-grid">
+      <div class="filter-field search-field">
+        <label class="form-label" for="postVisitSearch">Busca</label>
+        <input
+          id="postVisitSearch"
+          type="search"
+          class="form-control"
+          placeholder="Cliente, CPF, telefone ou regi&atilde;o"
+          [(ngModel)]="search"
+          (keyup.enter)="onFilterChange()"
+          [disabled]="isLoading"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label class="form-label" for="postVisitStatus">Status</label>
+        <select
+          id="postVisitStatus"
+          class="form-select"
+          [(ngModel)]="status"
+          (ngModelChange)="onFilterChange()"
+          [disabled]="isLoading"
+        >
+          <option *ngFor="let option of statusOptions; trackBy: trackByStatus" [ngValue]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label class="form-label" for="postVisitAgent">Agente</label>
+        <select
+          id="postVisitAgent"
+          class="form-select"
+          [(ngModel)]="agentId"
+          (ngModelChange)="onFilterChange()"
+          [disabled]="isLoading || isLoadingAgents"
+        >
+          <option value="">Todos agentes</option>
+          <option *ngFor="let agent of agents; trackBy: trackByAgent" [value]="agent.id">
+            {{ agent.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label class="form-label" for="postVisitFollowUpFrom">Follow-up de</label>
+        <input
+          id="postVisitFollowUpFrom"
+          type="date"
+          class="form-control"
+          [(ngModel)]="followUpFrom"
+          (change)="onFilterChange()"
+          [disabled]="isLoading"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label class="form-label" for="postVisitFollowUpTo">Follow-up at&eacute;</label>
+        <input
+          id="postVisitFollowUpTo"
+          type="date"
+          class="form-control"
+          [(ngModel)]="followUpTo"
+          (change)="onFilterChange()"
+          [disabled]="isLoading"
+        />
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" class="btn btn-primary w-100" (click)="onFilterChange()" [disabled]="isLoading">
+          Buscar
+        </button>
+        <button type="button" class="btn btn-outline-secondary w-100" (click)="clearFilters()" [disabled]="isLoading">
+          Limpar
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="agentsErrorMessage" class="filters-warning">
+      {{ agentsErrorMessage }}
+    </div>
+  </section>
+
+  <div *ngIf="isLoading" class="list-state">
+    Carregando p&oacute;s-visita...
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="alert alert-warning" role="alert">
+    {{ errorMessage }}
+  </div>
+
+  <section *ngIf="!isLoading && !errorMessage" class="post-visit-panel">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Contato</th>
+            <th>CPF</th>
+            <th>Status</th>
+            <th>Agente</th>
+            <th>Regi&atilde;o</th>
+            <th class="text-end">Entrada</th>
+            <th>Interesse</th>
+            <th>Pr&oacute;ximo follow-up</th>
+            <th>&Uacute;ltima intera&ccedil;&atilde;o</th>
+            <th class="text-end">A&ccedil;&atilde;o</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let item of postVisits; trackBy: trackByPostVisitId"
+            class="clickable-row"
+            (click)="openLeadPanel(item.leadId)"
+          >
+            <td>
+              <strong>{{ item.nomeCliente || 'Nao informado' }}</strong>
+              <small>Lead #{{ item.leadId }}</small>
+            </td>
+            <td>
+              <span>{{ item.telefone || 'Nao informado' }}</span>
+              <small>{{ item.email || '' }}</small>
+            </td>
+            <td>{{ item.cpf || 'Nao informado' }}</td>
+            <td>
+              <span class="status-pill" [class.status-proposta]="item.postVisitStatus === 'EM_PROPOSTA'">
+                {{ getStatusLabel(item.postVisitStatus) }}
+              </span>
+            </td>
+            <td>{{ item.attendingAgentName || 'Nao informado' }}</td>
+            <td>{{ item.interestRegion || 'Nao informado' }}</td>
+            <td class="text-end">
+              {{ item.downPaymentAmount !== null && item.downPaymentAmount !== undefined ? (item.downPaymentAmount | currency:'BRL':'symbol':'1.2-2') : 'Nao informado' }}
+            </td>
+            <td>{{ getPropertyInterestLabel(item.propertyInterestType) }}</td>
+            <td>
+              {{ item.nextFollowUpAt ? (item.nextFollowUpAt | date:'dd/MM/yyyy HH:mm') : 'Nao programado' }}
+            </td>
+            <td class="interaction-cell">
+              {{ item.lastInteractionSummary || 'Sem resumo registrado' }}
+            </td>
+            <td class="text-end">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                (click)="$event.stopPropagation(); openLeadPanel(item.leadId)"
+              >
+                Abrir Painel
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="postVisits.length === 0">
+            <td colspan="11" class="empty-cell">
+              Nenhum registro de p&oacute;s-visita encontrado para o filtro atual.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

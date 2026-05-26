@@ -41,6 +41,7 @@ import { LeadVisitsSectionComponent } from './leads-details/components/lead-visi
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
 import { LeadsComponent } from './leads/leads.component';
 import { ModalVendaComponent } from './modal-venda/modal-venda.component';
+import { PosVisitaComponent } from './pos-visita/pos-visita.component';
 import { VisitasComponent } from './visitas/visitas.component';
 import { FluxoCaixaComponent } from './financeiro/fluxo-caixa/fluxo-caixa.component';
 import { ProjecaoComponent } from './financeiro/projecao/projecao.component';
@@ -72,6 +73,7 @@ import { PerfisAcessosComponent } from './configuracoes/perfis-acessos/perfis-ac
     AtendimentoRelatoriosComponent,
     VisitasComponent,
     LeadsComponent,
+    PosVisitaComponent,
     LeadDetailsComponent,
     LeadSummarySectionComponent,
     LeadActivitiesSectionComponent,

@@ -47,6 +47,13 @@ export const MENU: MenuItem[] = [
       },
       {
         id: 24,
+        label: 'P\u00f3s-Visita',
+        link: '/jm/atendimento/pos-visita',
+        parentId: 20,
+        permissionKey: 'atendimento.leads.visualizar',
+      },
+      {
+        id: 25,
         label: 'Relat\u00f3rios',
         link: '/jm/atendimento/relatorios',
         parentId: 20,
