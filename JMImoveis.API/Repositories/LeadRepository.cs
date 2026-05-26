@@ -385,6 +385,41 @@ namespace JMImoveisAPI.Repositories
             return affected > 0;
         }
 
+        public async Task<VisitaDto?> GetScheduleByIdAsync(int id)
+        {
+            const string sql = @"SELECT
+                                    ls.Id,
+                                    ls.LeadId,
+                                    ls.UserId as VendedorId,
+                                    vendedor.name as VendedorNome,
+                                    COALESCE(NULLIF(ls.CoordenadorId, 0), NULLIF(vendedor.coordenator_id, 0)) as CoordenadorId,
+                                    coordenador.name as CoordenadorNome,
+                                    COALESCE(NULLIF(ls.GerenteId, 0), NULLIF(vendedor.manager_id, 0), NULLIF(coordenador.manager_id, 0)) as GerenteId,
+                                    gerente.name as GerenteNome,
+                                    COALESCE(NULLIF(ls.NameClient, ''), l.Nome) as NomeCliente,
+                                    l.Telefone as Telefone,
+                                    l.ImoveisInteresse as ImoveisInteresse,
+                                    l.Fonte as Fonte,
+                                    ls.ScheduledAt as DataHoraISO,
+                                    ls.Note as Observacao,
+                                    ls.Status,
+                                    ls.TipoAgenda as TipoAgenda,
+                                    ls.compareceu AS Compareceu,
+                                    ls.virouVenda AS VirouVenda,
+                                    ls.CreatedAt,
+                                    ls.UpdatedAt
+                                FROM LeadSchedules ls
+                                LEFT JOIN leads l ON l.Id = ls.LeadId
+                                LEFT JOIN users vendedor ON vendedor.id = ls.UserId
+                                LEFT JOIN users coordenador ON coordenador.id = COALESCE(NULLIF(ls.CoordenadorId, 0), NULLIF(vendedor.coordenator_id, 0))
+                                LEFT JOIN users gerente ON gerente.id = COALESCE(NULLIF(ls.GerenteId, 0), NULLIF(vendedor.manager_id, 0), NULLIF(coordenador.manager_id, 0))
+                                WHERE ls.Id = @Id
+                                LIMIT 1;";
+
+            await using var conn = await _context.OpenConnectionAsync();
+            return await conn.QueryFirstOrDefaultAsync<VisitaDto>(sql, new { Id = id });
+        }
+
         public async Task<IEnumerable<Lead>> GetAllByFilters(LeadFilter filter)
         {
             var sql = new StringBuilder(@"SELECT Id,

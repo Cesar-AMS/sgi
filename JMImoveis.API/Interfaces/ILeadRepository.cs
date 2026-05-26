@@ -16,6 +16,7 @@ namespace JMImoveisAPI.Interfaces
         Task<IEnumerable<LeadActivity>> GetActivitiesByLeadId(int leadId);
         Task<IEnumerable<LeadSchedule>> GetSchedulesByLeadId(int leadId, string typeSchedule);
         Task<bool> UpdateScheduleAsync(int id, VisitaPatchRequest patch);
+        Task<VisitaDto?> GetScheduleByIdAsync(int id);
         Task<int> InsertAsync(LeadScheduleRequest request, int? leadId);
         Task<IEnumerable<VisitaDto>> ListScheduleAsync(string? q, int? vendedorId, string? status, bool? compareceu, bool? virouVenda, DateTime? startAt, DateTime? finishAt, string? tipoAgenda, long currentUserId, bool canViewAll);
         Task<int> CreateSchedule(CreateLeadScheduleRequest req);

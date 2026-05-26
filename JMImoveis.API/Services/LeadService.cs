@@ -1,6 +1,7 @@
 using JMImoveisAPI.Entities;
 using JMImoveisAPI.Interfaces;
 using System.Globalization;
+using System.Text;
 
 namespace JMImoveisAPI.Services
 {
@@ -26,13 +27,19 @@ namespace JMImoveisAPI.Services
 
         private readonly ILeadRepository _leadRepository;
         private readonly ILeadTransferHistoryService _leadTransferHistoryService;
+        private readonly ILeadPostVisitService _leadPostVisitService;
+        private readonly ILogger<LeadService> _logger;
 
         public LeadService(
             ILeadRepository leadRepository,
-            ILeadTransferHistoryService leadTransferHistoryService)
+            ILeadTransferHistoryService leadTransferHistoryService,
+            ILeadPostVisitService leadPostVisitService,
+            ILogger<LeadService> logger)
         {
             _leadRepository = leadRepository;
             _leadTransferHistoryService = leadTransferHistoryService;
+            _leadPostVisitService = leadPostVisitService;
+            _logger = logger;
         }
 
         public Task<IEnumerable<Lead>> GetAllByFiltersAsync(LeadFilter filter)
@@ -190,15 +197,22 @@ namespace JMImoveisAPI.Services
         public Task UpdateScheduleStatusAsync(int leadId, int scheduleId, UpdateLeadScheduleStatusRequest request)
             => _leadRepository.UpdateStatus(leadId, scheduleId, request.Status);
 
-        public Task<bool> UpdateScheduleAsync(int id, VisitaPatchRequest patch)
+        public async Task<bool> UpdateScheduleAsync(int id, VisitaPatchRequest patch)
         {
             if (patch == null)
             {
-                return Task.FromResult(false);
+                return false;
             }
 
             patch.TipoAgenda = NormalizeOptionalTipoAgenda(patch.TipoAgenda);
-            return _leadRepository.UpdateScheduleAsync(id, patch);
+            var updated = await _leadRepository.UpdateScheduleAsync(id, patch);
+            if (!updated)
+            {
+                return false;
+            }
+
+            await TryEnsurePostVisitForCompletedVisitAsync(id);
+            return true;
         }
 
         private static DateTime? TryParseIsoDate(string? value)
@@ -234,6 +248,72 @@ namespace JMImoveisAPI.Services
             return normalized is "contato" or "visita"
                 ? normalized
                 : null;
+        }
+
+        private async Task TryEnsurePostVisitForCompletedVisitAsync(int scheduleId)
+        {
+            try
+            {
+                var schedule = await _leadRepository.GetScheduleByIdAsync(scheduleId);
+                if (!ShouldCreatePostVisit(schedule))
+                {
+                    return;
+                }
+
+                await _leadPostVisitService.EnsurePostVisitForCompletedVisitAsync(
+                    schedule!.LeadId!.Value,
+                    schedule.VendedorId > 0 ? (long)schedule.VendedorId : null,
+                    "Pos-visita iniciado automaticamente apos visita realizada.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Visita {ScheduleId} atualizada, mas nao foi possivel iniciar o pos-visita automaticamente.", scheduleId);
+            }
+        }
+
+        private static bool ShouldCreatePostVisit(VisitaDto? schedule)
+        {
+            if (schedule?.LeadId is not > 0)
+            {
+                return false;
+            }
+
+            var tipoAgenda = NormalizeOptionalTipoAgenda(schedule.TipoAgenda);
+            if (!string.Equals(tipoAgenda, "visita", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (IsCanceledVisitStatus(schedule.Status))
+            {
+                return false;
+            }
+
+            return IsCompletedVisitStatus(schedule.Status) || schedule.Compareceu;
+        }
+
+        private static bool IsCompletedVisitStatus(string? status)
+        {
+            var normalized = RemoveDiacritics(status).Trim().ToLowerInvariant();
+            return normalized is "realizada" or "visita realizada";
+        }
+
+        private static bool IsCanceledVisitStatus(string? status)
+        {
+            var normalized = RemoveDiacritics(status).Trim().ToLowerInvariant();
+            return normalized is "cancelada" or "cancelado";
+        }
+
+        private static string RemoveDiacritics(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            var normalized = value.Normalize(NormalizationForm.FormD);
+            var chars = normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark);
+            return new string(chars.ToArray()).Normalize(NormalizationForm.FormC);
         }
 
         private async Task<int> EnsureScheduleLeadIdAsync(LeadScheduleRequest request, int? leadId)

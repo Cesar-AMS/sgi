@@ -15,5 +15,6 @@ namespace JMImoveisAPI.Interfaces
         Task<LeadPostVisit> UpdateByLeadIdAsync(int leadId, LeadPostVisitRequest request);
         Task<LeadPostVisit> UpdateStatusAsync(long id, UpdateLeadPostVisitStatusRequest request);
         Task<LeadPostVisit> MarkAsInProposalAsync(int leadId, long? proposalId);
+        Task<LeadPostVisit> EnsurePostVisitForCompletedVisitAsync(int leadId, long? attendingAgentId = null, string? summary = null);
     }
 }
