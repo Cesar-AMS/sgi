@@ -66,6 +66,21 @@ FinancialService e o ponto de materializacao das comissoes em accounts_payable.
 
 Novas comissoes nao devem usar receivables/payables legados.
 
+## Fluxo de Caixa oficial
+
+O Fluxo de Caixa oficial do piloto usa somente:
+
+- accounts_receivable
+- accounts_payable
+
+O previsto usa DueDate.
+
+O realizado usa PayDate.
+
+Registros CANCELLED e registros com deleted_at preenchido ficam fora do calculo.
+
+O legado receivables/payables nao deve ser usado para novas visoes de Fluxo de Caixa.
+
 ## Riscos conhecidos
 
 - Divergencia entre dados novos e antigos.

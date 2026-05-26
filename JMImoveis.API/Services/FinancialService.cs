@@ -511,5 +511,253 @@ namespace JMImoveisAPI.Services
 
             return await conn.QueryAsync<FinancialHistoryItemV2>(sql, new { From = from, To = to });
         }
+
+        public async Task<CashFlowResponseDto> GetCashFlowAsync(DateTime? from = null, DateTime? to = null, string? groupBy = null)
+        {
+            var (fromDate, toDate, normalizedGroupBy) = NormalizeCashFlowQuery(from, to, groupBy);
+            var periods = BuildCashFlowPeriods(fromDate, toDate, normalizedGroupBy);
+            var periodMap = periods.ToDictionary(p => p.Period, StringComparer.OrdinalIgnoreCase);
+
+            await using var conn = await _context.OpenConnectionAsync();
+
+            var sql = @"
+                SELECT
+                    'RECEIVE' AS Kind,
+                    DueDate,
+                    PayDate,
+                    Status,
+                    Amount,
+                    PendingAmount
+                FROM jmoficial.accounts_receivable
+                WHERE deleted_at IS NULL
+                  AND Status <> 'CANCELLED'
+                  AND (
+                    (DueDate IS NOT NULL AND DueDate BETWEEN @From AND @To)
+                    OR (Status = 'PAID' AND PayDate IS NOT NULL AND PayDate BETWEEN @From AND @To)
+                  )
+
+                UNION ALL
+
+                SELECT
+                    'PAY' AS Kind,
+                    DueDate,
+                    PayDate,
+                    Status,
+                    Amount,
+                    PendingAmount
+                FROM jmoficial.accounts_payable
+                WHERE deleted_at IS NULL
+                  AND Status <> 'CANCELLED'
+                  AND (
+                    (DueDate IS NOT NULL AND DueDate BETWEEN @From AND @To)
+                    OR (Status = 'PAID' AND PayDate IS NOT NULL AND PayDate BETWEEN @From AND @To)
+                  );";
+
+            var rows = (await conn.QueryAsync<CashFlowSourceRow>(sql, new
+            {
+                From = fromDate,
+                To = toDate
+            })).ToList();
+
+            var summary = new CashFlowSummaryDto
+            {
+                ReceivableCount = rows.Count(r => IsReceivable(r.Kind)),
+                PayableCount = rows.Count(r => IsPayable(r.Kind))
+            };
+
+            foreach (var row in rows)
+            {
+                ApplyExpectedCashFlow(row, fromDate, toDate, normalizedGroupBy, periodMap, summary);
+                ApplyRealizedCashFlow(row, fromDate, toDate, normalizedGroupBy, periodMap, summary);
+            }
+
+            FinalizeCashFlowBalances(summary, periods);
+
+            return new CashFlowResponseDto
+            {
+                From = fromDate,
+                To = toDate,
+                GroupBy = normalizedGroupBy,
+                Summary = summary,
+                Periods = periods
+            };
+        }
+
+        private static (DateTime From, DateTime To, string GroupBy) NormalizeCashFlowQuery(DateTime? from, DateTime? to, string? groupBy)
+        {
+            var today = DateTime.Today;
+            var fromDate = (from ?? new DateTime(today.Year, today.Month, 1)).Date;
+            var toDate = (to ?? new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month))).Date;
+            var normalizedGroupBy = string.IsNullOrWhiteSpace(groupBy)
+                ? "day"
+                : groupBy.Trim().ToLowerInvariant();
+
+            if (normalizedGroupBy != "day" && normalizedGroupBy != "month")
+                throw new ArgumentException("groupBy deve ser day ou month.");
+
+            if (fromDate > toDate)
+                throw new ArgumentException("from nao pode ser maior que to.");
+
+            if ((toDate - fromDate).TotalDays > 366)
+                throw new ArgumentException("intervalo maximo permitido para fluxo de caixa e de 366 dias.");
+
+            return (fromDate, toDate, normalizedGroupBy);
+        }
+
+        private static List<CashFlowPeriodDto> BuildCashFlowPeriods(DateTime from, DateTime to, string groupBy)
+        {
+            var periods = new List<CashFlowPeriodDto>();
+
+            if (groupBy == "month")
+            {
+                var cursor = new DateTime(from.Year, from.Month, 1);
+                while (cursor <= to)
+                {
+                    var monthEnd = new DateTime(cursor.Year, cursor.Month, DateTime.DaysInMonth(cursor.Year, cursor.Month));
+                    periods.Add(new CashFlowPeriodDto
+                    {
+                        Period = cursor.ToString("yyyy-MM"),
+                        PeriodStart = cursor < from ? from : cursor,
+                        PeriodEnd = monthEnd > to ? to : monthEnd
+                    });
+
+                    cursor = cursor.AddMonths(1);
+                }
+
+                return periods;
+            }
+
+            for (var cursor = from; cursor <= to; cursor = cursor.AddDays(1))
+            {
+                periods.Add(new CashFlowPeriodDto
+                {
+                    Period = cursor.ToString("yyyy-MM-dd"),
+                    PeriodStart = cursor,
+                    PeriodEnd = cursor
+                });
+            }
+
+            return periods;
+        }
+
+        private static void ApplyExpectedCashFlow(
+            CashFlowSourceRow row,
+            DateTime from,
+            DateTime to,
+            string groupBy,
+            Dictionary<string, CashFlowPeriodDto> periodMap,
+            CashFlowSummaryDto summary)
+        {
+            if (!row.DueDate.HasValue || !IsInRange(row.DueDate.Value.Date, from, to))
+                return;
+
+            var status = NormalizeStatus(row.Status);
+            var value = ResolveExpectedValue(status, row.Amount, row.PendingAmount);
+            var period = periodMap[GetPeriodKey(row.DueDate.Value.Date, groupBy)];
+
+            if (IsReceivable(row.Kind))
+            {
+                summary.ExpectedInflow += value;
+                period.ExpectedInflow += value;
+
+                if (status == "WAITING")
+                {
+                    summary.OpenInflow += value;
+                    period.OpenInflow += value;
+                }
+                else if (status == "PROJECAO")
+                {
+                    summary.ProjectionInflow += value;
+                    period.ProjectionInflow += value;
+                }
+            }
+            else if (IsPayable(row.Kind))
+            {
+                summary.ExpectedOutflow += value;
+                period.ExpectedOutflow += value;
+
+                if (status == "WAITING")
+                {
+                    summary.OpenOutflow += value;
+                    period.OpenOutflow += value;
+                }
+                else if (status == "PROJECAO")
+                {
+                    summary.ProjectionOutflow += value;
+                    period.ProjectionOutflow += value;
+                }
+            }
+        }
+
+        private static void ApplyRealizedCashFlow(
+            CashFlowSourceRow row,
+            DateTime from,
+            DateTime to,
+            string groupBy,
+            Dictionary<string, CashFlowPeriodDto> periodMap,
+            CashFlowSummaryDto summary)
+        {
+            if (NormalizeStatus(row.Status) != "PAID" || !row.PayDate.HasValue || !IsInRange(row.PayDate.Value.Date, from, to))
+                return;
+
+            var value = row.Amount;
+            var period = periodMap[GetPeriodKey(row.PayDate.Value.Date, groupBy)];
+
+            if (IsReceivable(row.Kind))
+            {
+                summary.RealizedInflow += value;
+                period.RealizedInflow += value;
+            }
+            else if (IsPayable(row.Kind))
+            {
+                summary.RealizedOutflow += value;
+                period.RealizedOutflow += value;
+            }
+        }
+
+        private static void FinalizeCashFlowBalances(CashFlowSummaryDto summary, List<CashFlowPeriodDto> periods)
+        {
+            summary.ExpectedBalance = summary.ExpectedInflow - summary.ExpectedOutflow;
+            summary.RealizedBalance = summary.RealizedInflow - summary.RealizedOutflow;
+
+            foreach (var period in periods)
+            {
+                period.ExpectedBalance = period.ExpectedInflow - period.ExpectedOutflow;
+                period.RealizedBalance = period.RealizedInflow - period.RealizedOutflow;
+            }
+        }
+
+        private static decimal ResolveExpectedValue(string status, decimal amount, decimal pendingAmount)
+        {
+            if (status == "PAID")
+                return amount;
+
+            return pendingAmount > 0 ? pendingAmount : amount;
+        }
+
+        private static bool IsInRange(DateTime date, DateTime from, DateTime to)
+            => date >= from && date <= to;
+
+        private static string GetPeriodKey(DateTime date, string groupBy)
+            => groupBy == "month" ? date.ToString("yyyy-MM") : date.ToString("yyyy-MM-dd");
+
+        private static string NormalizeStatus(string? status)
+            => (status ?? string.Empty).Trim().ToUpperInvariant();
+
+        private static bool IsReceivable(string kind)
+            => string.Equals(kind, "RECEIVE", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsPayable(string kind)
+            => string.Equals(kind, "PAY", StringComparison.OrdinalIgnoreCase);
+
+        private sealed class CashFlowSourceRow
+        {
+            public string Kind { get; set; } = string.Empty;
+            public DateTime? DueDate { get; set; }
+            public DateTime? PayDate { get; set; }
+            public string Status { get; set; } = string.Empty;
+            public decimal Amount { get; set; }
+            public decimal PendingAmount { get; set; }
+        }
     }
 }

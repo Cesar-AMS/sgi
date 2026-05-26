@@ -17,6 +17,55 @@ namespace JMImoveisAPI.Entities
         public string Description { get; set; } = string.Empty;
     }
 
+    public class CashFlowQueryDto
+    {
+        public DateTime? From { get; set; }
+        public DateTime? To { get; set; }
+        public string? GroupBy { get; set; }
+    }
+
+    public class CashFlowSummaryDto
+    {
+        public decimal ExpectedInflow { get; set; }
+        public decimal ExpectedOutflow { get; set; }
+        public decimal ExpectedBalance { get; set; }
+        public decimal RealizedInflow { get; set; }
+        public decimal RealizedOutflow { get; set; }
+        public decimal RealizedBalance { get; set; }
+        public decimal OpenInflow { get; set; }
+        public decimal OpenOutflow { get; set; }
+        public decimal ProjectionInflow { get; set; }
+        public decimal ProjectionOutflow { get; set; }
+        public int ReceivableCount { get; set; }
+        public int PayableCount { get; set; }
+    }
+
+    public class CashFlowPeriodDto
+    {
+        public string Period { get; set; } = string.Empty;
+        public DateTime PeriodStart { get; set; }
+        public DateTime PeriodEnd { get; set; }
+        public decimal ExpectedInflow { get; set; }
+        public decimal ExpectedOutflow { get; set; }
+        public decimal ExpectedBalance { get; set; }
+        public decimal RealizedInflow { get; set; }
+        public decimal RealizedOutflow { get; set; }
+        public decimal RealizedBalance { get; set; }
+        public decimal OpenInflow { get; set; }
+        public decimal OpenOutflow { get; set; }
+        public decimal ProjectionInflow { get; set; }
+        public decimal ProjectionOutflow { get; set; }
+    }
+
+    public class CashFlowResponseDto
+    {
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
+        public string GroupBy { get; set; } = "day";
+        public CashFlowSummaryDto Summary { get; set; } = new();
+        public List<CashFlowPeriodDto> Periods { get; set; } = new();
+    }
+
     public class AccountsPayableQuery
     {
         public DateTime? DueFrom { get; set; }

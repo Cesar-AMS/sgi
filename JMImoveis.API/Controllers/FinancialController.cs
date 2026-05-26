@@ -38,6 +38,29 @@ namespace JMImoveisAPI.Controllers
             return Ok(result);
         }
 
+        [HttpGet("cash-flow")]
+        public async Task<ActionResult<CashFlowResponseDto>> GetCashFlow(
+            [FromQuery] DateTime? from,
+            [FromQuery] DateTime? to,
+            [FromQuery] string? groupBy)
+        {
+            var authorizationResult = await AuthorizeCurrentUserAsync(ViewFinancialReportsPermission, "visualizar relatorios financeiros.");
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            try
+            {
+                var result = await _financialService.GetCashFlowAsync(from, to, groupBy);
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPost("generate/{saleId:long}")]
         public async Task<IActionResult> GenerateForSale(long saleId)
         {
