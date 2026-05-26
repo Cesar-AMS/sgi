@@ -37,6 +37,35 @@ Toda nova implementacao de Contas a Receber, Contas a Pagar, Comissoes, Fluxo de
 
 Nenhuma nova funcionalidade financeira deve depender de receivables/payables.
 
+## Comissoes oficiais
+
+No piloto financeiro, comissoes oficiais sao lancamentos em accounts_payable.
+
+As categorias oficiais de comissao devem iniciar com COMISSAO_.
+
+Exemplos:
+
+- COMISSAO_CORRETOR
+- COMISSAO_GERENTE
+- COMISSAO_COORDENADOR
+- COMISSAO_FINANCEIRO
+
+A tela de Comissoes deve consumir accounts_payable filtrando categorias COMISSAO_*.
+
+O pagamento de comissao deve usar o fluxo oficial de Contas a Pagar:
+
+- POST /api/accounts-payable/{id}/settle
+
+Edicao e cancelamento de comissao devem respeitar as regras oficiais de Contas a Pagar.
+
+EnterpriseCommissionRules representa regra/parametro de comissao por empreendimento, nao lancamento financeiro.
+
+ProposalCommissionCalculator representa simulacao/resumo da proposta, nao baixa ou pagamento financeiro.
+
+FinancialService e o ponto de materializacao das comissoes em accounts_payable.
+
+Novas comissoes nao devem usar receivables/payables legados.
+
 ## Riscos conhecidos
 
 - Divergencia entre dados novos e antigos.

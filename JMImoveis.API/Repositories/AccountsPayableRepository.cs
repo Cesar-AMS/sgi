@@ -338,6 +338,8 @@ namespace JMImoveisAPI.Repositories
                 var category = q.Category.Trim().ToUpperInvariant();
                 if (category == "COMISSAO")
                 {
+                    // Comissoes oficiais do piloto financeiro sao lancamentos em
+                    // accounts_payable com categorias COMISSAO_*.
                     clauses.Add("Category LIKE 'COMISSAO_%'");
                 }
                 else
