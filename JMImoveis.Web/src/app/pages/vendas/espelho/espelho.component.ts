@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { ConstrutoraService } from '../../../services/construtora.service';
 import { EmpreendimentoService } from '../../../services/empreendimento.service';
@@ -25,8 +26,10 @@ export class EspelhoVendasComponent implements OnInit {
     statusConfig = StatusConfig;
     fichaProposta: FichaPropostaInicial | null = null;
     unidadesPorAndar: Array<{ andar: number; label: string; unidades: Unidade[] }> = [];
+    leadId: number | null = null;
 
     constructor(
+        private route: ActivatedRoute,
         private construtoraService: ConstrutoraService,
         private empreendimentoService: EmpreendimentoService,
         private unidadeService: UnidadeService,
@@ -34,6 +37,7 @@ export class EspelhoVendasComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+        this.leadId = this.getLeadIdFromRoute();
         this.carregarConstrutoras();
     }
 
@@ -183,6 +187,7 @@ export class EspelhoVendasComponent implements OnInit {
             unidadeNumero: unidade.numero,
             empreendimentoId: unidade.empreendimentoId,
             empreendimentoNome: empreendimento?.nome,
+            leadId: this.leadId,
             valor: unidade.valor
         };
     }
@@ -259,6 +264,11 @@ export class EspelhoVendasComponent implements OnInit {
             sessionStorage.removeItem(this.filtrosStorageKey);
             return null;
         }
+    }
+
+    private getLeadIdFromRoute(): number | null {
+        const leadId = Number(this.route.snapshot.queryParamMap.get('leadId'));
+        return Number.isFinite(leadId) && leadId > 0 ? leadId : null;
     }
 
     private ordenarUnidades(unidades: Unidade[]): Unidade[] {

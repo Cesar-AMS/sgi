@@ -779,6 +779,17 @@ export class LeadDetailsComponent implements OnInit {
     });
   }
 
+  openProposalFlow(): void {
+    if (!this.ensureCanEditLeads()) return;
+    if (!this.lead?.id) return;
+
+    this.router.navigate(['/jm/vendas/espelho'], {
+      queryParams: {
+        leadId: this.lead.id,
+      },
+    });
+  }
+
   // ---- Atividades ----
 
   startAddActivity(): void {

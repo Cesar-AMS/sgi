@@ -34,6 +34,15 @@
       <button
         type="button"
         class="btn btn-sm btn-outline-secondary lead-action-button"
+        (click)="saleRequested.emit()"
+        *ngIf="canEditLeads"
+      >
+        <i class="bi bi-file-earmark-plus"></i>
+        Criar proposta
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary lead-action-button"
         (click)="editToggled.emit()"
         *ngIf="canEditLeads"
       >
