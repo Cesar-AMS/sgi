@@ -23,7 +23,7 @@
             Documentos
           </button>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" *ngIf="canViewPostVisit">
           <button
             class="nav-link"
             [class.active]="activeTab === 'postVisit'"
@@ -363,10 +363,10 @@
         </div>
       </div>
 
-      <div *ngIf="activeTab === 'postVisit'">
+      <div *ngIf="activeTab === 'postVisit' && canViewPostVisit">
         <app-lead-post-visit-section
           [leadId]="lead.id"
-          [canEditLeads]="canEditLeads"
+          [canEditPostVisit]="canEditPostVisit"
           [agents]="corretores"
         ></app-lead-post-visit-section>
       </div>

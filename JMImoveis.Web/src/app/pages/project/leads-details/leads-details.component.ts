@@ -60,6 +60,8 @@ export class LeadDetailsComponent implements OnInit {
   isLoadingDocuments = false;
   isUploadingDocuments = false;
   canEditLeads = false;
+  canViewPostVisit = false;
+  canEditPostVisit = false;
   canViewTransferHistory = false;
   showTransferHistoryPanel = false;
   isLoadingTransferHistory = false;
@@ -435,6 +437,10 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   setTab(tab: 'info' | 'docs' | 'postVisit'): void {
+    if (tab === 'postVisit' && !this.canViewPostVisit) {
+      return;
+    }
+
     this.activeTab = tab;
   }
 
@@ -693,30 +699,51 @@ export class LeadDetailsComponent implements OnInit {
     const currentUserId = this.sessionService.getCurrentUserId();
     if (!currentUserId) {
       this.canEditLeads = false;
+      this.canViewPostVisit = false;
+      this.canEditPostVisit = false;
       this.canViewTransferHistory = false;
+      if (this.activeTab === 'postVisit') {
+        this.activeTab = 'info';
+      }
       return;
     }
 
     this.permissionsService.getUserEffectivePermissions(currentUserId).subscribe({
       next: (permissions) => {
         const permissionKeys = this.extractPermissionKeys(permissions);
+        const isAdmin = permissionKeys.has('sistema.admin.total');
         this.canEditLeads =
           permissionKeys.has('atendimento.leads.editar') ||
-          permissionKeys.has('sistema.admin.total');
+          isAdmin;
+        this.canViewPostVisit =
+          permissionKeys.has('atendimento.posvisita.visualizar') ||
+          isAdmin;
+        this.canEditPostVisit =
+          permissionKeys.has('atendimento.posvisita.editar') ||
+          isAdmin;
         this.canViewTransferHistory =
           permissionKeys.has('atendimento.leads.transferencias.visualizar') ||
-          permissionKeys.has('sistema.admin.total');
+          isAdmin;
 
         if (!this.canViewTransferHistory) {
           this.showTransferHistoryPanel = false;
           this.transferHistoryItems = [];
         }
+
+        if (!this.canViewPostVisit && this.activeTab === 'postVisit') {
+          this.activeTab = 'info';
+        }
       },
       error: () => {
         this.canEditLeads = false;
+        this.canViewPostVisit = false;
+        this.canEditPostVisit = false;
         this.canViewTransferHistory = false;
         this.showTransferHistoryPanel = false;
         this.transferHistoryItems = [];
+        if (this.activeTab === 'postVisit') {
+          this.activeTab = 'info';
+        }
       },
     });
   }

@@ -22,7 +22,7 @@ type Option<T extends string = string> = {
 })
 export class LeadPostVisitSectionComponent implements OnChanges {
   @Input() leadId?: number;
-  @Input() canEditLeads = false;
+  @Input() canEditPostVisit = false;
   @Input() agents: Usuarios[] = [];
 
   postVisit?: LeadPostVisit | null;
@@ -92,7 +92,7 @@ export class LeadPostVisitSectionComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['canEditLeads']) {
+    if (changes['canEditPostVisit']) {
       this.setFormAccess();
     }
 
@@ -253,16 +253,16 @@ export class LeadPostVisitSectionComponent implements OnChanges {
   }
 
   private ensureCanEdit(): boolean {
-    if (this.canEditLeads) {
+    if (this.canEditPostVisit) {
       return true;
     }
 
-    this.errorMessage = 'Voce nao tem permissao para editar leads.';
+    this.errorMessage = 'Voce nao tem permissao para editar o Pos-Visita.';
     return false;
   }
 
   private setFormAccess(): void {
-    if (this.canEditLeads) {
+    if (this.canEditPostVisit) {
       this.form.enable({ emitEvent: false });
     } else {
       this.form.disable({ emitEvent: false });

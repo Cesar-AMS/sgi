@@ -34,12 +34,12 @@
           type="button"
           class="btn btn-orange"
           (click)="initializePostVisit()"
-          [disabled]="isInitializing || !canEditLeads"
+          [disabled]="isInitializing || !canEditPostVisit"
         >
           {{ isInitializing ? 'Iniciando...' : 'Iniciar Pos-Visita' }}
         </button>
 
-        <small *ngIf="!canEditLeads">
+        <small *ngIf="!canEditPostVisit">
           Voce pode visualizar o painel, mas nao tem permissao para iniciar ou editar o Pos-Visita.
         </small>
       </div>
@@ -171,13 +171,13 @@
             <button
               type="submit"
               class="btn btn-orange"
-              [disabled]="isSaving || !canEditLeads"
+              [disabled]="isSaving || !canEditPostVisit"
             >
               {{ isSaving ? 'Salvando...' : 'Salvar Pos-Visita' }}
             </button>
           </div>
 
-          <small class="readonly-hint" *ngIf="!canEditLeads">
+          <small class="readonly-hint" *ngIf="!canEditPostVisit">
             Voce pode visualizar o Pos-Visita, mas nao tem permissao para editar.
           </small>
         </form>
