@@ -116,6 +116,37 @@ namespace JMImoveisAPI.Services
                 ?? throw new KeyNotFoundException("Pos-visita nao encontrado.");
         }
 
+        public async Task<LeadPostVisit> MarkAsInProposalAsync(int leadId, long? proposalId)
+        {
+            await EnsureLeadExistsAsync(leadId);
+
+            var existing = await _repository.GetByLeadIdAsync(leadId);
+            if (existing == null)
+            {
+                var id = await _repository.CreateAsync(new LeadPostVisit
+                {
+                    LeadId = leadId,
+                    PostVisitStatus = "EM_PROPOSTA",
+                    ProposalId = proposalId
+                });
+
+                return await _repository.GetByIdAsync(id)
+                    ?? throw new InvalidOperationException("Pos-visita criado, mas nao foi possivel consulta-lo.");
+            }
+
+            existing.PostVisitStatus = "EM_PROPOSTA";
+            existing.ProposalId = proposalId ?? existing.ProposalId;
+
+            var updated = await _repository.UpdateAsync(existing);
+            if (!updated)
+            {
+                throw new KeyNotFoundException("Pos-visita nao encontrado.");
+            }
+
+            return await _repository.GetByIdAsync(existing.Id)
+                ?? throw new KeyNotFoundException("Pos-visita nao encontrado.");
+        }
+
         private async Task EnsureLeadExistsAsync(int leadId)
         {
             if (leadId <= 0)

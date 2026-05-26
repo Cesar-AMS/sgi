@@ -98,6 +98,7 @@
 
     public sealed class PropostaReservaDto
     {
+        public int? LeadId { get; set; }
         public string EmpreendimentoID { get; set; } = "";
         public string UnidadeID { get; set; } = "";
         public decimal VlrUnidade { get; set; }

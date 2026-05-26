@@ -187,6 +187,7 @@ export class PropostasComponent implements OnInit, OnChanges {
     const unidadeNumero = this.route.snapshot.queryParamMap.get('unidadeNumero');
     const empreendimentoId = Number(this.route.snapshot.queryParamMap.get('empreendimentoId'));
     const valor = Number(this.route.snapshot.queryParamMap.get('valor'));
+    const leadId = Number(this.route.snapshot.queryParamMap.get('leadId'));
     this.voltarAoEspelho = this.route.snapshot.queryParamMap.get('origem') === 'espelho';
 
     if (!Number.isFinite(unidadeId) || unidadeId <= 0) {
@@ -198,6 +199,7 @@ export class PropostasComponent implements OnInit, OnChanges {
       unidadeID: String(unidadeId),
       unitName: unidadeNumero || String(unidadeId),
       empreendimentoID: Number.isFinite(empreendimentoId) && empreendimentoId > 0 ? String(empreendimentoId) : '',
+      leadId: Number.isFinite(leadId) && leadId > 0 ? leadId : null,
       vlrUnidade: Number.isFinite(valor) ? valor : 0,
       status: 'RASCUNHO',
       condicao: this.proposta?.condicao ?? []
@@ -389,6 +391,7 @@ export class PropostasComponent implements OnInit, OnChanges {
   private criarPropostaVazia(): PropostaReserva {
     return {
       id: 0,
+      leadId: null,
       empreendimentoID: '',
       unidadeID: '',
       vlrUnidade: 0,

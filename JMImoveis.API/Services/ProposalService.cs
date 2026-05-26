@@ -13,6 +13,7 @@ namespace JMImoveisAPI.Services
         private readonly IClienteRepository _clienteRepository;
         private readonly IVendaCriacaoService _vendaCriacaoService;
         private readonly IAccountsReceivableService _accountsReceivableService;
+        private readonly ILeadPostVisitService _leadPostVisitService;
         private readonly ILogger<ProposalService> _logger;
         private readonly ProposalCommissionCalculator _commissionCalculator = new();
 
@@ -21,12 +22,14 @@ namespace JMImoveisAPI.Services
             IClienteRepository clienteRepository,
             IVendaCriacaoService vendaCriacaoService,
             IAccountsReceivableService accountsReceivableService,
+            ILeadPostVisitService leadPostVisitService,
             ILogger<ProposalService> logger)
         {
             _repo = repo;
             _clienteRepository = clienteRepository;
             _vendaCriacaoService = vendaCriacaoService;
             _accountsReceivableService = accountsReceivableService;
+            _leadPostVisitService = leadPostVisitService;
             _logger = logger;
         }
 
@@ -62,7 +65,9 @@ namespace JMImoveisAPI.Services
             }
 
             proposal.Status = ProposalStatus.EM_ANALISE.ToString();
-            return await _repo.CreateAsync(proposal, conds, ct);
+            var proposalId = await _repo.CreateAsync(proposal, conds, ct);
+            await TryMarkPostVisitAsInProposalAsync(dto.LeadId, proposalId);
+            return proposalId;
         }
 
         public async Task<bool> UpdateAsync(long id, PropostaReservaDto dto, CancellationToken ct)
@@ -829,6 +834,23 @@ namespace JMImoveisAPI.Services
                 "CANCELLED" => ProposalStatus.CANCELADO.ToString(),
                 _ => normalized
             };
+        }
+
+        private async Task TryMarkPostVisitAsInProposalAsync(int? leadId, long proposalId)
+        {
+            if (!leadId.HasValue || leadId.Value <= 0)
+            {
+                return;
+            }
+
+            try
+            {
+                await _leadPostVisitService.MarkAsInProposalAsync(leadId.Value, proposalId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Proposta {ProposalId} criada, mas nao foi possivel marcar pos-visita do lead {LeadId} como EM_PROPOSTA.", proposalId, leadId.Value);
+            }
         }
 
         private static string NormalizeUnitStatus(string? status)

@@ -3,6 +3,7 @@
 export interface PropostaReserva
 {
   id: number
+  leadId?: number | null;
   empreendimentoID: number | string;
   enterPriseName? : string
   unitName? : string
