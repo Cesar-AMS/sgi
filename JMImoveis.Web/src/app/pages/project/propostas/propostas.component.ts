@@ -23,6 +23,7 @@ export interface FichaPropostaInicial {
   empreendimentoId?: number;
   empreendimentoNome?: string;
   valor?: number;
+  leadId?: number | null;
 }
 
 interface Usuario {
@@ -217,6 +218,7 @@ export class PropostasComponent implements OnInit, OnChanges {
       unitName: ficha.unidadeNumero || String(ficha.unidadeId),
       empreendimentoID: ficha.empreendimentoId ? String(ficha.empreendimentoId) : '',
       enterPriseName: ficha.empreendimentoNome || '',
+      leadId: Number.isFinite(Number(ficha.leadId)) && Number(ficha.leadId) > 0 ? Number(ficha.leadId) : null,
       vlrUnidade: ficha.valor ?? 0,
       status: 'RASCUNHO',
       condicao: []
