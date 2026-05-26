@@ -20,7 +20,10 @@ namespace JMImoveisAPI.Interfaces
             string? category,
             string? status,
                 string? search);
+        Task<AccountsReceivableRowDto?> GetByIdAsync(int id);
         Task<int> CreateAsync(CreateAccountsReceivableRequest req);
+        Task UpdateAsync(int id, UpdateAccountsReceivableRequest req);
+        Task CancelAsync(int id, CancelAccountsReceivableRequest req);
         Task<bool> HasAnyBySaleIdAsync(int saleId);
         Task SettleAsync(int id, SettleAccountsReceivableRequest req);
     }

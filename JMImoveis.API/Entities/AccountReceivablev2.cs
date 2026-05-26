@@ -63,12 +63,34 @@
         public DateTime? PaidDate { get; set; }
 
         public string Description { get; set; } = string.Empty;
-        public string Status { get; set; } = "WAITING"; // WAITING | PAID | CANCELLED
+        public string Status { get; set; } = "WAITING"; // WAITING | PAID | CANCELLED | PROJECAO
         public string Category { get; set; } = string.Empty;
 
         public decimal Amount { get; set; }
         public decimal PendingAmount { get; set; }
 
+        public string? Observations { get; set; }
+    }
+
+    public class UpdateAccountsReceivableRequest
+    {
+        public int? BranchId { get; set; }
+
+        public DateTime? CompetenceDate { get; set; }
+        public DateTime? DueDate { get; set; }
+
+        public string Description { get; set; } = string.Empty;
+        public string Status { get; set; } = "WAITING"; // WAITING | PROJECAO
+        public string Category { get; set; } = string.Empty;
+
+        public decimal Amount { get; set; }
+        public decimal PendingAmount { get; set; }
+
+        public string? Observations { get; set; }
+    }
+
+    public class CancelAccountsReceivableRequest
+    {
         public string? Observations { get; set; }
     }
 

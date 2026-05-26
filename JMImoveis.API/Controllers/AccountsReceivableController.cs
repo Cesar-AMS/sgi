@@ -12,7 +12,9 @@ namespace JMImoveisAPI.Controllers
     {
         private const string ViewReceivablesPermission = "financeiro.contas_receber.visualizar";
         private const string CreateReceivablesPermission = "financeiro.contas_receber.criar";
+        private const string EditReceivablesPermission = "financeiro.contas_receber.editar";
         private const string SettleReceivablesPermission = "financeiro.contas_receber.baixar";
+        private const string CancelReceivablesPermission = "financeiro.contas_receber.cancelar";
 
         private readonly IAccountsReceivableService _service;
         private readonly IPermissionService _permissionService;
@@ -67,6 +69,19 @@ namespace JMImoveisAPI.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<AccountsReceivableRowDto>> GetById(int id)
+        {
+            var authorizationResult = await AuthorizeCurrentUserAsync(ViewReceivablesPermission, "visualizar contas a receber.");
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            var result = await _service.GetByIdAsync(id);
+            return result == null ? NotFound() : Ok(result);
+        }
+
         // POST /api/accounts-receivable
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateAccountsReceivableRequest req)
@@ -84,6 +99,35 @@ namespace JMImoveisAPI.Controllers
                 return Ok(new { id });
             }
             catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateAccountsReceivableRequest req)
+        {
+            var authorizationResult = await AuthorizeCurrentUserAsync(EditReceivablesPermission, "editar contas a receber.");
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            if (req == null) return BadRequest();
+            try
+            {
+                await _service.UpdateAsync(id, req);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -113,6 +157,30 @@ namespace JMImoveisAPI.Controllers
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPatch("{id:int}/cancel")]
+        public async Task<IActionResult> Cancel(int id, [FromBody] CancelAccountsReceivableRequest req)
+        {
+            var authorizationResult = await AuthorizeCurrentUserAsync(CancelReceivablesPermission, "cancelar contas a receber.");
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            try
+            {
+                await _service.CancelAsync(id, req ?? new CancelAccountsReceivableRequest());
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
             {
                 return BadRequest(ex.Message);
             }
