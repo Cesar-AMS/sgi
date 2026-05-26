@@ -42,7 +42,7 @@ export class LeadDetailsComponent implements OnInit {
   lead?: Lead;
   isLoading = false;
 
-  activeTab: 'info' | 'docs' = 'info';
+  activeTab: 'info' | 'docs' | 'postVisit' = 'info';
   isEditing = false;
 
   infoForm!: FormGroup;
@@ -434,7 +434,7 @@ export class LeadDetailsComponent implements OnInit {
     this.router.navigate([targetRoute]);
   }
 
-  setTab(tab: 'info' | 'docs'): void {
+  setTab(tab: 'info' | 'docs' | 'postVisit'): void {
     this.activeTab = tab;
   }
 

@@ -1,0 +1,151 @@
+.lead-post-visit-card {
+  border-radius: 0.75rem;
+}
+
+.post-visit-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.post-visit-header h5 {
+  color: #252538;
+  font-weight: 700;
+}
+
+.post-visit-header p {
+  font-size: 0.86rem;
+}
+
+.proposal-badge {
+  background: #e7f5ee;
+  border-radius: 999px;
+  color: #17663a;
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.35rem 0.65rem;
+  white-space: nowrap;
+}
+
+.post-visit-loading,
+.post-visit-empty {
+  border: 1px dashed #dedee8;
+  border-radius: 0.65rem;
+  color: #8a8aa0;
+  padding: 1rem;
+  text-align: center;
+}
+
+.post-visit-empty {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.post-visit-empty strong {
+  color: #35354a;
+}
+
+.post-visit-empty span,
+.post-visit-empty small,
+.readonly-hint {
+  color: #8a8aa0;
+  font-size: 0.84rem;
+}
+
+.post-visit-feedback,
+.post-visit-alert {
+  border-radius: 0.55rem;
+  font-size: 0.84rem;
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.post-visit-feedback-error {
+  background-color: #fff4f2;
+  border: 1px solid #ffd6d0;
+  color: #b42318;
+}
+
+.post-visit-feedback-success {
+  background-color: #ecfdf3;
+  border: 1px solid #abefc6;
+  color: #027a48;
+}
+
+.post-visit-alert {
+  background-color: #fff8e6;
+  border: 1px solid #ffe4a3;
+  color: #8a5a00;
+}
+
+.post-visit-form {
+  border: 1px solid #eeeeF5;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.post-visit-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.form-field {
+  min-width: 0;
+}
+
+.form-field .form-label {
+  color: #606075;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.post-visit-actions {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.btn-orange {
+  background-color: #ff7a1a;
+  border-color: #ff7a1a;
+  color: #fff;
+}
+
+.btn-orange:hover {
+  background-color: #ff8f3d;
+  border-color: #ff8f3d;
+  color: #fff;
+}
+
+.readonly-hint {
+  display: block;
+  margin-top: 0.75rem;
+  text-align: right;
+}
+
+@media (max-width: 575.98px) {
+  .post-visit-header,
+  .post-visit-actions {
+    flex-direction: column;
+  }
+
+  .post-visit-actions .btn {
+    width: 100%;
+  }
+
+  .proposal-badge {
+    width: 100%;
+  }
+
+  .readonly-hint {
+    text-align: left;
+  }
+}

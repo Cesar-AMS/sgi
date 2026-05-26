@@ -36,6 +36,7 @@ import { CadastroComponent } from './empreendimentos/cadastro/cadastro.component
 import { EspelhoComponent } from './empreendimentos/espelho/espelho.component';
 import { LeadActivitiesSectionComponent } from './leads-details/components/lead-activities-section/lead-activities-section.component';
 import { LeadAgendaSectionComponent } from './leads-details/components/lead-agenda-section/lead-agenda-section.component';
+import { LeadPostVisitSectionComponent } from './leads-details/components/lead-post-visit-section/lead-post-visit-section.component';
 import { LeadSummarySectionComponent } from './leads-details/components/lead-summary-section/lead-summary-section.component';
 import { LeadVisitsSectionComponent } from './leads-details/components/lead-visits-section/lead-visits-section.component';
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
@@ -76,6 +77,7 @@ import { PerfisAcessosComponent } from './configuracoes/perfis-acessos/perfis-ac
     PosVisitaComponent,
     LeadDetailsComponent,
     LeadSummarySectionComponent,
+    LeadPostVisitSectionComponent,
     LeadActivitiesSectionComponent,
     LeadAgendaSectionComponent,
     LeadVisitsSectionComponent,

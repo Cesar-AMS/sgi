@@ -1,0 +1,187 @@
+<section class="card shadow-sm border-0 lead-post-visit-card">
+  <div class="card-body">
+    <div class="post-visit-header">
+      <div>
+        <h5 class="card-title mb-1">Pos-Visita</h5>
+        <p class="text-muted mb-0">
+          Acompanhamento do cliente apos visita, recepcao ou agendamento.
+        </p>
+      </div>
+
+      <div class="proposal-badge" *ngIf="postVisit?.proposalId">
+        Proposta vinculada: #{{ postVisit?.proposalId }}
+      </div>
+    </div>
+
+    <div class="post-visit-loading" *ngIf="isLoading">
+      Carregando pos-visita...
+    </div>
+
+    <div class="post-visit-feedback post-visit-feedback-error" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <div class="post-visit-feedback post-visit-feedback-success" *ngIf="successMessage">
+      {{ successMessage }}
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+      <div class="post-visit-empty" *ngIf="!postVisit; else postVisitFormTpl">
+        <strong>Este lead ainda nao possui acompanhamento de Pos-Visita.</strong>
+        <span>Inicie o acompanhamento para registrar perfil, follow-up e status operacional.</span>
+
+        <button
+          type="button"
+          class="btn btn-orange"
+          (click)="initializePostVisit()"
+          [disabled]="isInitializing || !canEditLeads"
+        >
+          {{ isInitializing ? 'Iniciando...' : 'Iniciar Pos-Visita' }}
+        </button>
+
+        <small *ngIf="!canEditLeads">
+          Voce pode visualizar o painel, mas nao tem permissao para iniciar ou editar o Pos-Visita.
+        </small>
+      </div>
+
+      <ng-template #postVisitFormTpl>
+        <div class="post-visit-alert" *ngIf="isInProposal()">
+          Este lead ja foi encaminhado para proposta.
+        </div>
+
+        <form class="post-visit-form" [formGroup]="form" (ngSubmit)="save()">
+          <div class="post-visit-grid">
+            <div class="form-field">
+              <label class="form-label" for="postVisitCpf">CPF</label>
+              <input id="postVisitCpf" type="text" class="form-control" formControlName="cpf" />
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="postVisitRestriction">Tem restricao?</label>
+              <select id="postVisitRestriction" class="form-select" formControlName="hasRestriction">
+                <option *ngFor="let option of restrictionOptions; trackBy: trackByValue" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="postVisitIncomeType">Tipo de renda</label>
+              <select id="postVisitIncomeType" class="form-select" formControlName="incomeType">
+                <option *ngFor="let option of incomeTypeOptions; trackBy: trackByValue" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="postVisitRegion">Regiao de interesse</label>
+              <input id="postVisitRegion" type="text" class="form-control" formControlName="interestRegion" />
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="postVisitPaysRent">Paga aluguel?</label>
+              <select id="postVisitPaysRent" class="form-select" formControlName="paysRent">
+                <option *ngFor="let option of restrictionOptions; trackBy: trackByValue" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="postVisitMaritalStatus">Estado civil</label>
+              <select id="postVisitMaritalStatus" class="form-select" formControlName="maritalStatus">
+                <option *ngFor="let option of maritalStatusOptions; trackBy: trackByValue" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="postVisitDownPayment">Valor de entrada</label>
+              <input
+                id="postVisitDownPayment"
+                type="number"
+                min="0"
+                step="0.01"
+                class="form-control"
+                formControlName="downPaymentAmount"
+              />
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="postVisitAgent">Agente que atendeu</label>
+              <select id="postVisitAgent" class="form-select" formControlName="attendingAgentId">
+                <option value="">Nao informado</option>
+                <option *ngFor="let agent of agents; trackBy: trackByAgent" [value]="agent.id">
+                  {{ agent.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="postVisitInterestType">Interesse</label>
+              <select id="postVisitInterestType" class="form-select" formControlName="propertyInterestType">
+                <option *ngFor="let option of propertyInterestOptions; trackBy: trackByValue" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="postVisitStatus">Status</label>
+              <select id="postVisitStatus" class="form-select" formControlName="postVisitStatus">
+                <option *ngFor="let option of statusOptions; trackBy: trackByValue" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="postVisitFollowUp">Proximo follow-up</label>
+              <input
+                id="postVisitFollowUp"
+                type="datetime-local"
+                class="form-control"
+                formControlName="nextFollowUpAt"
+              />
+            </div>
+          </div>
+
+          <div class="form-field mt-3">
+            <label class="form-label" for="postVisitLastInteraction">Resumo da ultima interacao</label>
+            <textarea
+              id="postVisitLastInteraction"
+              class="form-control"
+              rows="4"
+              formControlName="lastInteractionSummary"
+              placeholder="Resumo curto do ultimo contato, conversa ou retorno combinado..."
+            ></textarea>
+          </div>
+
+          <div class="post-visit-actions">
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              (click)="loadPostVisit()"
+              [disabled]="isSaving"
+            >
+              Recarregar
+            </button>
+            <button
+              type="submit"
+              class="btn btn-orange"
+              [disabled]="isSaving || !canEditLeads"
+            >
+              {{ isSaving ? 'Salvando...' : 'Salvar Pos-Visita' }}
+            </button>
+          </div>
+
+          <small class="readonly-hint" *ngIf="!canEditLeads">
+            Voce pode visualizar o Pos-Visita, mas nao tem permissao para editar.
+          </small>
+        </form>
+      </ng-template>
+    </ng-container>
+  </div>
+</section>
