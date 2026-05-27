@@ -20,6 +20,15 @@
       >
         Exportar Excel
       </button>
+
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        (click)="setActiveSection('print')"
+        [disabled]="isLoading"
+      >
+        Previa de impressao
+      </button>
     </div>
   </div>
 
@@ -109,6 +118,19 @@
     </div>
   </section>
 
+  <nav class="report-tabs mb-4" aria-label="Categorias de relatorios de atendimento">
+    <button
+      *ngFor="let section of reportSections; trackBy: trackBySection"
+      type="button"
+      class="report-tab"
+      [class.active]="activeSection === section.key"
+      (click)="setActiveSection(section.key)"
+    >
+      <strong>{{ section.label }}</strong>
+      <span>{{ section.description }}</span>
+    </button>
+  </nav>
+
   <div *ngIf="isLoading" class="report-state">
     Carregando relat&oacute;rios de atendimento...
   </div>
@@ -118,7 +140,7 @@
   </div>
 
   <ng-container *ngIf="!isLoading">
-    <div class="summary-grid mb-4">
+    <div *ngIf="activeSection === 'overview'" class="summary-grid mb-4">
       <div class="summary-card" *ngFor="let card of summaryCards; trackBy: trackByLabel">
         <span>{{ card.label }}</span>
         <strong>{{ card.value }}</strong>
@@ -126,7 +148,11 @@
       </div>
     </div>
 
-    <section class="conversion-section mb-4" aria-label="Indicadores de conversao">
+    <section
+      *ngIf="activeSection === 'overview' || activeSection === 'conversion'"
+      class="conversion-section mb-4"
+      aria-label="Indicadores de conversao"
+    >
       <div class="section-title">
         <h3>Indicadores de convers&atilde;o</h3>
         <span>Taxas calculadas com os dados do filtro atual.</span>
@@ -148,7 +174,85 @@
       Sem dados para o filtro selecionado.
     </div>
 
-    <section *ngIf="hasReportData" class="funnel-section mb-4" aria-label="Funil por equipe">
+    <section
+      *ngIf="activeSection === 'postVisit'"
+      class="post-visit-section mb-4"
+      aria-label="Metricas de pos-visita"
+    >
+      <div class="section-title">
+        <h3>M&eacute;tricas de P&oacute;s-Visita</h3>
+        <span>Somente indicadores com fonte confi&aacute;vel s&atilde;o apresentados como n&uacute;mero.</span>
+      </div>
+
+      <div class="post-visit-grid">
+        <article
+          class="post-visit-card"
+          [class.pending]="!card.available"
+          *ngFor="let card of postVisitMetricCards; trackBy: trackByPostVisitMetric"
+        >
+          <span>{{ card.label }}</span>
+          <strong *ngIf="card.available">{{ card.value }}</strong>
+          <strong *ngIf="!card.available">Pendente</strong>
+          <small>{{ card.description }}</small>
+        </article>
+      </div>
+    </section>
+
+    <section
+      *ngIf="activeSection === 'print'"
+      class="print-preview mb-4"
+      aria-label="Previa de impressao"
+    >
+      <div class="section-title">
+        <h3>Pr&eacute;via de impress&atilde;o</h3>
+        <span>Revise os dados filtrados antes de imprimir.</span>
+      </div>
+
+      <div class="print-actions">
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="printCurrentReport()"
+          [disabled]="!hasReportData"
+        >
+          Imprimir esta pr&eacute;via
+        </button>
+      </div>
+
+      <div class="print-surface">
+        <header>
+          <h3>Relat&oacute;rios de Atendimento</h3>
+          <p>{{ periodLabel }}</p>
+        </header>
+
+        <div class="print-grid">
+          <div *ngFor="let card of summaryCards; trackBy: trackByLabel">
+            <span>{{ card.label }}</span>
+            <strong>{{ card.value }}</strong>
+          </div>
+        </div>
+
+        <h4>P&oacute;s-Visita</h4>
+        <div class="print-grid">
+          <div *ngFor="let card of postVisitMetricCards; trackBy: trackByPostVisitMetric">
+            <span>{{ card.label }}</span>
+            <strong>{{ card.available ? card.value : 'Pendente' }}</strong>
+          </div>
+        </div>
+
+        <h4>Convers&otilde;es</h4>
+        <table class="table table-sm align-middle mb-0">
+          <tbody>
+            <tr *ngFor="let card of conversionCards; trackBy: trackByLabel">
+              <td>{{ card.label }}</td>
+              <td class="text-end">{{ card.percentage | number:'1.0-1' }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section *ngIf="hasReportData && activeSection === 'conversion'" class="funnel-section mb-4" aria-label="Funil por equipe">
       <div class="section-title">
         <h3>Funil por equipe</h3>
         <span>Comparativo calculado com os dados do filtro atual.</span>
@@ -264,7 +368,7 @@
       </div>
     </section>
 
-    <section *ngIf="hasReportData" class="ranking-section mb-4" aria-label="Ranking gerencial">
+    <section *ngIf="hasReportData && activeSection === 'conversion'" class="ranking-section mb-4" aria-label="Ranking gerencial">
       <div class="section-title">
         <h3>Ranking gerencial</h3>
         <span>Ranking calculado com base nos dados filtrados e dispon&iacute;veis no per&iacute;odo.</span>
@@ -334,8 +438,11 @@
       </div>
     </section>
 
-    <div *ngIf="hasReportData" class="row g-3">
-      <div class="col-12 col-xl-6">
+    <div
+      *ngIf="hasReportData && (activeSection === 'leads' || activeSection === 'schedules' || activeSection === 'visits')"
+      class="row g-3"
+    >
+      <div *ngIf="activeSection === 'leads'" class="col-12 col-xl-6">
         <section class="report-panel">
           <header>Leads por status</header>
           <table class="table table-sm align-middle mb-0">
@@ -352,7 +459,7 @@
         </section>
       </div>
 
-      <div class="col-12 col-xl-6">
+      <div *ngIf="activeSection === 'leads'" class="col-12 col-xl-6">
         <section class="report-panel">
           <header>Leads por etapa de atendimento</header>
           <table class="table table-sm align-middle mb-0">
@@ -369,7 +476,7 @@
         </section>
       </div>
 
-      <div class="col-12 col-xl-6">
+      <div *ngIf="activeSection === 'schedules'" class="col-12 col-xl-6">
         <section class="report-panel">
           <header>Agendamentos por status</header>
           <table class="table table-sm align-middle mb-0">
@@ -386,7 +493,7 @@
         </section>
       </div>
 
-      <div class="col-12 col-xl-6">
+      <div *ngIf="activeSection === 'visits'" class="col-12 col-xl-6">
         <section class="report-panel">
           <header>Visitas por status</header>
           <table class="table table-sm align-middle mb-0">
@@ -403,7 +510,7 @@
         </section>
       </div>
 
-      <div class="col-12 col-xl-6">
+      <div *ngIf="activeSection === 'visits'" class="col-12 col-xl-6">
         <section class="report-panel">
           <header>Visitas por vendedor</header>
           <table class="table table-sm align-middle mb-0">
@@ -420,7 +527,7 @@
         </section>
       </div>
 
-      <div class="col-12 col-xl-6">
+      <div *ngIf="activeSection === 'visits'" class="col-12 col-xl-6">
         <section class="report-panel">
           <header>Visitas por coordenador / gerente</header>
           <table class="table table-sm align-middle mb-0">

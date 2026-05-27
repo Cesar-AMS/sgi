@@ -12,11 +12,25 @@ import {
 import { exportToExcel } from 'src/app/shared/utils/excel-export';
 
 type DateRange = 'today' | 'last7' | 'last30' | 'thisMonth' | 'thisYear' | 'all';
+type ReportSection = 'overview' | 'leads' | 'schedules' | 'visits' | 'postVisit' | 'conversion' | 'print';
 
 type SummaryCard = {
   label: string;
   value: number;
   description: string;
+};
+
+type ReportSectionTab = {
+  key: ReportSection;
+  label: string;
+  description: string;
+};
+
+type PostVisitMetricCard = {
+  label: string;
+  value: number | null;
+  description: string;
+  available: boolean;
 };
 
 type ConversionCard = {
@@ -64,6 +78,7 @@ export class AtendimentoRelatoriosComponent implements OnInit {
   filterErrorMessage = '';
   hasReportData = false;
   periodLabel = 'Ultimos 30 dias';
+  activeSection: ReportSection = 'overview';
 
   dateRange: DateRange = 'last30';
   vendedorFilter = '';
@@ -79,11 +94,22 @@ export class AtendimentoRelatoriosComponent implements OnInit {
     { label: 'Todos', value: 'all' },
   ];
 
+  reportSections: ReportSectionTab[] = [
+    { key: 'overview', label: 'Resumo', description: 'Indicadores gerais do atendimento' },
+    { key: 'leads', label: 'Leads', description: 'Status e etapas de atendimento' },
+    { key: 'schedules', label: 'Agendamentos', description: 'Status de contatos e retornos' },
+    { key: 'visits', label: 'Visitas', description: 'Visitas, equipe e conversoes' },
+    { key: 'postVisit', label: 'Pos-visita', description: 'Metricas disponiveis e pendencias confiaveis' },
+    { key: 'conversion', label: 'Funil', description: 'Funis e rankings gerenciais' },
+    { key: 'print', label: 'Previa', description: 'Visualizacao antes da impressao' },
+  ];
+
   corretores: Usuarios[] = [];
   coordenadores: Usuarios[] = [];
   gerentes: Usuarios[] = [];
 
   summaryCards: SummaryCard[] = [];
+  postVisitMetricCards: PostVisitMetricCard[] = [];
   conversionCards: ConversionCard[] = [];
   leadsByStatus: GroupRow[] = [];
   leadsByEtapa: GroupRow[] = [];
@@ -181,10 +207,27 @@ export class AtendimentoRelatoriosComponent implements OnInit {
     return `${item.position}-${item.name}`;
   }
 
+  trackBySection(_: number, item: ReportSectionTab): ReportSection {
+    return item.key;
+  }
+
+  trackByPostVisitMetric(_: number, item: PostVisitMetricCard): string {
+    return item.label;
+  }
+
+  setActiveSection(section: ReportSection): void {
+    this.activeSection = section;
+  }
+
+  printCurrentReport(): void {
+    window.print();
+  }
+
   exportExcel(): void {
     const data = [
       ...this.buildFilterExportRows(),
       ...this.buildSummaryExportRows(),
+      ...this.buildPostVisitMetricExportRows(),
       ...this.buildConversionExportRows(),
       ...this.buildGroupExportRows('Leads por status', this.leadsByStatus),
       ...this.buildGroupExportRows('Leads por etapa de atendimento', this.leadsByEtapa),
@@ -257,6 +300,33 @@ export class AtendimentoRelatoriosComponent implements OnInit {
         label: 'Virou venda',
         value: resumo.virouVenda || 0,
         description: 'Visitas marcadas como virou venda',
+      },
+    ];
+
+    this.postVisitMetricCards = [
+      {
+        label: 'Comparecimentos registrados',
+        value: resumo.comparecimentos || 0,
+        description: 'Visitas marcadas como compareceu no periodo filtrado.',
+        available: true,
+      },
+      {
+        label: 'Sinal de venda na visita',
+        value: resumo.virouVenda || 0,
+        description: 'Usa o campo virouVenda da visita. Nao confirma venda no modulo Vendas.',
+        available: true,
+      },
+      {
+        label: 'Retornaram apos visita',
+        value: null,
+        description: 'Pendente: exige regra confiavel com pos-visita, follow-up ou agendamento posterior a visita.',
+        available: false,
+      },
+      {
+        label: 'Venda confirmada apos visita',
+        value: null,
+        description: 'Pendente: exige vinculo confiavel entre pos-visita, proposta e venda aprovada.',
+        available: false,
       },
     ];
 
@@ -334,6 +404,7 @@ export class AtendimentoRelatoriosComponent implements OnInit {
 
   private clearReportData(): void {
     this.summaryCards = [];
+    this.postVisitMetricCards = [];
     this.conversionCards = [];
     this.leadsByStatus = [];
     this.leadsByEtapa = [];
@@ -479,6 +550,17 @@ export class AtendimentoRelatoriosComponent implements OnInit {
   private buildSummaryExportRows(): any[] {
     return this.summaryCards.map((card) =>
       this.createExportRow('Resumo', card.label, card.value, card.description)
+    );
+  }
+
+  private buildPostVisitMetricExportRows(): any[] {
+    return this.postVisitMetricCards.map((card) =>
+      this.createExportRow(
+        'Pos-visita',
+        card.label,
+        card.available ? card.value ?? 0 : 'Pendente',
+        card.description
+      )
     );
   }
 
