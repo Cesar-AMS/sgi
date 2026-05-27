@@ -1,4 +1,4 @@
-export type VisitaStatus = 'Agendada' | 'Confirmada' | 'Realizada' | 'Cancelada';
+export type VisitaStatus = 'Agendada' | 'Confirmada' | 'Realizada' | 'Cancelada' | 'Atrasado';
 
 export interface Visita {
   id: number;

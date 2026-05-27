@@ -263,7 +263,7 @@
 
               <td style="min-width: 150px;">
                 <span class="status-pill" [ngClass]="getStatusClass(v.status)">
-                  {{ v.status }}
+                  {{ getDisplayStatus(v.status) }}
                 </span>
 
                 <select
@@ -340,10 +340,10 @@
                   class="btn btn-sm btn-outline-success me-1"
                   type="button"
                   (click)="$event.stopPropagation(); confirmAgendamento(v)"
-                  title="Confirmar agendamento"
-                  aria-label="Confirmar agendamento"
+                  title="Marcar agendamento como realizado"
+                  aria-label="Marcar agendamento como realizado"
                 >
-                  Confirmar
+                  Realizar
                 </button>
 
                 <button
@@ -362,11 +362,11 @@
                   class="btn btn-sm btn-outline-danger"
                   type="button"
                   (click)="$event.stopPropagation(); cancel(v)"
-                  [attr.title]="isAgendamentoMode() ? 'Cancelar agendamento' : 'Cancelar visita'"
-                  [attr.aria-label]="isAgendamentoMode() ? 'Cancelar agendamento' : 'Cancelar visita'"
+                  [attr.title]="isAgendamentoMode() ? 'Marcar agendamento como atrasado' : 'Cancelar visita'"
+                  [attr.aria-label]="isAgendamentoMode() ? 'Marcar agendamento como atrasado' : 'Cancelar visita'"
                 >
                   <i class="bi bi-x-circle"></i>
-                  <span *ngIf="isAgendamentoMode()" class="ms-1">Cancelar</span>
+                  <span *ngIf="isAgendamentoMode()" class="ms-1">Atrasar</span>
                 </button>
               </td>
             </tr>
@@ -437,7 +437,7 @@
 
     <div class="modal-body px-4 pb-4">
       <p class="schedule-lead-link-note" *ngIf="isAgendamentoMode() && !editingId">
-        Ao salvar, o sistema cria ou vincula um Lead mínimo para abrir o Painel do Cliente.
+        Novo agendamento deve ficar vinculado a um Lead. Informe um Lead existente ou preencha os dados do cliente para criar um Lead rapido automaticamente.
       </p>
 
       <form [formGroup]="createForm" (ngSubmit)="submitSave()">
@@ -453,7 +453,9 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label" for="visitLeadId">Lead existente (opcional)</label>
+          <label class="form-label" for="visitLeadId">
+            {{ isAgendamentoMode() ? 'Lead existente' : 'Lead existente (opcional)' }}
+          </label>
           <input
             id="visitLeadId"
             type="number"
@@ -462,8 +464,8 @@
             placeholder="Informe o ID do Lead se já existir"
             formControlName="leadId"
           />
-          <small class="text-muted">
-            Se ficar vazio, o sistema cria um Lead mínimo e libera o Painel do Cliente automaticamente.
+          <small class="text-muted" *ngIf="isAgendamentoMode()">
+            Se ficar vazio, o sistema cria um Lead rapido com os dados informados e vincula o agendamento automaticamente.
           </small>
         </div>
 
@@ -475,6 +477,28 @@
             class="form-control"
             placeholder="Ex: (11) 99999-9999"
             formControlName="telefone"
+          />
+        </div>
+
+        <div class="mb-3" *ngIf="isAgendamentoMode()">
+          <label class="form-label" for="visitClientEmail">Email</label>
+          <input
+            id="visitClientEmail"
+            type="email"
+            class="form-control"
+            placeholder="Ex: cliente@email.com"
+            formControlName="email"
+          />
+        </div>
+
+        <div class="mb-3" *ngIf="isAgendamentoMode()">
+          <label class="form-label" for="visitClientSource">Origem</label>
+          <input
+            id="visitClientSource"
+            type="text"
+            class="form-control"
+            placeholder="Ex: Rua, telefone, indicacao..."
+            formControlName="fonte"
           />
         </div>
 
@@ -547,10 +571,10 @@
             class="btn btn-outline-danger"
             [disabled]="isSaving"
             (click)="cancelEditing()"
-            [attr.aria-label]="isAgendamentoMode() ? 'Cancelar agendamento' : 'Cancelar visita'"
+            [attr.aria-label]="isAgendamentoMode() ? 'Marcar agendamento como atrasado' : 'Cancelar visita'"
           >
             <i class="bi bi-x-circle me-2"></i>
-            {{ isAgendamentoMode() ? 'Cancelar agendamento' : 'Cancelar visita' }}
+            {{ isAgendamentoMode() ? 'Marcar como atrasado' : 'Cancelar visita' }}
           </button>
 
           <div class="d-flex justify-content-end gap-2 ms-auto">
@@ -564,7 +588,7 @@
             </button>
 
             <button type="submit" class="btn btn-orange" [disabled]="isSaving">
-              {{ editingId ? 'Salvar alterações' : 'Salvar' }}
+              {{ editingId ? 'Salvar alterações' : (isAgendamentoMode() ? 'Salvar agendamento vinculado' : 'Salvar') }}
             </button>
           </div>
         </div>

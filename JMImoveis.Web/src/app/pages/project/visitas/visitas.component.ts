@@ -1,13 +1,16 @@
 import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { catchError, filter, forkJoin, of } from 'rxjs';
+import { catchError, filter, forkJoin, map, Observable, of, throwError } from 'rxjs';
 import { SessionService } from 'src/app/core/session/session.service';
 import { ApiService } from 'src/app/core/services/api.service';
 import { Permission, PermissionsService } from 'src/app/core/services/permissions.service';
 import { VisitasApiService } from 'src/app/core/services/visitas-api.service';
+import { LeadsService } from 'src/app/core/services/leads.service';
 import { Usuarios } from 'src/app/models/ContaBancaria';
+import { CreateLeadRequest } from 'src/app/models/lead';
 import { Visita, VisitaStatus } from 'src/app/models/visita';
 import { exportToExcel } from 'src/app/shared/utils/excel-export';
 
@@ -35,7 +38,7 @@ export class VisitasComponent {
 screenMode: VisitasScreenMode = 'visitas';
 filtersCollapsed = false;
 
-setStatusTab(status: 'Agendada' | 'Confirmada' | 'Realizada' | 'Cancelada') {
+setStatusTab(status: VisitaStatus) {
   this.statusFilter = status;
 
   this.page = 1;
@@ -158,6 +161,7 @@ private isoToDatetimeLocal(iso: string): string {
     private toast: ToastrService,
     private api: ApiService,
     private visitasApi: VisitasApiService,
+    private leadService: LeadsService,
     private router: Router,
     private sessionService: SessionService,
     private permissionsService: PermissionsService
@@ -263,25 +267,25 @@ private isoToDatetimeLocal(iso: string): string {
 
   getSummaryValue(): number {
     return this.isAgendamentoMode()
-      ? this.visitas.filter((visita) => visita.status === 'Agendada' || visita.status === 'Confirmada').length
+      ? this.visitas.filter((visita) => visita.status === 'Agendada').length
       : this.getTodayVisitsCount();
   }
 
   getSummaryNote(): string {
     return this.isAgendamentoMode()
-      ? 'Fila operacional para confirmar contatos, acompanhar retornos e cancelar compromissos quando necessário.'
+      ? 'Fila operacional para realizar retornos e identificar compromissos atrasados quando necessário.'
       : 'Acompanhe a chegada dos clientes e marque rapidamente as visitas realizadas.';
   }
 
   getStatusTabs(): VisitaStatus[] {
     return this.isAgendamentoMode()
-      ? ['Agendada', 'Confirmada', 'Cancelada']
+      ? ['Agendada', 'Realizada', 'Atrasado']
       : ['Agendada', 'Confirmada', 'Realizada', 'Cancelada'];
   }
 
   getStatusOptionsForMode(): VisitaStatus[] {
     return this.isAgendamentoMode()
-      ? ['Agendada', 'Confirmada', 'Cancelada']
+      ? ['Agendada', 'Realizada', 'Atrasado']
       : this.statusOptions;
   }
 
@@ -291,6 +295,7 @@ private isoToDatetimeLocal(iso: string): string {
       Confirmada: 'Confirmadas',
       Realizada: 'Realizadas',
       Cancelada: 'Canceladas',
+      Atrasado: 'Atrasados',
     };
 
     return labels[status];
@@ -373,6 +378,8 @@ private isoToDatetimeLocal(iso: string): string {
       nomeCliente: ['', Validators.required],
       leadId: [''],
       telefone: [''],
+      email: [''],
+      fonte: [''],
       dataHora: ['', Validators.required], // datetime-local
       vendedorId: [''],
       status: ['Agendada' as VisitaStatus, Validators.required],
@@ -414,7 +421,7 @@ private isoToDatetimeLocal(iso: string): string {
       this.applyAndPaginateLocal();
       this.isLoading = false;
     },
-    error: (err) => {
+    error: (err: HttpErrorResponse) => {
       if (requestId !== this.loadRequestId) {
         return;
       }
@@ -484,6 +491,8 @@ private isoToDatetimeLocal(iso: string): string {
     nomeCliente: '',
     leadId: '',
     telefone: '',
+    email: '',
+    fonte: '',
     dataHora: '',
     vendedorId: '',
     status: 'Agendada',
@@ -509,6 +518,8 @@ openEditModal(v: Visita): void {
     nomeCliente: v.nomeCliente,
     leadId: v.leadId ?? '',
     telefone: v.telefone ?? '',
+    email: '',
+    fonte: v.fonte ?? '',
     dataHora: dtLocal,
     vendedorId: v.vendedorId ?? '',
     status: this.getStatusOptionsForMode().includes(v.status) ? v.status : 'Agendada',
@@ -551,7 +562,7 @@ openEditModal(v: Visita): void {
         this.closeCreateModal();
         this.loadVisitas();
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         console.error(err);
         this.toast.error('Erro ao atualizar visita');
         this.isSaving = false;
@@ -561,6 +572,37 @@ openEditModal(v: Visita): void {
   }
 
   // ✅ CRIAR
+  if (this.isAgendamentoMode()) {
+    const leadIdRequest$: Observable<number> = this.resolveAgendamentoLeadId(form);
+
+    leadIdRequest$.subscribe({
+      next: (leadId: number) => {
+        this.visitasApi.create({
+          ...payload,
+          leadId,
+        } as any).subscribe({
+          next: () => {
+            this.toast.success('Agendamento criado com lead vinculado!');
+            this.isSaving = false;
+            this.closeCreateModal();
+            this.loadVisitas();
+          },
+          error: (err: HttpErrorResponse) => {
+            console.error(err);
+            this.toast.error('Erro ao criar agendamento');
+            this.isSaving = false;
+          }
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error(err);
+        this.toast.error('Erro ao vincular lead ao agendamento');
+        this.isSaving = false;
+      }
+    });
+    return;
+  }
+
   this.visitasApi.create(payload as any).subscribe({
     next: () => {
       this.toast.success('Visita criada com sucesso!');
@@ -568,7 +610,7 @@ openEditModal(v: Visita): void {
       this.closeCreateModal();
       this.loadVisitas();
     },
-    error: (err) => {
+    error: (err: HttpErrorResponse) => {
       console.error(err);
       this.toast.error('Erro ao criar visita');
       this.isSaving = false;
@@ -619,7 +661,7 @@ openEditModal(v: Visita): void {
   }
 
   confirmAgendamento(visita: Visita): void {
-    this.updateStatus(visita, 'Confirmada');
+    this.updateStatus(visita, 'Realizada');
   }
 
   hasValidLead(visita: Visita): boolean {
@@ -638,12 +680,16 @@ openEditModal(v: Visita): void {
       return;
     }
 
-    this.visitasApi.cancel(visita.id).subscribe({
+    const cancelRequest$ = this.isAgendamentoMode()
+      ? this.visitasApi.update(visita.id, { status: 'Atrasado' } as any)
+      : this.visitasApi.cancel(visita.id);
+
+    cancelRequest$.subscribe({
       next: () => {
-        this.toast.info('Visita cancelada');
+        this.toast.info(this.isAgendamentoMode() ? 'Agendamento marcado como atrasado' : 'Visita cancelada');
         this.loadVisitas();
       },
-      error: () => this.toast.error('Erro ao cancelar visita')
+      error: () => this.toast.error(this.isAgendamentoMode() ? 'Erro ao marcar agendamento como atrasado' : 'Erro ao cancelar visita')
     });
   }
 
@@ -765,17 +811,35 @@ openEditModal(v: Visita): void {
   }
 
   getStatusClass(status: VisitaStatus): string {
-    switch (status) {
+    switch (this.getDisplayStatus(status)) {
       case 'Confirmada':
         return 'status-confirmada';
       case 'Realizada':
         return 'status-realizada';
       case 'Cancelada':
         return 'status-cancelada';
+      case 'Atrasado':
+        return 'status-atrasado';
       case 'Agendada':
       default:
         return 'status-agendada';
     }
+  }
+
+  getDisplayStatus(status: VisitaStatus): VisitaStatus {
+    if (!this.isAgendamentoMode()) {
+      return status;
+    }
+
+    if (status === 'Confirmada') {
+      return 'Realizada';
+    }
+
+    if (status === 'Cancelada') {
+      return 'Atrasado';
+    }
+
+    return status;
   }
 
   cancelEditing(): void {
@@ -788,16 +852,20 @@ openEditModal(v: Visita): void {
   const id = this.editingId;
   this.isSaving = true;
 
-  this.visitasApi.cancel(id).subscribe({
+  const cancelRequest$ = this.isAgendamentoMode()
+    ? this.visitasApi.update(id, { status: 'Atrasado' } as any)
+    : this.visitasApi.cancel(id);
+
+  cancelRequest$.subscribe({
     next: () => {
-      this.toast.info('Visita cancelada');
+      this.toast.info(this.isAgendamentoMode() ? 'Agendamento marcado como atrasado' : 'Visita cancelada');
       this.isSaving = false;
       this.closeCreateModal();
       this.loadVisitas();
     },
-    error: (err) => {
+    error: (err: HttpErrorResponse) => {
       console.error(err);
-      this.toast.error('Erro ao cancelar visita');
+      this.toast.error(this.isAgendamentoMode() ? 'Erro ao marcar agendamento como atrasado' : 'Erro ao cancelar visita');
       this.isSaving = false;
     }
   });
@@ -830,6 +898,54 @@ private buildSchedulePayload(form: any): SchedulePayload {
 private normalizeStatusForMode(status: VisitaStatus): VisitaStatus {
   const allowedStatuses = this.getStatusOptionsForMode();
   return allowedStatuses.includes(status) ? status : 'Agendada';
+}
+
+private hasValidLeadInput(leadId: unknown): boolean {
+  return Number(leadId) > 0;
+}
+
+private resolveAgendamentoLeadId(form: any): Observable<number> {
+  if (this.hasValidLeadInput(form.leadId)) {
+    const leadId = Number(form.leadId);
+    return this.leadService.getLeadById(leadId).pipe(
+      map(() => leadId)
+    );
+  }
+
+  return this.createQuickLeadForAgendamento(form);
+}
+
+private createQuickLeadForAgendamento(form: any): Observable<number> {
+  const quickLead = this.buildQuickLeadPayload(form);
+
+  if (!quickLead) {
+    this.toast.warning('Informe o nome do cliente para criar o lead do agendamento.');
+    this.isSaving = false;
+    return throwError(() => new Error('Nome do cliente obrigatorio para criar lead do agendamento.'));
+  }
+
+  return this.leadService.createLead(quickLead).pipe(
+    map((created) => Number(created.id))
+  );
+}
+
+private buildQuickLeadPayload(form: any): CreateLeadRequest | null {
+  const nome = String(form.nomeCliente || '').trim();
+
+  if (!nome) {
+    return null;
+  }
+
+  return {
+    nome,
+    telefone: form.telefone ? String(form.telefone).trim() : undefined,
+    email: form.email ? String(form.email).trim() : undefined,
+    fonte: form.fonte ? String(form.fonte).trim() : 'Agendamento',
+    vendedor: form.vendedorId ? String(form.vendedorId) : undefined,
+    observacao: form.observacao ? String(form.observacao).trim() : undefined,
+    status: 'Novo',
+    etapaAtendimento: 'Agendamento de retorno',
+  };
 }
 
 
