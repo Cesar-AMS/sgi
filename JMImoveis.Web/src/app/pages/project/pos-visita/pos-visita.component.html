@@ -121,7 +121,6 @@
             <th>Interesse</th>
             <th>Pr&oacute;ximo follow-up</th>
             <th>&Uacute;ltima intera&ccedil;&atilde;o</th>
-            <th class="text-end">A&ccedil;&atilde;o</th>
           </tr>
         </thead>
         <tbody>
@@ -158,19 +157,10 @@
                 {{ item.lastInteractionSummary || 'Sem resumo registrado' }}
               </span>
             </td>
-            <td class="text-end">
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-primary"
-                (click)="$event.stopPropagation(); openLeadPanel(item.leadId)"
-              >
-                Abrir Painel
-              </button>
-            </td>
           </tr>
 
           <tr *ngIf="postVisits.length === 0">
-            <td colspan="11" class="empty-cell">
+            <td colspan="10" class="empty-cell">
               Nenhum registro de p&oacute;s-visita encontrado para o filtro atual.
             </td>
           </tr>

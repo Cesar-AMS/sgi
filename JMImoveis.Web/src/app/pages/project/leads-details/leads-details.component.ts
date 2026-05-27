@@ -36,6 +36,7 @@ export class LeadDetailsComponent implements OnInit {
   private readonly backRoutes: Record<string, string> = {
     leads: '/jm/atendimento/leads/listagem',
     agendamento: '/jm/atendimento/agendamento',
+    'pos-visita': '/jm/atendimento/pos-visita',
     visitas: '/jm/atendimento/visitas',
   };
 

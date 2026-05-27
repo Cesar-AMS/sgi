@@ -96,7 +96,9 @@ export class PosVisitaComponent implements OnInit {
       return;
     }
 
-    this.router.navigate(['/jm/atendimento/leads', leadId]);
+    this.router.navigate(['/jm/atendimento/leads', leadId], {
+      queryParams: { from: 'pos-visita' },
+    });
   }
 
   trackByPostVisitId(_: number, item: LeadPostVisitListItem): number {

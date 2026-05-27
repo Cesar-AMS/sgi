@@ -261,7 +261,7 @@
               <td>{{ v.gerenteNome || '-' }}</td>
 
               <td class="status-cell">
-                <span class="status-pill" [ngClass]="getStatusClass(v.status)">
+                <span *ngIf="isAgendamentoMode()" class="status-pill" [ngClass]="getStatusClass(v.status)">
                   {{ getDisplayStatus(v.status) }}
                 </span>
 
@@ -276,6 +276,10 @@
                 >
                   <option *ngFor="let s of getStatusOptionsForMode()" [ngValue]="s">{{ s }}</option>
                 </select>
+
+                <span *ngIf="isVisitasMode() && !canEditVisits" class="status-readonly">
+                  {{ getDisplayStatus(v.status) }}
+                </span>
               </td>
 
               <td *ngIf="isVisitasMode()" style="min-width: 140px;">
