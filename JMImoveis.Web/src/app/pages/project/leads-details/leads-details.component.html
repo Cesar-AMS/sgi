@@ -213,8 +213,8 @@
               </div>
             </form>
 
-            <div class="timeline-list" *ngIf="activities.length > 0; else noTimelineItemsTpl">
-              <article class="timeline-item" *ngFor="let act of activities">
+            <div class="timeline-list" *ngIf="getTimelineActivities().length > 0; else noTimelineItemsTpl">
+              <article class="timeline-item" *ngFor="let act of getTimelineActivities()">
                 <div class="timeline-dot"></div>
                 <div class="timeline-content">
                   <div class="timeline-item-header">
@@ -234,6 +234,23 @@
                 Nenhuma interação registrada para este lead.
               </div>
             </ng-template>
+
+            <div class="timeline-list mt-3" *ngIf="getEtapaAtendimentoActivities().length > 0">
+              <div class="text-muted small mb-2">Etapas de Atendimento</div>
+              <article class="timeline-item" *ngFor="let act of getEtapaAtendimentoActivities()">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <div class="timeline-item-header">
+                    <strong>Etapa de atendimento</strong>
+                    <span>{{ act.dateTime | date: 'dd/MM/yyyy HH:mm' }}</span>
+                  </div>
+                  <p class="timeline-description mb-1">{{ act.description }}</p>
+                  <div class="timeline-author">
+                    {{ act.author || 'Sistema' }}
+                  </div>
+                </div>
+              </article>
+            </div>
           </div>
         </section>
       </div>

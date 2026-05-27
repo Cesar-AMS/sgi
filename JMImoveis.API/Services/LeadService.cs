@@ -140,8 +140,34 @@ namespace JMImoveisAPI.Services
         public Task<IEnumerable<LeadActivity>> GetActivitiesByLeadIdAsync(int leadId)
             => _leadRepository.GetActivitiesByLeadId(leadId);
 
-        public Task<int> CreateActivityAsync(CreateLeadActivityRequest request)
-            => _leadRepository.CreateActivity(request);
+        public async Task<int> CreateActivityAsync(CreateLeadActivityRequest request)
+        {
+            var activityId = await _leadRepository.CreateActivity(request);
+
+            try
+            {
+                var lead = await _leadRepository.GetLeadById(request.LeadId);
+                if (IsNewLeadStatus(lead?.Status))
+                {
+                    var activity = new CreateLeadActivityRequest
+                    {
+                        LeadId = request.LeadId,
+                        DateTime = DateTime.Now,
+                        Description = "Status alterado automaticamente de \"Novo\" para \"Em Contato\" apos registro de interacao.",
+                        Author = "Sistema",
+                        Type = "Status"
+                    };
+
+                    await _leadRepository.UpdateLeadStatus(request.LeadId, "Em Contato", activity);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Interacao {ActivityId} criada, mas nao foi possivel atualizar automaticamente o status do lead {LeadId}.", activityId, request.LeadId);
+            }
+
+            return activityId;
+        }
 
         public Task<IEnumerable<LeadSchedule>> GetSchedulesByLeadIdAsync(int leadId, string typeSchedule)
             => _leadRepository.GetSchedulesByLeadId(leadId, typeSchedule);
@@ -315,6 +341,9 @@ namespace JMImoveisAPI.Services
             var chars = normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark);
             return new string(chars.ToArray()).Normalize(NormalizationForm.FormC);
         }
+
+        private static bool IsNewLeadStatus(string? status)
+            => string.Equals(RemoveDiacritics(status).Trim(), "Novo", StringComparison.OrdinalIgnoreCase);
 
         private async Task<int> EnsureScheduleLeadIdAsync(LeadScheduleRequest request, int? leadId)
         {

@@ -294,6 +294,14 @@ export class LeadDetailsComponent implements OnInit {
     });
   }
 
+  getTimelineActivities(): LeadActivity[] {
+    return (this.activities || []).filter((activity) => !this.isTimelineSystemActivity(activity));
+  }
+
+  getEtapaAtendimentoActivities(): LeadActivity[] {
+    return (this.activities || []).filter((activity) => this.isEtapaAtendimentoActivity(activity));
+  }
+
   patchInfoForm(lead: Lead): void {
     this.infoForm.patchValue({
       nome: lead.nome,
@@ -567,6 +575,7 @@ export class LeadDetailsComponent implements OnInit {
         this.timelineSuccessMessage = 'Interação registrada com sucesso.';
         this.clearOperationalInteractionForm();
         this.loadActivities(this.lead?.id ?? 0);
+        this.loadLead(this.lead?.id ?? 0);
       },
       error: () => {
         this.isSavingInteraction = false;
@@ -851,7 +860,17 @@ export class LeadDetailsComponent implements OnInit {
       next: () => {
         this.isAddingActivity = false;
         this.loadActivities(this.lead?.id ?? 0);
+        this.loadLead(this.lead?.id ?? 0);
       },
     });
+  }
+
+  private isEtapaAtendimentoActivity(activity: LeadActivity): boolean {
+    return String(activity?.type ?? '').trim().toLowerCase() === 'etapaatendimento';
+  }
+
+  private isTimelineSystemActivity(activity: LeadActivity): boolean {
+    const type = String(activity?.type ?? '').trim().toLowerCase();
+    return type === 'etapaatendimento' || type === 'status';
   }
 }
