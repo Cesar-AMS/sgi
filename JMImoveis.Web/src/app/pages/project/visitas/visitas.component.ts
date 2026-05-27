@@ -79,7 +79,7 @@ exportExcel(): void {
     Interesse: r.imoveisInteresse ?? '',
     Origem: r.fonte ?? '',
     DtAgendamento: this.toBRDate(r.dataHoraISO),
-    Vendedor: this.getVendedorNome(r),
+    Agente: this.getVendedorNome(r),
     Coordenador: r.coordenadorNome ?? '',
     Gerente: r.gerenteNome ?? '',
     TipoAgenda: r.tipoAgenda ?? this.getDefaultTipoAgenda(),
@@ -786,8 +786,10 @@ openEditModal(v: Visita): void {
   // ---------- helpers ----------
   selectNameSale(idVendedor: any): string {
     if (idVendedor === null || idVendedor === undefined || String(idVendedor).trim() === '') return '-';
-    const x = this.corretores.find(it => it.id?.toString().trim() === idVendedor.toString().trim())?.name;
-    return x || '-';
+    const raw = String(idVendedor).trim();
+    const x = this.corretores.find(it => it.id?.toString().trim() === raw)?.name;
+    if (x) return x;
+    return Number.isFinite(Number(raw)) ? '-' : raw;
   }
 
   getVendedorNome(visita: Visita): string {
@@ -795,13 +797,13 @@ openEditModal(v: Visita): void {
   }
 
   getSellerFilterLabel(): string {
-    return this.sellerFilterMode === 'mine' ? 'Minhas visitas' : 'Vendedor';
+    return this.sellerFilterMode === 'mine' ? 'Minhas visitas' : 'Agente';
   }
 
   getSellerFilterAriaLabel(): string {
     return this.sellerFilterMode === 'mine'
       ? 'Filtro fixo para minhas visitas'
-      : 'Filtrar visitas por vendedor';
+      : 'Filtrar visitas por agente';
   }
 
   private applySellerFilterScope(): void {

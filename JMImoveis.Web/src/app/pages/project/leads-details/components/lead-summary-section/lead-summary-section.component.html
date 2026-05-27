@@ -80,7 +80,7 @@
           <div class="value">{{ lead.valor | currency: 'BRL':'symbol':'1.0-0' }}</div>
         </div>
         <div class="col-md-6"><div class="label">Observação</div><div class="value">{{ lead.observacao || '-' }}</div></div>
-        <div class="col-md-6"><div class="label">Vendedor</div><div class="value">{{ selectNameSale(lead.vendedor) }}</div></div>
+        <div class="col-md-6"><div class="label">Agente</div><div class="value">{{ selectNameSale(lead.vendedor) }}</div></div>
         <div class="col-md-6"><div class="label">Interesse do lead</div><div class="value">{{ lead.imoveisInteresse || '-' }}</div></div>
         <div class="col-md-6"><div class="label">Data de Criação</div><div class="value">{{ lead.dataCriacao | date: 'dd/MM/yyyy' }}</div></div>
         <div class="col-md-6"><div class="label">Último Contato</div><div class="value">{{ lead.dataCriacao | date: 'dd/MM/yyyy' }}</div></div>
@@ -106,7 +106,7 @@
             <input id="lead-interest" type="text" class="form-control" formControlName="imoveisInteresse" />
           </div>
           <div class="col-md-6">
-            <label class="form-label">Vendedor</label>
+            <label class="form-label">Agente</label>
             <select class="form-select" formControlName="vendedor">
               <option value="">Todos</option>
               <option *ngFor="let c of corretores" [value]="c.id">{{ c.name }}</option>

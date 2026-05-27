@@ -33,10 +33,15 @@ export class LeadSummarySectionComponent {
       return '-';
     }
 
-    return (
-      this.corretores.find(
-        (item) => item.id.toString().trim() === idVendedor.toString().trim()
-      )?.name ?? '-'
-    );
+    const raw = String(idVendedor).trim();
+    const name = this.corretores.find(
+      (item) => item.id.toString().trim() === raw
+    )?.name;
+
+    if (name) {
+      return name;
+    }
+
+    return Number.isFinite(Number(raw)) ? '-' : raw;
   }
 }

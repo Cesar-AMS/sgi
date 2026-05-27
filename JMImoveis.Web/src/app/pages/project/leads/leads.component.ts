@@ -343,11 +343,16 @@ export class LeadsComponent {
       return '-';
     }
 
+    const raw = String(idvendedor).trim();
     const name = this.corretores.find(
-      (it) => it.id.toString().trim() === idvendedor.toString().trim()
+      (it) => it.id.toString().trim() === raw
     )?.name;
 
-    return name || '-';
+    if (name) {
+      return name;
+    }
+
+    return Number.isFinite(Number(raw)) ? '-' : raw;
   }
 
   applyFilters(): void {
@@ -535,7 +540,7 @@ export class LeadsComponent {
     const data = (this.pagedLeads || []).map((r) => ({
       ID: r.id,
       Criacao: this.toBRDate(r.dataCriacao),
-      Vendedor: this.selectNameSale(r.vendedor),
+      Agente: this.selectNameSale(r.vendedor),
       Status: r.status,
       Gerente: r.gerente,
       Fonte: r.fonte,

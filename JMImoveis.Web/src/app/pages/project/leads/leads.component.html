@@ -120,15 +120,15 @@
       </div>
 
       <div class="filter-field">
-        <label class="form-label" for="leadVendedorFilter">Vendedor</label>
+        <label class="form-label" for="leadVendedorFilter">Agente</label>
         <select
           id="leadVendedorFilter"
           class="form-select"
           [(ngModel)]="vendedorFilter"
           (ngModelChange)="onFilterChange()"
-          aria-label="Filtrar leads por vendedor"
+          aria-label="Filtrar leads por agente"
         >
-          <option value="">Todos vendedores</option>
+          <option value="">Todos agentes</option>
           <option *ngFor="let v of corretores" [value]="v.id">
             {{ v.name }}
           </option>
@@ -212,7 +212,7 @@
             <tr>
               <th>Nome</th>
               <th>Status</th>
-              <th>Vendedor</th>
+              <th>Agente</th>
               <th>Coordenador</th>
               <th>Gerente</th>
               <th>Valor (R$)</th>
@@ -507,7 +507,7 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label" for="leadVendedor">Vendedor</label>
+          <label class="form-label" for="leadVendedor">Agente</label>
           <select
             id="leadVendedor"
             class="form-select"

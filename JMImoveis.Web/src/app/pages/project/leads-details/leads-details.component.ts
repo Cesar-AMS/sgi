@@ -319,6 +319,20 @@ export class LeadDetailsComponent implements OnInit {
     });
   }
 
+  getLeadAgentName(): string {
+    const raw = String(this.lead?.vendedor ?? '').trim();
+    if (!raw) {
+      return '';
+    }
+
+    const name = this.corretores.find((agent) => String(agent.id).trim() === raw)?.name;
+    if (name) {
+      return name;
+    }
+
+    return Number.isFinite(Number(raw)) ? '' : raw;
+  }
+
   onLeadDocumentsSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
 

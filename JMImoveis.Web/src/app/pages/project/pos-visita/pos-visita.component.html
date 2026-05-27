@@ -143,7 +143,7 @@
                 {{ getStatusLabel(item.postVisitStatus) }}
               </span>
             </td>
-            <td>{{ item.attendingAgentName || 'Nao informado' }}</td>
+            <td>{{ item.attendingAgentName || '-' }}</td>
             <td>{{ item.interestRegion || 'Nao informado' }}</td>
             <td class="text-end">
               {{ item.downPaymentAmount !== null && item.downPaymentAmount !== undefined ? (item.downPaymentAmount | currency:'BRL':'symbol':'1.2-2':'pt-BR') : 'Nao informado' }}

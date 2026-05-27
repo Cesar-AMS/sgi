@@ -108,7 +108,17 @@ namespace JMImoveisAPI.Repositories
                        pv.interest_region AS InterestRegion,
                        pv.down_payment_amount AS DownPaymentAmount,
                        pv.property_interest_type AS PropertyInterestType,
-                       pv.last_interaction_summary AS LastInteractionSummary,
+                       COALESCE(
+                           (
+                               SELECT la.Description
+                                 FROM LeadActivities la
+                                WHERE la.LeadId = pv.lead_id
+                                  AND LOWER(TRIM(COALESCE(la.Type, ''))) NOT IN ('status', 'etapaatendimento')
+                                ORDER BY la.DateTime DESC, la.Id DESC
+                                LIMIT 1
+                           ),
+                           pv.last_interaction_summary
+                       ) AS LastInteractionSummary,
                        pv.proposal_id AS ProposalId,
                        pv.created_at AS CreatedAt,
                        pv.updated_at AS UpdatedAt

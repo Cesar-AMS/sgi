@@ -273,15 +273,13 @@ export class SidebarComponent {
       return;
     }
 
-    const shouldOpen = !item.isOpen;
-
     this.menuItems.forEach((menuItem: MenuItem) => {
       if (menuItem !== item) {
         menuItem.isOpen = false;
       }
     });
 
-    item.isOpen = shouldOpen;
+    item.isOpen = true;
   }
 
   toggleSubItem(event: any) {
@@ -415,14 +413,38 @@ export class SidebarComponent {
   }
 
   updateActive(event: any) {
+    const target = (event.target as HTMLElement | null)?.closest('a.nav-link') as HTMLElement | null;
+    this.keepParentMenuOpen(target);
+
     const ul = document.getElementById('navbar-nav');
     if (ul) {
       const items = Array.from(ul.querySelectorAll('a.nav-link'));
       this.removeActivation(items);
     }
 
-    const target = (event.target as HTMLElement | null)?.closest('a.nav-link');
     this.activateParentDropdown(target);
+    this.keepParentMenuOpen(target);
+  }
+
+  private keepParentMenuOpen(target: HTMLElement | null): void {
+    const parentId = Number(target?.getAttribute('data-parent'));
+    if (!Number.isFinite(parentId) || parentId <= 0) {
+      return;
+    }
+
+    const topParent = this.menuItems.find((menuItem: MenuItem) =>
+      menuItem.id === parentId || this.itemContainsId(menuItem, parentId)
+    );
+
+    this.menuItems.forEach((menuItem: MenuItem) => {
+      menuItem.isOpen = menuItem === topParent;
+    });
+  }
+
+  private itemContainsId(item: MenuItem, id: number): boolean {
+    return (item.subItems || []).some((subItem) =>
+      subItem.id === id || this.itemContainsId(subItem, id)
+    );
   }
 
   initActiveMenu(): void {

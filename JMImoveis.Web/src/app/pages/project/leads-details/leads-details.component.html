@@ -385,7 +385,7 @@
           [leadId]="lead.id"
           [canEditPostVisit]="canEditPostVisit"
           [agents]="corretores"
-          [responsibleAgentName]="lead.vendedor"
+          [responsibleAgentName]="getLeadAgentName()"
         ></app-lead-post-visit-section>
       </div>
     </div>

@@ -137,7 +137,7 @@
           [disabled]="sellerFilterMode === 'mine'"
           [attr.aria-label]="getSellerFilterAriaLabel()"
         >
-          <option *ngIf="sellerFilterMode !== 'mine'" value="">Todos vendedores do escopo</option>
+          <option *ngIf="sellerFilterMode !== 'mine'" value="">Todos agentes do escopo</option>
           <option *ngFor="let v of visibleCorretores" [value]="v.id">{{ v.name }}</option>
           <option *ngIf="sellerFilterMode === 'mine' && visibleCorretores.length === 0" [value]="currentUserId || ''">
             Minhas visitas
@@ -210,7 +210,7 @@
                   Origem <i class="bi" [ngClass]="getSortIcon('fonte')" aria-hidden="true"></i>
                 </button>
               </th>
-              <th>Vendedor</th>
+              <th>Agente</th>
               <th>Coordenador</th>
               <th>Gerente</th>
               <th>Status</th>
@@ -223,11 +223,11 @@
           <tbody>
             <tr
               *ngFor="let v of paged"
-              (click)="v.leadId && openLead(v)"
-              [class.table-row-click]="!!v.leadId"
-              [class.table-row-disabled]="!v.leadId"
+              (click)="openLead(v)"
+              [class.table-row-click]="hasValidLead(v)"
+              [class.table-row-disabled]="!hasValidLead(v)"
               [class.visit-today-row]="isToday(v.dataHoraISO)"
-              [attr.aria-label]="v.leadId ? 'Abrir painel do cliente vinculado' : 'Registro sem lead vinculado'"
+              [attr.aria-label]="hasValidLead(v) ? 'Abrir painel do cliente vinculado' : 'Registro sem lead vinculado'"
             >
               <td class="visit-schedule-cell">
                 <div class="visit-time">{{ formatTimeOnly(v.dataHoraISO) }}</div>
@@ -501,7 +501,7 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label" for="visitSeller">Corretor</label>
+          <label class="form-label" for="visitSeller">Agente</label>
           <select id="visitSeller" class="form-select" formControlName="vendedorId">
             <option value="">Selecione...</option>
             <option *ngFor="let v of corretores" [value]="v.id">{{ v.name }}</option>
