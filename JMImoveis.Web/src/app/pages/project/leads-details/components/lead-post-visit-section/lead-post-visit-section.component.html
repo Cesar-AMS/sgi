@@ -29,6 +29,7 @@
       <div class="post-visit-empty" *ngIf="!postVisit; else postVisitFormTpl">
         <strong>Este lead ainda nao possui acompanhamento de Pos-Visita.</strong>
         <span>Inicie o acompanhamento para registrar perfil, follow-up e status operacional.</span>
+        <span>Ultimo responsavel informado: {{ getSuggestedAgentName() }}</span>
 
         <button
           type="button"
@@ -50,38 +51,35 @@
         </div>
 
         <form class="post-visit-form" [formGroup]="form" (ngSubmit)="save()">
+          <div class="post-visit-summary-strip">
+            <div>
+              <span>Responsavel pelo atendimento</span>
+              <strong>{{ getSelectedAgentName() }}</strong>
+            </div>
+            <div>
+              <span>Ultima interacao</span>
+              <strong>{{ form.get('lastInteractionSummary')?.value || 'Sem resumo registrado' }}</strong>
+            </div>
+          </div>
+
+          <div class="post-visit-section-title">Identificacao do cliente</div>
           <div class="post-visit-grid">
             <div class="form-field">
               <label class="form-label" for="postVisitCpf">CPF</label>
-              <input id="postVisitCpf" type="text" class="form-control" formControlName="cpf" />
+              <input
+                id="postVisitCpf"
+                type="text"
+                class="form-control"
+                formControlName="cpf"
+                maxlength="14"
+                placeholder="000.000.000-00"
+                (input)="formatCpfInput()"
+              />
             </div>
 
             <div class="form-field">
               <label class="form-label" for="postVisitRestriction">Tem restricao?</label>
               <select id="postVisitRestriction" class="form-select" formControlName="hasRestriction">
-                <option *ngFor="let option of restrictionOptions; trackBy: trackByValue" [value]="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label class="form-label" for="postVisitIncomeType">Tipo de renda</label>
-              <select id="postVisitIncomeType" class="form-select" formControlName="incomeType">
-                <option *ngFor="let option of incomeTypeOptions; trackBy: trackByValue" [value]="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label class="form-label" for="postVisitRegion">Regiao de interesse</label>
-              <input id="postVisitRegion" type="text" class="form-control" formControlName="interestRegion" />
-            </div>
-
-            <div class="form-field">
-              <label class="form-label" for="postVisitPaysRent">Paga aluguel?</label>
-              <select id="postVisitPaysRent" class="form-select" formControlName="paysRent">
                 <option *ngFor="let option of restrictionOptions; trackBy: trackByValue" [value]="option.value">
                   {{ option.label }}
                 </option>
@@ -96,19 +94,47 @@
                 </option>
               </select>
             </div>
+          </div>
+
+          <div class="post-visit-section-title">Perfil financeiro</div>
+          <div class="post-visit-grid">
+            <div class="form-field">
+              <label class="form-label" for="postVisitIncomeType">Tipo de renda</label>
+              <select id="postVisitIncomeType" class="form-select" formControlName="incomeType">
+                <option *ngFor="let option of incomeTypeOptions; trackBy: trackByValue" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="postVisitPaysRent">Paga aluguel?</label>
+              <select id="postVisitPaysRent" class="form-select" formControlName="paysRent">
+                <option *ngFor="let option of restrictionOptions; trackBy: trackByValue" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
 
             <div class="form-field">
               <label class="form-label" for="postVisitDownPayment">Valor de entrada</label>
-              <input
-                id="postVisitDownPayment"
-                type="number"
-                min="0"
-                step="0.01"
-                class="form-control"
-                formControlName="downPaymentAmount"
-              />
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input
+                  id="postVisitDownPayment"
+                  type="text"
+                  class="form-control"
+                  formControlName="downPaymentAmount"
+                  currencyMask
+                  [options]="currencyOptions"
+                />
+              </div>
+              <small class="field-hint">{{ getDownPaymentPreview() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</small>
             </div>
+          </div>
 
+          <div class="post-visit-section-title">Responsavel pelo atendimento</div>
+          <div class="post-visit-grid">
             <div class="form-field">
               <label class="form-label" for="postVisitAgent">Agente que atendeu</label>
               <select id="postVisitAgent" class="form-select" formControlName="attendingAgentId">
@@ -117,6 +143,15 @@
                   {{ agent.name }}
                 </option>
               </select>
+              <small class="field-hint">Ultimo responsavel informado: {{ getSuggestedAgentName() }}. Selecione manualmente quando houver ID confiavel.</small>
+            </div>
+          </div>
+
+          <div class="post-visit-section-title">Interesse do imovel</div>
+          <div class="post-visit-grid">
+            <div class="form-field">
+              <label class="form-label" for="postVisitRegion">Regiao de interesse</label>
+              <input id="postVisitRegion" type="text" class="form-control" formControlName="interestRegion" />
             </div>
 
             <div class="form-field">
@@ -127,7 +162,10 @@
                 </option>
               </select>
             </div>
+          </div>
 
+          <div class="post-visit-section-title">Follow-up e status operacional</div>
+          <div class="post-visit-grid">
             <div class="form-field">
               <label class="form-label" for="postVisitStatus">Status</label>
               <select id="postVisitStatus" class="form-select" formControlName="postVisitStatus">
@@ -149,13 +187,13 @@
           </div>
 
           <div class="form-field mt-3">
-            <label class="form-label" for="postVisitLastInteraction">Resumo da ultima interacao</label>
+            <label class="form-label" for="postVisitLastInteraction">Ultima interacao</label>
             <textarea
               id="postVisitLastInteraction"
               class="form-control"
               rows="4"
               formControlName="lastInteractionSummary"
-              placeholder="Resumo curto do ultimo contato, conversa ou retorno combinado..."
+              placeholder="Comentario curto sobre o ultimo contato, conversa ou retorno combinado..."
             ></textarea>
           </div>
 

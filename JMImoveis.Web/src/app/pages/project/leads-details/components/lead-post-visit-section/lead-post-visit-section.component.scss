@@ -89,6 +89,49 @@
   padding: 1rem;
 }
 
+.post-visit-summary-strip {
+  background: #f8fafc;
+  border: 1px solid #e6ebf2;
+  border-radius: 0.65rem;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+}
+
+.post-visit-summary-strip span {
+  color: #667085;
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
+}
+
+.post-visit-summary-strip strong {
+  color: #252538;
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.post-visit-section-title {
+  border-top: 1px solid #eeeeF5;
+  color: #35354a;
+  font-size: 0.86rem;
+  font-weight: 800;
+  margin: 1rem 0 0.75rem;
+  padding-top: 1rem;
+}
+
+.post-visit-summary-strip + .post-visit-section-title {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
 .post-visit-grid {
   display: grid;
   gap: 0.85rem;
@@ -104,6 +147,13 @@
   font-size: 0.82rem;
   font-weight: 700;
   margin-bottom: 0.35rem;
+}
+
+.field-hint {
+  color: #8a8aa0;
+  display: block;
+  font-size: 0.76rem;
+  margin-top: 0.3rem;
 }
 
 .post-visit-actions {

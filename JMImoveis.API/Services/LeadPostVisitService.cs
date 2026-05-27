@@ -18,6 +18,7 @@ namespace JMImoveisAPI.Services
         {
             "CLT",
             "AUTONOMO",
+            "CLT_AUTONOMO",
             "OUTRO"
         };
 

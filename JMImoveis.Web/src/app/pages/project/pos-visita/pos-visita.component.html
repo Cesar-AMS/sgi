@@ -138,7 +138,7 @@
               <span>{{ item.telefone || 'Nao informado' }}</span>
               <small>{{ item.email || '' }}</small>
             </td>
-            <td>{{ item.cpf || 'Nao informado' }}</td>
+            <td>{{ formatCpf(item.cpf) }}</td>
             <td>
               <span class="status-pill" [class.status-proposta]="item.postVisitStatus === 'EM_PROPOSTA'">
                 {{ getStatusLabel(item.postVisitStatus) }}
@@ -147,14 +147,16 @@
             <td>{{ item.attendingAgentName || 'Nao informado' }}</td>
             <td>{{ item.interestRegion || 'Nao informado' }}</td>
             <td class="text-end">
-              {{ item.downPaymentAmount !== null && item.downPaymentAmount !== undefined ? (item.downPaymentAmount | currency:'BRL':'symbol':'1.2-2') : 'Nao informado' }}
+              {{ item.downPaymentAmount !== null && item.downPaymentAmount !== undefined ? (item.downPaymentAmount | currency:'BRL':'symbol':'1.2-2':'pt-BR') : 'Nao informado' }}
             </td>
             <td>{{ getPropertyInterestLabel(item.propertyInterestType) }}</td>
             <td>
               {{ item.nextFollowUpAt ? (item.nextFollowUpAt | date:'dd/MM/yyyy HH:mm') : 'Nao programado' }}
             </td>
             <td class="interaction-cell">
-              {{ item.lastInteractionSummary || 'Sem resumo registrado' }}
+              <span [title]="item.lastInteractionSummary || ''">
+                {{ item.lastInteractionSummary || 'Sem resumo registrado' }}
+              </span>
             </td>
             <td class="text-end">
               <button
