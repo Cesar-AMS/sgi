@@ -183,6 +183,26 @@
   border-bottom-width: 1px;
 }
 
+.sort-header {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 700;
+  gap: 0.35rem;
+  letter-spacing: inherit;
+  padding: 0;
+  text-transform: inherit;
+  white-space: nowrap;
+}
+
+.sort-header:hover,
+.sort-header:focus {
+  color: #252538;
+}
+
 .table tbody td {
   vertical-align: middle;
 }
@@ -249,6 +269,23 @@
   line-height: 1;
   margin-bottom: 0.35rem;
   padding: 0.32rem 0.55rem;
+}
+
+.status-cell {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 150px;
+}
+
+.status-cell .form-select {
+  max-width: 150px;
+  min-height: 31px;
+}
+
+.status-cell .status-pill {
+  margin-bottom: 0;
 }
 
 .status-agendada {

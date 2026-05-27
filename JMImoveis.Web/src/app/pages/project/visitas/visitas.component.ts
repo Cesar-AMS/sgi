@@ -16,6 +16,8 @@ import { exportToExcel } from 'src/app/shared/utils/excel-export';
 
 type VisitasScreenMode = 'agendamento' | 'visitas';
 type TipoAgenda = 'contato' | 'visita';
+type VisitSortColumn = 'dataHoraISO' | 'nomeCliente' | 'imoveisInteresse' | 'fonte';
+type SortDirection = 'asc' | 'desc';
 type SchedulePayload = {
   leadId?: number | null;
   nomeCliente: string;
@@ -140,6 +142,8 @@ private isoToDatetimeLocal(iso: string): string {
   compareceuFilter: '' | 'sim' | 'nao' = '';
   virouVendaFilter: '' | 'sim' | 'nao' = '';
   dateRange: 'all' | 'today' | 'last7' | 'last30' | 'thisMonth' | 'thisYear' = 'all';
+  sortColumn: VisitSortColumn = 'dataHoraISO';
+  sortDirection: SortDirection = 'asc';
 
   corretores: Usuarios[] = [];
   visibleCorretores: Usuarios[] = [];
@@ -304,7 +308,7 @@ private isoToDatetimeLocal(iso: string): string {
   getFilterDescription(): string {
     return this.isAgendamentoMode()
       ? 'Refine os compromissos por cliente, status, equipe e período.'
-      : 'Refine as visitas por busca, status, equipe, comparecimento e período.';
+      : 'Refine as visitas por busca, status, equipe e período.';
   }
 
   getSearchLabel(): string {
@@ -313,8 +317,8 @@ private isoToDatetimeLocal(iso: string): string {
 
   getSearchAriaLabel(): string {
     return this.isAgendamentoMode()
-      ? 'Buscar agendamento por cliente'
-      : 'Buscar visita por cliente';
+      ? 'Buscar agendamento por cliente, interesse, origem ou horario'
+      : 'Buscar visita por cliente, interesse, origem ou horario';
   }
 
   getExportAriaLabel(): string {
@@ -396,13 +400,9 @@ private isoToDatetimeLocal(iso: string): string {
   const requestId = ++this.loadRequestId;
 
   const { startAt, finishAt } = this.getDatesFromRange(this.dateRange);
-  const q = this.nomeTerm.trim();
-
   this.visitasApi.list({
-    q: q || undefined,
     vendedorId: this.vendedorFilter || undefined,
     status: this.statusFilter || undefined,
-    compareceu: this.compareceuFilter ? (this.compareceuFilter === 'sim') : undefined,
     virouVenda: this.virouVendaFilter ? (this.virouVendaFilter === 'sim') : undefined,
     tipoAgenda: this.getListTipoAgenda(),
 
@@ -416,7 +416,6 @@ private isoToDatetimeLocal(iso: string): string {
       }
 
       this.visitas = list || [];
-      this.totalItems = this.visitas.length;
       this.page = 1;
       this.applyAndPaginateLocal();
       this.isLoading = false;
@@ -473,9 +472,100 @@ private isoToDatetimeLocal(iso: string): string {
   }
 
   private applyAndPaginateLocal(): void {
+    const filtered = this.applyLocalSearch(this.visitas);
+    const sorted = this.applyLocalSort(filtered);
     const startIndex = (this.page - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
-    this.paged = this.visitas.slice(startIndex, endIndex);
+    this.totalItems = sorted.length;
+    this.paged = sorted.slice(startIndex, endIndex);
+  }
+
+  setSort(column: VisitSortColumn): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+
+    this.page = 1;
+    this.applyAndPaginateLocal();
+  }
+
+  getSortIcon(column: VisitSortColumn): string {
+    if (this.sortColumn !== column) {
+      return 'bi-arrow-down-up';
+    }
+
+    return this.sortDirection === 'asc' ? 'bi-sort-up' : 'bi-sort-down';
+  }
+
+  getSortAriaLabel(column: VisitSortColumn): string {
+    const labels: Record<VisitSortColumn, string> = {
+      dataHoraISO: 'horario',
+      nomeCliente: 'cliente',
+      imoveisInteresse: 'interesse',
+      fonte: 'origem',
+    };
+
+    const nextDirection = this.sortColumn === column && this.sortDirection === 'asc'
+      ? 'decrescente'
+      : 'crescente';
+
+    return `Ordenar por ${labels[column]} em ordem ${nextDirection}`;
+  }
+
+  private applyLocalSearch(rows: Visita[]): Visita[] {
+    const term = this.normalizeSearch(this.nomeTerm);
+
+    if (!term) {
+      return rows;
+    }
+
+    return rows.filter((visita) => {
+      const fields = [
+        visita.nomeCliente,
+        visita.telefone,
+        visita.imoveisInteresse,
+        visita.fonte,
+        this.formatTimeOnly(visita.dataHoraISO),
+        this.formatDateOnly(visita.dataHoraISO),
+      ];
+
+      return fields.some((value) => this.normalizeSearch(value).includes(term));
+    });
+  }
+
+  private applyLocalSort(rows: Visita[]): Visita[] {
+    const direction = this.sortDirection === 'asc' ? 1 : -1;
+
+    return [...rows].sort((left, right) => {
+      let result = 0;
+
+      if (this.sortColumn === 'dataHoraISO') {
+        result = this.getVisitTimestamp(left) - this.getVisitTimestamp(right);
+      } else {
+        result = this.normalizeSearch(left[this.sortColumn]).localeCompare(
+          this.normalizeSearch(right[this.sortColumn]),
+          'pt-BR'
+        );
+      }
+
+      return result * direction;
+    });
+  }
+
+  private getVisitTimestamp(visita: Visita): number {
+    const parsed = new Date(visita.dataHoraISO).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private normalizeSearch(value: unknown): string {
+    return String(value ?? '')
+      .trim()
+      .toLocaleLowerCase('pt-BR')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
   // ---------- ações ----------

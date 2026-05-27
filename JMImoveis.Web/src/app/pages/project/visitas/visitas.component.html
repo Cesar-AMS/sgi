@@ -108,7 +108,7 @@
             id="visitSearchInput"
             type="text"
             class="form-control"
-            placeholder="Buscar por cliente..."
+            placeholder="Cliente, interesse, origem ou horário..."
             [(ngModel)]="nomeTerm"
             (ngModelChange)="onFilterChange()"
             (keyup.enter)="search()"
@@ -142,22 +142,6 @@
           <option *ngIf="sellerFilterMode === 'mine' && visibleCorretores.length === 0" [value]="currentUserId || ''">
             Minhas visitas
           </option>
-        </select>
-      </div>
-
-      <div class="filter-field" *ngIf="isVisitasMode()">
-        <label class="form-label" for="visitCompareceuFilter">Comparecimento</label>
-
-        <select
-          id="visitCompareceuFilter"
-          class="form-select"
-          [(ngModel)]="compareceuFilter"
-          (ngModelChange)="onFilterChange()"
-          aria-label="Filtrar visitas por comparecimento"
-        >
-          <option value="">Compareceu: Todos</option>
-          <option value="sim">Compareceu: Sim</option>
-          <option value="nao">Compareceu: Não</option>
         </select>
       </div>
 
@@ -206,15 +190,30 @@
         <table class="table align-middle">
           <thead>
             <tr>
-              <th>Horário</th>
-              <th>Cliente</th>
-              <th>Interesse</th>
-              <th>Origem</th>
+              <th>
+                <button type="button" class="sort-header" (click)="setSort('dataHoraISO')" [attr.aria-label]="getSortAriaLabel('dataHoraISO')">
+                  Horário <i class="bi" [ngClass]="getSortIcon('dataHoraISO')" aria-hidden="true"></i>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="sort-header" (click)="setSort('nomeCliente')" [attr.aria-label]="getSortAriaLabel('nomeCliente')">
+                  Cliente <i class="bi" [ngClass]="getSortIcon('nomeCliente')" aria-hidden="true"></i>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="sort-header" (click)="setSort('imoveisInteresse')" [attr.aria-label]="getSortAriaLabel('imoveisInteresse')">
+                  Interesse <i class="bi" [ngClass]="getSortIcon('imoveisInteresse')" aria-hidden="true"></i>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="sort-header" (click)="setSort('fonte')" [attr.aria-label]="getSortAriaLabel('fonte')">
+                  Origem <i class="bi" [ngClass]="getSortIcon('fonte')" aria-hidden="true"></i>
+                </button>
+              </th>
               <th>Vendedor</th>
               <th>Coordenador</th>
               <th>Gerente</th>
               <th>Status</th>
-              <th *ngIf="isVisitasMode()">Compareceu?</th>
               <th *ngIf="isVisitasMode()">Virou venda?</th>
               <th>Observação</th>
               <th class="text-end">Ações</th>
@@ -261,7 +260,7 @@
               <td>{{ v.coordenadorNome || '-' }}</td>
               <td>{{ v.gerenteNome || '-' }}</td>
 
-              <td style="min-width: 150px;">
+              <td class="status-cell">
                 <span class="status-pill" [ngClass]="getStatusClass(v.status)">
                   {{ getDisplayStatus(v.status) }}
                 </span>
@@ -277,25 +276,6 @@
                 >
                   <option *ngFor="let s of getStatusOptionsForMode()" [ngValue]="s">{{ s }}</option>
                 </select>
-              </td>
-
-              <td *ngIf="isVisitasMode()" style="min-width: 140px;">
-                <select
-                  *ngIf="canEditVisits; else readonlyCompareceuTpl"
-                  class="form-select form-select-sm"
-                  aria-label="Alterar comparecimento da visita"
-                  [ngModel]="v.compareceu"
-                  (click)="$event.stopPropagation()"
-                  (change)="$event.stopPropagation()"
-                  (ngModelChange)="updateCompareceu(v, $event)"
-                >
-                  <option [ngValue]="true">Sim</option>
-                  <option [ngValue]="false">Não</option>
-                </select>
-
-                <ng-template #readonlyCompareceuTpl>
-                  <span class="text-muted">{{ v.compareceu ? 'Sim' : 'Nao' }}</span>
-                </ng-template>
               </td>
 
               <td *ngIf="isVisitasMode()" style="min-width: 140px;">
@@ -440,18 +420,11 @@
         Novo agendamento deve ficar vinculado a um Lead. Informe um Lead existente ou preencha os dados do cliente para criar um Lead rapido automaticamente.
       </p>
 
-      <form [formGroup]="createForm" (ngSubmit)="submitSave()">
-        <div class="mb-3">
-          <label class="form-label" for="visitClientName">Nome do cliente</label>
-          <input
-            id="visitClientName"
-            type="text"
-            class="form-control"
-            placeholder="Ex: Maria Silva"
-            formControlName="nomeCliente"
-          />
-        </div>
+      <p class="schedule-lead-link-note" *ngIf="isVisitasMode() && !editingId">
+        Para agilizar a recepção, informe o Lead existente quando houver. Nome, telefone, data/hora e responsável ficam em primeiro plano.
+      </p>
 
+      <form [formGroup]="createForm" (ngSubmit)="submitSave()">
         <div class="mb-3">
           <label class="form-label" for="visitLeadId">
             {{ isAgendamentoMode() ? 'Lead existente' : 'Lead existente (opcional)' }}
@@ -467,6 +440,17 @@
           <small class="text-muted" *ngIf="isAgendamentoMode()">
             Se ficar vazio, o sistema cria um Lead rapido com os dados informados e vincula o agendamento automaticamente.
           </small>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="visitClientName">Nome do cliente</label>
+          <input
+            id="visitClientName"
+            type="text"
+            class="form-control"
+            placeholder="Ex: Maria Silva"
+            formControlName="nomeCliente"
+          />
         </div>
 
         <div class="mb-3">
@@ -536,15 +520,7 @@
         </div>
 
         <div class="row g-3 mb-3" *ngIf="isVisitasMode()">
-          <div class="col-6">
-            <label class="form-label" for="visitAttended">Compareceu?</label>
-            <select id="visitAttended" class="form-select" formControlName="compareceu">
-              <option [ngValue]="true">Sim</option>
-              <option [ngValue]="false">Não</option>
-            </select>
-          </div>
-
-          <div class="col-6">
+          <div class="col-12">
             <label class="form-label" for="visitConvertedSale">Virou venda?</label>
             <select id="visitConvertedSale" class="form-select" formControlName="virouVenda">
               <option [ngValue]="true">Sim</option>
