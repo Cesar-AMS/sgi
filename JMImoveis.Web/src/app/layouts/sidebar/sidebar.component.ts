@@ -45,7 +45,7 @@ export class SidebarComponent {
     });
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     setTimeout(() => {
       this.initActiveMenu();
     }, 0);
@@ -102,6 +102,7 @@ export class SidebarComponent {
         if (it.link && !it.link.startsWith('/')) {
           it.link = '/' + it.link;
         }
+
         if (it.subItems?.length) {
           walk(it.subItems);
         }
@@ -128,6 +129,7 @@ export class SidebarComponent {
       const subItems = item.subItems?.length
         ? this.markPermissionDisabledItems(item.subItems, permissionKeys)
         : undefined;
+
       const permissionDisabled = this.shouldDisableByPermission(item, permissionKeys);
 
       return {
@@ -159,6 +161,7 @@ export class SidebarComponent {
 
     for (const permission of permissions ?? []) {
       const key = permission.permissionKey ?? permission.permission_key;
+
       if (key) {
         keys.add(key);
       }
@@ -174,6 +177,7 @@ export class SidebarComponent {
 
   private resolveCurrentUserId(): number | null {
     const sessionUserId = this.sessionService.getCurrentUserId();
+
     if (sessionUserId) {
       return sessionUserId;
     }
@@ -191,18 +195,20 @@ export class SidebarComponent {
 
   private extractUserIdFromStorage(key: string): number | null {
     const raw = localStorage.getItem(key) ?? sessionStorage.getItem(key);
+
     if (!raw) {
       return null;
     }
 
     try {
       const user = JSON.parse(raw);
+
       return this.normalizeUserId(
         user?.id ??
-        user?.Id ??
-        user?.userId ??
-        user?.user_id ??
-        user?.sub
+          user?.Id ??
+          user?.userId ??
+          user?.user_id ??
+          user?.sub
       );
     } catch {
       return null;
@@ -223,13 +229,14 @@ export class SidebarComponent {
 
     try {
       const json = JSON.parse(atob(this.toBase64(payload)));
+
       return this.normalizeUserId(
         json?.id ??
-        json?.Id ??
-        json?.userId ??
-        json?.user_id ??
-        json?.nameid ??
-        json?.sub
+          json?.Id ??
+          json?.userId ??
+          json?.user_id ??
+          json?.nameid ??
+          json?.sub
       );
     } catch {
       return null;
@@ -244,23 +251,30 @@ export class SidebarComponent {
   private toBase64(value: string): string {
     const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
     const padding = base64.length % 4;
+
     return padding ? base64 + '='.repeat(4 - padding) : base64;
   }
 
-  removeActivation(items: any) {
+  removeActivation(items: any): void {
     items.forEach((item: any) => {
       if (item.classList.contains('menu-link')) {
         if (!item.classList.contains('active')) {
-          item.setAttribute('aria-expanded', false);
+          item.setAttribute('aria-expanded', 'false');
         }
-        item.nextElementSibling ? item.nextElementSibling.classList.remove('show') : null;
+
+        if (item.nextElementSibling) {
+          item.nextElementSibling.classList.remove('show');
+        }
       }
+
       if (item.classList.contains('nav-link')) {
         if (item.nextElementSibling) {
           item.nextElementSibling.classList.remove('show');
         }
-        item.setAttribute('aria-expanded', false);
+
+        item.setAttribute('aria-expanded', 'false');
       }
+
       item.classList.remove('active');
     });
   }
@@ -282,9 +296,10 @@ export class SidebarComponent {
     item.isOpen = true;
   }
 
-  toggleSubItem(event: any) {
+  toggleSubItem(event: any): void {
     event.preventDefault();
     event.stopPropagation();
+
     const isCurrentMenuId = event.target.closest('a.nav-link') as HTMLElement | null;
     const isMenu = isCurrentMenuId?.nextElementSibling as HTMLElement | null;
 
@@ -299,89 +314,100 @@ export class SidebarComponent {
     if (isMenu.classList.contains('show')) {
       isMenu.classList.remove('show');
       isCurrentMenuId.setAttribute('aria-expanded', 'false');
-    } else {
-      let dropDowns = Array.from(document.querySelectorAll('.sub-menu'));
-      dropDowns.forEach((node: any) => {
-        node.classList.remove('show');
-      });
-      let subDropDowns = Array.from(document.querySelectorAll('.menu-dropdown .nav-link'));
-      subDropDowns.forEach((submenu: any) => {
-        submenu.setAttribute('aria-expanded', 'false');
-      });
-
-      if (isMenu) {
-        isCurrentMenuId.setAttribute('aria-expanded', 'true');
-        isMenu.classList.toggle('show');
-      }
-    }
-  }
-
-  toggleExtraSubItem(event: any) {
-    event.preventDefault();
-    event.stopPropagation();
-    const isCurrentMenuId = event.target.closest('a.nav-link') as HTMLElement | null;
-    const isMenu = isCurrentMenuId?.nextElementSibling as HTMLElement | null;
-
-    if (!isCurrentMenuId || !isMenu) {
       return;
     }
 
-    if (isCurrentMenuId.classList.contains('menu-disabled')) {
-      return;
-    }
+    const dropDowns = Array.from(document.querySelectorAll('.sub-menu'));
 
-    if (isMenu.classList.contains('show')) {
-      isMenu.classList.remove('show');
-      isCurrentMenuId.setAttribute('aria-expanded', 'false');
-    } else {
-      let dropDowns = Array.from(document.querySelectorAll('.extra-sub-menu'));
-      dropDowns.forEach((node: any) => {
-        node.classList.remove('show');
-      });
-
-      let subDropDowns = Array.from(document.querySelectorAll('.menu-dropdown .nav-link'));
-      subDropDowns.forEach((submenu: any) => {
-        submenu.setAttribute('aria-expanded', 'false');
-      });
-
-      if (isMenu) {
-        isCurrentMenuId.setAttribute('aria-expanded', 'true');
-        isMenu.classList.toggle('show');
-      }
-    }
-  }
-
-  toggleParentItem(event: any, item: any) {
-    this.toggleItem(event, item);
-    let isCurrentMenuId = event.target.closest('a.nav-link');
-    if (!isCurrentMenuId) {
-      return;
-    }
-    let dropDowns = Array.from(document.querySelectorAll('#navbar-nav .show'));
     dropDowns.forEach((node: any) => {
       node.classList.remove('show');
     });
+
+    const subDropDowns = Array.from(document.querySelectorAll('.menu-dropdown .nav-link'));
+
+    subDropDowns.forEach((submenu: any) => {
+      submenu.setAttribute('aria-expanded', 'false');
+    });
+
+    isCurrentMenuId.setAttribute('aria-expanded', 'true');
+    isMenu.classList.add('show');
+  }
+
+  toggleExtraSubItem(event: any): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const isCurrentMenuId = event.target.closest('a.nav-link') as HTMLElement | null;
+    const isMenu = isCurrentMenuId?.nextElementSibling as HTMLElement | null;
+
+    if (!isCurrentMenuId || !isMenu) {
+      return;
+    }
+
+    if (isCurrentMenuId.classList.contains('menu-disabled')) {
+      return;
+    }
+
+    if (isMenu.classList.contains('show')) {
+      isMenu.classList.remove('show');
+      isCurrentMenuId.setAttribute('aria-expanded', 'false');
+      return;
+    }
+
+    const dropDowns = Array.from(document.querySelectorAll('.extra-sub-menu'));
+
+    dropDowns.forEach((node: any) => {
+      node.classList.remove('show');
+    });
+
+    const subDropDowns = Array.from(document.querySelectorAll('.menu-dropdown .nav-link'));
+
+    subDropDowns.forEach((submenu: any) => {
+      submenu.setAttribute('aria-expanded', 'false');
+    });
+
+    isCurrentMenuId.setAttribute('aria-expanded', 'true');
+    isMenu.classList.add('show');
+  }
+
+  toggleParentItem(event: any, item: any): void {
+    this.toggleItem(event, item);
+
+    const isCurrentMenuId = event.target.closest('a.nav-link') as HTMLElement | null;
+
+    if (!isCurrentMenuId) {
+      return;
+    }
+
+    const dropDowns = Array.from(document.querySelectorAll('#navbar-nav .show'));
+
+    dropDowns.forEach((node: any) => {
+      node.classList.remove('show');
+    });
+
     const ul = document.getElementById('navbar-nav');
+
     if (ul) {
       const iconItems = Array.from(ul.getElementsByTagName('a'));
-      let activeIconItems = iconItems.filter((x: any) => x.classList.contains('active'));
+      const activeIconItems = iconItems.filter((x: any) => x.classList.contains('active'));
+
       activeIconItems.forEach((item: any) => {
         item.setAttribute('aria-expanded', 'false');
         item.classList.remove('active');
       });
     }
+
     isCurrentMenuId.setAttribute('aria-expanded', 'true');
-    if (isCurrentMenuId) {
-      this.activateParentDropdown(isCurrentMenuId);
-    }
+    this.activateParentDropdown(isCurrentMenuId);
   }
 
-  activateParentDropdown(item: any) {
+  activateParentDropdown(item: HTMLElement | null): boolean {
     if (!item) {
       return false;
     }
 
     item.classList.add('active');
+
     const parentCollapseDiv = item.closest('.collapse.menu-dropdown') as HTMLElement | null;
 
     if (parentCollapseDiv) {
@@ -389,37 +415,55 @@ export class SidebarComponent {
 
       const parentElement = parentCollapseDiv.parentElement;
       const parentLink = parentElement?.children?.[0] as HTMLElement | undefined;
+
       parentLink?.classList.add('active');
       parentLink?.setAttribute('aria-expanded', 'true');
 
       const outerCollapse = parentElement?.closest('.collapse.menu-dropdown') as HTMLElement | null;
+
       if (outerCollapse) {
         outerCollapse.classList.add('show');
 
         const outerTrigger = outerCollapse.previousElementSibling as HTMLElement | null;
+
         outerTrigger?.classList.add('active');
         outerTrigger?.setAttribute('aria-expanded', 'true');
 
         const topCollapse = outerTrigger?.closest('.collapse') as HTMLElement | null;
+
         topCollapse?.classList.add('show');
 
         const topTrigger = topCollapse?.previousElementSibling as HTMLElement | null;
+
         topTrigger?.classList.add('active');
         topTrigger?.setAttribute('aria-expanded', 'true');
       }
+
       return false;
     }
+
     return false;
   }
 
-  updateActive(event: any) {
+  updateActive(event: any): void {
+    event.stopPropagation();
+
     const target = (event.target as HTMLElement | null)?.closest('a.nav-link') as HTMLElement | null;
+
+    if (!target || target.classList.contains('menu-disabled')) {
+      return;
+    }
+
     this.keepParentMenuOpen(target);
 
     const ul = document.getElementById('navbar-nav');
+
     if (ul) {
-      const items = Array.from(ul.querySelectorAll('a.nav-link'));
-      this.removeActivation(items);
+      const items = Array.from(ul.querySelectorAll('a.nav-link')) as HTMLElement[];
+
+      items.forEach((item: HTMLElement) => {
+        item.classList.remove('active');
+      });
     }
 
     this.activateParentDropdown(target);
@@ -428,6 +472,7 @@ export class SidebarComponent {
 
   private keepParentMenuOpen(target: HTMLElement | null): void {
     const parentId = Number(target?.getAttribute('data-parent'));
+
     if (!Number.isFinite(parentId) || parentId <= 0) {
       return;
     }
@@ -448,30 +493,63 @@ export class SidebarComponent {
   }
 
   initActiveMenu(): void {
-    const pathName = window.location.pathname;
+    const pathName = this.normalizeRoutePath(this.router.url);
 
     this.menuItems.forEach((item: MenuItem) => {
       item.isOpen = this.itemContainsRoute(item, pathName);
     });
 
     const ul = document.getElementById('navbar-nav');
+
     if (!ul) {
       return;
     }
 
-    const items = Array.from(ul.querySelectorAll('a.nav-link'));
-    const activeItems = items.filter((x: any) => x.classList.contains('active'));
-    this.removeActivation(activeItems);
+    const items = Array.from(ul.querySelectorAll('a.nav-link')) as HTMLElement[];
 
-    const matchingMenuItem = items.find((x: any) => x.pathname === pathName);
+    items.forEach((item: HTMLElement) => {
+      item.classList.remove('active');
+    });
+
+    const matchingMenuItem = items.find((item: HTMLElement) => {
+      const routerLink = item.getAttribute('ng-reflect-router-link') || '';
+      const href = item.getAttribute('href') || '';
+      const rawRoute = routerLink || (href.includes('#') ? href.split('#')[1] : href);
+      const hrefRoute = this.normalizeRoutePath(rawRoute);
+
+      return hrefRoute === pathName;
+    });
 
     if (matchingMenuItem) {
       this.activateParentDropdown(matchingMenuItem);
+      this.keepParentMenuOpen(matchingMenuItem);
     }
   }
 
+  private normalizeRoutePath(value: string | null | undefined): string {
+    if (!value) {
+      return '/';
+    }
+
+    let route = value.trim();
+
+    if (route.includes('#')) {
+      route = route.split('#')[1];
+    }
+
+    if (route.includes('?')) {
+      route = route.split('?')[0];
+    }
+
+    if (!route.startsWith('/')) {
+      route = '/' + route;
+    }
+
+    return route;
+  }
+
   private itemContainsRoute(item: MenuItem, pathName: string): boolean {
-    if (item.link === pathName) {
+    if (item.link && this.normalizeRoutePath(item.link) === pathName) {
       return true;
     }
 
@@ -499,8 +577,9 @@ export class SidebarComponent {
     event.stopPropagation();
   }
 
-  toggleMobileMenu(event: any) {
-    var sidebarsize = document.documentElement.getAttribute('data-sidebar-size');
+  toggleMobileMenu(event: any): void {
+    const sidebarsize = document.documentElement.getAttribute('data-sidebar-size');
+
     if (sidebarsize == 'sm-hover-active') {
       document.documentElement.setAttribute('data-sidebar-size', 'sm-hover');
     } else {
@@ -512,7 +591,7 @@ export class SidebarComponent {
     }, 0);
   }
 
-  SidebarHide() {
+  SidebarHide(): void {
     document.body.classList.remove('vertical-sidebar-enable');
   }
 }
