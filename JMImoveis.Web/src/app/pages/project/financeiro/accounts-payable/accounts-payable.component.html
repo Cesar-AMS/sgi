@@ -31,6 +31,12 @@
 
   <!-- Cards -->
   <div class="ar-cards">
+    <div class="ar-card" (click)="onCardClick('PROJECTION')" [class.active]="activeCard==='PROJECTION'">
+      <div class="label">Projeções</div>
+      <div class="value">{{ cards.projectionValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+      <div class="meta">{{ cards.projectionTotal }} títulos</div>
+    </div>
+
     <div class="ar-card" (click)="onCardClick('OPEN')" [class.active]="activeCard==='OPEN'">
       <div class="label">Títulos em aberto</div>
       <div class="value">{{ cards.openValue | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
@@ -195,11 +201,28 @@
               </td>
 
               <td class="text-center">
-                <button class="btn btn-sm btn-outline-primary"
+                <div class="ar-actions">
+                  <button class="btn btn-sm btn-outline-primary"
+                        type="button"
                         (click)="openSettleModal(r)"
-                        [disabled]="r.status === 'PAID'">
-                  <i class="bi bi-cash-coin"></i> Baixar
-                </button>
+                        [disabled]="!canSettle(r)">
+                    <i class="bi bi-cash-coin"></i> Baixar
+                  </button>
+
+                  <button class="btn btn-sm btn-outline-secondary"
+                          type="button"
+                          (click)="openEditModal(r)"
+                          [disabled]="!canEdit(r) || editing">
+                    <i class="bi bi-pencil-square"></i> Editar
+                  </button>
+
+                  <button class="btn btn-sm btn-outline-danger"
+                          type="button"
+                          (click)="openCancelModal(r)"
+                          [disabled]="!canCancel(r) || cancelling">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                  </button>
+                </div>
               </td>
             </tr>
 
@@ -283,7 +306,7 @@
                   </div>
                 </div>
 
-                <div *ngIf="createForm.value.isPaid" class="mb-3">
+                <div *ngIf="createForm.value.isPaid || createForm.value.status === 'PAID'" class="mb-3">
                   <label class="form-label">Data do pagamento</label>
                   <input type="date" class="form-control" formControlName="paidDate">
                 </div>
@@ -301,11 +324,10 @@
                 </select>
 
                 <label class="form-label mt-3">Status</label>
-                <select class="form-select" formControlName="status">
-                  <option value="PROJECAO">PROJEÇÃO</option>
-                  <option value="WAITING">EM ABERTO</option>
-                  <option value="PAID">PAGO</option>
-                  <option value="CANCELLED">CANCELADO</option>
+                <select class="form-select" formControlName="status" (change)="onCreateStatusChanged()">
+                  <option value="PROJECAO">Projeção</option>
+                  <option value="WAITING">Em aberto</option>
+                  <option value="PAID">Pago</option>
                 </select>
               </div>
 
@@ -369,6 +391,147 @@
   </div>
 </div>
 
+<!-- Modal editar -->
+<div *ngIf="showEditModal">
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.35);">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Editar conta a pagar</h5>
+          <button type="button" class="btn-close" (click)="closeEditModal()"></button>
+        </div>
+
+        <div class="modal-body">
+          <form [formGroup]="editForm">
+            <div class="row g-3">
+
+              <div class="col-md-6">
+                <label class="form-label">Descrição <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="description">
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">Categoria <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="category">
+                  <option value="">Selecione</option>
+                  <option *ngFor="let c of categories" [value]="c.key">{{ c.label }}</option>
+                </select>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" formControlName="status">
+                  <option value="PROJECAO">Projeção</option>
+                  <option value="WAITING">Em aberto</option>
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Filial</label>
+                <select class="form-select" formControlName="branchId">
+                  <option [ngValue]="null">Todas</option>
+                  <option *ngFor="let b of branches" [ngValue]="b.id">{{ b.name }}</option>
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Data de vencimento <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" formControlName="dueDate">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Valor total <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" formControlName="amount" (input)="onEditAmountChanged()">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Valor pendente <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" formControlName="pendingAmount">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Observações</label>
+                <textarea rows="4" class="form-control" formControlName="observations"></textarea>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeEditModal()">
+            Cancelar
+          </button>
+
+          <button type="button"
+                  class="btn btn-success"
+                  [disabled]="editForm.invalid || saving"
+                  (click)="submitEdit()">
+            <span *ngIf="!saving"><i class="bi bi-check2-circle"></i> Salvar alterações</span>
+            <span *ngIf="saving" class="d-flex align-items-center gap-2">
+              <span class="spinner-border spinner-border-sm"></span>
+              Salvando...
+            </span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal cancelar -->
+<div *ngIf="showCancelModal">
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.35);">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Cancelar conta a pagar</h5>
+          <button type="button" class="btn-close" (click)="closeCancelModal()"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="p-3 rounded bg-light border mb-3">
+            <div class="fw-semibold">{{ cancellingRow?.description }}</div>
+            <div class="small text-muted">
+              Venc.: {{ cancellingRow?.dueDate | date:'dd/MM/yyyy' }} -
+              Pendente: {{ cancellingRow?.pendingAmount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+            </div>
+          </div>
+
+          <form [formGroup]="cancelForm">
+            <label class="form-label">Observação do cancelamento</label>
+            <textarea rows="3"
+                      class="form-control"
+                      formControlName="observations"
+                      placeholder="Opcional"></textarea>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeCancelModal()">
+            Voltar
+          </button>
+
+          <button type="button"
+                  class="btn btn-danger"
+                  [disabled]="cancelling"
+                  (click)="confirmCancel()">
+            <span *ngIf="!cancelling"><i class="bi bi-x-circle"></i> Confirmar cancelamento</span>
+            <span *ngIf="cancelling" class="d-flex align-items-center gap-2">
+              <span class="spinner-border spinner-border-sm"></span>
+              Cancelando...
+            </span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal baixa -->
 <div *ngIf="showSettleModal">
   <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.35);">
@@ -392,7 +555,7 @@
                       <div class="small text-muted">
                         Venc.: {{ selectedRow?.dueDate | date:'dd/MM/yyyy' }} -
                         Categoria: {{ selectedRow?.category }} -
-                        Status: {{ selectedRow?.status }}
+                        Status: {{ checkStatus(selectedRow?.status) }}
                       </div>
                     </div>
 

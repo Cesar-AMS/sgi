@@ -1,22 +1,35 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 import { BACKEND_API_URL } from './backend-api-url';
 import { ContaPagarDto } from 'src/app/models/ContaBancaria';
 
 export interface AccountsPayableRow {
   id: number;
   saleId?: number | null;
+  branchId?: number | null;
   userId?: number | null;
   createDate?: string | null;
   dueDate?: string | null;
   paidDate?: string | null;
   description: string;
-  status: 'WAITING' | 'PAID' | 'CANCELLED';
+  status: 'WAITING' | 'PAID' | 'CANCELLED' | 'PROJECAO';
   category: string;
   amount: number;
   pendingAmount: number;
   observations?: string | null;
   createdAt?: string | null;
+}
+
+export interface AccountsPayableUpdatePayload {
+  dueDate: string | null;
+  amount: number;
+  pendingAmount: number;
+  description: string;
+  category: string;
+  observations?: string | null;
+  branchId?: number | null;
+  status: 'WAITING' | 'PAID' | 'CANCELLED' | 'PROJECAO';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -42,6 +55,18 @@ export class AccountsPayableService {
 
   settle(id: number, payload: { paidValue: number; paidDate: string; observations?: string | null }) {
     return this.http.post(`${this.baseUrl}/${id}/settle`, payload);
+  }
+
+  getById(id: number): Observable<AccountsPayableRow> {
+    return this.http.get<AccountsPayableRow>(`${this.baseUrl}/${id}`);
+  }
+
+  update(id: number, payload: AccountsPayableUpdatePayload) {
+    return this.http.put(`${this.baseUrl}/${id}`, payload);
+  }
+
+  cancel(id: number, payload: { observations?: string | null }) {
+    return this.http.patch(`${this.baseUrl}/${id}/cancel`, payload);
   }
 
   exportExcel(query: any) {
