@@ -22,13 +22,14 @@ export interface AccountsPayableRow {
 }
 
 export interface AccountsPayableUpdatePayload {
+  createDate?: string | null;
   dueDate: string | null;
   amount: number;
   pendingAmount: number;
   description: string;
   category: string;
   observations?: string | null;
-  branchId?: number | null;
+  userId?: number | null;
   status: 'WAITING' | 'PAID' | 'CANCELLED' | 'PROJECAO';
 }
 

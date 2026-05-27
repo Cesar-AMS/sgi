@@ -88,6 +88,15 @@ namespace JMImoveisAPI.Services
             if (req == null)
                 throw new ArgumentException("payload invalido.");
 
+            if (!req.UserId.HasValue || req.UserId.Value <= 0)
+                throw new ArgumentException("userId e obrigatorio para contas a pagar.");
+
+            if (!req.SaleId.HasValue)
+                req.SaleId = 0;
+
+            if (req.SaleId.Value < 0)
+                throw new ArgumentException("saleId nao pode ser negativo.");
+
             ValidateCommonFields(req.Description, req.Category, req.Amount, req.PendingAmount);
 
             req.Description = req.Description.Trim();

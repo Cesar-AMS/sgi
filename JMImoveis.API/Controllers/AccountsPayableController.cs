@@ -77,6 +77,17 @@ namespace JMImoveisAPI.Controllers
 
             try
             {
+                var currentUserId = GetCurrentUserId();
+                if (!currentUserId.HasValue)
+                {
+                    return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+                }
+
+                if (!req.UserId.HasValue || req.UserId.Value <= 0)
+                {
+                    req.UserId = currentUserId.Value;
+                }
+
                 var id = await _service.CreateAsync(req);
                 return Ok(new { id });
             }

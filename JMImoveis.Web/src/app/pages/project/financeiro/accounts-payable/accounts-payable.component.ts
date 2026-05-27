@@ -355,12 +355,17 @@ export class AccountsPayableComponent implements OnInit {
       return;
     }
 
+    if (!v.competenceDate) {
+      this.notifyError('Informe a data de competência.');
+      return;
+    }
+
     const payload = {
       saleId: v.saleId ?? null,
-      branchId: v.branchId ?? null,
-      competenceDate: v.competenceDate ?? null,
+      userId: null,
+      createDate: v.competenceDate ?? null,
       dueDate: v.dueDate ?? null,
-      paidDate: status === 'PAID' ? v.paidDate ?? null : null,
+      payDate: status === 'PAID' ? v.paidDate ?? null : null,
       description: String(v.description ?? '').trim(),
       status,
       category: String(v.category ?? '').trim(),
@@ -524,7 +529,6 @@ export class AccountsPayableComponent implements OnInit {
       description: String(this.editForm.value.description ?? '').trim(),
       category: String(this.editForm.value.category ?? '').trim(),
       observations: this.trimOrNull(this.editForm.value.observations),
-      branchId: this.editForm.value.branchId ?? null,
       status: (this.editForm.value.status ?? 'WAITING') as StatusType,
     };
 
