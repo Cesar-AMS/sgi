@@ -12,11 +12,22 @@ export interface AccountsReceivableRow {
   dueDate: string;
   paidDate?: string | null;
   description: string;
-  status: 'WAITING' | 'PAID' | 'CANCELLED';
+  status: 'WAITING' | 'PAID' | 'CANCELLED' | 'PROJECAO';
   category: string;
   amount: number;
   pendingAmount: number;
   observations?: string | null;
+}
+
+export interface AccountsReceivableUpdatePayload {
+  dueDate: string | null;
+  amount: number;
+  pendingAmount: number;
+  description: string;
+  category: string;
+  observations?: string | null;
+  branchId?: number | null;
+  status: 'WAITING' | 'PAID' | 'CANCELLED' | 'PROJECAO';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -36,6 +47,18 @@ export class AccountsReceivableService {
 
   settle(id: number, payload: { paidValue: number; paidDate: string; observations?: string | null }) {
     return this.http.post(`${this.baseUrl}/${id}/settle`, payload);
+  }
+
+  getById(id: number): Observable<AccountsReceivableRow> {
+    return this.http.get<AccountsReceivableRow>(`${this.baseUrl}/${id}`);
+  }
+
+  update(id: number, payload: AccountsReceivableUpdatePayload) {
+    return this.http.put(`${this.baseUrl}/${id}`, payload);
+  }
+
+  cancel(id: number, payload: { observations?: string | null }) {
+    return this.http.patch(`${this.baseUrl}/${id}/cancel`, payload);
   }
 
   getSummary(query: any): Observable<any> {

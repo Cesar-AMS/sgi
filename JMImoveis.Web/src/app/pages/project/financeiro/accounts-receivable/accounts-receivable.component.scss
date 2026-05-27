@@ -80,6 +80,18 @@
   }
 }
 
+.ar-actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 250px;
+
+  .btn {
+    white-space: nowrap;
+  }
+}
+
 .ar-badge {
   padding: 6px 10px;
   border-radius: 999px;
