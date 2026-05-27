@@ -287,15 +287,16 @@
                 </label>
 
                 <h1 class="text-muted fw-bold mb-3">
-                  {{ (createForm.value.amount || 0) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                  {{ getCreateAmountPreview() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
                 </h1>
 
                 <div class="input-group mb-3">
                   <span class="input-group-text">R$</span>
-                  <input type="number"
+                  <input type="text"
                          class="form-control"
                          formControlName="amount"
-                         (input)="onAmountChanged()">
+                         currencyMask
+                         [options]="currencyOptions">
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -311,7 +312,7 @@
                   <div class="text-end">
                     <div class="small text-muted">Valor pendente</div>
                     <div class="fw-bold">
-                      {{ (createForm.value.pendingAmount || 0) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                      {{ getCreatePendingPreview() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
                     </div>
                   </div>
                 </div>

@@ -82,6 +82,14 @@ export class AccountsReceivableComponent implements OnInit {
     { key: 'OUTROS', label: 'Outros' },
   ];
 
+  currencyOptions = {
+    prefix: '',
+    thousands: '.',
+    decimal: ',',
+    precision: 2,
+    allowNegative: false,
+  };
+
   showCreateModal = false;
   showSettleModal = false;
   showEditModal = false;
@@ -157,6 +165,7 @@ export class AccountsReceivableComponent implements OnInit {
       search: [''],
     });
 
+    this.setupCreateFormWatchers();
     this.fetchAll();
   }
 
@@ -336,6 +345,14 @@ export class AccountsReceivableComponent implements OnInit {
     this.recalcPending();
   }
 
+  getCreateAmountPreview(): number {
+    return this.toMoneyNumber(this.createForm.value.amount);
+  }
+
+  getCreatePendingPreview(): number {
+    return this.toMoneyNumber(this.createForm.value.pendingAmount);
+  }
+
   submitCreate(): void {
     if (this.createForm.invalid) return;
 
@@ -352,7 +369,7 @@ export class AccountsReceivableComponent implements OnInit {
       return;
     }
 
-    const amount = Number(this.createForm.value.amount ?? 0);
+    const amount = this.toMoneyNumber(this.createForm.value.amount);
     const pendingAmount = status === 'PAID' ? 0 : amount;
 
     const payload = {
@@ -684,14 +701,28 @@ export class AccountsReceivableComponent implements OnInit {
   }
 
   private recalcPending(): void {
-    const amount = Number(this.createForm.value.amount ?? 0);
+    const amount = this.toMoneyNumber(this.createForm.value.amount);
     const status = String(this.createForm.value.status || 'WAITING');
+    const nextPending = status === 'PAID' ? 0 : amount;
+    const currentPending = this.toMoneyNumber(this.createForm.value.pendingAmount);
 
-    if (status === 'PAID') {
-      this.createForm.patchValue({ pendingAmount: 0 }, { emitEvent: false });
-    } else {
-      this.createForm.patchValue({ pendingAmount: amount }, { emitEvent: false });
+    if (currentPending !== nextPending) {
+      this.createForm.patchValue({ pendingAmount: nextPending }, { emitEvent: false });
     }
+  }
+
+  private setupCreateFormWatchers(): void {
+    this.createForm.get('amount')?.valueChanges.subscribe(() => {
+      this.recalcPending();
+    });
+
+    this.createForm.get('status')?.valueChanges.subscribe(() => {
+      this.recalcPending();
+    });
+
+    this.createForm.get('isPaid')?.valueChanges.subscribe(() => {
+      this.recalcPending();
+    });
   }
 
   private emptyCards(): SummaryCards {
@@ -755,6 +786,21 @@ export class AccountsReceivableComponent implements OnInit {
   private trimOrNull(value?: string | null): string | null {
     const text = String(value ?? '').trim();
     return text || null;
+  }
+
+  private toMoneyNumber(value: unknown): number {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+
+    const raw = String(value ?? '').trim();
+    if (!raw) return 0;
+
+    const normalized = raw
+      .replace(/[^\d,.-]/g, '')
+      .replace(/\./g, '')
+      .replace(',', '.');
+
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 
   private notifyError(message: string, error?: any): void {
