@@ -272,20 +272,25 @@
 }
 
 .status-cell {
-  align-items: flex-start;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
   min-width: 150px;
+  vertical-align: middle;
 }
 
 .status-cell .form-select {
+  display: inline-block;
   max-width: 150px;
   min-height: 31px;
+  width: 150px;
 }
 
 .status-cell .status-pill {
   margin-bottom: 0;
+}
+
+.status-readonly {
+  color: #536173;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .status-agendada {
