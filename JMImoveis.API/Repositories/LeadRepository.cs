@@ -213,14 +213,14 @@ namespace JMImoveisAPI.Repositories
                                            Valor, Fonte, ImoveisInteresse,
                                            Vendedor, Coordenador, Gerente,
                                            owner_user_id, coordinator_user_id, manager_user_id,
-                                           assigned_at, assigned_by_user_id, Observacao)
+                                           assigned_at, assigned_by_user_id, distribution_type, Observacao)
                                         VALUES
                                         (
                                             @Nome, @Email, @Telefone, @Status, @EtapaAtendimento,
                                             @Valor, @Fonte, @ImoveisInteresse,
                                             @Vendedor, @Coordenador, @Gerente,
                                             @OwnerUserId, @CoordinatorUserId, @ManagerUserId,
-                                            @AssignedAt, @AssignedByUserId, @Observacao);";
+                                            @AssignedAt, @AssignedByUserId, @DistributionType, @Observacao);";
 
             await using var conn = await _context.OpenConnectionAsync();
             await conn.ExecuteAsync(sql, lead);
@@ -612,6 +612,7 @@ namespace JMImoveisAPI.Repositories
                                                  manager_user_id AS ManagerUserId,
                                                  assigned_at AS AssignedAt,
                                                  assigned_by_user_id AS AssignedByUserId,
+                                                 distribution_type AS DistributionType,
                                                  DataCriacao,
                                                  (
                                                     SELECT MAX(la.DateTime)
@@ -711,6 +712,7 @@ namespace JMImoveisAPI.Repositories
                                 manager_user_id AS ManagerUserId,
                                 assigned_at AS AssignedAt,
                                 assigned_by_user_id AS AssignedByUserId,
+                                distribution_type AS DistributionType,
                                 DataCriacao,
                                 (
                                     SELECT MAX(la.DateTime)
@@ -758,14 +760,14 @@ namespace JMImoveisAPI.Repositories
                                            Valor, Fonte, ImoveisInteresse,
                                            Vendedor, Coordenador, Gerente,
                                            owner_user_id, coordinator_user_id, manager_user_id,
-                                           assigned_at, assigned_by_user_id, Observacao)
+                                           assigned_at, assigned_by_user_id, distribution_type, Observacao)
                                         VALUES
                                         (
                                             @Nome, @Email, @Telefone, @Status, @EtapaAtendimento,
                                             @Valor, @Fonte, @ImoveisInteresse,
                                             @Vendedor, @Coordenador, @Gerente,
                                             @OwnerUserId, @CoordinatorUserId, @ManagerUserId,
-                                            @AssignedAt, @AssignedByUserId, @Observacao
+                                            @AssignedAt, @AssignedByUserId, @DistributionType, @Observacao
                                         );
 
                         SELECT LAST_INSERT_ID();";

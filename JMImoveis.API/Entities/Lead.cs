@@ -21,6 +21,7 @@ namespace JMImoveisAPI.Entities
         public long? ManagerUserId { get; set; }
         public DateTime? AssignedAt { get; set; }
         public long? AssignedByUserId { get; set; }
+        public string? DistributionType { get; set; }
         public DateTime DataCriacao { get; set; } = DateTime.Now;
         public DateTime? UltimoContato { get; set; }
         public string? Observacao { get; set; }
