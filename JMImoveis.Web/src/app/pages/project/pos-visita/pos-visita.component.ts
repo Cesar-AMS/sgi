@@ -8,6 +8,7 @@ import {
   LeadPostVisitStatus,
 } from 'src/app/models/lead-post-visit';
 import { Usuarios } from 'src/app/models/ContaBancaria';
+import { exportToExcel } from 'src/app/shared/utils/excel-export';
 
 type StatusOption = {
   label: string;
@@ -24,6 +25,7 @@ export class PosVisitaComponent implements OnInit {
   isLoadingAgents = false;
   errorMessage = '';
   agentsErrorMessage = '';
+  exportMessage = '';
 
   search = '';
   status: LeadPostVisitStatus | '' = '';
@@ -57,6 +59,7 @@ export class PosVisitaComponent implements OnInit {
   loadPostVisits(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.exportMessage = '';
 
     this.leadPostVisitService
       .list({
@@ -89,6 +92,36 @@ export class PosVisitaComponent implements OnInit {
     this.followUpFrom = '';
     this.followUpTo = '';
     this.loadPostVisits();
+  }
+
+  exportExcel(): void {
+    this.exportMessage = '';
+
+    if (!this.postVisits.length) {
+      this.exportMessage = 'Nenhum registro de pos-visita para exportar.';
+      return;
+    }
+
+    const data = this.postVisits.map((item) => ({
+      Cliente: item.nomeCliente || 'Nao informado',
+      Telefone: item.telefone || 'Nao informado',
+      Email: item.email || '',
+      CPF: this.formatCpf(item.cpf),
+      'Status Pós-Visita': this.getStatusLabel(item.postVisitStatus),
+      'Tipo de renda': this.getIncomeTypeLabel((item as any).incomeType),
+      'Região de Interesse': item.interestRegion || 'Nao informado',
+      'Valor de entrada': this.formatCurrency(item.downPaymentAmount),
+      'Agente que atendeu': item.attendingAgentName || 'Nao informado',
+      'Interesse imóvel': this.getPropertyInterestLabel(item.propertyInterestType),
+      'Próximo follow-up': this.formatDateTime(item.nextFollowUpAt, 'Nao programado'),
+      'Última interação': item.lastInteractionSummary || 'Sem resumo registrado',
+      'Proposta vinculada': item.proposalId ? `Proposta #${item.proposalId}` : 'Nao',
+      'Data de criação': this.formatDateTime(item.createdAt),
+      'Data de atualização': this.formatDateTime(item.updatedAt),
+      LeadId: item.leadId,
+    }));
+
+    exportToExcel(`pos_visita_${this.today()}.xlsx`, 'Pos-Visita', data);
   }
 
   openLeadPanel(leadId: number): void {
@@ -141,6 +174,63 @@ export class PosVisitaComponent implements OnInit {
     if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
 
     return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  }
+
+  private getIncomeTypeLabel(value: string | null | undefined): string {
+    switch ((value || '').toUpperCase()) {
+      case 'CLT':
+        return 'CLT';
+      case 'AUTONOMO':
+        return 'Autonomo';
+      case 'CLT_AUTONOMO':
+        return 'CLT + Autônomo';
+      case 'EMPRESARIO':
+        return 'Empresario';
+      case 'APOSENTADO':
+        return 'Aposentado';
+      case 'INFORMAL':
+        return 'Informal';
+      default:
+        return value || 'Nao informado';
+    }
+  }
+
+  private formatCurrency(value?: number | null): string {
+    if (value === null || value === undefined) {
+      return 'Nao informado';
+    }
+
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(Number(value));
+  }
+
+  private formatDateTime(value?: string | null, fallback = ''): string {
+    if (!value) {
+      return fallback;
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  }
+
+  private today(): string {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   hasActiveFilters(): boolean {
