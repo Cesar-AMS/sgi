@@ -54,6 +54,7 @@ clearStatusFilter(): void {
   this.onFilterChange();
 }
   visitas: Visita[] = [];
+  filteredVisitas: Visita[] = [];
   paged: Visita[] = [];
   totalItems = 0;
   editingId: number | null = null;     // null = criando, number = editando
@@ -495,6 +496,7 @@ private isoToDatetimeLocal(iso: string): string {
     const startIndex = (this.page - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
     this.totalItems = sorted.length;
+    this.filteredVisitas = sorted;
     this.paged = sorted.slice(startIndex, endIndex);
   }
 
@@ -1023,7 +1025,55 @@ openEditModal(v: Visita): void {
   }
 
   getTodayVisitsCount(): number {
-    return this.visitas.filter((visita) => this.isToday(visita.dataHoraISO)).length;
+    return this.getVisitIndicatorRows().filter((visita) => this.isToday(visita.dataHoraISO)).length;
+  }
+
+  getWeekVisitsCount(): number {
+    return this.getVisitIndicatorRows().filter((visita) => this.isCurrentWeek(visita.dataHoraISO)).length;
+  }
+
+  getNotCompletedVisitsCount(): number {
+    return this.getVisitIndicatorRows().filter((visita) => visita.status !== 'Realizada').length;
+  }
+
+  getCompletedVisitsCount(): number {
+    return this.getVisitIndicatorRows().filter((visita) => visita.status === 'Realizada').length;
+  }
+
+  getScheduledVisitsCount(): number {
+    return this.getVisitIndicatorRows().length;
+  }
+
+  getConversionRate(): number {
+    const total = this.getScheduledVisitsCount();
+    return total > 0 ? Math.round((this.getCompletedVisitsCount() / total) * 100) : 0;
+  }
+
+  getConversionSummary(): string {
+    const total = this.getScheduledVisitsCount();
+    const completed = this.getCompletedVisitsCount();
+    return `${total} visitas agendadas / ${completed} realizadas = ${this.getConversionRate()}% de conversao`;
+  }
+
+  private getVisitIndicatorRows(): Visita[] {
+    return this.filteredVisitas.filter((visita) => this.normalizeTipoAgendaForForm(visita.tipoAgenda) === 'visita');
+  }
+
+  private isCurrentWeek(iso: string): boolean {
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return false;
+
+    const today = new Date();
+    const start = new Date(today);
+    const dayOffset = (today.getDay() + 6) % 7;
+    start.setDate(today.getDate() - dayOffset);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+
+    return date >= start && date <= end;
   }
 
   getStatusClass(status: VisitaStatus): string {

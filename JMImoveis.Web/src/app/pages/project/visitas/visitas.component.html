@@ -42,6 +42,29 @@
     </div>
   </section>
 
+  <section class="visitas-indicators mb-3" *ngIf="isVisitasMode()" aria-label="Indicadores de visitas">
+    <article class="indicator-card">
+      <span class="indicator-label">Hoje</span>
+      <strong class="indicator-value">{{ getTodayVisitsCount() }}</strong>
+    </article>
+
+    <article class="indicator-card">
+      <span class="indicator-label">Esta semana</span>
+      <strong class="indicator-value">{{ getWeekVisitsCount() }}</strong>
+    </article>
+
+    <article class="indicator-card">
+      <span class="indicator-label">Nao realizadas</span>
+      <strong class="indicator-value">{{ getNotCompletedVisitsCount() }}</strong>
+    </article>
+
+    <article class="indicator-card indicator-card-wide">
+      <span class="indicator-label">Conversao</span>
+      <strong class="indicator-value">{{ getConversionRate() }}%</strong>
+      <span class="indicator-detail">{{ getConversionSummary() }}</span>
+    </article>
+  </section>
+
   <ul class="nav nav-pills mb-3 flex-wrap gap-2" [attr.aria-label]="isAgendamentoMode() ? 'Status dos agendamentos' : 'Status das visitas'">
     <li class="nav-item" *ngIf="isVisitasMode()">
       <button
