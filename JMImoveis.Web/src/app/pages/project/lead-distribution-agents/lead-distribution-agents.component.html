@@ -1,0 +1,205 @@
+<div class="lead-distribution-wrapper container-fluid py-4">
+  <div class="page-header mb-4">
+    <div>
+      <h2 class="fw-bold mb-2">Distribuicao Inteligente de Leads</h2>
+      <p class="text-muted mb-0">
+        Configure quais agentes participam da distribuicao e o nivel de prioridade. Esta tela nao ativa
+        distribuicao automatica.
+      </p>
+    </div>
+
+    <button
+      *ngIf="canEdit"
+      type="button"
+      class="btn btn-primary"
+      (click)="openCreateModal()"
+      [disabled]="isLoadingUsers"
+    >
+      <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
+      Novo agente
+    </button>
+  </div>
+
+  <div *ngIf="isAccessDenied" class="alert alert-warning" role="alert">
+    Voce nao possui permissao para visualizar a configuracao da distribuicao de leads.
+  </div>
+
+  <ng-container *ngIf="canView">
+    <section class="summary-grid mb-4" aria-label="Resumo da distribuicao de leads">
+      <div class="summary-card">
+        <span>Total configurados</span>
+        <strong>{{ totalConfigured }}</strong>
+      </div>
+      <div class="summary-card">
+        <span>Ativos</span>
+        <strong>{{ activeCount }}</strong>
+      </div>
+      <div class="summary-card">
+        <span>Experientes</span>
+        <strong>{{ experiencedCount }}</strong>
+      </div>
+      <div class="summary-card">
+        <span>Novatos</span>
+        <strong>{{ noviceCount }}</strong>
+      </div>
+    </section>
+
+    <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+      {{ errorMessage }}
+    </div>
+
+    <section class="distribution-panel">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Agente</th>
+              <th>Status</th>
+              <th>Nivel</th>
+              <th>Prioridade</th>
+              <th>Limite diario</th>
+              <th>Ultima atribuicao</th>
+              <th *ngIf="canEdit" class="text-end">Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="isLoading">
+              <td [attr.colspan]="canEdit ? 7 : 6" class="text-center py-4 text-muted">
+                Carregando agentes...
+              </td>
+            </tr>
+
+            <tr *ngIf="!isLoading && agents.length === 0">
+              <td [attr.colspan]="canEdit ? 7 : 6" class="text-center py-4 text-muted">
+                Nenhum agente configurado.
+              </td>
+            </tr>
+
+            <tr *ngFor="let agent of agents; trackBy: trackByAgentId">
+              <td>
+                <strong>{{ agent.userName || 'Usuario #' + agent.userId }}</strong>
+                <small>ID {{ agent.userId }}</small>
+              </td>
+              <td>
+                <span class="status-pill" [class.status-pill-active]="agent.isActive">
+                  {{ agent.isActive ? 'Ativo' : 'Inativo' }}
+                </span>
+              </td>
+              <td>{{ formatLevel(agent.level) }}</td>
+              <td>{{ agent.priority }}</td>
+              <td>{{ agent.maxDailyLeads ?? 'Sem limite' }}</td>
+              <td>{{ formatDate(agent.lastAssignedAt) }}</td>
+              <td *ngIf="canEdit" class="text-end">
+                <div class="action-buttons">
+                  <button type="button" class="btn btn-sm btn-outline-primary" (click)="openEditModal(agent)">
+                    Editar
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleAgent(agent)">
+                    {{ agent.isActive ? 'Inativar' : 'Ativar' }}
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeAgent(agent)">
+                    Remover
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+</div>
+
+<div *ngIf="showModal" class="distribution-modal-backdrop" (click)="closeModal()">
+  <div class="distribution-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <div class="distribution-modal-header">
+      <div>
+        <h3>{{ editingAgent ? 'Editar agente' : 'Novo agente' }}</h3>
+        <p>Configure a participacao do agente na distribuicao inteligente.</p>
+      </div>
+      <button type="button" class="btn-close" aria-label="Fechar" (click)="closeModal()"></button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="mb-3">
+        <label class="form-label" for="distributionUser">Agente/usuario</label>
+        <select
+          id="distributionUser"
+          class="form-select"
+          formControlName="userId"
+          [class.is-invalid]="form.get('userId')?.invalid && form.get('userId')?.touched"
+        >
+          <option value="">Selecione um agente</option>
+          <option
+            *ngIf="editingAgent && !hasSelectedUserInCorretores()"
+            [value]="editingAgent.userId"
+          >
+            {{ editingAgent.userName || 'Usuario #' + editingAgent.userId }}
+          </option>
+          <option *ngFor="let user of availableCorretores; trackBy: trackByUserId" [value]="user.id">
+            {{ user.name }}
+          </option>
+        </select>
+        <div class="invalid-feedback">Selecione um agente.</div>
+      </div>
+
+      <div class="form-check form-switch mb-3">
+        <input id="distributionActive" type="checkbox" class="form-check-input" formControlName="isActive" />
+        <label class="form-check-label" for="distributionActive">Ativo na distribuicao</label>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="distributionLevel">Nivel</label>
+          <select
+            id="distributionLevel"
+            class="form-select"
+            formControlName="level"
+            [class.is-invalid]="form.get('level')?.invalid && form.get('level')?.touched"
+          >
+            <option *ngFor="let level of levels" [value]="level.value">{{ level.label }}</option>
+          </select>
+          <div class="invalid-feedback">Selecione um nivel.</div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="distributionPriority">Prioridade</label>
+          <input
+            id="distributionPriority"
+            type="number"
+            class="form-control"
+            formControlName="priority"
+            min="1"
+            placeholder="100"
+          />
+        </div>
+
+        <div class="col-12">
+          <label class="form-label" for="distributionLimit">Limite diario</label>
+          <input
+            id="distributionLimit"
+            type="number"
+            class="form-control"
+            formControlName="maxDailyLeads"
+            min="0"
+            placeholder="Sem limite"
+          />
+          <small class="text-muted">Deixe vazio para nao definir limite diario.</small>
+        </div>
+      </div>
+
+      <div *ngIf="formErrorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
+        {{ formErrorMessage }}
+      </div>
+
+      <div class="distribution-modal-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeModal()" [disabled]="isSaving">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+          {{ isSaving ? 'Salvando...' : 'Salvar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

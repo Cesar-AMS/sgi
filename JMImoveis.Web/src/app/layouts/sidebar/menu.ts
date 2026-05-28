@@ -23,6 +23,8 @@ export const MENU: MenuItem[] = [
       'atendimento.visitas.visualizar',
       'atendimento.posvisita.visualizar',
       'atendimento.relatorios.visualizar',
+      'atendimento.distribuicao_leads.visualizar',
+      'atendimento.distribuicao_leads.editar',
     ],
     subItems: [
       {
@@ -59,6 +61,16 @@ export const MENU: MenuItem[] = [
         link: '/jm/atendimento/relatorios',
         parentId: 20,
         permissionKey: 'atendimento.relatorios.visualizar',
+      },
+      {
+        id: 26,
+        label: 'Distribui\u00e7\u00e3o de Leads',
+        link: '/jm/atendimento/distribuicao-leads',
+        parentId: 20,
+        permissionKeys: [
+          'atendimento.distribuicao_leads.visualizar',
+          'atendimento.distribuicao_leads.editar',
+        ],
       },
     ],
   },

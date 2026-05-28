@@ -20,6 +20,7 @@ import { ContasContabeisComponent } from './financeiro/contas-contabeis/contas-c
 import { FluxoCaixaComponent } from './financeiro/fluxo-caixa/fluxo-caixa.component';
 import { ProjecaoComponent } from './financeiro/projecao/projecao.component';
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
+import { LeadDistributionAgentsComponent } from './lead-distribution-agents/lead-distribution-agents.component';
 import { LeadsComponent } from './leads/leads.component';
 import { PosVisitaComponent } from './pos-visita/pos-visita.component';
 import { ControleFuncionariosComponent } from './rh/controle-funcionarios/controle-funcionarios.component';
@@ -301,6 +302,10 @@ const routes: Routes = [
     data: { permissionKey: 'atendimento.relatorios.visualizar' },
   },
   {
+    path: 'atendimento/distribuicao-leads',
+    component: LeadDistributionAgentsComponent,
+  },
+  {
     path: 'comparecimento',
     component: StandaloneComparecimentosComponent,
     canActivate: [PermissionGuard],
@@ -318,4 +323,3 @@ const routes: Routes = [
   exports: [RouterModule],
 })
 export class ProjectRoutingModule { }
-
