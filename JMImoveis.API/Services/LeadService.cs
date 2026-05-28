@@ -48,12 +48,23 @@ namespace JMImoveisAPI.Services
         public async Task<Lead?> GetByIdAsync(int id)
             => await _leadRepository.GetLeadById(id);
 
-        public Task<int> CreateLeadAsync(Lead lead)
+        public Task<int> CreateLeadAsync(Lead lead, long? currentUserId = null)
         {
             lead.Status = string.IsNullOrWhiteSpace(lead.Status) ? "Novo" : lead.Status;
             lead.EtapaAtendimento = string.IsNullOrWhiteSpace(lead.EtapaAtendimento)
                 ? "Sem atendimento"
                 : lead.EtapaAtendimento;
+
+            if (currentUserId.HasValue && currentUserId.Value > 0)
+            {
+                lead.OwnerUserId = currentUserId.Value;
+                lead.AssignedByUserId = currentUserId.Value;
+                lead.AssignedAt = DateTime.Now;
+            }
+            else
+            {
+                _logger.LogWarning("Lead criado sem owner_user_id porque o usuario logado nao foi identificado.");
+            }
 
             return _leadRepository.CreateLeadAndReturnId(lead);
         }

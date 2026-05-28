@@ -183,7 +183,7 @@ namespace JMImoveisAPI.Controllers
                 return authorizationResult;
             }
 
-            var id = await _leadService.CreateLeadAsync(lead);
+            var id = await _leadService.CreateLeadAsync(lead, GetCurrentUserId());
             return Ok(new { id });
         }
 
