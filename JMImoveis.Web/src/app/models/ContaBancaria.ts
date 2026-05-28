@@ -214,6 +214,7 @@ export interface LeadFilter {
   vendedor?: string | null;
   coordenador?: string | null;
   gerente?: string | null;
+  regiaoInteresse?: string | null;
   startAt?: string | null;
   finishAt?: string | null;
 }

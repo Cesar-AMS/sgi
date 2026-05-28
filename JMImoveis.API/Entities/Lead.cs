@@ -17,6 +17,7 @@ namespace JMImoveisAPI.Entities
         public string? Coordenador { get; set; }
         public string? Gerente { get; set; }
         public DateTime DataCriacao { get; set; } = DateTime.Now;
+        public DateTime? UltimoContato { get; set; }
         public string? Observacao { get; set; }
     }
 
@@ -33,10 +34,12 @@ namespace JMImoveisAPI.Entities
     public class LeadFilter
     {
         public string? Term { get; set; }
+        public string? Nome { get; set; }
         public string? Status { get; set; }
         public string? Vendedor { get; set; }
         public string? Coordenador { get; set; }
         public string? Gerente { get; set; }
+        public string? RegiaoInteresse { get; set; }
         public DateTime? StartAt { get; set; }
         public DateTime? FinishAt { get; set; }
     }

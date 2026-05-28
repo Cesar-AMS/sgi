@@ -11,6 +11,7 @@ namespace JMImoveisAPI.Interfaces
         Task UpdateLead(Lead lead);
         Task<bool> UpdateLeadStatus(int id, string status, CreateLeadActivityRequest activity);
         Task<bool> UpdateLeadEtapaAtendimento(int id, string etapaAtendimento, CreateLeadActivityRequest activity);
+        Task<bool> UpdateLeadEtapaAtendimento(int id, string etapaAtendimento);
         Task DeleteLead(Lead lead);
         Task<int> CreateActivity(CreateLeadActivityRequest request);
         Task<IEnumerable<LeadActivity>> GetActivitiesByLeadId(int leadId);

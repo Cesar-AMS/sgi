@@ -92,6 +92,17 @@ export class LeadDetailsComponent implements OnInit {
     'Perdeu',
   ];
 
+  regiaoInteresseOptions = [
+    'Zona Leste',
+    'Zona Norte',
+    'Zona Sul',
+    'Zona Oeste',
+    'Centro',
+    'Guarulhos',
+    'ABC',
+    'Outros',
+  ];
+
   operationalInteractionTypes: OperationalInteractionType[] = [
     'Ligação realizada',
     'Cliente não respondeu',
@@ -458,6 +469,15 @@ export class LeadDetailsComponent implements OnInit {
     if (size < 1024) return `${size} B`;
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  getRegiaoInteresseOptionsForValue(value?: string | null): string[] {
+    const normalizedValue = (value || '').trim();
+    if (!normalizedValue || this.regiaoInteresseOptions.includes(normalizedValue)) {
+      return this.regiaoInteresseOptions;
+    }
+
+    return [...this.regiaoInteresseOptions, normalizedValue];
   }
 
   goBack(): void {

@@ -435,16 +435,27 @@ namespace JMImoveisAPI.Repositories
                                                  Coordenador,
                                                  Gerente,
                                                  DataCriacao,
+                                                 (
+                                                    SELECT MAX(la.DateTime)
+                                                      FROM LeadActivities la
+                                                     WHERE la.LeadId = leads.Id
+                                                       AND (
+                                                            la.Type IS NULL
+                                                            OR TRIM(la.Type) = ''
+                                                            OR la.Type NOT IN ('Status', 'EtapaAtendimento')
+                                                       )
+                                                 ) AS UltimoContato,
                                                  Observacao
                                             FROM leads
                                             WHERE 1 = 1");
 
             var parameters = new DynamicParameters();
 
-            if (!string.IsNullOrWhiteSpace(filter.Term))
+            var term = string.IsNullOrWhiteSpace(filter.Term) ? filter.Nome : filter.Term;
+            if (!string.IsNullOrWhiteSpace(term))
             {
                 sql.Append(" AND Nome LIKE @Nome");
-                parameters.Add("@Nome", $"%{filter.Term}%");
+                parameters.Add("@Nome", $"%{term.Trim()}%");
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Status))
@@ -469,6 +480,12 @@ namespace JMImoveisAPI.Repositories
             {
                 sql.Append(" AND Gerente = @Gerente");
                 parameters.Add("@Gerente", filter.Gerente);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.RegiaoInteresse))
+            {
+                sql.Append(" AND ImoveisInteresse = @RegiaoInteresse");
+                parameters.Add("@RegiaoInteresse", filter.RegiaoInteresse.Trim());
             }
 
             if (filter.StartAt.HasValue)
@@ -506,6 +523,16 @@ namespace JMImoveisAPI.Repositories
                                 Coordenador,
                                 Gerente,
                                 DataCriacao,
+                                (
+                                    SELECT MAX(la.DateTime)
+                                      FROM LeadActivities la
+                                     WHERE la.LeadId = leads.Id
+                                       AND (
+                                            la.Type IS NULL
+                                            OR TRIM(la.Type) = ''
+                                            OR la.Type NOT IN ('Status', 'EtapaAtendimento')
+                                       )
+                                ) AS UltimoContato,
                                 Observacao
                             FROM leads
                             WHERE Id = @Id;";
@@ -522,6 +549,7 @@ namespace JMImoveisAPI.Repositories
                                         Email = @Email,
                                         Telefone = @Telefone,
                                         Status = @Status,
+                                        EtapaAtendimento = @EtapaAtendimento,
                                         Valor = @Valor,
                                         Fonte = @Fonte,
                                         ImoveisInteresse = @ImoveisInteresse,
@@ -629,6 +657,16 @@ namespace JMImoveisAPI.Repositories
             await transaction.CommitAsync();
 
             return true;
+        }
+
+        public async Task<bool> UpdateLeadEtapaAtendimento(int id, string etapaAtendimento)
+        {
+            const string updateSql = @"UPDATE leads
+                                       SET EtapaAtendimento = @EtapaAtendimento
+                                       WHERE Id = @Id;";
+
+            await using var conn = await _context.OpenConnectionAsync();
+            return await conn.ExecuteAsync(updateSql, new { Id = id, EtapaAtendimento = etapaAtendimento }) > 0;
         }
     }
 }

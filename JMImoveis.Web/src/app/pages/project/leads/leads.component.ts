@@ -41,6 +41,7 @@ export class LeadsComponent {
   vendedorFilter = '';
   coordenadorFilter = '';
   gerenteFilter = '';
+  regiaoInteresseFilter = '';
   dateFrom = '';
   dateTo = '';
 
@@ -94,6 +95,17 @@ export class LeadsComponent {
     'Placa',
     'TikTok',
     'Listas telefônicas',
+  ];
+
+  regiaoInteresseOptions = [
+    'Zona Leste',
+    'Zona Norte',
+    'Zona Sul',
+    'Zona Oeste',
+    'Centro',
+    'Guarulhos',
+    'ABC',
+    'Outros',
   ];
 
   constructor(
@@ -373,6 +385,10 @@ export class LeadsComponent {
       const matchesGer =
         !this.gerenteFilter || lead.gerente === this.gerenteFilter;
 
+      const matchesRegiao =
+        !this.regiaoInteresseFilter ||
+        lead.imoveisInteresse === this.regiaoInteresseFilter;
+
       const created = new Date(lead.dataCriacao).getTime();
       const fromOk =
         !this.dateFrom || created >= new Date(this.dateFrom).getTime();
@@ -384,6 +400,7 @@ export class LeadsComponent {
         matchesVendedor &&
         matchesCoord &&
         matchesGer &&
+        matchesRegiao &&
         fromOk &&
         toOk
       );
@@ -399,6 +416,7 @@ export class LeadsComponent {
       vendedor: this.vendedorFilter || null,
       coordenador: this.coordenadorFilter || null,
       gerente: this.gerenteFilter || null,
+      regiaoInteresse: this.regiaoInteresseFilter || null,
       startAt: startAt,
       finishAt: finishAt,
     };
@@ -566,5 +584,22 @@ export class LeadsComponent {
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const yy = d.getFullYear();
     return `${dd}/${mm}/${yy}`;
+  }
+
+  getRegiaoInteresseOptionsForValue(value?: string | null): string[] {
+    const normalizedValue = (value || '').trim();
+    if (!normalizedValue || this.regiaoInteresseOptions.includes(normalizedValue)) {
+      return this.regiaoInteresseOptions;
+    }
+
+    return [...this.regiaoInteresseOptions, normalizedValue];
+  }
+
+  getRegiaoInteresseFilterOptions(): string[] {
+    const values = (this.leads || [])
+      .map((lead) => (lead.imoveisInteresse || '').trim())
+      .filter((value) => !!value && !this.regiaoInteresseOptions.includes(value));
+
+    return [...this.regiaoInteresseOptions, ...Array.from(new Set(values)).sort()];
   }
 }

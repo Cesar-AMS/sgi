@@ -120,6 +120,22 @@
       </div>
 
       <div class="filter-field">
+        <label class="form-label" for="leadRegiaoInteresseFilter">Região de Interesse</label>
+        <select
+          id="leadRegiaoInteresseFilter"
+          class="form-select"
+          [(ngModel)]="regiaoInteresseFilter"
+          (ngModelChange)="onFilterChange()"
+          aria-label="Filtrar leads por região de interesse"
+        >
+          <option value="">Todas regiões</option>
+          <option *ngFor="let regiao of getRegiaoInteresseFilterOptions()" [value]="regiao">
+            {{ regiao }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-field">
         <label class="form-label" for="leadVendedorFilter">Agente</label>
         <select
           id="leadVendedorFilter"
@@ -217,6 +233,8 @@
               <th>Gerente</th>
               <th>Valor (R$)</th>
               <th>Fonte</th>
+              <th>Região de Interesse</th>
+              <th>Último Contato</th>
               <th>Data</th>
             </tr>
           </thead>
@@ -240,6 +258,8 @@
               <td>{{ lead.gerente || '-' }}</td>
               <td>{{ lead.valor | currency: 'BRL' : 'symbol' : '1.0-0' }}</td>
               <td>{{ lead.fonte || '-' }}</td>
+              <td>{{ lead.imoveisInteresse || '-' }}</td>
+              <td>{{ lead.ultimoContato ? (lead.ultimoContato | date: 'dd/MM/yyyy HH:mm') : '-' }}</td>
               <td>{{ lead.dataCriacao | date: 'shortDate' }}</td>
             </tr>
           </tbody>
@@ -494,16 +514,19 @@
 
         <div class="mb-3">
           <label class="form-label" for="leadInteresse">
-            Interesse do lead
+            Região de Interesse
           </label>
-          <input
+          <select
             id="leadInteresse"
-            type="text"
-            class="form-control"
-            placeholder="Ex: apto 2 dorms, unidade 101, casa em condomínio..."
+            class="form-select"
             formControlName="imoveisInteresse"
-            aria-label="Interesse do lead"
-          />
+            aria-label="Região de interesse"
+          >
+            <option value="">Selecione...</option>
+            <option *ngFor="let regiao of regiaoInteresseOptions" [value]="regiao">
+              {{ regiao }}
+            </option>
+          </select>
         </div>
 
         <div class="mb-3">

@@ -26,6 +26,7 @@ export interface Lead {
   coordenador?: string;
   gerente?: string;
   dataCriacao: string; // ISO string
+  ultimoContato?: string | null;
   observacao?: string;
 }
 

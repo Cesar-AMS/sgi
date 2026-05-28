@@ -62,6 +62,16 @@ namespace JMImoveisAPI.Services
         {
             var previousLead = await _leadRepository.GetLeadById(lead.Id);
 
+            if (previousLead != null && string.IsNullOrWhiteSpace(lead.EtapaAtendimento))
+            {
+                lead.EtapaAtendimento = previousLead.EtapaAtendimento;
+            }
+
+            if (ShouldMoveToEmAtendimento(previousLead))
+            {
+                lead.EtapaAtendimento = "Em atendimento";
+            }
+
             await _leadRepository.UpdateLead(lead);
 
             if (previousLead != null)
@@ -147,7 +157,12 @@ namespace JMImoveisAPI.Services
             try
             {
                 var lead = await _leadRepository.GetLeadById(request.LeadId);
-                if (IsNewLeadStatus(lead?.Status))
+                if (IsRealInteractionActivity(request) && ShouldMoveToEmAtendimento(lead))
+                {
+                    await _leadRepository.UpdateLeadEtapaAtendimento(request.LeadId, "Em atendimento");
+                }
+
+                if (IsRealInteractionActivity(request) && IsNewLeadStatus(lead?.Status))
                 {
                     var activity = new CreateLeadActivityRequest
                     {
@@ -344,6 +359,29 @@ namespace JMImoveisAPI.Services
 
         private static bool IsNewLeadStatus(string? status)
             => string.Equals(RemoveDiacritics(status).Trim(), "Novo", StringComparison.OrdinalIgnoreCase);
+
+        private static bool ShouldMoveToEmAtendimento(Lead? lead)
+        {
+            if (lead == null)
+            {
+                return false;
+            }
+
+            var etapaAtendimento = RemoveDiacritics(lead.EtapaAtendimento).Trim();
+            if (string.Equals(etapaAtendimento, "Sem atendimento", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return string.IsNullOrWhiteSpace(lead.EtapaAtendimento) && IsNewLeadStatus(lead.Status);
+        }
+
+        private static bool IsRealInteractionActivity(CreateLeadActivityRequest request)
+        {
+            var type = RemoveDiacritics(request.Type).Trim();
+            return !string.Equals(type, "Status", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(type, "EtapaAtendimento", StringComparison.OrdinalIgnoreCase);
+        }
 
         private async Task<int> EnsureScheduleLeadIdAsync(LeadScheduleRequest request, int? leadId)
         {
