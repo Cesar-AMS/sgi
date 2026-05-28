@@ -56,6 +56,12 @@ export class LeadsComponent {
 
   showCreateModal = false;
   createForm!: FormGroup;
+  showReturnScheduleModal = false;
+  returnScheduleForm!: FormGroup;
+  isSavingReturnSchedule = false;
+  returnScheduleErrorMessage = '';
+  pendingReturnLead?: Lead;
+  pendingReturnPreviousEtapa: LeadEtapaAtendimento | null = null;
 
   schedules: LeadSchedule[] = [];
   scheduleForm!: FormGroup;
@@ -225,6 +231,12 @@ export class LeadsComponent {
       vendedor: [''],
       observacao: [''],
     });
+
+    this.returnScheduleForm = this.fb.group({
+      date: [new Date().toISOString().substring(0, 10), Validators.required],
+      time: ['09:00', Validators.required],
+      note: [''],
+    });
   }
 
   loadLeads(): void {
@@ -318,6 +330,11 @@ export class LeadsComponent {
       return;
     }
 
+    if (targetEtapaAtendimento === 'Agendamento de retorno') {
+      this.openReturnScheduleModal(lead, previousEtapaAtendimento);
+      return;
+    }
+
     this.leadService.updateLeadEtapaAtendimento(lead.id, targetEtapaAtendimento).subscribe({
       next: () => {
         lead.etapaAtendimento = targetEtapaAtendimento;
@@ -328,6 +345,128 @@ export class LeadsComponent {
         lead.etapaAtendimento = previousEtapaAtendimento;
         this.updatePagedLeads();
         this.toast.error('Não foi possível atualizar a etapa do lead.');
+      },
+    });
+  }
+
+  openReturnScheduleModal(lead: Lead, previousEtapaAtendimento: LeadEtapaAtendimento | null): void {
+    this.pendingReturnLead = lead;
+    this.pendingReturnPreviousEtapa = previousEtapaAtendimento;
+    this.returnScheduleErrorMessage = '';
+    this.returnScheduleForm.reset({
+      date: new Date().toISOString().substring(0, 10),
+      time: '09:00',
+      note: '',
+    });
+    this.showReturnScheduleModal = true;
+  }
+
+  closeReturnScheduleModal(): void {
+    if (this.isSavingReturnSchedule) {
+      return;
+    }
+
+    if (this.pendingReturnLead) {
+      this.pendingReturnLead.etapaAtendimento = this.pendingReturnPreviousEtapa;
+      this.updatePagedLeads();
+    }
+
+    this.showReturnScheduleModal = false;
+    this.returnScheduleErrorMessage = '';
+    this.pendingReturnLead = undefined;
+    this.pendingReturnPreviousEtapa = null;
+  }
+
+  submitReturnSchedule(): void {
+    if (!this.canEditLeads) {
+      this.returnScheduleErrorMessage = 'Voce nao tem permissao para alterar a etapa do lead.';
+      return;
+    }
+
+    if (!this.pendingReturnLead?.id) {
+      this.returnScheduleErrorMessage = 'Nao foi possivel identificar o lead.';
+      return;
+    }
+
+    if (this.returnScheduleForm.invalid) {
+      this.returnScheduleForm.markAllAsTouched();
+      this.returnScheduleErrorMessage = 'Informe a data e o horario do retorno.';
+      return;
+    }
+
+    const lead = this.pendingReturnLead;
+    const currentUserId = this.sessionService.getCurrentUserId();
+    if (!currentUserId) {
+      this.returnScheduleErrorMessage = 'Nao foi possivel identificar o usuario logado para criar o retorno.';
+      return;
+    }
+
+    const payload = this.buildReturnSchedulePayload(lead, currentUserId);
+    this.isSavingReturnSchedule = true;
+    this.returnScheduleErrorMessage = '';
+
+    this.leadService.updateLeadEtapaAtendimento(lead.id, 'Agendamento de retorno').subscribe({
+      next: () => {
+        this.leadService.createScheduleV3(lead.id, payload).subscribe({
+          next: () => {
+            lead.etapaAtendimento = 'Agendamento de retorno';
+            this.showReturnScheduleModal = false;
+            this.isSavingReturnSchedule = false;
+            this.pendingReturnLead = undefined;
+            this.pendingReturnPreviousEtapa = null;
+            this.updatePagedLeads();
+            this.toast.success('Retorno agendado com sucesso.');
+          },
+          error: () => {
+            this.restorePendingReturnEtapa();
+            this.isSavingReturnSchedule = false;
+            this.returnScheduleErrorMessage = 'Nao foi possivel criar o agendamento de retorno.';
+          },
+        });
+      },
+      error: () => {
+        this.isSavingReturnSchedule = false;
+        this.returnScheduleErrorMessage = 'Nao foi possivel atualizar a etapa do lead.';
+      },
+    });
+  }
+
+  private buildReturnSchedulePayload(lead: Lead, vendedorId: number): unknown {
+    const { date, time, note } = this.returnScheduleForm.value;
+    const iso = new Date(`${date}T${time}:00`).toISOString();
+    const noteText = String(note ?? '').trim();
+
+    return {
+      leadId: lead.id,
+      nomeCliente: lead.nome,
+      telefone: lead.telefone || null,
+      dataHoraISO: iso,
+      vendedorId,
+      status: 'Agendada',
+      observacao: noteText ? `Retorno do Kanban: ${noteText}` : 'Retorno agendado pelo Kanban.',
+      compareceu: false,
+      virouVenda: false,
+      tipoAgenda: 'contato',
+    };
+  }
+
+  private restorePendingReturnEtapa(): void {
+    const lead = this.pendingReturnLead;
+    if (!lead?.id) {
+      return;
+    }
+
+    this.leadService.updateLeadEtapaAtendimento(
+      lead.id,
+      this.pendingReturnPreviousEtapa || this.getEffectiveEtapaAtendimento(lead)
+    ).subscribe({
+      next: () => {
+        lead.etapaAtendimento = this.pendingReturnPreviousEtapa;
+        this.updatePagedLeads();
+      },
+      error: () => {
+        lead.etapaAtendimento = this.pendingReturnPreviousEtapa;
+        this.updatePagedLeads();
       },
     });
   }

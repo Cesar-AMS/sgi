@@ -231,6 +231,38 @@
   overflow-y: auto;
 }
 
+.return-schedule-modal {
+  width: 460px;
+}
+
+.return-schedule-lead {
+  color: #606075;
+  font-size: 0.84rem;
+}
+
+.return-schedule-note,
+.return-schedule-error {
+  border-radius: 0.55rem;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.return-schedule-note {
+  background-color: #fbfbfd;
+  border: 1px solid #eeeeF5;
+  color: #606075;
+}
+
+.return-schedule-error {
+  background-color: #fff3f3;
+  border: 1px solid #ffd0d0;
+  color: #b42318;
+  margin-bottom: 0;
+  margin-top: 1rem;
+}
+
 /* Filtros de Leads */
 
 .leads-filter-card {
