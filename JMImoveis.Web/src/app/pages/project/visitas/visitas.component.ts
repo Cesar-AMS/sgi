@@ -159,6 +159,19 @@ private isoToDatetimeLocal(iso: string): string {
 
   showCreateModal = false;
   createForm!: FormGroup;
+  showResultModal = false;
+  resultForm!: FormGroup;
+  selectedResultVisit: Visita | null = null;
+  isSavingResult = false;
+  resultOptions = [
+    'Cliente atendido',
+    'Nao respondeu',
+    'Reagendou',
+    'Sem interesse',
+    'Encaminhado para visita',
+    'Outro',
+  ];
+  private autoOverdueUpdateIds = new Set<number>();
 
   constructor(
     private fb: FormBuilder,
@@ -392,6 +405,11 @@ private isoToDatetimeLocal(iso: string): string {
       compareceu: [false, Validators.required],
       virouVenda: [false, Validators.required],
     });
+
+    this.resultForm = this.fb.group({
+      resultado: ['Cliente atendido', Validators.required],
+      observacao: [''],
+    });
   }
 
   // ---------- carregamento ----------
@@ -415,7 +433,7 @@ private isoToDatetimeLocal(iso: string): string {
         return;
       }
 
-      this.visitas = list || [];
+      this.visitas = this.applyAutomaticOverdueStatus(list || []);
       this.page = 1;
       this.applyAndPaginateLocal();
       this.isLoading = false;
@@ -751,7 +769,56 @@ openEditModal(v: Visita): void {
   }
 
   confirmAgendamento(visita: Visita): void {
-    this.updateStatus(visita, 'Realizada');
+    if (!this.ensureCanManageCurrentMode()) {
+      return;
+    }
+
+    this.selectedResultVisit = visita;
+    this.resultForm.reset({
+      resultado: 'Cliente atendido',
+      observacao: '',
+    });
+    this.showResultModal = true;
+  }
+
+  closeResultModal(): void {
+    if (this.isSavingResult) {
+      return;
+    }
+
+    this.showResultModal = false;
+    this.selectedResultVisit = null;
+    this.resultForm.reset({
+      resultado: 'Cliente atendido',
+      observacao: '',
+    });
+  }
+
+  submitAgendamentoResult(): void {
+    if (!this.selectedResultVisit || this.resultForm.invalid) {
+      this.resultForm.markAllAsTouched();
+      return;
+    }
+
+    const visita = this.selectedResultVisit;
+    this.isSavingResult = true;
+
+    this.visitasApi.update(visita.id, {
+      status: 'Realizada',
+      observacao: this.buildAgendamentoResultObservation(visita.observacao),
+    } as Partial<Visita>).subscribe({
+      next: () => {
+        this.toast.success('Agendamento marcado como realizado');
+        this.isSavingResult = false;
+        this.showResultModal = false;
+        this.selectedResultVisit = null;
+        this.loadVisitas();
+      },
+      error: () => {
+        this.toast.error('Erro ao marcar agendamento como realizado');
+        this.isSavingResult = false;
+      }
+    });
   }
 
   hasValidLead(visita: Visita): boolean {
@@ -837,6 +904,63 @@ openEditModal(v: Visita): void {
     this.sellerFilterMode = 'mine';
     this.visibleCorretores = currentSeller ? [currentSeller] : [];
     this.vendedorFilter = String(userId);
+  }
+
+  private applyAutomaticOverdueStatus(rows: Visita[]): Visita[] {
+    if (!this.isAgendamentoMode()) {
+      return rows;
+    }
+
+    const overdueRows = rows.filter((visita) => this.shouldAutoMarkOverdue(visita));
+
+    if (this.canManageCurrentMode()) {
+      overdueRows.forEach((visita) => {
+        if (this.autoOverdueUpdateIds.has(visita.id)) {
+          return;
+        }
+
+        this.autoOverdueUpdateIds.add(visita.id);
+        this.visitasApi.update(visita.id, { status: 'Atrasado' } as Partial<Visita>).subscribe({
+          error: () => {
+            this.autoOverdueUpdateIds.delete(visita.id);
+            this.toast.error('Erro ao marcar agendamento atrasado automaticamente');
+          }
+        });
+      });
+    }
+
+    return rows.map((visita) => this.shouldAutoMarkOverdue(visita)
+      ? { ...visita, status: 'Atrasado' as VisitaStatus }
+      : visita);
+  }
+
+  private shouldAutoMarkOverdue(visita: Visita): boolean {
+    if (!this.isAgendamentoMode()) {
+      return false;
+    }
+
+    if (this.normalizeTipoAgendaForForm(visita.tipoAgenda) === 'visita') {
+      return false;
+    }
+
+    if (visita.status !== 'Agendada') {
+      return false;
+    }
+
+    const scheduledAt = new Date(visita.dataHoraISO).getTime();
+    return Number.isFinite(scheduledAt) && scheduledAt < Date.now();
+  }
+
+  private buildAgendamentoResultObservation(existingObservation?: string | null): string {
+    const form = this.resultForm.value;
+    const resultado = String(form.resultado || '').trim();
+    const observacao = String(form.observacao || '').trim();
+    const resultLine = observacao
+      ? `Resultado do agendamento: ${resultado}. Observacao: ${observacao}`
+      : `Resultado do agendamento: ${resultado}.`;
+    const existing = String(existingObservation || '').trim();
+
+    return existing ? `${existing}\n${resultLine}` : resultLine;
   }
 
   private hasPermission(permissions: Permission[], permissionKey: string): boolean {

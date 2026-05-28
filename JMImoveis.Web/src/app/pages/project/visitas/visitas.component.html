@@ -404,6 +404,61 @@
   </ng-template>
 </div>
 
+<div class="modal-backdrop-custom" *ngIf="showResultModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="scheduleResultModalTitle">
+    <div class="modal-header border-0 px-4 pt-4 pb-2">
+      <h5 id="scheduleResultModalTitle" class="modal-title fw-semibold">
+        Resultado do atendimento
+      </h5>
+
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Fechar modal de resultado"
+        [disabled]="isSavingResult"
+        (click)="closeResultModal()"
+      ></button>
+    </div>
+
+    <div class="modal-body px-4 pb-4">
+      <form [formGroup]="resultForm" (ngSubmit)="submitAgendamentoResult()">
+        <div class="mb-3">
+          <label class="form-label" for="scheduleResultSelect">Resultado</label>
+          <select id="scheduleResultSelect" class="form-select" formControlName="resultado">
+            <option *ngFor="let result of resultOptions" [value]="result">{{ result }}</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="scheduleResultNote">Observacao complementar</label>
+          <textarea
+            id="scheduleResultNote"
+            class="form-control"
+            rows="3"
+            placeholder="Detalhes do atendimento..."
+            formControlName="observacao"
+          ></textarea>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="isSavingResult"
+            (click)="closeResultModal()"
+          >
+            Cancelar
+          </button>
+
+          <button type="submit" class="btn btn-orange" [disabled]="isSavingResult">
+            Salvar resultado
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop-custom" *ngIf="showCreateModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="visitModalTitle">
     <div class="modal-header border-0 px-4 pt-4 pb-2">
