@@ -4,7 +4,7 @@ namespace JMImoveisAPI.Interfaces
 {
     public interface ILeadService
     {
-        Task<IEnumerable<Lead>> GetAllByFiltersAsync(LeadFilter filter);
+        Task<IEnumerable<Lead>> GetAllByFiltersAsync(LeadFilter filter, long currentUserId, bool canViewAll);
         Task<Lead?> GetByIdAsync(int id);
         Task<int> CreateLeadAsync(Lead lead, long? currentUserId = null);
         Task UpdateLeadAsync(Lead lead, long? changedByUserId = null);

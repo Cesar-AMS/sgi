@@ -593,7 +593,7 @@ namespace JMImoveisAPI.Repositories
             return await conn.QueryFirstOrDefaultAsync<VisitaDto>(sql, new { Id = id });
         }
 
-        public async Task<IEnumerable<Lead>> GetAllByFilters(LeadFilter filter)
+        public async Task<IEnumerable<Lead>> GetAllByFilters(LeadFilter filter, long currentUserId, bool canViewAll)
         {
             var sql = new StringBuilder(@"SELECT Id,
                                                  Nome,
@@ -628,6 +628,12 @@ namespace JMImoveisAPI.Repositories
                                             WHERE 1 = 1");
 
             var parameters = new DynamicParameters();
+
+            if (!canViewAll)
+            {
+                sql.Append(" AND leads.owner_user_id = @CurrentUserId");
+                parameters.Add("@CurrentUserId", currentUserId);
+            }
 
             var term = string.IsNullOrWhiteSpace(filter.Term) ? filter.Nome : filter.Term;
             if (!string.IsNullOrWhiteSpace(term))

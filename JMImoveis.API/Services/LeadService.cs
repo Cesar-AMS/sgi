@@ -42,8 +42,8 @@ namespace JMImoveisAPI.Services
             _logger = logger;
         }
 
-        public Task<IEnumerable<Lead>> GetAllByFiltersAsync(LeadFilter filter)
-            => _leadRepository.GetAllByFilters(filter);
+        public Task<IEnumerable<Lead>> GetAllByFiltersAsync(LeadFilter filter, long currentUserId, bool canViewAll)
+            => _leadRepository.GetAllByFilters(filter, currentUserId, canViewAll);
 
         public async Task<Lead?> GetByIdAsync(int id)
             => await _leadRepository.GetLeadById(id);

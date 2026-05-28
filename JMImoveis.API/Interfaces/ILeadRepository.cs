@@ -6,7 +6,7 @@ namespace JMImoveisAPI.Interfaces
     {
         Task CreateLead(Lead lead);
         Task<int> CreateLeadAndReturnId(Lead lead);
-        Task<IEnumerable<Lead>> GetAllByFilters(LeadFilter filter);
+        Task<IEnumerable<Lead>> GetAllByFilters(LeadFilter filter, long currentUserId, bool canViewAll);
         Task<Lead> GetLeadById(int id);
         Task UpdateLead(Lead lead);
         Task<bool> UpdateLeadStatus(int id, string status, CreateLeadActivityRequest activity);

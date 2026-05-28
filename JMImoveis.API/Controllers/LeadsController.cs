@@ -10,6 +10,7 @@ namespace JMImoveisAPI.Controllers
     public class LeadsController : ControllerBase
     {
         private const string ViewAllSchedulesPermission = "sistema.admin.total";
+        private const string ViewAllLeadsPermission = "atendimento.leads.visualizar.todos";
         private const string EditLeadPermission = "atendimento.leads.editar";
         private const string ViewLeadTransferHistoryPermission = "atendimento.leads.transferencias.visualizar";
         private readonly ILeadService _leadService;
@@ -199,7 +200,33 @@ namespace JMImoveisAPI.Controllers
 
         [HttpPost("report")]
         public async Task<IActionResult> GetReportLead(LeadFilter filter)
-            => Ok(await _leadService.GetAllByFiltersAsync(filter));
+        {
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            bool canViewAll;
+            try
+            {
+                var isAdmin = await _permissionService.UserHasPermissionAsync(
+                    currentUserId.Value,
+                    ViewAllSchedulesPermission);
+
+                var canViewAllLeads = await _permissionService.UserHasPermissionAsync(
+                    currentUserId.Value,
+                    ViewAllLeadsPermission);
+
+                canViewAll = isAdmin || canViewAllLeads;
+            }
+            catch (KeyNotFoundException)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao encontrado." });
+            }
+
+            return Ok(await _leadService.GetAllByFiltersAsync(filter, currentUserId.Value, canViewAll));
+        }
 
         [HttpPost]
         public async Task<IActionResult> CreateLead(Lead lead)
