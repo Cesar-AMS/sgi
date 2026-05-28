@@ -435,9 +435,20 @@ export class LeadDetailsComponent implements OnInit {
     if (!this.ensureCanEditDocuments()) return;
     if (!this.lead) return;
 
+    const confirmed = window.confirm(
+      'Tem certeza que deseja remover este documento? Esta ação não poderá ser desfeita.'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     this.leadService.deleteLeadDocument(this.lead.id, document.id).subscribe({
       next: () => {
         this.leadDocuments = this.leadDocuments.filter((item) => item.id !== document.id);
+        if (this.lead?.id) {
+          this.loadLeadDocuments(this.lead.id);
+        }
       },
       error: () => {
         this.documentErrorMessage = 'Não foi possível remover o documento.';
