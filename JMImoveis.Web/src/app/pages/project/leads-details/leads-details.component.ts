@@ -61,6 +61,8 @@ export class LeadDetailsComponent implements OnInit {
   isLoadingDocuments = false;
   isUploadingDocuments = false;
   canEditLeads = false;
+  canViewDocuments = false;
+  canEditDocuments = false;
   canViewPostVisit = false;
   canEditPostVisit = false;
   canViewTransferHistory = false;
@@ -147,7 +149,6 @@ export class LeadDetailsComponent implements OnInit {
     if (id) {
       this.loadLead(id);
       this.loadActivities(id);
-      this.loadLeadDocuments(id);
       this.loadSchedules(id, 'visita');
       this.loadSchedules(id, 'contato');
     }
@@ -287,6 +288,9 @@ export class LeadDetailsComponent implements OnInit {
       next: (lead) => {
         this.lead = lead;
         this.patchInfoForm(lead);
+        if (this.canViewDocuments) {
+          this.loadLeadDocuments(lead.id);
+        }
         this.isLoading = false;
       },
       error: () => {
@@ -347,7 +351,7 @@ export class LeadDetailsComponent implements OnInit {
   onLeadDocumentsSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
 
-    if (!this.ensureCanEditLeads('documents')) {
+    if (!this.ensureCanEditDocuments()) {
       input.value = '';
       return;
     }
@@ -382,6 +386,11 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   loadLeadDocuments(leadId: number): void {
+    if (!this.canViewDocuments) {
+      this.leadDocuments = [];
+      return;
+    }
+
     this.isLoadingDocuments = true;
     this.documentErrorMessage = '';
 
@@ -398,13 +407,13 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   toggleDocumentEdit(document: LeadDocument): void {
-    if (!this.ensureCanEditLeads('documents')) return;
+    if (!this.ensureCanEditDocuments()) return;
 
     document.isEditing = !document.isEditing;
   }
 
   saveLeadDocumentMetadata(document: LeadDocument): void {
-    if (!this.ensureCanEditLeads('documents')) return;
+    if (!this.ensureCanEditDocuments()) return;
     if (!this.lead) return;
 
     this.leadService.updateLeadDocument(this.lead.id, document.id, {
@@ -423,7 +432,7 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   removeLeadDocument(document: LeadDocument): void {
-    if (!this.ensureCanEditLeads('documents')) return;
+    if (!this.ensureCanEditDocuments()) return;
     if (!this.lead) return;
 
     this.leadService.deleteLeadDocument(this.lead.id, document.id).subscribe({
@@ -437,7 +446,7 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   openLeadDocument(document: LeadDocument): void {
-    if (!this.lead) return;
+    if (!this.lead || !this.canViewDocuments) return;
 
     this.documentErrorMessage = '';
     const documentWindow = window.open('', '_blank');
@@ -488,6 +497,10 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   setTab(tab: 'info' | 'docs' | 'postVisit'): void {
+    if (tab === 'docs' && !this.canViewDocuments) {
+      return;
+    }
+
     if (tab === 'postVisit' && !this.canViewPostVisit) {
       return;
     }
@@ -751,12 +764,13 @@ export class LeadDetailsComponent implements OnInit {
     const currentUserId = this.sessionService.getCurrentUserId();
     if (!currentUserId) {
       this.canEditLeads = false;
+      this.canViewDocuments = false;
+      this.canEditDocuments = false;
       this.canViewPostVisit = false;
       this.canEditPostVisit = false;
       this.canViewTransferHistory = false;
-      if (this.activeTab === 'postVisit') {
-        this.activeTab = 'info';
-      }
+      this.leadDocuments = [];
+      this.ensureActiveTabIsAllowed();
       return;
     }
 
@@ -765,6 +779,13 @@ export class LeadDetailsComponent implements OnInit {
         const permissionKeys = this.extractPermissionKeys(permissions);
         const isAdmin = permissionKeys.has('sistema.admin.total');
         this.canEditLeads =
+          permissionKeys.has('atendimento.leads.editar') ||
+          isAdmin;
+        this.canViewDocuments =
+          permissionKeys.has('atendimento.leads.visualizar') ||
+          permissionKeys.has('atendimento.leads.editar') ||
+          isAdmin;
+        this.canEditDocuments =
           permissionKeys.has('atendimento.leads.editar') ||
           isAdmin;
         this.canViewPostVisit =
@@ -782,20 +803,25 @@ export class LeadDetailsComponent implements OnInit {
           this.transferHistoryItems = [];
         }
 
-        if (!this.canViewPostVisit && this.activeTab === 'postVisit') {
-          this.activeTab = 'info';
+        if (!this.canViewDocuments) {
+          this.leadDocuments = [];
+        } else if (this.lead?.id) {
+          this.loadLeadDocuments(this.lead.id);
         }
+
+        this.ensureActiveTabIsAllowed();
       },
       error: () => {
         this.canEditLeads = false;
+        this.canViewDocuments = false;
+        this.canEditDocuments = false;
         this.canViewPostVisit = false;
         this.canEditPostVisit = false;
         this.canViewTransferHistory = false;
         this.showTransferHistoryPanel = false;
         this.transferHistoryItems = [];
-        if (this.activeTab === 'postVisit') {
-          this.activeTab = 'info';
-        }
+        this.leadDocuments = [];
+        this.ensureActiveTabIsAllowed();
       },
     });
   }
@@ -824,6 +850,25 @@ export class LeadDetailsComponent implements OnInit {
     }
 
     return false;
+  }
+
+  private ensureCanEditDocuments(): boolean {
+    if (this.canEditDocuments) {
+      return true;
+    }
+
+    this.documentErrorMessage = 'Voce nao tem permissao para editar documentos.';
+    return false;
+  }
+
+  private ensureActiveTabIsAllowed(): void {
+    if (this.activeTab === 'docs' && !this.canViewDocuments) {
+      this.activeTab = 'info';
+    }
+
+    if (this.activeTab === 'postVisit' && !this.canViewPostVisit) {
+      this.activeTab = 'info';
+    }
   }
 
   // ações rápidas – por enquanto só console.log, depois integra
