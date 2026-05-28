@@ -29,5 +29,8 @@ namespace JMImoveisAPI.Interfaces
             bool canViewAll);
         Task UpdateScheduleStatusAsync(int leadId, int scheduleId, UpdateLeadScheduleStatusRequest request);
         Task<bool> UpdateScheduleAsync(int id, VisitaPatchRequest patch);
+        Task<BulkTransferLeadsResponse> BulkTransferLeadsAsync(
+        BulkTransferLeadsRequest request,
+        long changedByUserId);
     }
 }

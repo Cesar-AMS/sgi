@@ -38,6 +38,175 @@ namespace JMImoveisAPI.Repositories
             return await conn.ExecuteScalarAsync<int>(sql, request);
         }
 
+        public async Task<BulkTransferLeadsResponse> BulkTransferLeadsAsync(
+    BulkTransferLeadsRequest request,
+    long changedByUserId)
+        {
+            var response = new BulkTransferLeadsResponse
+            {
+                RequestedCount = request.LeadIds.Count,
+                ToUserId = request.ToUserId
+            };
+
+            const string destinationUserSql = @"
+        SELECT COUNT(1)
+          FROM jmoficial.users
+         WHERE id = @ToUserId;";
+
+            const string selectLeadsSql = @"
+        SELECT l.Id,
+               l.owner_user_id AS OwnerUserId,
+               l.Vendedor,
+               previous_owner.name AS PreviousOwnerName
+          FROM jmoficial.leads l
+          LEFT JOIN jmoficial.users previous_owner
+            ON previous_owner.id = l.owner_user_id
+         WHERE l.Id IN @LeadIds
+         FOR UPDATE;";
+
+            const string updateLeadSql = @"
+        UPDATE jmoficial.leads
+           SET owner_user_id = @ToUserId,
+               Vendedor = @ToUserIdText,
+               assigned_by_user_id = @ChangedByUserId,
+               assigned_at = NOW()
+         WHERE Id = @LeadId;";
+
+            const string insertHistorySql = @"
+        INSERT INTO jmoficial.lead_transfer_history
+            (lead_id,
+             previous_seller_id,
+             new_seller_id,
+             previous_seller_name,
+             new_seller_name,
+             previous_coordinator_id,
+             new_coordinator_id,
+             previous_coordinator_name,
+             new_coordinator_name,
+             previous_manager_id,
+             new_manager_id,
+             previous_manager_name,
+             new_manager_name,
+             changed_by_user_id,
+             change_reason,
+             created_at)
+        VALUES
+            (@LeadId,
+             @PreviousSellerId,
+             @NewSellerId,
+             @PreviousSellerName,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             NULL,
+             @ChangedByUserId,
+             @ChangeReason,
+             NOW());";
+
+            await using var conn = await _context.OpenConnectionAsync();
+            await using var transaction = await conn.BeginTransactionAsync();
+
+            try
+            {
+                var destinationExists = await conn.ExecuteScalarAsync<int>(
+                    destinationUserSql,
+                    new { request.ToUserId },
+                    transaction);
+
+                if (destinationExists == 0)
+                {
+                    throw new ArgumentException("Agente destino não encontrado.");
+                }
+
+                var leads = (await conn.QueryAsync<dynamic>(
+                    selectLeadsSql,
+                    new { request.LeadIds },
+                    transaction)).ToList();
+
+                var foundLeadIds = leads
+                    .Select(l => (int)l.Id)
+                    .ToHashSet();
+
+                foreach (var requestedLeadId in request.LeadIds)
+                {
+                    if (!foundLeadIds.Contains(requestedLeadId))
+                    {
+                        response.SkippedLeadIds.Add(requestedLeadId);
+                    }
+                }
+
+                foreach (var lead in leads)
+                {
+                    int leadId = (int)lead.Id;
+                    long? previousOwnerUserId = lead.OwnerUserId == null ? null : (long?)lead.OwnerUserId;
+                    string? vendedor = lead.Vendedor == null ? null : (string)lead.Vendedor;
+                    string? previousOwnerName = lead.PreviousOwnerName == null ? null : (string)lead.PreviousOwnerName;
+
+                    long? previousSellerId = previousOwnerUserId;
+
+                    if (!previousSellerId.HasValue && long.TryParse(vendedor, out var vendedorId) && vendedorId > 0)
+                    {
+                        previousSellerId = vendedorId;
+                    }
+
+                    var previousSellerName = previousOwnerName;
+
+                    if (string.IsNullOrWhiteSpace(previousSellerName) && !long.TryParse(vendedor ?? string.Empty, out _))
+                    {
+                        previousSellerName = vendedor;
+                    }
+
+                    if (previousSellerId.HasValue && previousSellerId.Value == request.ToUserId)
+                    {
+                        response.SkippedLeadIds.Add(leadId);
+                        continue;
+                    }
+
+                    await conn.ExecuteAsync(
+                        updateLeadSql,
+                        new
+                        {
+                            LeadId = leadId,
+                            request.ToUserId,
+                            ToUserIdText = request.ToUserId.ToString(),
+                            ChangedByUserId = changedByUserId
+                        },
+                        transaction);
+
+                    await conn.ExecuteAsync(
+                        insertHistorySql,
+                        new
+                        {
+                            LeadId = leadId,
+                            PreviousSellerId = previousSellerId,
+                            NewSellerId = request.ToUserId,
+                            PreviousSellerName = previousSellerName,
+                            ChangedByUserId = changedByUserId,
+                            ChangeReason = request.Reason
+                        },
+                        transaction);
+
+                    response.TransferredLeadIds.Add(leadId);
+                }
+
+                response.TransferredCount = response.TransferredLeadIds.Count;
+                response.SkippedCount = response.SkippedLeadIds.Count;
+
+                await transaction.CommitAsync();
+                return response;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
         public async Task CreateLead(Lead lead)
         {
             var sql = @"INSERT INTO leads (Nome, Email, Telefone, Status, EtapaAtendimento,
@@ -315,7 +484,7 @@ namespace JMImoveisAPI.Repositories
 
         public async Task<bool> UpdateScheduleAsync(int id, VisitaPatchRequest patch)
         {
-           
+
             if (patch == null) return false;
 
             var sets = new List<string>();

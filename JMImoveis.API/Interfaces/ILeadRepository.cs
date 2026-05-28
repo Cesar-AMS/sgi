@@ -23,5 +23,8 @@ namespace JMImoveisAPI.Interfaces
         Task<int> CreateSchedule(CreateLeadScheduleRequest req);
 
         Task UpdateStatus(int leadId, int scheduleId, string status);
+        Task<BulkTransferLeadsResponse> BulkTransferLeadsAsync(
+        BulkTransferLeadsRequest request,
+        long changedByUserId);
     }
 }

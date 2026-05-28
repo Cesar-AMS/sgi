@@ -53,9 +53,16 @@ export class LeadsComponent {
   filtersCollapsed = true;
 
   canEditLeads = false;
+  canTransferLeads = false;
 
   showCreateModal = false;
   createForm!: FormGroup;
+  isTransferMode = false;
+  selectedLeadIds = new Set<number>();
+  showTransferModal = false;
+  isTransferringLeads = false;
+  transferErrorMessage = '';
+  transferForm!: FormGroup;
   showReturnScheduleModal = false;
   returnScheduleForm!: FormGroup;
   isSavingReturnSchedule = false;
@@ -148,6 +155,7 @@ export class LeadsComponent {
 
     if (!currentUserId) {
       this.canEditLeads = false;
+      this.canTransferLeads = false;
       return;
     }
 
@@ -157,9 +165,13 @@ export class LeadsComponent {
         this.canEditLeads =
           permissions.includes('atendimento.leads.editar') ||
           permissions.includes('sistema.admin.total');
+        this.canTransferLeads =
+          permissions.includes('atendimento.leads.transferir') ||
+          permissions.includes('sistema.admin.total');
       },
       error: () => {
         this.canEditLeads = false;
+        this.canTransferLeads = false;
       },
     });
   }
@@ -169,7 +181,7 @@ export class LeadsComponent {
       return response
         .map((item: any) => {
           if (typeof item === 'string') return item;
-          return item?.key || item?.permissionKey || item?.name || item?.code || '';
+          return item?.key || item?.permissionKey || item?.permission_key || item?.name || item?.code || '';
         })
         .filter(Boolean);
     }
@@ -180,7 +192,7 @@ export class LeadsComponent {
       return data.permissions
         .map((item: any) => {
           if (typeof item === 'string') return item;
-          return item?.key || item?.permissionKey || item?.name || item?.code || '';
+          return item?.key || item?.permissionKey || item?.permission_key || item?.name || item?.code || '';
         })
         .filter(Boolean);
     }
@@ -189,7 +201,7 @@ export class LeadsComponent {
       return data.items
         .map((item: any) => {
           if (typeof item === 'string') return item;
-          return item?.key || item?.permissionKey || item?.name || item?.code || '';
+          return item?.key || item?.permissionKey || item?.permission_key || item?.name || item?.code || '';
         })
         .filter(Boolean);
     }
@@ -237,6 +249,11 @@ export class LeadsComponent {
       time: ['09:00', Validators.required],
       note: [''],
     });
+
+    this.transferForm = this.fb.group({
+      toUserId: ['', Validators.required],
+      reason: ['Transferencia manual de leads selecionados.'],
+    });
   }
 
   loadLeads(): void {
@@ -248,6 +265,7 @@ export class LeadsComponent {
         this.leads = data || [];
         this.totalItems = this.leads.length;
         this.page = 1;
+        this.syncSelectedLeadIdsWithCurrentLeads();
         this.updatePagedLeads();
         this.isLoading = false;
       },
@@ -263,8 +281,143 @@ export class LeadsComponent {
     });
   }
 
+  toggleTransferMode(): void {
+    if (!this.canTransferLeads) {
+      this.toast.warning('Voce nao tem permissao para transferir leads.');
+      return;
+    }
+
+    if (this.isTransferMode) {
+      this.cancelTransferMode();
+      return;
+    }
+
+    this.viewMode = 'list';
+    this.isTransferMode = true;
+    this.transferErrorMessage = '';
+  }
+
+  isLeadSelected(leadId: number): boolean {
+    return this.selectedLeadIds.has(leadId);
+  }
+
+  toggleLeadSelection(leadId: number, event: Event): void {
+    event.stopPropagation();
+
+    if (!this.canTransferLeads || !this.isTransferMode) {
+      return;
+    }
+
+    if (this.selectedLeadIds.has(leadId)) {
+      this.selectedLeadIds.delete(leadId);
+      return;
+    }
+
+    this.selectedLeadIds.add(leadId);
+  }
+
+  areAllPagedLeadsSelected(): boolean {
+    return this.pagedLeads.length > 0 && this.pagedLeads.every((lead) => this.selectedLeadIds.has(lead.id));
+  }
+
+  toggleSelectAllPagedLeads(event: Event): void {
+    event.stopPropagation();
+
+    if (!this.canTransferLeads || !this.isTransferMode) {
+      return;
+    }
+
+    if (this.areAllPagedLeadsSelected()) {
+      this.pagedLeads.forEach((lead) => this.selectedLeadIds.delete(lead.id));
+      return;
+    }
+
+    this.pagedLeads.forEach((lead) => this.selectedLeadIds.add(lead.id));
+  }
+
+  openTransferModal(): void {
+    if (!this.canTransferLeads) {
+      this.toast.warning('Voce nao tem permissao para transferir leads.');
+      return;
+    }
+
+    if (this.selectedLeadIds.size === 0) {
+      this.toast.warning('Selecione ao menos um lead para transferir.');
+      return;
+    }
+
+    this.transferErrorMessage = '';
+    this.transferForm.reset({
+      toUserId: '',
+      reason: 'Transferencia manual de leads selecionados.',
+    });
+    this.showTransferModal = true;
+  }
+
+  closeTransferModal(): void {
+    if (this.isTransferringLeads) {
+      return;
+    }
+
+    this.showTransferModal = false;
+    this.transferErrorMessage = '';
+  }
+
+  submitTransferLeads(): void {
+    if (!this.canTransferLeads) {
+      this.transferErrorMessage = 'Voce nao tem permissao para transferir leads.';
+      return;
+    }
+
+    if (this.selectedLeadIds.size === 0) {
+      this.transferErrorMessage = 'Selecione ao menos um lead para transferir.';
+      return;
+    }
+
+    if (this.transferForm.invalid) {
+      this.transferForm.markAllAsTouched();
+      this.transferErrorMessage = 'Selecione o agente destino.';
+      return;
+    }
+
+    const toUserId = Number(this.transferForm.get('toUserId')?.value);
+    if (!Number.isFinite(toUserId) || toUserId <= 0) {
+      this.transferErrorMessage = 'Selecione um agente destino valido.';
+      return;
+    }
+
+    const reason = String(this.transferForm.get('reason')?.value ?? '').trim();
+
+    this.isTransferringLeads = true;
+    this.transferErrorMessage = '';
+
+    this.leadService.bulkTransferLeads({
+      leadIds: Array.from(this.selectedLeadIds),
+      toUserId,
+      reason: reason || null,
+    }).subscribe({
+      next: (result) => {
+        const transferredCount = result.transferredCount || 0;
+        this.isTransferringLeads = false;
+        this.showTransferModal = false;
+        this.cancelTransferMode();
+        this.toast.success(
+          `${transferredCount} lead${transferredCount === 1 ? '' : 's'} transferido${transferredCount === 1 ? '' : 's'} com sucesso.`
+        );
+        this.loadLeads();
+      },
+      error: () => {
+        this.isTransferringLeads = false;
+        this.transferErrorMessage = 'Nao foi possivel transferir os leads selecionados.';
+      },
+    });
+  }
+
   setViewMode(mode: 'list' | 'kanban'): void {
     this.viewMode = mode;
+    if (mode === 'kanban' && this.isTransferMode) {
+      this.cancelTransferMode();
+    }
   }
 
   toggleFilters(): void {
@@ -487,6 +640,26 @@ export class LeadsComponent {
     const startIndex = (this.page - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
     this.pagedLeads = this.leads.slice(startIndex, endIndex);
+  }
+
+  private cancelTransferMode(): void {
+    this.isTransferMode = false;
+    this.selectedLeadIds.clear();
+    this.showTransferModal = false;
+    this.transferErrorMessage = '';
+  }
+
+  private syncSelectedLeadIdsWithCurrentLeads(): void {
+    if (this.selectedLeadIds.size === 0) {
+      return;
+    }
+
+    const currentLeadIds = new Set(this.leads.map((lead) => lead.id));
+    Array.from(this.selectedLeadIds).forEach((leadId) => {
+      if (!currentLeadIds.has(leadId)) {
+        this.selectedLeadIds.delete(leadId);
+      }
+    });
   }
 
   selectNameSale(idvendedor: any): string {

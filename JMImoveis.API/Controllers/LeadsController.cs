@@ -15,6 +15,7 @@ namespace JMImoveisAPI.Controllers
         private readonly ILeadService _leadService;
         private readonly IPermissionService _permissionService;
         private readonly ILeadTransferHistoryService _leadTransferHistoryService;
+        private const string TransferLeadPermission = "atendimento.leads.transferir";
 
         public LeadsController(
             ILeadService leadService,
@@ -31,6 +32,32 @@ namespace JMImoveisAPI.Controllers
             => Ok(await _leadService.GetSchedulesByLeadIdAsync(leadId, typeSchedule));
 
         [HttpPost("{leadId}/schedules")]
+
+        [HttpPost("bulk-transfer")]
+        public async Task<IActionResult> BulkTransferLeads([FromBody] BulkTransferLeadsRequest request)
+        {
+            var authorizationResult = await AuthorizeCurrentUserForLeadTransferAsync();
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            try
+            {
+                var result = await _leadService.BulkTransferLeadsAsync(request, currentUserId.Value);
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         public async Task<IActionResult> CreateLeadsActivitiesById(CreateLeadScheduleRequest lead)
         {
             var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
@@ -317,6 +344,32 @@ namespace JMImoveisAPI.Controllers
                 if (!canViewTransferHistory)
                 {
                     return StatusCode(403, new { message = "Usuario sem permissao para visualizar historico de transferencia." });
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao encontrado." });
+            }
+
+            return null;
+        }
+        private async Task<IActionResult?> AuthorizeCurrentUserForLeadTransferAsync()
+        {
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            try
+            {
+                var hasPermission = await _permissionService.UserHasPermissionAsync(
+                    currentUserId.Value,
+                    TransferLeadPermission);
+
+                if (!hasPermission)
+                {
+                    return StatusCode(403, new { message = "Usuario sem permissao para transferir leads." });
                 }
             }
             catch (KeyNotFoundException)

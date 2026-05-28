@@ -20,6 +20,26 @@
       </button>
 
       <button
+        class="btn btn-outline-secondary"
+        type="button"
+        (click)="toggleTransferMode()"
+        *ngIf="canTransferLeads"
+      >
+        <i class="bi bi-arrow-left-right me-2" aria-hidden="true"></i>
+        {{ isTransferMode ? 'Cancelar transferência' : 'Transferir Leads' }}
+      </button>
+
+      <button
+        class="btn btn-orange"
+        type="button"
+        (click)="openTransferModal()"
+        [disabled]="selectedLeadIds.size === 0"
+        *ngIf="canTransferLeads && isTransferMode"
+      >
+        Transferir selecionados ({{ selectedLeadIds.size }})
+      </button>
+
+      <button
         class="btn btn-orange d-flex align-items-center"
         type="button"
         (click)="openCreateModal()"
@@ -226,6 +246,16 @@
         <table class="table align-middle">
           <thead>
             <tr>
+              <th class="lead-selection-cell" *ngIf="isTransferMode">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [checked]="areAllPagedLeadsSelected()"
+                  (click)="$event.stopPropagation()"
+                  (change)="toggleSelectAllPagedLeads($event)"
+                  aria-label="Selecionar todos os leads desta pagina"
+                />
+              </th>
               <th>Nome</th>
               <th>Status</th>
               <th>Agente</th>
@@ -249,6 +279,16 @@
               role="button"
               [attr.aria-label]="'Abrir painel do cliente ' + lead.nome"
             >
+              <td class="lead-selection-cell" *ngIf="isTransferMode">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [checked]="isLeadSelected(lead.id)"
+                  (click)="$event.stopPropagation()"
+                  (change)="toggleLeadSelection(lead.id, $event)"
+                  [attr.aria-label]="'Selecionar lead ' + lead.nome"
+                />
+              </td>
               <td>{{ lead.nome }}</td>
               <td>
                 <span class="badge bg-status">{{ lead.status }}</span>
@@ -409,6 +449,93 @@
       <p class="mb-0 fs-5">Nenhum lead encontrado.</p>
     </div>
   </ng-template>
+</div>
+
+<!-- Modal de Transferencia de Leads -->
+<div class="modal-backdrop-custom" *ngIf="showTransferModal">
+  <div
+    class="modal-panel transfer-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="transferLeadsModalTitle"
+  >
+    <div class="modal-header border-0 px-4 pt-4 pb-2">
+      <div>
+        <h5 id="transferLeadsModalTitle" class="modal-title fw-semibold">
+          Transferir Leads
+        </h5>
+        <p class="transfer-modal-subtitle mb-0">
+          {{ selectedLeadIds.size }} lead{{ selectedLeadIds.size === 1 ? '' : 's' }} selecionado{{ selectedLeadIds.size === 1 ? '' : 's' }}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Fechar modal de transferencia"
+        (click)="closeTransferModal()"
+        [disabled]="isTransferringLeads"
+      ></button>
+    </div>
+
+    <div class="modal-body px-4 pb-4">
+      <form [formGroup]="transferForm" (ngSubmit)="submitTransferLeads()">
+        <div class="transfer-note">
+          Escolha o agente destino. A transferencia sera registrada no historico de cada lead.
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="transferToUserId">Agente destino</label>
+          <select
+            id="transferToUserId"
+            class="form-select"
+            formControlName="toUserId"
+          >
+            <option value="">Selecione...</option>
+            <option *ngFor="let corretor of corretores" [value]="corretor.id">
+              {{ corretor.name }}
+            </option>
+          </select>
+          <div
+            class="invalid-feedback d-block"
+            *ngIf="transferForm.get('toUserId')?.touched && transferForm.get('toUserId')?.invalid"
+          >
+            Selecione o agente destino.
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="transferReason">Motivo</label>
+          <textarea
+            id="transferReason"
+            class="form-control"
+            rows="4"
+            formControlName="reason"
+            placeholder="Motivo da transferencia..."
+          ></textarea>
+        </div>
+
+        <div class="return-schedule-error" *ngIf="transferErrorMessage">
+          {{ transferErrorMessage }}
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="closeTransferModal()"
+            [disabled]="isTransferringLeads"
+          >
+            Cancelar
+          </button>
+
+          <button type="submit" class="btn btn-orange" [disabled]="isTransferringLeads">
+            {{ isTransferringLeads ? 'Transferindo...' : 'Confirmar transferencia' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <!-- Modal de Retorno do Kanban -->

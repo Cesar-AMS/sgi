@@ -69,6 +69,42 @@ namespace JMImoveisAPI.Services
             return _leadRepository.CreateLeadAndReturnId(lead);
         }
 
+        public async Task<BulkTransferLeadsResponse> BulkTransferLeadsAsync(
+            BulkTransferLeadsRequest request,
+            long changedByUserId)
+        {
+            if (request == null)
+            {
+                throw new ArgumentException("Solicitação inválida.");
+            }
+
+            request.LeadIds = request.LeadIds
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            if (!request.LeadIds.Any())
+            {
+                throw new ArgumentException("Selecione ao menos um lead para transferir.");
+            }
+
+            if (request.ToUserId <= 0)
+            {
+                throw new ArgumentException("Agente destino inválido.");
+            }
+
+            if (changedByUserId <= 0)
+            {
+                throw new ArgumentException("Usuário responsável pela transferência não identificado.");
+            }
+
+            request.Reason = string.IsNullOrWhiteSpace(request.Reason)
+                ? "Transferência manual de leads selecionados."
+                : request.Reason.Trim();
+
+            return await _leadRepository.BulkTransferLeadsAsync(request, changedByUserId);
+        }
+
         public async Task UpdateLeadAsync(Lead lead, long? changedByUserId = null)
         {
             var previousLead = await _leadRepository.GetLeadById(lead.Id);

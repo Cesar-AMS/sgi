@@ -18,6 +18,21 @@ import {
   LeadTransferHistory,
 } from 'src/app/models/lead';
 
+export interface BulkTransferLeadsPayload {
+  leadIds: number[];
+  toUserId: number;
+  reason?: string | null;
+}
+
+export interface BulkTransferLeadsResult {
+  requestedCount: number;
+  transferredCount: number;
+  skippedCount: number;
+  toUserId: number;
+  transferredLeadIds: number[];
+  skippedLeadIds: number[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class LeadsService {
   private readonly baseUrl = `${BACKEND_API_URL}api/Leads`;
@@ -61,6 +76,14 @@ export class LeadsService {
       {
         headers: this.getAuthHeaders(),
       }
+    );
+  }
+
+  bulkTransferLeads(payload: BulkTransferLeadsPayload): Observable<BulkTransferLeadsResult> {
+    return this.http.post<BulkTransferLeadsResult>(
+      `${this.baseUrl}/bulk-transfer`,
+      payload,
+      { headers: this.getAuthHeaders() }
     );
   }
 

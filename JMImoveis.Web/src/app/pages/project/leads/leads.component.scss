@@ -65,6 +65,15 @@
   vertical-align: middle;
 }
 
+.lead-selection-cell {
+  text-align: center;
+  width: 44px;
+}
+
+.lead-selection-cell .form-check-input {
+  cursor: pointer;
+}
+
 .bg-status {
   background-color: #e5f3ff;
   color: #0b71d9;
@@ -233,6 +242,26 @@
 
 .return-schedule-modal {
   width: 460px;
+}
+
+.transfer-modal {
+  width: 460px;
+}
+
+.transfer-modal-subtitle {
+  color: #606075;
+  font-size: 0.84rem;
+}
+
+.transfer-note {
+  background-color: #fbfbfd;
+  border: 1px solid #eeeeF5;
+  border-radius: 0.55rem;
+  color: #606075;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.75rem;
 }
 
 .return-schedule-lead {
