@@ -308,20 +308,34 @@
   padding: 0.32rem 0.55rem;
 }
 
-.status-cell {
+.status-cell,
+.visit-select-cell {
   min-width: 150px;
+  width: 150px;
   vertical-align: middle;
 }
 
-.status-cell .form-select {
+.status-cell .form-select,
+.visit-select-cell .form-select {
   display: inline-block;
-  max-width: 150px;
-  min-height: 31px;
   width: 150px;
+  min-width: 150px;
+  max-width: 150px;
+  min-height: 34px;
+  font-size: 0.8125rem;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
 }
 
-.status-cell .status-pill {
+.status-cell .status-pill,
+.status-cell .status-readonly {
+  align-items: center;
+  display: inline-flex;
+  min-height: 34px;
+  min-width: 130px;
+  justify-content: center;
   margin-bottom: 0;
+  padding: 0.35rem 0.7rem;
 }
 
 .status-readonly {
