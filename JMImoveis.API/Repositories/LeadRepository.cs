@@ -42,12 +42,16 @@ namespace JMImoveisAPI.Repositories
         {
             var sql = @"INSERT INTO leads (Nome, Email, Telefone, Status, EtapaAtendimento,
                                            Valor, Fonte, ImoveisInteresse,
-                                           Vendedor, Coordenador, Gerente, Observacao)
+                                           Vendedor, Coordenador, Gerente,
+                                           owner_user_id, coordinator_user_id, manager_user_id,
+                                           assigned_at, assigned_by_user_id, Observacao)
                                         VALUES
                                         (
                                             @Nome, @Email, @Telefone, @Status, @EtapaAtendimento,
                                             @Valor, @Fonte, @ImoveisInteresse,
-                                            @Vendedor, @Coordenador, @Gerente, @Observacao);";
+                                            @Vendedor, @Coordenador, @Gerente,
+                                            @OwnerUserId, @CoordinatorUserId, @ManagerUserId,
+                                            @AssignedAt, @AssignedByUserId, @Observacao);";
 
             await using var conn = await _context.OpenConnectionAsync();
             await conn.ExecuteAsync(sql, lead);
@@ -434,6 +438,11 @@ namespace JMImoveisAPI.Repositories
                                                  Vendedor,
                                                  Coordenador,
                                                  Gerente,
+                                                 owner_user_id AS OwnerUserId,
+                                                 coordinator_user_id AS CoordinatorUserId,
+                                                 manager_user_id AS ManagerUserId,
+                                                 assigned_at AS AssignedAt,
+                                                 assigned_by_user_id AS AssignedByUserId,
                                                  DataCriacao,
                                                  (
                                                     SELECT MAX(la.DateTime)
@@ -522,6 +531,11 @@ namespace JMImoveisAPI.Repositories
                                 Vendedor,
                                 Coordenador,
                                 Gerente,
+                                owner_user_id AS OwnerUserId,
+                                coordinator_user_id AS CoordinatorUserId,
+                                manager_user_id AS ManagerUserId,
+                                assigned_at AS AssignedAt,
+                                assigned_by_user_id AS AssignedByUserId,
                                 DataCriacao,
                                 (
                                     SELECT MAX(la.DateTime)
@@ -567,12 +581,16 @@ namespace JMImoveisAPI.Repositories
         {
             var sql = @"INSERT INTO leads (Nome, Email, Telefone, Status, EtapaAtendimento,
                                            Valor, Fonte, ImoveisInteresse,
-                                           Vendedor, Coordenador, Gerente, Observacao)
+                                           Vendedor, Coordenador, Gerente,
+                                           owner_user_id, coordinator_user_id, manager_user_id,
+                                           assigned_at, assigned_by_user_id, Observacao)
                                         VALUES
                                         (
                                             @Nome, @Email, @Telefone, @Status, @EtapaAtendimento,
                                             @Valor, @Fonte, @ImoveisInteresse,
-                                            @Vendedor, @Coordenador, @Gerente, @Observacao
+                                            @Vendedor, @Coordenador, @Gerente,
+                                            @OwnerUserId, @CoordinatorUserId, @ManagerUserId,
+                                            @AssignedAt, @AssignedByUserId, @Observacao
                                         );
 
                         SELECT LAST_INSERT_ID();";

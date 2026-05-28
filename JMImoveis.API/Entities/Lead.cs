@@ -16,6 +16,11 @@ namespace JMImoveisAPI.Entities
         public string? Vendedor { get; set; }
         public string? Coordenador { get; set; }
         public string? Gerente { get; set; }
+        public long? OwnerUserId { get; set; }
+        public long? CoordinatorUserId { get; set; }
+        public long? ManagerUserId { get; set; }
+        public DateTime? AssignedAt { get; set; }
+        public long? AssignedByUserId { get; set; }
         public DateTime DataCriacao { get; set; } = DateTime.Now;
         public DateTime? UltimoContato { get; set; }
         public string? Observacao { get; set; }
