@@ -291,11 +291,7 @@ export class AtendimentoRelatoriosComponent implements OnInit {
         value: resumo.visitasRealizadas || 0,
         description: 'Visitas com status Realizada',
       },
-      {
-        label: 'Comparecimentos',
-        value: resumo.comparecimentos || 0,
-        description: 'Visitas marcadas como compareceu',
-      },
+
       {
         label: 'Virou venda',
         value: resumo.virouVenda || 0,
