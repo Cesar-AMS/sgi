@@ -9,7 +9,9 @@ namespace JMImoveisAPI.Controllers
     [Route("api/Leads/{leadId:int}/documents")]
     public class LeadDocumentsController : ControllerBase
     {
+        private const string ViewLeadPermission = "atendimento.leads.visualizar";
         private const string EditLeadPermission = "atendimento.leads.editar";
+        private const string AdminPermission = "sistema.admin.total";
 
         private readonly ILeadDocumentService _service;
         private readonly IPermissionService _permissionService;
@@ -25,9 +27,10 @@ namespace JMImoveisAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetByLeadId([FromRoute] int leadId)
         {
-            if (!GetCurrentUserId().HasValue)
+            var authorizationResult = await AuthorizeCurrentUserForLeadViewAsync();
+            if (authorizationResult != null)
             {
-                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+                return authorizationResult;
             }
 
             try
@@ -86,11 +89,6 @@ namespace JMImoveisAPI.Controllers
                 return authorizationResult;
             }
 
-            if (!GetCurrentUserId().HasValue)
-            {
-                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
-            }
-
             try
             {
                 return Ok(await _service.UpdateAsync(leadId, documentId, request));
@@ -108,9 +106,10 @@ namespace JMImoveisAPI.Controllers
         [HttpGet("{documentId:long}/download")]
         public async Task<IActionResult> Download([FromRoute] int leadId, [FromRoute] long documentId)
         {
-            if (!GetCurrentUserId().HasValue)
+            var authorizationResult = await AuthorizeCurrentUserForLeadViewAsync();
+            if (authorizationResult != null)
             {
-                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+                return authorizationResult;
             }
 
             try
@@ -161,6 +160,42 @@ namespace JMImoveisAPI.Controllers
             }
         }
 
+        private async Task<IActionResult?> AuthorizeCurrentUserForLeadViewAsync()
+        {
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            var isAdmin = await _permissionService.UserHasPermissionAsync(
+                currentUserId.Value,
+                AdminPermission
+            );
+
+            if (isAdmin)
+            {
+                return null;
+            }
+
+            var canView = await _permissionService.UserHasPermissionAsync(
+                currentUserId.Value,
+                ViewLeadPermission
+            );
+
+            if (canView)
+            {
+                return null;
+            }
+
+            var canEdit = await _permissionService.UserHasPermissionAsync(
+                currentUserId.Value,
+                EditLeadPermission
+            );
+
+            return canEdit ? null : Forbid();
+        }
+
         private async Task<IActionResult?> AuthorizeCurrentUserForLeadEditAsync()
         {
             var currentUserId = GetCurrentUserId();
@@ -169,12 +204,22 @@ namespace JMImoveisAPI.Controllers
                 return Unauthorized(new { message = "Usuario autenticado nao identificado." });
             }
 
-            var hasPermission = await _permissionService.UserHasPermissionAsync(
+            var isAdmin = await _permissionService.UserHasPermissionAsync(
+                currentUserId.Value,
+                AdminPermission
+            );
+
+            if (isAdmin)
+            {
+                return null;
+            }
+
+            var canEdit = await _permissionService.UserHasPermissionAsync(
                 currentUserId.Value,
                 EditLeadPermission
             );
 
-            return hasPermission ? null : Forbid();
+            return canEdit ? null : Forbid();
         }
 
         private long? GetCurrentUserId()
