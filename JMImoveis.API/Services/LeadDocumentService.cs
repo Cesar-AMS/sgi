@@ -97,8 +97,12 @@ namespace JMImoveisAPI.Services
                 return null;
             }
 
-            var relativePath = document.FilePath.Replace('/', Path.DirectorySeparatorChar);
-            var absolutePath = Path.Combine(_environment.ContentRootPath, relativePath);
+            var absolutePath = ResolveLeadDocumentPath(leadId, document.FilePath);
+            if (absolutePath is null)
+            {
+                return null;
+            }
+
             if (!File.Exists(absolutePath))
             {
                 return null;
@@ -106,8 +110,8 @@ namespace JMImoveisAPI.Services
 
             return (
                 await File.ReadAllBytesAsync(absolutePath),
-                document.ContentType,
-                document.OriginalFileName
+                string.IsNullOrWhiteSpace(document.ContentType) ? "application/octet-stream" : document.ContentType,
+                string.IsNullOrWhiteSpace(document.OriginalFileName) ? Path.GetFileName(absolutePath) : Path.GetFileName(document.OriginalFileName)
             );
         }
 
@@ -194,5 +198,28 @@ namespace JMImoveisAPI.Services
 
         private static string? NormalizeOptionalText(string? value)
             => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        private string? ResolveLeadDocumentPath(int leadId, string storedFilePath)
+        {
+            var leadUploadDirectory = Path.GetFullPath(
+                Path.Combine(_environment.ContentRootPath, "uploads", "leads", leadId.ToString())
+            );
+
+            var normalizedStoredPath = storedFilePath
+                .Replace('/', Path.DirectorySeparatorChar)
+                .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+            var absolutePath = Path.GetFullPath(Path.Combine(_environment.ContentRootPath, normalizedStoredPath));
+            var allowedPrefix = leadUploadDirectory.EndsWith(Path.DirectorySeparatorChar)
+                ? leadUploadDirectory
+                : leadUploadDirectory + Path.DirectorySeparatorChar;
+
+            if (!absolutePath.StartsWith(allowedPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return absolutePath;
+        }
     }
 }

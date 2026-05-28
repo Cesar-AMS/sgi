@@ -428,13 +428,21 @@ export class LeadDetailsComponent implements OnInit {
   openLeadDocument(document: LeadDocument): void {
     if (!this.lead) return;
 
+    this.documentErrorMessage = '';
+    const documentWindow = window.open('', '_blank');
+    if (!documentWindow) {
+      this.documentErrorMessage = 'Não foi possível abrir o documento. Verifique o bloqueador de pop-ups do navegador.';
+      return;
+    }
+
     this.leadService.downloadLeadDocument(this.lead.id, document.id).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
+        documentWindow.location.href = url;
         setTimeout(() => URL.revokeObjectURL(url), 60000);
       },
       error: () => {
+        documentWindow.close();
         this.documentErrorMessage = 'Não foi possível abrir o documento.';
       },
     });
