@@ -626,7 +626,13 @@ namespace JMImoveisAPI.Repositories
                                                  ) AS UltimoContato,
                                                  Observacao
                                             FROM leads
-                                            WHERE 1 = 1");
+                                            WHERE 1 = 1
+                                              AND NOT EXISTS (
+                                                    SELECT 1
+                                                      FROM jmoficial.lead_post_visit pv
+                                                     WHERE pv.lead_id = leads.Id
+                                                       AND pv.deleted_at IS NULL
+                                              )");
 
             var parameters = new DynamicParameters();
 
