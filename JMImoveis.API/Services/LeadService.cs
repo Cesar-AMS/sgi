@@ -261,7 +261,7 @@ namespace JMImoveisAPI.Services
             return (true, null, scheduleId, effectiveLeadId);
         }
 
-        public Task<IEnumerable<VisitaDto>> ListScheduleAsync(
+        public async Task<IEnumerable<VisitaDto>> ListScheduleAsync(
             string? q,
             int? vendedorId,
             string? status,
@@ -277,7 +277,15 @@ namespace JMImoveisAPI.Services
             DateTime? finish = TryParseIsoDate(finishAt);
             var normalizedTipoAgenda = NormalizeOptionalTipoAgenda(tipoAgenda);
 
-            return _leadRepository.ListScheduleAsync(
+            if (
+                string.IsNullOrWhiteSpace(normalizedTipoAgenda) ||
+                string.Equals(normalizedTipoAgenda, "contato", StringComparison.OrdinalIgnoreCase)
+            )
+            {
+                await _leadRepository.AutoCancelExpiredContactSchedulesAsync();
+            }
+
+            return await _leadRepository.ListScheduleAsync(
                 q, vendedorId, status, compareceu, virouVenda, start, finish, normalizedTipoAgenda, currentUserId, canViewAll
             );
         }

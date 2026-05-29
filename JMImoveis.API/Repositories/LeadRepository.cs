@@ -361,6 +361,26 @@ namespace JMImoveisAPI.Repositories
             return await conn.ExecuteScalarAsync<int>(sql, req);
         }
 
+
+        public async Task<int> AutoCancelExpiredContactSchedulesAsync()
+        {
+            const string sql = @"
+                UPDATE LeadSchedules
+                SET
+                    Status = 'Cancelado',
+                    auto_cancelled_at = NOW(),
+                    auto_cancelled_reason = 'Cancelado automaticamente após encerramento do dia',
+                    UpdatedAt = NOW()
+                WHERE LOWER(TRIM(COALESCE(TipoAgenda, 'contato'))) = 'contato'
+                  AND ScheduledAt < CURDATE()
+                  AND auto_cancelled_at IS NULL
+                  AND Status IN ('Agendada', 'Atrasado', 'Confirmada', 'Pendente');
+            ";
+
+            await using var conn = await _context.OpenConnectionAsync();
+            return await conn.ExecuteAsync(sql);
+        }
+
         public async Task<IEnumerable<VisitaDto>> ListScheduleAsync(string? q, int? vendedorId, string? status, bool? compareceu, bool? virouVenda, DateTime? startAt, DateTime? finishAt, string? tipoAgenda, long currentUserId, bool canViewAll)
         {
 

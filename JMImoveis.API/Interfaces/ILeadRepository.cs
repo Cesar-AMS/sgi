@@ -19,12 +19,13 @@ namespace JMImoveisAPI.Interfaces
         Task<bool> UpdateScheduleAsync(int id, VisitaPatchRequest patch);
         Task<VisitaDto?> GetScheduleByIdAsync(int id);
         Task<int> InsertAsync(LeadScheduleRequest request, int? leadId);
+        Task<int> AutoCancelExpiredContactSchedulesAsync();
         Task<IEnumerable<VisitaDto>> ListScheduleAsync(string? q, int? vendedorId, string? status, bool? compareceu, bool? virouVenda, DateTime? startAt, DateTime? finishAt, string? tipoAgenda, long currentUserId, bool canViewAll);
         Task<int> CreateSchedule(CreateLeadScheduleRequest req);
 
         Task UpdateStatus(int leadId, int scheduleId, string status);
         Task<BulkTransferLeadsResponse> BulkTransferLeadsAsync(
-        BulkTransferLeadsRequest request,
-        long changedByUserId);
+            BulkTransferLeadsRequest request,
+            long changedByUserId);
     }
 }
