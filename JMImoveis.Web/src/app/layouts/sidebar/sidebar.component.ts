@@ -121,7 +121,66 @@ export class SidebarComponent {
       return officialMenu;
     }
 
-    return this.markPermissionDisabledItems(officialMenu, permissionKeys);
+    return this.filterMenuByPermissions(officialMenu, permissionKeys);
+  }
+
+  private filterMenuByPermissions(items: MenuItem[], permissionKeys: Set<string>): MenuItem[] {
+    const filteredItems: MenuItem[] = [];
+    let pendingTitles: MenuItem[] = [];
+
+    for (const item of items) {
+      if (item.isTitle) {
+        pendingTitles.push({ ...item });
+        continue;
+      }
+
+      const filteredItem = this.filterMenuItemByPermissions(item, permissionKeys);
+
+      if (!filteredItem) {
+        continue;
+      }
+
+      if (pendingTitles.length) {
+        filteredItems.push(...pendingTitles);
+        pendingTitles = [];
+      }
+
+      filteredItems.push(filteredItem);
+    }
+
+    return filteredItems;
+  }
+
+  private filterMenuItemByPermissions(item: MenuItem, permissionKeys: Set<string>): MenuItem | null {
+    const subItems = item.subItems?.length
+      ? this.filterMenuByPermissions(item.subItems, permissionKeys)
+      : undefined;
+
+    const hasVisibleSubItems = !!subItems?.length;
+    const hasDirectPermission = this.hasAllowedPermission(item, permissionKeys);
+    const hasAllowedLink = !!item.link && hasDirectPermission;
+
+    if (!hasVisibleSubItems && !hasAllowedLink) {
+      return null;
+    }
+
+    return {
+      ...item,
+      subItems,
+      permissionDisabled: false,
+    };
+  }
+
+  private hasAllowedPermission(item: MenuItem, permissionKeys: Set<string>): boolean {
+    if (item.permissionKey) {
+      return permissionKeys.has(item.permissionKey);
+    }
+
+    if (item.permissionKeys?.length) {
+      return item.permissionKeys.some((permissionKey) => permissionKeys.has(permissionKey));
+    }
+
+    return false;
   }
 
   private markPermissionDisabledItems(items: MenuItem[], permissionKeys: Set<string>): MenuItem[] {
