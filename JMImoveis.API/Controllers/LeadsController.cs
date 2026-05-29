@@ -160,13 +160,16 @@ namespace JMImoveisAPI.Controllers
             => Ok(await _leadService.GetActivitiesByLeadIdAsync(leadId));
 
         [HttpPost("{leadId}/activities")]
-        public async Task<IActionResult> CreateLeadsActivitiesById(CreateLeadActivityRequest lead)
+        public async Task<IActionResult> CreateLeadsActivitiesById(int leadId, CreateLeadActivityRequest lead)
         {
             var authorizationResult = await AuthorizeCurrentUserForLeadEditAsync();
             if (authorizationResult != null)
             {
                 return authorizationResult;
             }
+
+            lead.LeadId = leadId;
+            lead.Author = GetCurrentUserDisplayName();
 
             return Ok(await _leadService.CreateActivityAsync(lead));
         }
@@ -324,7 +327,10 @@ namespace JMImoveisAPI.Controllers
         }
 
         private string? GetCurrentUserDisplayName()
-            => User.FindFirst(ClaimTypes.Email)?.Value
+            => User.FindFirst(ClaimTypes.Name)?.Value
+                ?? User.FindFirst("name")?.Value
+                ?? User.FindFirst("preferred_username")?.Value
+                ?? User.FindFirst(ClaimTypes.Email)?.Value
                 ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         private async Task<IActionResult?> AuthorizeCurrentUserForLeadEditAsync()
