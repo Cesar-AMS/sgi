@@ -348,6 +348,8 @@ namespace JMImoveisAPI.Services
                     return;
                 }
 
+                await TryMoveLeadToVisitCompletedAsync(schedule);
+
                 await _leadPostVisitService.EnsurePostVisitForCompletedVisitAsync(
                     schedule!.LeadId!.Value,
                     schedule.VendedorId > 0 ? (long)schedule.VendedorId : null,
@@ -357,6 +359,58 @@ namespace JMImoveisAPI.Services
             {
                 _logger.LogWarning(ex, "Visita {ScheduleId} atualizada, mas nao foi possivel iniciar o pos-visita automaticamente.", scheduleId);
             }
+        }
+
+        private async Task TryMoveLeadToVisitCompletedAsync(VisitaDto? schedule)
+        {
+            if (!ShouldMoveLeadToVisitCompleted(schedule))
+            {
+                return;
+            }
+
+            var leadId = schedule!.LeadId!.Value;
+            var lead = await _leadRepository.GetLeadById(leadId);
+            if (lead == null || IsLeadEtapaAtendimento(lead.EtapaAtendimento, "Visita concluida"))
+            {
+                return;
+            }
+
+            var targetEtapa = GetCanonicalLeadEtapaAtendimento("Visita concluida");
+            var previousEtapa = string.IsNullOrWhiteSpace(lead.EtapaAtendimento)
+                ? "Sem etapa"
+                : lead.EtapaAtendimento.Trim();
+
+            var activity = new CreateLeadActivityRequest
+            {
+                LeadId = leadId,
+                DateTime = DateTime.Now,
+                Description = $"Etapa de atendimento alterada automaticamente de \"{previousEtapa}\" para \"{targetEtapa}\" apos visita realizada.",
+                Author = "Sistema",
+                Type = "EtapaAtendimento"
+            };
+
+            await _leadRepository.UpdateLeadEtapaAtendimento(leadId, targetEtapa, activity);
+        }
+
+        private static bool ShouldMoveLeadToVisitCompleted(VisitaDto? schedule)
+        {
+            if (schedule?.LeadId is not > 0)
+            {
+                return false;
+            }
+
+            var tipoAgenda = NormalizeOptionalTipoAgenda(schedule.TipoAgenda);
+            if (!string.Equals(tipoAgenda, "visita", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (IsCanceledVisitStatus(schedule.Status))
+            {
+                return false;
+            }
+
+            return IsCompletedVisitStatus(schedule.Status);
         }
 
         private static bool ShouldCreatePostVisit(VisitaDto? schedule)
@@ -406,6 +460,20 @@ namespace JMImoveisAPI.Services
 
         private static bool IsNewLeadStatus(string? status)
             => string.Equals(RemoveDiacritics(status).Trim(), "Novo", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsLeadEtapaAtendimento(string? currentEtapa, string expectedEtapa)
+            => string.Equals(
+                RemoveDiacritics(currentEtapa).Trim(),
+                RemoveDiacritics(expectedEtapa).Trim(),
+                StringComparison.OrdinalIgnoreCase);
+
+        private static string GetCanonicalLeadEtapaAtendimento(string etapaAtendimento)
+            => ValidLeadEtapasAtendimento.FirstOrDefault(etapa =>
+                string.Equals(
+                    RemoveDiacritics(etapa).Trim(),
+                    RemoveDiacritics(etapaAtendimento).Trim(),
+                    StringComparison.OrdinalIgnoreCase))
+               ?? etapaAtendimento;
 
         private static bool ShouldMoveToEmAtendimento(Lead? lead)
         {
