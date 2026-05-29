@@ -46,6 +46,7 @@ export class PerfisAcessosComponent implements OnInit {
 
   searchTerm = '';
   roleSearchTerm = '';
+  credentialsSearchTerm = '';
 
   loadingInitialData = false;
   loadingRolePermissions = false;
@@ -334,6 +335,30 @@ export class PerfisAcessosComponent implements OnInit {
 
   clearRoleSearch(): void {
     this.roleSearchTerm = '';
+  }
+
+  get filteredCredentialUsers(): EmployeeControlRow[] {
+    const term = this.normalizeSearch(this.credentialsSearchTerm);
+
+    if (!term) {
+      return [...this.collaborators];
+    }
+
+    return this.collaborators.filter((collaborator) => {
+      const haystack = [
+        collaborator.name,
+        collaborator.email,
+        collaborator.cargo,
+        collaborator.employmentTypeLabel,
+        collaborator.status,
+      ].map((value) => this.normalizeSearch(value)).join(' ');
+
+      return haystack.includes(term);
+    });
+  }
+
+  clearCredentialsSearch(): void {
+    this.credentialsSearchTerm = '';
   }
 
   get effectivePermissionCount(): number {

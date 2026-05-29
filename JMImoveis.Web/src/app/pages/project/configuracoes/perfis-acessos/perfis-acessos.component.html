@@ -65,7 +65,36 @@
         Nenhum colaborador encontrado para exibicao de credenciais.
       </div>
 
-      <div *ngIf="collaborators.length" class="table-responsive">
+      <div *ngIf="collaborators.length" class="credentials-search-row mb-3">
+        <label class="form-label mb-0" for="credentialsSearch">Buscar usuario</label>
+
+        <div class="search-box credentials-search-box">
+          <input
+            id="credentialsSearch"
+            type="text"
+            class="form-control search"
+            name="credentialsSearch"
+            [(ngModel)]="credentialsSearchTerm"
+            placeholder="Digite nome, e-mail ou login"
+            aria-label="Buscar usuario por nome, e-mail ou login">
+          <i class="ri-search-line search-icon"></i>
+
+          <button
+            *ngIf="credentialsSearchTerm"
+            type="button"
+            class="btn btn-outline-secondary btn-sm credentials-search-clear"
+            (click)="clearCredentialsSearch()"
+            aria-label="Limpar busca de credenciais">
+            Limpar
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="collaborators.length && !filteredCredentialUsers.length" class="empty-state">
+        Nenhum usuario encontrado para a busca informada.
+      </div>
+
+      <div *ngIf="filteredCredentialUsers.length" class="table-responsive">
         <table class="table align-middle mb-0 credentials-table">
           <thead class="table-light">
             <tr>
@@ -79,7 +108,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let collaborator of collaborators; trackBy: trackCollaborator">
+            <tr *ngFor="let collaborator of filteredCredentialUsers; trackBy: trackCollaborator">
               <td class="fw-semibold">{{ collaborator.name }}</td>
               <td>{{ collaborator.email }}</td>
               <td>{{ collaborator.cargo }}</td>
