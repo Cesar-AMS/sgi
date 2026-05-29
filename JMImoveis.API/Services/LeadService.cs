@@ -293,22 +293,37 @@ namespace JMImoveisAPI.Services
         public Task UpdateScheduleStatusAsync(int leadId, int scheduleId, UpdateLeadScheduleStatusRequest request)
             => _leadRepository.UpdateStatus(leadId, scheduleId, request.Status);
 
-        public async Task<bool> UpdateScheduleAsync(int id, VisitaPatchRequest patch)
+        public async Task<(bool Success, string? ErrorMessage)> UpdateScheduleAsync(
+            int id,
+            VisitaPatchRequest patch,
+            bool canReopenAutoCancelledSchedule = false)
         {
             if (patch == null)
             {
-                return false;
+                return (false, "Payload inválido.");
+            }
+
+            var currentSchedule = await _leadRepository.GetScheduleByIdAsync(id);
+            if (currentSchedule == null)
+            {
+                return (false, "Agendamento não encontrado.");
+            }
+
+            if (currentSchedule.AutoCancelledAt.HasValue && !canReopenAutoCancelledSchedule)
+            {
+                return (false, "Este agendamento foi cancelado automaticamente e só pode ser alterado por Gestor Comercial.");
             }
 
             patch.TipoAgenda = NormalizeOptionalTipoAgenda(patch.TipoAgenda);
             var updated = await _leadRepository.UpdateScheduleAsync(id, patch);
+
             if (!updated)
             {
-                return false;
+                return (false, "Nada para atualizar.");
             }
 
             await TryEnsurePostVisitForCompletedVisitAsync(id);
-            return true;
+            return (true, null);
         }
 
         private static DateTime? TryParseIsoDate(string? value)

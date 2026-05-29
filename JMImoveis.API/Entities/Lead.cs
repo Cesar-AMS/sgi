@@ -30,7 +30,6 @@ namespace JMImoveisAPI.Entities
         public string? Observacao { get; set; }
     }
 
-
     public enum LeadStatus
     {
         Novo = 1,
@@ -53,17 +52,14 @@ namespace JMImoveisAPI.Entities
         public DateTime? FinishAt { get; set; }
     }
 
-
     public class LeadActivity
     {
         public int Id { get; set; }
         public int LeadId { get; set; }
         public DateTime DateTime { get; set; }
         public string Description { get; set; } = string.Empty;
-
         public string? Author { get; set; }
         public string? Type { get; set; }
-
         public DateTime CreatedAt { get; set; }
     }
 
@@ -72,7 +68,6 @@ namespace JMImoveisAPI.Entities
         public int LeadId { get; set; }
         public DateTime DateTime { get; set; }
         public string Description { get; set; } = string.Empty;
-
         public string? Author { get; set; }
         public string? Type { get; set; }
     }
@@ -91,15 +86,13 @@ namespace JMImoveisAPI.Entities
     {
         public int Id { get; set; }
         public int LeadId { get; set; }
-
         public DateTime ScheduledAt { get; set; }
         public string? Note { get; set; }
-
-        public string Status { get; set; } = "Pendente"; // Pendente | Cumprido | NaoCumprido
-
+        public string Status { get; set; } = "Pendente";
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
+
     public class CreateLeadScheduleRequest
     {
         public int LeadId { get; set; }
@@ -114,21 +107,15 @@ namespace JMImoveisAPI.Entities
     {
         public int Id { get; set; }
         public int LeadId { get; set; }
-
-        public DateTime ScheduledAt { get; set; } // dataHoraISO
-
-        public string? Note { get; set; } // observacao
+        public DateTime ScheduledAt { get; set; }
+        public string? Note { get; set; }
         public string Status { get; set; } = string.Empty;
-
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-
-        public int UserId { get; set; } // vendedorId
+        public int UserId { get; set; }
         public int? CoordenadorId { get; set; }
         public int? GerenteId { get; set; }
-
         public string NameClient { get; set; } = string.Empty;
-
         public bool Compareceu { get; set; }
         public bool VirouVenda { get; set; }
     }
@@ -151,34 +138,34 @@ namespace JMImoveisAPI.Entities
     {
         public int Id { get; set; }
         public int? LeadId { get; set; }
-        public int VendedorId { get; set; }          // vendedorId
+        public int VendedorId { get; set; }
         public string? VendedorNome { get; set; }
         public int? CoordenadorId { get; set; }
         public string? CoordenadorNome { get; set; }
         public int? GerenteId { get; set; }
         public string? GerenteNome { get; set; }
-        public string NomeCliente { get; set; } = string.Empty;   // nomeCliente
+        public string NomeCliente { get; set; } = string.Empty;
         public string? Telefone { get; set; }
         public string? ImoveisInteresse { get; set; }
         public string? Fonte { get; set; }
         public DateTime DataHoraISO { get; set; }
-        public string? Observacao { get; set; }        // observacao
+        public string? Observacao { get; set; }
         public string Status { get; set; } = string.Empty;
         public string TipoAgenda { get; set; } = "visita";
         public bool Compareceu { get; set; }
         public bool VirouVenda { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public DateTime? AutoCancelledAt { get; set; }
+        public string? AutoCancelledReason { get; set; }
     }
-
 
     public class UpdateLeadScheduleStatusRequest
     {
         public int Id { get; set; }
         public int LeadId { get; set; }
-        public string Status { get; set; } = "Pendente"; // Pendente | Cumprido | NaoCumprido
+        public string Status { get; set; } = "Pendente";
     }
-
 
     public class VisitaPatchRequest
     {
@@ -206,5 +193,4 @@ namespace JMImoveisAPI.Entities
         [JsonPropertyName("tipoAgenda")]
         public string? TipoAgenda { get; set; }
     }
-
 }

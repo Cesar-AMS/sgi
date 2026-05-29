@@ -149,8 +149,40 @@ namespace JMImoveisAPI.Controllers
         [HttpPut("schedule/{id:int}")]
         public async Task<IActionResult> UpdateSchedule(int id, [FromBody] VisitaPatchRequest patch)
         {
-            var ok = await _leadService.UpdateScheduleAsync(id, patch);
-            if (!ok) return BadRequest("Nada para atualizar.");
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            bool canReopenAutoCancelledSchedule;
+            try
+            {
+                canReopenAutoCancelledSchedule =
+                    await _permissionService.UserHasPermissionAsync(
+                        currentUserId.Value,
+                        "sistema.admin.total"
+                    )
+                    || await _permissionService.UserHasPermissionAsync(
+                        currentUserId.Value,
+                        "atendimento.agendamento.reabrir_cancelado_automatico"
+                    );
+            }
+            catch (KeyNotFoundException)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao encontrado." });
+            }
+
+            var result = await _leadService.UpdateScheduleAsync(
+                id,
+                patch,
+                canReopenAutoCancelledSchedule
+            );
+
+            if (!result.Success)
+            {
+                return BadRequest(new { message = result.ErrorMessage ?? "Nada para atualizar." });
+            }
 
             return Ok();
         }

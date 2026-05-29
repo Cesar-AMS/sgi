@@ -406,7 +406,9 @@ namespace JMImoveisAPI.Repositories
                                                 ls.compareceu AS Compareceu,
                                                 ls.virouVenda AS VirouVenda,
                                                 ls.CreatedAt,
-                                                ls.UpdatedAt
+                                                ls.UpdatedAt,
+                                                ls.auto_cancelled_at AS AutoCancelledAt,
+                                                ls.auto_cancelled_reason AS AutoCancelledReason
                                             FROM LeadSchedules ls
                                             LEFT JOIN leads l ON l.Id = ls.LeadId
                                             LEFT JOIN users vendedor ON vendedor.id = ls.UserId
@@ -609,7 +611,9 @@ namespace JMImoveisAPI.Repositories
                                     ls.compareceu AS Compareceu,
                                     ls.virouVenda AS VirouVenda,
                                     ls.CreatedAt,
-                                    ls.UpdatedAt
+                                    ls.UpdatedAt,
+                                    ls.auto_cancelled_at AS AutoCancelledAt,
+                                    ls.auto_cancelled_reason AS AutoCancelledReason
                                 FROM LeadSchedules ls
                                 LEFT JOIN leads l ON l.Id = ls.LeadId
                                 LEFT JOIN users vendedor ON vendedor.id = ls.UserId
