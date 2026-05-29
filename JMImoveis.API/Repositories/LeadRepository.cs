@@ -393,6 +393,15 @@ namespace JMImoveisAPI.Repositories
                                             LEFT JOIN users coordenador ON coordenador.id = COALESCE(NULLIF(ls.CoordenadorId, 0), NULLIF(vendedor.coordenator_id, 0))
                                             LEFT JOIN users gerente ON gerente.id = COALESCE(NULLIF(ls.GerenteId, 0), NULLIF(vendedor.manager_id, 0), NULLIF(coordenador.manager_id, 0))
                                             WHERE 1=1
+                                              AND (
+                                                    ls.LeadId IS NULL
+                                                    OR NOT EXISTS (
+                                                        SELECT 1
+                                                          FROM jmoficial.lead_post_visit pv
+                                                         WHERE pv.lead_id = ls.LeadId
+                                                           AND pv.deleted_at IS NULL
+                                                    )
+                                              )
                                             ");
 
             var p = new DynamicParameters();
