@@ -6,6 +6,7 @@ import { PageChangedEvent } from 'ngx-bootstrap/pagination';
 import { ToastrService } from 'ngx-toastr';
 import { ApiService } from 'src/app/core/services/api.service';
 import { LeadsService } from 'src/app/core/services/leads.service';
+import { LeadInterestRegionService } from 'src/app/core/services/lead-interest-region.service';
 import { PermissionsService } from 'src/app/core/services/permissions.service';
 import { SessionService } from 'src/app/core/session/session.service';
 import {
@@ -110,16 +111,7 @@ export class LeadsComponent {
     'Listas telefônicas',
   ];
 
-  regiaoInteresseOptions = [
-    'Zona Leste',
-    'Zona Norte',
-    'Zona Sul',
-    'Zona Oeste',
-    'Centro',
-    'Guarulhos',
-    'ABC',
-    'Outros',
-  ];
+  regiaoInteresseOptions: string[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -128,11 +120,13 @@ export class LeadsComponent {
     private leadService: LeadsService,
     private apiService: ApiService,
     private permissionsService: PermissionsService,
-    private sessionService: SessionService
+    private sessionService: SessionService,
+    private leadInterestRegionService: LeadInterestRegionService
   ) {}
 
   ngOnInit(): void {
     this.loadPermissions();
+    this.loadRegiaoInteresseOptions();
 
     this.apiService.getGerentes().subscribe((data) => {
       this.gerentes = data;
@@ -253,6 +247,30 @@ export class LeadsComponent {
     this.transferForm = this.fb.group({
       toUserId: ['', Validators.required],
       reason: ['Transferencia manual de leads selecionados.'],
+    });
+  }
+
+  private loadRegiaoInteresseOptions(): void {
+    this.leadInterestRegionService.listActive().subscribe({
+      next: (regions) => {
+        const seen = new Set<string>();
+
+        this.regiaoInteresseOptions = (regions || [])
+          .map((region) => (region.name || '').trim())
+          .filter((name) => {
+            if (!name) return false;
+
+            const key = name.toLowerCase();
+            if (seen.has(key)) return false;
+
+            seen.add(key);
+            return true;
+          });
+      },
+      error: () => {
+        this.regiaoInteresseOptions = [];
+        this.toast.warning('Não foi possível carregar as regiões de interesse cadastradas.');
+      },
     });
   }
 

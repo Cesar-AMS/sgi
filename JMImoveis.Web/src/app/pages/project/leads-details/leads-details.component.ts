@@ -12,6 +12,7 @@ import {
 } from 'src/app/models/ContaBancaria';
 import { ApiService } from 'src/app/core/services/api.service';
 import { LeadsService } from 'src/app/core/services/leads.service';
+import { LeadInterestRegionService } from 'src/app/core/services/lead-interest-region.service';
 import { Permission, PermissionsService } from 'src/app/core/services/permissions.service';
 import { SessionService } from 'src/app/core/session/session.service';
 import { LeadAgendaStatusChangeEvent } from './components/lead-agenda-section/lead-agenda-section.component';
@@ -94,16 +95,7 @@ export class LeadDetailsComponent implements OnInit {
     'Perdeu',
   ];
 
-  regiaoInteresseOptions = [
-    'Zona Leste',
-    'Zona Norte',
-    'Zona Sul',
-    'Zona Oeste',
-    'Centro',
-    'Guarulhos',
-    'ABC',
-    'Outros',
-  ];
+  regiaoInteresseOptions: string[] = [];
 
   operationalInteractionTypes: OperationalInteractionType[] = [
     'Ligação realizada',
@@ -136,14 +128,15 @@ export class LeadDetailsComponent implements OnInit {
     private leadService: LeadsService,
     private apiService: ApiService,
     private permissionsService: PermissionsService,
-    private sessionService: SessionService
+    private sessionService: SessionService,
+    private leadInterestRegionService: LeadInterestRegionService
   ) { }
 
   ngOnInit(): void {
     this.buildForms();
     this.buildScheduleForm();
     this.loadLeadPermissions();
-
+    this.loadRegiaoInteresseOptions();
 
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
@@ -281,6 +274,29 @@ export class LeadDetailsComponent implements OnInit {
   }
 
 
+
+  private loadRegiaoInteresseOptions(): void {
+    this.leadInterestRegionService.listActive().subscribe({
+      next: (regions) => {
+        const seen = new Set<string>();
+
+        this.regiaoInteresseOptions = (regions || [])
+          .map((region) => (region.name || '').trim())
+          .filter((name) => {
+            if (!name) return false;
+
+            const key = name.toLowerCase();
+            if (seen.has(key)) return false;
+
+            seen.add(key);
+            return true;
+          });
+      },
+      error: () => {
+        this.regiaoInteresseOptions = [];
+      },
+    });
+  }
 
   loadLead(id: number): void {
     this.isLoading = true;
