@@ -21,6 +21,7 @@ import { FluxoCaixaComponent } from './financeiro/fluxo-caixa/fluxo-caixa.compon
 import { ProjecaoComponent } from './financeiro/projecao/projecao.component';
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
 import { LeadDistributionAgentsComponent } from './lead-distribution-agents/lead-distribution-agents.component';
+import { LeadInterestRegionsComponent } from './lead-interest-regions/lead-interest-regions.component';
 import { LeadsComponent } from './leads/leads.component';
 import { PosVisitaComponent } from './pos-visita/pos-visita.component';
 import { ControleFuncionariosComponent } from './rh/controle-funcionarios/controle-funcionarios.component';
@@ -304,6 +305,10 @@ const routes: Routes = [
   {
     path: 'atendimento/distribuicao-leads',
     component: LeadDistributionAgentsComponent,
+  },
+  {
+    path: 'atendimento/regioes-interesse',
+    component: LeadInterestRegionsComponent,
   },
   {
     path: 'comparecimento',

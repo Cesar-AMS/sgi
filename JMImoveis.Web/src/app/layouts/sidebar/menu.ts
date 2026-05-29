@@ -25,6 +25,8 @@ export const MENU: MenuItem[] = [
       'atendimento.relatorios.visualizar',
       'atendimento.distribuicao_leads.visualizar',
       'atendimento.distribuicao_leads.editar',
+      'atendimento.regioes_interesse.visualizar',
+      'atendimento.regioes_interesse.editar',
     ],
     subItems: [
       {
@@ -70,6 +72,17 @@ export const MENU: MenuItem[] = [
         permissionKeys: [
           'atendimento.distribuicao_leads.visualizar',
           'atendimento.distribuicao_leads.editar',
+        ],
+      },
+      {
+        id: 27,
+        label: 'Regi\u00f5es de Interesse',
+        link: '/jm/atendimento/regioes-interesse',
+        parentId: 20,
+        permissionKeys: [
+          'atendimento.regioes_interesse.visualizar',
+          'atendimento.regioes_interesse.editar',
+          'sistema.admin.total',
         ],
       },
     ],

@@ -41,6 +41,7 @@ import { LeadSummarySectionComponent } from './leads-details/components/lead-sum
 import { LeadVisitsSectionComponent } from './leads-details/components/lead-visits-section/lead-visits-section.component';
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
 import { LeadDistributionAgentsComponent } from './lead-distribution-agents/lead-distribution-agents.component';
+import { LeadInterestRegionsComponent } from './lead-interest-regions/lead-interest-regions.component';
 import { LeadsComponent } from './leads/leads.component';
 import { ModalVendaComponent } from './modal-venda/modal-venda.component';
 import { PosVisitaComponent } from './pos-visita/pos-visita.component';
@@ -74,6 +75,7 @@ import { PerfisAcessosComponent } from './configuracoes/perfis-acessos/perfis-ac
     DashboardHomeComponent,
     AtendimentoRelatoriosComponent,
     LeadDistributionAgentsComponent,
+    LeadInterestRegionsComponent,
     VisitasComponent,
     LeadsComponent,
     PosVisitaComponent,
