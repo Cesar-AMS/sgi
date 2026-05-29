@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, filter, forkJoin, map, Observable, of, throwError } from 'rxjs';
 import { SessionService } from 'src/app/core/session/session.service';
@@ -181,6 +181,7 @@ private isoToDatetimeLocal(iso: string): string {
     private visitasApi: VisitasApiService,
     private leadService: LeadsService,
     private router: Router,
+    private route: ActivatedRoute,
     private sessionService: SessionService,
     private permissionsService: PermissionsService
   ) {}
@@ -195,6 +196,7 @@ private isoToDatetimeLocal(iso: string): string {
 
         if (previousMode !== this.screenMode) {
           this.applyDefaultFiltersForMode();
+          this.applyScheduleQueryFilters();
           this.loadVisitas();
         }
       });
@@ -226,6 +228,7 @@ private isoToDatetimeLocal(iso: string): string {
     });
 
     this.applyDefaultFiltersForMode();
+    this.applyScheduleQueryFilters();
     this.loadVisitas();
   }
 
@@ -251,6 +254,19 @@ private isoToDatetimeLocal(iso: string): string {
     this.statusFilter = '';
     this.dateRange = 'today';
     this.filtersCollapsed = false;
+  }
+
+  private applyScheduleQueryFilters(): void {
+    const query = this.route.snapshot.queryParamMap;
+    const leadId = query.get('leadId');
+    const search = query.get('q');
+
+    if (this.isAgendamentoMode() && (leadId || search)) {
+      this.nomeTerm = leadId || search || '';
+      this.statusFilter = '';
+      this.dateRange = 'all';
+      this.filtersCollapsed = false;
+    }
   }
 
   toggleFilters(): void {
@@ -544,6 +560,7 @@ private isoToDatetimeLocal(iso: string): string {
 
     return rows.filter((visita) => {
       const fields = [
+        visita.leadId?.toString(),
         visita.nomeCliente,
         visita.telefone,
         visita.imoveisInteresse,

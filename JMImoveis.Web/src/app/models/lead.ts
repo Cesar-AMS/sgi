@@ -27,6 +27,9 @@ export interface Lead {
   gerente?: string;
   dataCriacao: string; // ISO string
   ultimoContato?: string | null;
+  hasActiveSchedule?: boolean;
+  activeScheduleId?: number | null;
+  activeScheduleAt?: string | null;
   observacao?: string;
 }
 

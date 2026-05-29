@@ -633,6 +633,43 @@ namespace JMImoveisAPI.Repositories
                                                             OR la.Type NOT IN ('Status', 'EtapaAtendimento')
                                                        )
                                                  ) AS UltimoContato,
+                                                 EXISTS (
+                                                    SELECT 1
+                                                      FROM LeadSchedules activeSchedule
+                                                     WHERE activeSchedule.LeadId = leads.Id
+                                                       AND (
+                                                            activeSchedule.TipoAgenda IS NULL
+                                                            OR TRIM(activeSchedule.TipoAgenda) = ''
+                                                            OR LOWER(TRIM(activeSchedule.TipoAgenda)) <> 'visita'
+                                                       )
+                                                       AND activeSchedule.Status IN ('Agendada', 'Confirmada', 'Atrasado')
+                                                 ) AS HasActiveSchedule,
+                                                 (
+                                                    SELECT activeSchedule.Id
+                                                      FROM LeadSchedules activeSchedule
+                                                     WHERE activeSchedule.LeadId = leads.Id
+                                                       AND (
+                                                            activeSchedule.TipoAgenda IS NULL
+                                                            OR TRIM(activeSchedule.TipoAgenda) = ''
+                                                            OR LOWER(TRIM(activeSchedule.TipoAgenda)) <> 'visita'
+                                                       )
+                                                       AND activeSchedule.Status IN ('Agendada', 'Confirmada', 'Atrasado')
+                                                     ORDER BY activeSchedule.ScheduledAt ASC, activeSchedule.Id ASC
+                                                     LIMIT 1
+                                                 ) AS ActiveScheduleId,
+                                                 (
+                                                    SELECT activeSchedule.ScheduledAt
+                                                      FROM LeadSchedules activeSchedule
+                                                     WHERE activeSchedule.LeadId = leads.Id
+                                                       AND (
+                                                            activeSchedule.TipoAgenda IS NULL
+                                                            OR TRIM(activeSchedule.TipoAgenda) = ''
+                                                            OR LOWER(TRIM(activeSchedule.TipoAgenda)) <> 'visita'
+                                                       )
+                                                       AND activeSchedule.Status IN ('Agendada', 'Confirmada', 'Atrasado')
+                                                     ORDER BY activeSchedule.ScheduledAt ASC, activeSchedule.Id ASC
+                                                     LIMIT 1
+                                                 ) AS ActiveScheduleAt,
                                                  Observacao
                                             FROM leads
                                             WHERE 1 = 1

@@ -74,6 +74,33 @@
   cursor: pointer;
 }
 
+.lead-name-with-schedule {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.active-schedule-indicator {
+  align-items: center;
+  background: #e8f7ef;
+  border: 1px solid #b7e4cc;
+  border-radius: 999px;
+  color: #0f7a43;
+  display: inline-flex;
+  height: 1.65rem;
+  justify-content: center;
+  min-width: 1.65rem;
+  padding: 0;
+}
+
+.active-schedule-indicator:hover,
+.active-schedule-indicator:focus {
+  background: #d8f0e3;
+  border-color: #8fd5b0;
+  color: #095f34;
+}
+
 .bg-status {
   background-color: #e5f3ff;
   color: #0b71d9;

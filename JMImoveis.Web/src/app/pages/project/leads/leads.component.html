@@ -289,7 +289,21 @@
                   [attr.aria-label]="'Selecionar lead ' + lead.nome"
                 />
               </td>
-              <td>{{ lead.nome }}</td>
+              <td>
+                <span class="lead-name-with-schedule">
+                  <span>{{ lead.nome }}</span>
+                  <button
+                    *ngIf="lead.hasActiveSchedule"
+                    type="button"
+                    class="active-schedule-indicator"
+                    (click)="openLeadSchedule($event, lead)"
+                    [attr.aria-label]="'Abrir agendamentos ativos de ' + lead.nome"
+                    [title]="lead.activeScheduleAt ? ('Agendamento ativo em ' + (lead.activeScheduleAt | date: 'dd/MM/yyyy HH:mm')) : 'Agendamento ativo'"
+                  >
+                    <i class="bi bi-calendar-check" aria-hidden="true"></i>
+                  </button>
+                </span>
+              </td>
               <td>
                 <span class="badge bg-status">{{ lead.status }}</span>
               </td>

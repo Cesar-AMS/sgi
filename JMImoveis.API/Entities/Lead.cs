@@ -24,6 +24,9 @@ namespace JMImoveisAPI.Entities
         public string? DistributionType { get; set; }
         public DateTime DataCriacao { get; set; } = DateTime.Now;
         public DateTime? UltimoContato { get; set; }
+        public bool HasActiveSchedule { get; set; }
+        public int? ActiveScheduleId { get; set; }
+        public DateTime? ActiveScheduleAt { get; set; }
         public string? Observacao { get; set; }
     }
 

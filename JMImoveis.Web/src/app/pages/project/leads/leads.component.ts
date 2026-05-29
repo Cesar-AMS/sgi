@@ -281,6 +281,18 @@ export class LeadsComponent {
     });
   }
 
+  openLeadSchedule(event: Event, lead: Lead): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.router.navigate(['/jm/atendimento/agendamento'], {
+      queryParams: {
+        leadId: lead.id,
+        q: lead.nome,
+      },
+    });
+  }
+
   toggleTransferMode(): void {
     if (!this.canTransferLeads) {
       this.toast.warning('Voce nao tem permissao para transferir leads.');
