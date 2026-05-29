@@ -57,6 +57,8 @@ namespace JMImoveisAPI.Configurations
             services.AddScoped<ILeadTransferHistoryService, LeadTransferHistoryService>();
             services.AddScoped<ILeadDistributionAgentRepository, LeadDistributionAgentRepository>();
             services.AddScoped<ILeadDistributionAgentService, LeadDistributionAgentService>();
+            services.AddScoped<ILeadInterestRegionRepository, LeadInterestRegionRepository>();
+            services.AddScoped<ILeadInterestRegionService, LeadInterestRegionService>();
             services.AddScoped<IAtendimentoRelatorioRepository, AtendimentoRelatorioRepository>();
             services.AddScoped<IAtendimentoRelatorioService, AtendimentoRelatorioService>();
             services.AddScoped<ISaleCustomerRepository, SaleCustomerRepository>();
