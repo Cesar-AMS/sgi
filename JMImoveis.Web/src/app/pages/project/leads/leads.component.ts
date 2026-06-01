@@ -7,6 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ApiService } from 'src/app/core/services/api.service';
 import { LeadsService } from 'src/app/core/services/leads.service';
 import { LeadInterestRegionService } from 'src/app/core/services/lead-interest-region.service';
+import { LeadSourceService } from 'src/app/core/services/lead-source.service';
 import { PermissionsService } from 'src/app/core/services/permissions.service';
 import { SessionService } from 'src/app/core/session/session.service';
 import {
@@ -101,17 +102,7 @@ export class LeadsComponent {
   coordenadoresMock = ['Ana', 'Bruno'];
   gerentesMock = ['Fernanda', 'Ricardo'];
 
-  fontesMock = [
-    'Facebook',
-    'Instagram',
-    'Indicação',
-    'Site',
-    'Ação de Rua',
-    'Placa',
-    'TikTok',
-    'Listas telefônicas',
-  ];
-
+  fonteOptions: string[] = [];
   regiaoInteresseOptions: string[] = [];
 
   constructor(
@@ -122,11 +113,13 @@ export class LeadsComponent {
     private apiService: ApiService,
     private permissionsService: PermissionsService,
     private sessionService: SessionService,
-    private leadInterestRegionService: LeadInterestRegionService
+    private leadInterestRegionService: LeadInterestRegionService,
+    private leadSourceService: LeadSourceService
   ) {}
 
   ngOnInit(): void {
     this.loadPermissions();
+    this.loadFonteOptions();
     this.loadRegiaoInteresseOptions();
 
     this.apiService.getGerentes().subscribe((data) => {
@@ -272,6 +265,30 @@ export class LeadsComponent {
       error: () => {
         this.regiaoInteresseOptions = [];
         this.toast.warning('Não foi possível carregar as regiões de interesse cadastradas.');
+      },
+    });
+  }
+
+  private loadFonteOptions(): void {
+    this.leadSourceService.listActive().subscribe({
+      next: (sources) => {
+        const seen = new Set<string>();
+
+        this.fonteOptions = (sources || [])
+          .map((source) => (source.name || '').trim())
+          .filter((name) => {
+            if (!name) return false;
+
+            const key = name.toLowerCase();
+            if (seen.has(key)) return false;
+
+            seen.add(key);
+            return true;
+          });
+      },
+      error: () => {
+        this.fonteOptions = [];
+        this.toast.warning('Não foi possível carregar as fontes de origem cadastradas.');
       },
     });
   }

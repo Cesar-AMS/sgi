@@ -12,6 +12,8 @@ namespace JMImoveisAPI.Controllers
         private const string ViewPermission = "atendimento.fontes_origem.visualizar";
         private const string EditPermission = "atendimento.fontes_origem.editar";
         private const string AdminPermission = "sistema.admin.total";
+        private const string ViewLeadsPermission = "atendimento.leads.visualizar";
+        private const string EditLeadsPermission = "atendimento.leads.editar";
 
         private readonly ILeadSourceService _service;
         private readonly IPermissionService _permissionService;
@@ -39,7 +41,7 @@ namespace JMImoveisAPI.Controllers
         [HttpGet("active")]
         public async Task<IActionResult> ListActive()
         {
-            var authorizationResult = await AuthorizeCurrentUserForViewAsync();
+            var authorizationResult = await AuthorizeCurrentUserForActiveListAsync();
             if (authorizationResult != null)
             {
                 return authorizationResult;
@@ -158,6 +160,35 @@ namespace JMImoveisAPI.Controllers
                 if (!canView && !canEdit && !isAdmin)
                 {
                     return StatusCode(403, new { message = "Usuario sem permissao para visualizar fontes de origem." });
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao encontrado." });
+            }
+
+            return null;
+        }
+
+        private async Task<IActionResult?> AuthorizeCurrentUserForActiveListAsync()
+        {
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            try
+            {
+                var canViewSources = await _permissionService.UserHasPermissionAsync(currentUserId.Value, ViewPermission);
+                var canEditSources = await _permissionService.UserHasPermissionAsync(currentUserId.Value, EditPermission);
+                var canViewLeads = await _permissionService.UserHasPermissionAsync(currentUserId.Value, ViewLeadsPermission);
+                var canEditLeads = await _permissionService.UserHasPermissionAsync(currentUserId.Value, EditLeadsPermission);
+                var isAdmin = await _permissionService.UserHasPermissionAsync(currentUserId.Value, AdminPermission);
+
+                if (!canViewSources && !canEditSources && !canViewLeads && !canEditLeads && !isAdmin)
+                {
+                    return StatusCode(403, new { message = "Usuario sem permissao para visualizar fontes de origem ativas." });
                 }
             }
             catch (KeyNotFoundException)

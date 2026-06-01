@@ -746,8 +746,8 @@
               class="form-select"
               formControlName="fonte"
             >
-              <option value="">Selecione...</option>
-              <option *ngFor="let f of fontesMock" [value]="f">
+              <option value="">Selecione a fonte de origem</option>
+              <option *ngFor="let f of fonteOptions" [value]="f">
                 {{ f }}
               </option>
             </select>
