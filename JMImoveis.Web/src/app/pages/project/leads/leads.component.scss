@@ -479,6 +479,111 @@
   padding: 0.65rem 0.75rem;
 }
 
+.lead-interest-selector {
+  position: relative;
+}
+
+.lead-interest-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.55rem;
+}
+
+.lead-interest-chip {
+  align-items: center;
+  background-color: #fff3ea;
+  border: 1px solid #ffd1b3;
+  border-radius: 999px;
+  color: #a64b0b;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 600;
+  gap: 0.3rem;
+  line-height: 1.2;
+  padding: 0.3rem 0.45rem 0.3rem 0.65rem;
+}
+
+.lead-interest-chip-remove {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: #a64b0b;
+  display: inline-flex;
+  font-size: 1rem;
+  height: 1rem;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  width: 1rem;
+}
+
+.lead-interest-chip-remove:hover,
+.lead-interest-chip-remove:focus {
+  background-color: #ffd1b3;
+  color: #7c3507;
+}
+
+.lead-interest-add {
+  align-items: center;
+  background-color: #fff;
+  border: 1px dashed #ff9a57;
+  color: #d85f0c;
+  display: flex;
+  font-size: 0.84rem;
+  font-weight: 600;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  width: 100%;
+}
+
+.lead-interest-add:hover,
+.lead-interest-add:focus {
+  background-color: #fff8f3;
+  border-color: #ff7a1a;
+  color: #b94f08;
+}
+
+.lead-interest-dropdown {
+  background-color: #fff;
+  border: 1px solid #dedee8;
+  border-radius: 0.55rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  left: 0;
+  margin-top: 0.35rem;
+  max-height: 13rem;
+  overflow-y: auto;
+  padding: 0.3rem;
+  position: absolute;
+  right: 0;
+  z-index: 2;
+}
+
+.lead-interest-option {
+  background-color: transparent;
+  border: 0;
+  border-radius: 0.4rem;
+  color: #35354a;
+  display: block;
+  font-size: 0.84rem;
+  padding: 0.5rem 0.55rem;
+  text-align: left;
+  width: 100%;
+}
+
+.lead-interest-option:hover,
+.lead-interest-option:focus {
+  background-color: #fff3ea;
+  color: #b94f08;
+}
+
+.lead-interest-empty {
+  color: #8a8aa0;
+  font-size: 0.8rem;
+  padding: 0.55rem;
+}
+
 .filter-field-search .input-group {
   flex-wrap: nowrap;
 }

@@ -57,6 +57,7 @@ export class LeadsComponent {
   canTransferLeads = false;
 
   showCreateModal = false;
+  showRegiaoInteresseDropdown = false;
   createForm!: FormGroup;
   isTransferMode = false;
   selectedLeadIds = new Set<number>();
@@ -234,6 +235,7 @@ export class LeadsComponent {
       valor: [null],
       fonte: [''],
       imoveisInteresse: [''],
+      regioesInteresse: [[] as string[]],
       vendedor: [''],
       observacao: [''],
     });
@@ -729,7 +731,9 @@ export class LeadsComponent {
 
       const matchesRegiao =
         !this.regiaoInteresseFilter ||
-        lead.imoveisInteresse === this.regiaoInteresseFilter;
+        this.splitRegioesInteresse(lead.imoveisInteresse).some(
+          (regiao) => regiao.toLowerCase() === this.regiaoInteresseFilter.toLowerCase()
+        );
 
       const created = new Date(lead.dataCriacao).getTime();
       const fromOk =
@@ -850,6 +854,7 @@ export class LeadsComponent {
     }
 
     this.showCreateModal = true;
+    this.showRegiaoInteresseDropdown = false;
     this.createForm.patchValue({
       status: this.createForm.get('status')?.value || 'Novo',
       etapaAtendimento: this.createForm.get('etapaAtendimento')?.value || 'Sem atendimento',
@@ -858,7 +863,13 @@ export class LeadsComponent {
 
   closeCreateModal(): void {
     this.showCreateModal = false;
-    this.createForm.reset();
+    this.showRegiaoInteresseDropdown = false;
+    this.createForm.reset({
+      status: 'Novo',
+      etapaAtendimento: 'Sem atendimento',
+      imoveisInteresse: '',
+      regioesInteresse: [],
+    });
   }
 
   submitCreate(): void {
@@ -872,10 +883,12 @@ export class LeadsComponent {
       return;
     }
 
+    const { regioesInteresse, ...formValue } = this.createForm.value;
     const payload = {
-      ...this.createForm.value,
-      status: this.createForm.value.status || 'Novo',
-      etapaAtendimento: this.createForm.value.etapaAtendimento || 'Sem atendimento',
+      ...formValue,
+      status: formValue.status || 'Novo',
+      etapaAtendimento: formValue.etapaAtendimento || 'Sem atendimento',
+      imoveisInteresse: this.serializeRegioesInteresse(regioesInteresse),
     };
 
     this.leadService.createLead(payload).subscribe({
@@ -938,10 +951,87 @@ export class LeadsComponent {
   }
 
   getRegiaoInteresseFilterOptions(): string[] {
-    const values = (this.leads || [])
-      .map((lead) => (lead.imoveisInteresse || '').trim())
-      .filter((value) => !!value && !this.regiaoInteresseOptions.includes(value));
+    const seen = new Set(this.regiaoInteresseOptions.map((value) => value.toLowerCase()));
+    const legacyValues = (this.leads || [])
+      .flatMap((lead) => this.splitRegioesInteresse(lead.imoveisInteresse))
+      .filter((value) => {
+        const key = value.toLowerCase();
+        if (seen.has(key)) return false;
 
-    return [...this.regiaoInteresseOptions, ...Array.from(new Set(values)).sort()];
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    return [...this.regiaoInteresseOptions, ...legacyValues];
+  }
+
+  toggleRegiaoInteresseDropdown(): void {
+    this.showRegiaoInteresseDropdown = !this.showRegiaoInteresseDropdown;
+  }
+
+  getSelectedRegioesInteresse(): string[] {
+    const values = this.createForm?.get('regioesInteresse')?.value;
+    if (!Array.isArray(values)) {
+      return [];
+    }
+
+    return this.splitRegioesInteresse(values.join(','));
+  }
+
+  getAvailableRegioesInteresse(): string[] {
+    const selected = new Set(
+      this.getSelectedRegioesInteresse().map((regiao) => regiao.toLowerCase())
+    );
+
+    return this.regiaoInteresseOptions.filter(
+      (regiao) => !selected.has(regiao.toLowerCase())
+    );
+  }
+
+  addRegiaoInteresse(regiao: string): void {
+    const selected = this.getSelectedRegioesInteresse();
+    const normalizedRegion = regiao.trim();
+
+    if (
+      normalizedRegion &&
+      !selected.some((item) => item.toLowerCase() === normalizedRegion.toLowerCase())
+    ) {
+      this.createForm.get('regioesInteresse')?.setValue([...selected, normalizedRegion]);
+    }
+
+    this.showRegiaoInteresseDropdown = false;
+  }
+
+  removeRegiaoInteresse(regiao: string): void {
+    const normalizedRegion = regiao.toLowerCase();
+    const selected = this.getSelectedRegioesInteresse().filter(
+      (item) => item.toLowerCase() !== normalizedRegion
+    );
+
+    this.createForm.get('regioesInteresse')?.setValue(selected);
+  }
+
+  private splitRegioesInteresse(value?: string | null): string[] {
+    const seen = new Set<string>();
+
+    return (value || '')
+      .split(',')
+      .map((regiao) => regiao.trim())
+      .filter((regiao) => {
+        const key = regiao.toLowerCase();
+        if (!key || seen.has(key)) return false;
+
+        seen.add(key);
+        return true;
+      });
+  }
+
+  private serializeRegioesInteresse(values: unknown): string {
+    if (!Array.isArray(values)) {
+      return '';
+    }
+
+    return this.splitRegioesInteresse(values.join(',')).join(', ');
   }
 }

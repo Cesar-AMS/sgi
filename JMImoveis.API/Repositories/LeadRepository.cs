@@ -745,7 +745,7 @@ namespace JMImoveisAPI.Repositories
 
             if (!string.IsNullOrWhiteSpace(filter.RegiaoInteresse))
             {
-                sql.Append(" AND ImoveisInteresse = @RegiaoInteresse");
+                sql.Append(" AND FIND_IN_SET(@RegiaoInteresse, REPLACE(ImoveisInteresse, ', ', ',')) > 0");
                 parameters.Add("@RegiaoInteresse", filter.RegiaoInteresse.Trim());
             }
 

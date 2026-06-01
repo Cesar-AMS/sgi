@@ -755,20 +755,74 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label" for="leadInteresse">
-            Região de Interesse
+          <label class="form-label" id="leadInteresseLabel">
+            Regiões de Interesse
           </label>
-          <select
-            id="leadInteresse"
-            class="form-select"
-            formControlName="imoveisInteresse"
-            aria-label="Região de interesse"
-          >
-            <option value="">Selecione...</option>
-            <option *ngFor="let regiao of regiaoInteresseOptions" [value]="regiao">
-              {{ regiao }}
-            </option>
-          </select>
+
+          <div class="lead-interest-selector">
+            <div
+              class="lead-interest-chips"
+              *ngIf="getSelectedRegioesInteresse().length > 0"
+              aria-label="Regiões selecionadas"
+            >
+              <span
+                class="lead-interest-chip"
+                *ngFor="let regiao of getSelectedRegioesInteresse()"
+              >
+                {{ regiao }}
+                <button
+                  type="button"
+                  class="lead-interest-chip-remove"
+                  (click)="removeRegiaoInteresse(regiao)"
+                  [attr.aria-label]="'Remover região ' + regiao"
+                >
+                  &times;
+                </button>
+              </span>
+            </div>
+
+            <button
+              id="leadInteresse"
+              type="button"
+              class="btn lead-interest-add"
+              (click)="toggleRegiaoInteresseDropdown()"
+              [attr.aria-expanded]="showRegiaoInteresseDropdown"
+              aria-controls="leadInteresseOptions"
+              aria-labelledby="leadInteresseLabel leadInteresse"
+            >
+              <span>+ Adicionar região</span>
+              <i
+                class="bi"
+                [ngClass]="showRegiaoInteresseDropdown ? 'bi-chevron-up' : 'bi-chevron-down'"
+                aria-hidden="true"
+              ></i>
+            </button>
+
+            <div
+              id="leadInteresseOptions"
+              class="lead-interest-dropdown"
+              *ngIf="showRegiaoInteresseDropdown"
+              role="listbox"
+              aria-label="Regiões disponíveis"
+            >
+              <button
+                type="button"
+                class="lead-interest-option"
+                *ngFor="let regiao of getAvailableRegioesInteresse()"
+                (click)="addRegiaoInteresse(regiao)"
+                role="option"
+              >
+                {{ regiao }}
+              </button>
+
+              <div
+                class="lead-interest-empty"
+                *ngIf="getAvailableRegioesInteresse().length === 0"
+              >
+                Todas as regiões disponíveis foram adicionadas.
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="mb-3">
