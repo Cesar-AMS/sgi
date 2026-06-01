@@ -1,0 +1,165 @@
+<div class="lead-sources-wrapper container-fluid py-4">
+  <div class="page-header mb-4">
+    <div>
+      <h2 class="fw-bold mb-2">Fontes de Origem</h2>
+      <p class="text-muted mb-0">
+        Cadastre e organize as fontes de origem disponiveis para os Leads.
+      </p>
+    </div>
+
+    <button
+      *ngIf="canEdit"
+      type="button"
+      class="btn btn-primary"
+      (click)="openCreateModal()"
+    >
+      <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
+      Nova fonte
+    </button>
+  </div>
+
+  <div *ngIf="isAccessDenied" class="alert alert-warning" role="alert">
+    Voce nao possui permissao para visualizar o cadastro de fontes de origem.
+  </div>
+
+  <ng-container *ngIf="canView">
+    <section class="summary-grid mb-4" aria-label="Resumo das fontes de origem">
+      <div class="summary-card">
+        <span>Total cadastradas</span>
+        <strong>{{ totalConfigured }}</strong>
+      </div>
+      <div class="summary-card">
+        <span>Ativas</span>
+        <strong>{{ activeCount }}</strong>
+      </div>
+      <div class="summary-card">
+        <span>Inativas</span>
+        <strong>{{ inactiveCount }}</strong>
+      </div>
+      <div class="summary-card">
+        <span>Menor ordem</span>
+        <strong>{{ firstSortOrder }}</strong>
+      </div>
+    </section>
+
+    <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+      {{ errorMessage }}
+    </div>
+
+    <section class="sources-panel">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Fonte</th>
+              <th>Status</th>
+              <th>Ordem</th>
+              <th>Criada em</th>
+              <th>Atualizada em</th>
+              <th *ngIf="canEdit" class="text-end">Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="isLoading">
+              <td [attr.colspan]="canEdit ? 6 : 5" class="text-center py-4 text-muted">
+                Carregando fontes...
+              </td>
+            </tr>
+
+            <tr *ngIf="!isLoading && sources.length === 0">
+              <td [attr.colspan]="canEdit ? 6 : 5" class="text-center py-4 text-muted">
+                Nenhuma fonte cadastrada.
+              </td>
+            </tr>
+
+            <tr *ngFor="let source of sources; trackBy: trackBySourceId">
+              <td>
+                <strong>{{ source.name }}</strong>
+                <small>ID {{ source.id }}</small>
+              </td>
+              <td>
+                <span class="status-pill" [class.status-pill-active]="source.isActive">
+                  {{ source.isActive ? 'Ativa' : 'Inativa' }}
+                </span>
+              </td>
+              <td>{{ source.sortOrder }}</td>
+              <td>{{ formatDate(source.createdAt) }}</td>
+              <td>{{ formatDate(source.updatedAt) }}</td>
+              <td *ngIf="canEdit" class="text-end">
+                <div class="action-buttons">
+                  <button type="button" class="btn btn-sm btn-outline-primary" (click)="openEditModal(source)">
+                    Editar
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleSource(source)">
+                    {{ source.isActive ? 'Inativar' : 'Ativar' }}
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeSource(source)">
+                    Remover
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+</div>
+
+<div *ngIf="showModal" class="source-modal-backdrop" (click)="closeModal()">
+  <div class="source-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <div class="source-modal-header">
+      <div>
+        <h3>{{ editingSource ? 'Editar fonte' : 'Nova fonte' }}</h3>
+        <p>Defina o nome e a ordem de exibicao da fonte.</p>
+      </div>
+      <button type="button" class="btn-close" aria-label="Fechar" (click)="closeModal()"></button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="mb-3">
+        <label class="form-label" for="sourceName">Nome da fonte</label>
+        <input
+          id="sourceName"
+          type="text"
+          class="form-control"
+          formControlName="name"
+          maxlength="120"
+          placeholder="Ex.: Instagram"
+          [class.is-invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+        />
+        <div class="invalid-feedback">Informe o nome da fonte.</div>
+      </div>
+
+      <div class="form-check form-switch mb-3">
+        <input id="sourceActive" type="checkbox" class="form-check-input" formControlName="isActive" />
+        <label class="form-check-label" for="sourceActive">Ativa para selecao futura</label>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="sourceSortOrder">Ordem de exibicao</label>
+        <input
+          id="sourceSortOrder"
+          type="number"
+          class="form-control"
+          formControlName="sortOrder"
+          min="1"
+          placeholder="100"
+        />
+      </div>
+
+      <div *ngIf="formErrorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
+        {{ formErrorMessage }}
+      </div>
+
+      <div class="source-modal-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeModal()" [disabled]="isSaving">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+          {{ isSaving ? 'Salvando...' : 'Salvar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

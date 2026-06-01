@@ -22,6 +22,7 @@ import { ProjecaoComponent } from './financeiro/projecao/projecao.component';
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
 import { LeadDistributionAgentsComponent } from './lead-distribution-agents/lead-distribution-agents.component';
 import { LeadInterestRegionsComponent } from './lead-interest-regions/lead-interest-regions.component';
+import { LeadSourcesComponent } from './lead-sources/lead-sources.component';
 import { LeadsComponent } from './leads/leads.component';
 import { PosVisitaComponent } from './pos-visita/pos-visita.component';
 import { ControleFuncionariosComponent } from './rh/controle-funcionarios/controle-funcionarios.component';
@@ -309,6 +310,10 @@ const routes: Routes = [
   {
     path: 'atendimento/regioes-interesse',
     component: LeadInterestRegionsComponent,
+  },
+  {
+    path: 'atendimento/fontes-origem',
+    component: LeadSourcesComponent,
   },
   {
     path: 'comparecimento',

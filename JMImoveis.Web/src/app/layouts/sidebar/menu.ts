@@ -27,6 +27,8 @@ export const MENU: MenuItem[] = [
       'atendimento.distribuicao_leads.editar',
       'atendimento.regioes_interesse.visualizar',
       'atendimento.regioes_interesse.editar',
+      'atendimento.fontes_origem.visualizar',
+      'atendimento.fontes_origem.editar',
     ],
     subItems: [
       {
@@ -82,6 +84,17 @@ export const MENU: MenuItem[] = [
         permissionKeys: [
           'atendimento.regioes_interesse.visualizar',
           'atendimento.regioes_interesse.editar',
+          'sistema.admin.total',
+        ],
+      },
+      {
+        id: 28,
+        label: 'Fontes de Origem',
+        link: '/jm/atendimento/fontes-origem',
+        parentId: 20,
+        permissionKeys: [
+          'atendimento.fontes_origem.visualizar',
+          'atendimento.fontes_origem.editar',
           'sistema.admin.total',
         ],
       },
