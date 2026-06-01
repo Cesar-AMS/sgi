@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { LeadInterestRegionService } from 'src/app/core/services/lead-interest-region.service';
@@ -16,14 +16,15 @@ import {
   styleUrls: ['./lead-interest-regions.component.scss'],
 })
 export class LeadInterestRegionsComponent implements OnInit {
-  private readonly viewPermission = 'atendimento.regioes_interesse.visualizar';
-  private readonly editPermission = 'atendimento.regioes_interesse.editar';
+  private readonly viewPermission = 'atendimento.gestao.regioes_interesse.visualizar';
+  private readonly editPermission = 'atendimento.gestao.regioes_interesse.editar';
   private readonly adminPermission = 'sistema.admin.total';
 
   regions: LeadInterestRegion[] = [];
   form!: FormGroup;
 
   canView = false;
+  @Input()
   canEdit = false;
   isAccessDenied = false;
   isLoading = false;

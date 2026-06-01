@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { LeadSourceService } from 'src/app/core/services/lead-source.service';
@@ -16,14 +16,15 @@ import {
   styleUrls: ['./lead-sources.component.scss'],
 })
 export class LeadSourcesComponent implements OnInit {
-  private readonly viewPermission = 'atendimento.fontes_origem.visualizar';
-  private readonly editPermission = 'atendimento.fontes_origem.editar';
+  private readonly viewPermission = 'atendimento.gestao.fontes_origem.visualizar';
+  private readonly editPermission = 'atendimento.gestao.fontes_origem.editar';
   private readonly adminPermission = 'sistema.admin.total';
 
   sources: LeadSource[] = [];
   form!: FormGroup;
 
   canView = false;
+  @Input()
   canEdit = false;
   isAccessDenied = false;
   isLoading = false;

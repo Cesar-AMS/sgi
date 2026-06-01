@@ -9,8 +9,8 @@ namespace JMImoveisAPI.Controllers
     [Route("api/lead-interest-regions")]
     public class LeadInterestRegionsController : ControllerBase
     {
-        private const string ViewPermission = "atendimento.regioes_interesse.visualizar";
-        private const string EditPermission = "atendimento.regioes_interesse.editar";
+        private const string ViewPermission = "atendimento.gestao.regioes_interesse.visualizar";
+        private const string EditPermission = "atendimento.gestao.regioes_interesse.editar";
 
         private readonly ILeadInterestRegionService _service;
         private readonly IPermissionService _permissionService;

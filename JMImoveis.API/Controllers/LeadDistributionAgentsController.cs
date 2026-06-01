@@ -9,8 +9,8 @@ namespace JMImoveisAPI.Controllers
     [Route("api/lead-distribution-agents")]
     public class LeadDistributionAgentsController : ControllerBase
     {
-        private const string ViewPermission = "atendimento.distribuicao_leads.visualizar";
-        private const string EditPermission = "atendimento.distribuicao_leads.editar";
+        private const string ViewPermission = "atendimento.gestao.distribuicao_leads.visualizar";
+        private const string EditPermission = "atendimento.gestao.distribuicao_leads.editar";
 
         private readonly ILeadDistributionAgentService _service;
         private readonly IPermissionService _permissionService;

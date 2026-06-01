@@ -307,18 +307,26 @@ const routes: Routes = [
   {
     path: 'atendimento/gestao',
     component: AtendimentoGestaoComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.gestao.visualizar' },
   },
   {
     path: 'atendimento/distribuicao-leads',
     component: LeadDistributionAgentsComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.gestao.distribuicao_leads.visualizar' },
   },
   {
     path: 'atendimento/regioes-interesse',
     component: LeadInterestRegionsComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.gestao.regioes_interesse.visualizar' },
   },
   {
     path: 'atendimento/fontes-origem',
     component: LeadSourcesComponent,
+    canActivate: [PermissionGuard],
+    data: { permissionKey: 'atendimento.gestao.fontes_origem.visualizar' },
   },
   {
     path: 'comparecimento',

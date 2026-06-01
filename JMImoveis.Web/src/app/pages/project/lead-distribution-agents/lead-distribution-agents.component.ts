@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { ApiService } from 'src/app/core/services/api.service';
@@ -19,8 +19,8 @@ import {
   styleUrls: ['./lead-distribution-agents.component.scss'],
 })
 export class LeadDistributionAgentsComponent implements OnInit {
-  private readonly viewPermission = 'atendimento.distribuicao_leads.visualizar';
-  private readonly editPermission = 'atendimento.distribuicao_leads.editar';
+  private readonly viewPermission = 'atendimento.gestao.distribuicao_leads.visualizar';
+  private readonly editPermission = 'atendimento.gestao.distribuicao_leads.editar';
   private readonly adminPermission = 'sistema.admin.total';
 
   agents: LeadDistributionAgent[] = [];
@@ -28,6 +28,7 @@ export class LeadDistributionAgentsComponent implements OnInit {
   form!: FormGroup;
 
   canView = false;
+  @Input()
   canEdit = false;
   isAccessDenied = false;
   isLoading = false;

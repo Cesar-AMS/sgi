@@ -9,8 +9,8 @@ namespace JMImoveisAPI.Controllers
     [Route("api/lead-sources")]
     public class LeadSourcesController : ControllerBase
     {
-        private const string ViewPermission = "atendimento.fontes_origem.visualizar";
-        private const string EditPermission = "atendimento.fontes_origem.editar";
+        private const string ViewPermission = "atendimento.gestao.fontes_origem.visualizar";
+        private const string EditPermission = "atendimento.gestao.fontes_origem.editar";
         private const string AdminPermission = "sistema.admin.total";
         private const string ViewLeadsPermission = "atendimento.leads.visualizar";
         private const string EditLeadsPermission = "atendimento.leads.editar";

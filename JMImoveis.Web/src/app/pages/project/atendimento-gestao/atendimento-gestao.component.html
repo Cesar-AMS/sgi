@@ -29,10 +29,23 @@
       </button>
     </nav>
 
+    <div *ngIf="visibleTabs.length === 0" class="alert alert-warning mt-3" role="alert">
+      Voce nao tem permissao para visualizar as abas da Gestao de Atendimento.
+    </div>
+
     <section class="gestao-tab-content" role="tabpanel">
-      <app-lead-distribution-agents *ngIf="activeTabId === 'distribuicao'"></app-lead-distribution-agents>
-      <app-lead-interest-regions *ngIf="activeTabId === 'regioes'"></app-lead-interest-regions>
-      <app-lead-sources *ngIf="activeTabId === 'fontes'"></app-lead-sources>
+      <app-lead-distribution-agents
+        *ngIf="activeTabId === 'distribuicao'"
+        [canEdit]="canEditDistribuicaoLeads"
+      ></app-lead-distribution-agents>
+      <app-lead-interest-regions
+        *ngIf="activeTabId === 'regioes'"
+        [canEdit]="canEditRegioesInteresse"
+      ></app-lead-interest-regions>
+      <app-lead-sources
+        *ngIf="activeTabId === 'fontes'"
+        [canEdit]="canEditFontesOrigem"
+      ></app-lead-sources>
     </section>
   </ng-container>
 </div>
