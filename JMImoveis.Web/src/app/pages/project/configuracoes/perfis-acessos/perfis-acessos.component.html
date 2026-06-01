@@ -3,7 +3,7 @@
     <div>
       <h4 class="mb-1">Perfis e Acessos</h4>
       <p class="text-muted mb-0">
-        Controle real de permissões por perfil/cargo e exceções individuais por colaborador.
+        Controle real de permissoes por perfil/cargo e excecoes individuais por colaborador.
       </p>
     </div>
 
@@ -25,7 +25,7 @@
   </div>
 
   <div *ngIf="loadingInitialData" class="text-muted text-center py-4">
-    Carregando dados de perfis, colaboradores e permissões...
+    Carregando dados de perfis, colaboradores e permissoes...
   </div>
 
   <div *ngIf="!loadingInitialData" class="access-tabs" role="tablist" aria-label="Perfis e acessos">
@@ -296,14 +296,14 @@
     <div class="access-panel permissions-panel">
       <div class="access-panel-header">
         <div>
-          <h5 class="mb-1">Permissões por Perfil/Cargo</h5>
+          <h5 class="mb-1">Permissoes por Perfil/Cargo</h5>
 
           <span class="text-muted small" *ngIf="selectedRole">
-            {{ selectedRole.name }} | {{ selectedRolePermissionCount }} permissão(ões) marcada(s)
+            {{ selectedRole.name }} | {{ selectedRolePermissionCount }} permissao(oes) marcada(s)
           </span>
 
           <span class="text-muted small" *ngIf="!selectedRole">
-            Selecione um perfil/cargo para configurar as permissões padrão.
+            Selecione um perfil/cargo para configurar as permissoes padrao.
           </span>
         </div>
 
@@ -313,7 +313,7 @@
             class="btn btn-outline-secondary btn-sm"
             (click)="clearRoleSelection()"
             [disabled]="!selectedRole || savingRolePermissions">
-            Limpar seleção
+            Limpar selecao
           </button>
 
           <button
@@ -337,13 +337,13 @@
             class="btn btn-primary btn-sm"
             (click)="saveRolePermissions()"
             [disabled]="!selectedRole || loadingRolePermissions || savingRolePermissions">
-            {{ savingRolePermissions ? 'Salvando...' : 'Salvar permissões do perfil' }}
+            {{ savingRolePermissions ? 'Salvando...' : 'Salvar permissoes do perfil' }}
           </button>
         </div>
       </div>
 
       <div *ngIf="!selectedRole" class="empty-state">
-        Escolha um perfil/cargo na lista para visualizar e editar suas permissões.
+        Escolha um perfil/cargo na lista para visualizar e editar suas permissoes.
       </div>
 
       <div class="access-empty-note role-permission-warning" role="note">
@@ -351,28 +351,77 @@
       </div>
 
       <div *ngIf="selectedRole && loadingRolePermissions" class="text-muted text-center py-4">
-        Carregando permissões do perfil/cargo...
+        Carregando permissoes do perfil/cargo...
       </div>
 
       <div *ngIf="selectedRole && !loadingRolePermissions" class="permission-groups">
-        <div class="permission-group" *ngFor="let group of permissionGroups; trackBy: trackGroup">
+        <div class="permission-search-box">
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            name="rolePermissionSearch"
+            [(ngModel)]="permissionSearchTerm"
+            placeholder="Buscar modulo, submodulo, permissao ou acao">
+
+          <button
+            *ngIf="permissionSearchTerm"
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            (click)="clearPermissionSearch()">
+            Limpar busca
+          </button>
+        </div>
+
+        <div *ngIf="!filteredPermissionModuleGroups.length" class="empty-state">
+          Nenhuma permissao encontrada para a busca.
+        </div>
+
+        <div class="permission-group" *ngFor="let group of filteredPermissionModuleGroups; trackBy: trackGroup">
           <div class="permission-group-title">{{ group.module }}</div>
 
-          <label class="permission-row" *ngFor="let permission of group.permissions; trackBy: trackPermission">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              [checked]="isRolePermissionChecked(permission)"
-              (change)="toggleRolePermission(permission, $any($event.target).checked)">
+          <section class="permission-submodule" *ngFor="let submodule of group.submodules; trackBy: trackSubmodule">
+            <div class="permission-submodule-title">{{ submodule.label }}</div>
 
-            <span class="permission-info">
-              <span class="permission-name">{{ permission.name }}</span>
-              <span class="permission-key">{{ getPermissionKey(permission) }}</span>
-              <span class="permission-description" *ngIf="permission.description">
-                {{ permission.description }}
+            <div class="permission-action-grid">
+              <label class="permission-row" *ngFor="let permission of getPrimaryPermissions(submodule); trackBy: trackPermission">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [checked]="isRolePermissionChecked(permission)"
+                  (change)="toggleRolePermission(permission, $any($event.target).checked)">
+
+                <span class="permission-info">
+                  <span class="permission-action-label">{{ getPermissionActionLabel(permission) }}</span>
+                  <span class="permission-name">{{ permission.name }}</span>
+                  <span class="permission-key">{{ getPermissionKey(permission) }}</span>
+                  <span class="permission-description" *ngIf="permission.description">
+                    {{ permission.description }}
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <div *ngIf="submodule.actions.outros.length" class="permission-other-title">
+              Outras permissoes
+            </div>
+
+            <label class="permission-row" *ngFor="let permission of submodule.actions.outros; trackBy: trackPermission">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                [checked]="isRolePermissionChecked(permission)"
+                (change)="toggleRolePermission(permission, $any($event.target).checked)">
+
+              <span class="permission-info">
+                <span class="permission-action-label">{{ getPermissionActionLabel(permission) }}</span>
+                <span class="permission-name">{{ permission.name }}</span>
+                <span class="permission-key">{{ getPermissionKey(permission) }}</span>
+                <span class="permission-description" *ngIf="permission.description">
+                  {{ permission.description }}
+                </span>
               </span>
-            </span>
-          </label>
+            </label>
+          </section>
         </div>
       </div>
     </div>
@@ -417,16 +466,16 @@
     <div class="access-panel exceptions-panel">
       <div class="access-panel-header">
         <div>
-          <h5 class="mb-1">Exceções por Usuário</h5>
+          <h5 class="mb-1">Excecoes por Usuario</h5>
 
           <span class="text-muted small" *ngIf="selectedCollaborator">
             {{ selectedCollaborator.name }} |
             {{ effectivePermissionCount }} efetiva(s) |
-            {{ overrideCount }} exceção(ões)
+            {{ overrideCount }} excecao(oes)
           </span>
 
           <span class="text-muted small" *ngIf="!selectedCollaborator">
-            Selecione um colaborador para consultar permissões efetivas e exceções.
+            Selecione um colaborador para consultar permissoes efetivas e excecoes.
           </span>
         </div>
 
@@ -436,7 +485,7 @@
             class="btn btn-outline-secondary btn-sm"
             (click)="clearUserSelection()"
             [disabled]="!selectedCollaborator || savingUserOverrides">
-            Limpar seleção
+            Limpar selecao
           </button>
 
           <button
@@ -444,61 +493,119 @@
             class="btn btn-primary btn-sm"
             (click)="saveUserOverrides()"
             [disabled]="!selectedCollaborator || loadingUserPermissions || savingUserOverrides">
-            {{ savingUserOverrides ? 'Salvando...' : 'Salvar exceções' }}
+            {{ savingUserOverrides ? 'Salvando...' : 'Salvar excecoes' }}
           </button>
         </div>
       </div>
 
       <div *ngIf="!selectedCollaborator" class="empty-state">
-        Escolha um colaborador na lista para visualizar permissões efetivas e configurar exceções.
+        Escolha um colaborador na lista para visualizar permissoes efetivas e configurar excecoes.
       </div>
 
       <div *ngIf="selectedCollaborator && loadingUserPermissions" class="text-muted text-center py-4">
-        Carregando permissões efetivas e exceções...
+        Carregando permissoes efetivas e excecoes...
       </div>
 
       <div *ngIf="selectedCollaborator && !loadingUserPermissions" class="permission-groups">
         <div class="access-empty-note">
-          PADRÃO usa as permissões do perfil/cargo. PERMITIR adiciona acesso individual. NEGAR remove acesso individual.
+          PADRAO usa as permissoes do perfil/cargo. PERMITIR adiciona acesso individual. NEGAR remove acesso individual.
         </div>
 
-        <div class="permission-group" *ngFor="let group of permissionGroups; trackBy: trackGroup">
+        <div class="permission-search-box">
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            name="userPermissionSearch"
+            [(ngModel)]="permissionSearchTerm"
+            placeholder="Buscar modulo, submodulo, permissao ou acao">
+
+          <button
+            *ngIf="permissionSearchTerm"
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            (click)="clearPermissionSearch()">
+            Limpar busca
+          </button>
+        </div>
+
+        <div *ngIf="!filteredPermissionModuleGroups.length" class="empty-state">
+          Nenhuma permissao encontrada para a busca.
+        </div>
+
+        <div class="permission-group" *ngFor="let group of filteredPermissionModuleGroups; trackBy: trackGroup">
           <div class="permission-group-title">{{ group.module }}</div>
 
-          <div class="permission-row override-row" *ngFor="let permission of group.permissions; trackBy: trackPermission">
-            <div class="permission-info">
-              <span class="permission-name">
-                {{ permission.name }}
-                <span
-                  class="badge ms-2"
-                  [class.bg-success]="isEffectivePermission(permission)"
-                  [class.bg-secondary]="!isEffectivePermission(permission)">
-                  {{ isEffectivePermission(permission) ? 'Efetiva' : 'Sem acesso' }}
-                </span>
-              </span>
+          <section class="permission-submodule" *ngFor="let submodule of group.submodules; trackBy: trackSubmodule">
+            <div class="permission-submodule-title">{{ submodule.label }}</div>
 
-              <span class="permission-key">{{ getPermissionKey(permission) }}</span>
+            <div class="permission-action-grid">
+              <div class="permission-row override-row" *ngFor="let permission of getPrimaryPermissions(submodule); trackBy: trackPermission">
+                <div class="permission-info">
+                  <span class="permission-action-label">{{ getPermissionActionLabel(permission) }}</span>
+                  <span class="permission-name">
+                    {{ permission.name }}
+                    <span
+                      class="badge ms-2"
+                      [class.bg-success]="isEffectivePermission(permission)"
+                      [class.bg-secondary]="!isEffectivePermission(permission)">
+                      {{ isEffectivePermission(permission) ? 'Efetiva' : 'Sem acesso' }}
+                    </span>
+                  </span>
 
-              <span class="permission-description" *ngIf="permission.description">
-                {{ permission.description }}
-              </span>
+                  <span class="permission-key">{{ getPermissionKey(permission) }}</span>
+
+                  <span class="permission-description" *ngIf="permission.description">
+                    {{ permission.description }}
+                  </span>
+                </div>
+
+                <select
+                  class="form-select form-select-sm override-select"
+                  [ngModel]="getOverrideEffect(permission)"
+                  (ngModelChange)="setOverrideEffect(permission, $event)">
+                  <option value="DEFAULT">Padrao</option>
+                  <option value="ALLOW">Permitir</option>
+                  <option value="DENY">Negar</option>
+                </select>
+              </div>
             </div>
 
-            <select
-              class="form-select form-select-sm override-select"
-              [ngModel]="getOverrideEffect(permission)"
-              (ngModelChange)="setOverrideEffect(permission, $event)">
-              <option value="DEFAULT">Padrão</option>
-              <option value="ALLOW">Permitir</option>
-              <option value="DENY">Negar</option>
-            </select>
-          </div>
+            <div *ngIf="submodule.actions.outros.length" class="permission-other-title">
+              Outras permissoes
+            </div>
+
+            <div class="permission-row override-row" *ngFor="let permission of submodule.actions.outros; trackBy: trackPermission">
+              <div class="permission-info">
+                <span class="permission-action-label">{{ getPermissionActionLabel(permission) }}</span>
+                <span class="permission-name">
+                  {{ permission.name }}
+                  <span
+                    class="badge ms-2"
+                    [class.bg-success]="isEffectivePermission(permission)"
+                    [class.bg-secondary]="!isEffectivePermission(permission)">
+                    {{ isEffectivePermission(permission) ? 'Efetiva' : 'Sem acesso' }}
+                  </span>
+                </span>
+
+                <span class="permission-key">{{ getPermissionKey(permission) }}</span>
+
+                <span class="permission-description" *ngIf="permission.description">
+                  {{ permission.description }}
+                </span>
+              </div>
+
+              <select
+                class="form-select form-select-sm override-select"
+                [ngModel]="getOverrideEffect(permission)"
+                (ngModelChange)="setOverrideEffect(permission, $event)">
+                <option value="DEFAULT">Padrao</option>
+                <option value="ALLOW">Permitir</option>
+                <option value="DENY">Negar</option>
+              </select>
+            </div>
+          </section>
         </div>
       </div>
     </div>
-  </div>
-
-  <div *ngIf="activeTab === 'permissions'" class="alert alert-warning mt-3" role="alert">
-    Esta tela configura permissões reais. O sidebar ainda não é filtrado por permissões nesta etapa.
   </div>
 </div>

@@ -9,9 +9,23 @@ import {
 } from 'src/app/core/services/permissions.service';
 import { Cargos } from 'src/app/models/ContaBancaria';
 
-type PermissionGroup = {
-  module: string;
+type PermissionActionKey = 'visualizar' | 'editar' | 'outros';
+
+type PermissionSubmoduleGroup = {
+  label: string;
+  searchText: string;
   permissions: Permission[];
+  actions: {
+    visualizar?: Permission;
+    editar?: Permission;
+    outros: Permission[];
+  };
+};
+
+type PermissionModuleGroup = {
+  module: string;
+  searchText: string;
+  submodules: PermissionSubmoduleGroup[];
 };
 
 type RoleGroup = {
@@ -34,7 +48,7 @@ export class PerfisAcessosComponent implements OnInit {
   filteredCollaborators: EmployeeControlRow[] = [];
 
   permissions: Permission[] = [];
-  permissionGroups: PermissionGroup[] = [];
+  permissionModuleGroups: PermissionModuleGroup[] = [];
 
   selectedRole?: Cargos;
   selectedCollaborator?: EmployeeControlRow;
@@ -47,6 +61,7 @@ export class PerfisAcessosComponent implements OnInit {
   searchTerm = '';
   roleSearchTerm = '';
   credentialsSearchTerm = '';
+  permissionSearchTerm = '';
 
   loadingInitialData = false;
   loadingRolePermissions = false;
@@ -92,7 +107,7 @@ export class PerfisAcessosComponent implements OnInit {
           .filter((role) => role?.id)
           .sort((a, b) => this.normalizeSearch(a.name).localeCompare(this.normalizeSearch(b.name), 'pt-BR'));
         this.permissions = permissions ?? [];
-        this.permissionGroups = this.groupPermissionsByModule(this.permissions);
+        this.permissionModuleGroups = this.groupPermissions(this.permissions);
         this.resetOverrideEffects();
         this.applySearch();
         this.loadingInitialData = false;
@@ -281,8 +296,12 @@ export class PerfisAcessosComponent implements OnInit {
     return collaborator.id;
   }
 
-  trackGroup(_: number, group: PermissionGroup): string {
+  trackGroup(_: number, group: PermissionModuleGroup): string {
     return group.module;
+  }
+
+  trackSubmodule(_: number, group: PermissionSubmoduleGroup): string {
+    return group.label;
   }
 
   trackRoleGroup(_: number, group: RoleGroup): string {
@@ -299,6 +318,59 @@ export class PerfisAcessosComponent implements OnInit {
 
   get selectedRolePermissionCount(): number {
     return this.selectedRolePermissionIds.size;
+  }
+
+  get filteredPermissionModuleGroups(): PermissionModuleGroup[] {
+    const term = this.normalizeSearch(this.permissionSearchTerm);
+
+    if (!term) {
+      return this.permissionModuleGroups;
+    }
+
+    return this.permissionModuleGroups
+      .map((moduleGroup) => {
+        const moduleMatches = this.normalizeSearch(moduleGroup.module).includes(term);
+        const submodules = moduleGroup.submodules
+          .map((submodule) => {
+            const submoduleMatches = this.normalizeSearch(submodule.label).includes(term);
+            const permissions = moduleMatches || submoduleMatches
+              ? submodule.permissions
+              : submodule.permissions.filter((permission) => this.permissionMatchesSearch(permission, term));
+
+            return permissions.length
+              ? this.buildPermissionSubmoduleGroup(submodule.label, permissions)
+              : null;
+          })
+          .filter((submodule): submodule is PermissionSubmoduleGroup => !!submodule);
+
+        return submodules.length
+          ? this.buildPermissionModuleGroup(moduleGroup.module, submodules)
+          : null;
+      })
+      .filter((moduleGroup): moduleGroup is PermissionModuleGroup => !!moduleGroup);
+  }
+
+  clearPermissionSearch(): void {
+    this.permissionSearchTerm = '';
+  }
+
+  getPrimaryPermissions(group: PermissionSubmoduleGroup): Permission[] {
+    return [group.actions.visualizar, group.actions.editar]
+      .filter((permission): permission is Permission => !!permission);
+  }
+
+  getPermissionActionLabel(permission: Permission): string {
+    const action = this.getPermissionAction(permission);
+
+    if (action === 'visualizar') {
+      return 'Visualizar';
+    }
+
+    if (action === 'editar') {
+      return 'Editar';
+    }
+
+    return this.toDisplayLabel(permission.action || this.getPermissionKey(permission).split('.').pop() || permission.name);
   }
 
   get filteredRoles(): Cargos[] {
@@ -756,25 +828,86 @@ export class PerfisAcessosComponent implements OnInit {
     );
   }
 
-  private groupPermissionsByModule(permissions: Permission[]): PermissionGroup[] {
-    const groups = new Map<string, Permission[]>();
+  private groupPermissions(permissions: Permission[]): PermissionModuleGroup[] {
+    const groups = new Map<string, Map<string, Permission[]>>();
 
     for (const permission of permissions ?? []) {
       const moduleName = this.getPermissionDisplayModule(permission);
+      const submoduleName = this.getPermissionSubmodule(permission);
 
       if (!groups.has(moduleName)) {
-        groups.set(moduleName, []);
+        groups.set(moduleName, new Map<string, Permission[]>());
       }
 
-      groups.get(moduleName)!.push(permission);
+      const submodules = groups.get(moduleName)!;
+      if (!submodules.has(submoduleName)) {
+        submodules.set(submoduleName, []);
+      }
+
+      submodules.get(submoduleName)!.push(permission);
     }
 
     return Array.from(groups.entries())
-      .map(([module, modulePermissions]) => ({
+      .map(([module, submodules]) => this.buildPermissionModuleGroup(
         module,
-        permissions: modulePermissions.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
-      }))
+        Array.from(submodules.entries())
+          .map(([label, submodulePermissions]) => this.buildPermissionSubmoduleGroup(label, submodulePermissions))
+          .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'))
+      ))
       .sort((a, b) => a.module.localeCompare(b.module, 'pt-BR'));
+  }
+
+  private buildPermissionModuleGroup(
+    module: string,
+    submodules: PermissionSubmoduleGroup[]
+  ): PermissionModuleGroup {
+    return {
+      module,
+      submodules,
+      searchText: this.normalizeSearch([
+        module,
+        ...submodules.map((submodule) => submodule.searchText),
+      ].join(' ')),
+    };
+  }
+
+  private buildPermissionSubmoduleGroup(
+    label: string,
+    permissions: Permission[]
+  ): PermissionSubmoduleGroup {
+    const sortedPermissions = [...permissions].sort((a, b) => {
+      const actionOrder = { visualizar: 0, editar: 1, outros: 2 };
+      const actionComparison = actionOrder[this.getPermissionAction(a)] - actionOrder[this.getPermissionAction(b)];
+
+      return actionComparison || a.name.localeCompare(b.name, 'pt-BR');
+    });
+    const actions: PermissionSubmoduleGroup['actions'] = { outros: [] };
+
+    for (const permission of sortedPermissions) {
+      const action = this.getPermissionAction(permission);
+      if (action === 'visualizar' && !actions.visualizar) {
+        actions.visualizar = permission;
+      } else if (action === 'editar' && !actions.editar) {
+        actions.editar = permission;
+      } else {
+        actions.outros.push(permission);
+      }
+    }
+
+    return {
+      label,
+      permissions: sortedPermissions,
+      actions,
+      searchText: this.normalizeSearch([
+        label,
+        ...sortedPermissions.flatMap((permission) => [
+          permission.name,
+          permission.description,
+          this.getPermissionKey(permission),
+          permission.action,
+        ]),
+      ].join(' ')),
+    };
   }
 
   private getPermissionDisplayModule(permission: Permission): string {
@@ -785,6 +918,73 @@ export class PerfisAcessosComponent implements OnInit {
     }
 
     return permission.module || 'Geral';
+  }
+
+  private getPermissionSubmodule(permission: Permission): string {
+    const permissionKey = this.getPermissionKey(permission);
+    const knownSubmodules: Array<[string, string]> = [
+      ['atendimento.gestao.distribuicao_leads.', 'Gestao > Distribuicao de Leads'],
+      ['atendimento.gestao.regioes_interesse.', 'Gestao > Regioes de Interesse'],
+      ['atendimento.gestao.fontes_origem.', 'Gestao > Fontes de Origem'],
+      ['atendimento.gestao.', 'Gestao de Atendimento'],
+      ['atendimento.leads.', 'Leads'],
+      ['atendimento.posvisita.', 'Pos-Visita'],
+      ['atendimento.agendamento.', 'Agendamento'],
+      ['atendimento.visitas.', 'Visitas'],
+      ['atendimento.relatorios.', 'Relatorios'],
+      ['financeiro.contas_receber.', 'Contas a Receber'],
+      ['financeiro.contas_pagar.', 'Contas a Pagar'],
+      ['financeiro.fluxo_caixa.', 'Fluxo de Caixa'],
+      ['financeiro.dre.', 'DRE'],
+      ['financeiro.comissoes.', 'Comissoes'],
+      ['vendas.propostas.', 'Propostas'],
+      ['sistema.admin.total', 'Administracao Total'],
+    ];
+    const knownSubmodule = knownSubmodules.find(([prefix]) => permissionKey.startsWith(prefix));
+
+    if (knownSubmodule) {
+      return knownSubmodule[1];
+    }
+
+    const keyParts = permissionKey.split('.').filter(Boolean);
+    const submoduleParts = keyParts.slice(1, -1);
+
+    return submoduleParts.length
+      ? submoduleParts.map((part) => this.toDisplayLabel(part)).join(' > ')
+      : permission.name || 'Geral';
+  }
+
+  private getPermissionAction(permission: Permission): PermissionActionKey {
+    const action = this.normalizeSearch(permission.action);
+    const permissionKey = this.getPermissionKey(permission);
+
+    if (action === 'visualizar' || permissionKey.endsWith('.visualizar')) {
+      return 'visualizar';
+    }
+
+    if (action === 'editar' || permissionKey.endsWith('.editar')) {
+      return 'editar';
+    }
+
+    return 'outros';
+  }
+
+  private permissionMatchesSearch(permission: Permission, term: string): boolean {
+    return this.normalizeSearch([
+      this.getPermissionDisplayModule(permission),
+      this.getPermissionSubmodule(permission),
+      permission.name,
+      permission.description,
+      this.getPermissionKey(permission),
+      permission.action,
+      this.getPermissionAction(permission),
+    ].join(' ')).includes(term);
+  }
+
+  private toDisplayLabel(value: string): string {
+    return value
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\w/g, (character) => character.toLocaleUpperCase('pt-BR'));
   }
 
   private normalizeSearch(value?: string | null): string {
