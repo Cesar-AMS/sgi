@@ -342,6 +342,23 @@
         </div>
       </div>
 
+      <div class="permission-search-box mb-3">
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          name="rolePermissionSearch"
+          [(ngModel)]="permissionSearchTerm"
+          placeholder="Buscar modulo, submodulo, permissao ou acao">
+
+        <button
+          *ngIf="permissionSearchTerm"
+          type="button"
+          class="btn btn-outline-secondary btn-sm"
+          (click)="clearPermissionSearch()">
+          Limpar busca
+        </button>
+      </div>
+
       <div *ngIf="!selectedRole" class="empty-state">
         Escolha um perfil/cargo na lista para visualizar e editar suas permissoes.
       </div>
@@ -355,23 +372,6 @@
       </div>
 
       <div *ngIf="selectedRole && !loadingRolePermissions" class="permission-groups">
-        <div class="permission-search-box">
-          <input
-            type="text"
-            class="form-control form-control-sm"
-            name="rolePermissionSearch"
-            [(ngModel)]="permissionSearchTerm"
-            placeholder="Buscar modulo, submodulo, permissao ou acao">
-
-          <button
-            *ngIf="permissionSearchTerm"
-            type="button"
-            class="btn btn-outline-secondary btn-sm"
-            (click)="clearPermissionSearch()">
-            Limpar busca
-          </button>
-        </div>
-
         <div *ngIf="!filteredPermissionModuleGroups.length" class="empty-state">
           Nenhuma permissao encontrada para a busca.
         </div>
@@ -498,6 +498,23 @@
         </div>
       </div>
 
+      <div class="permission-search-box mb-3">
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          name="userPermissionSearch"
+          [(ngModel)]="permissionSearchTerm"
+          placeholder="Buscar modulo, submodulo, permissao ou acao">
+
+        <button
+          *ngIf="permissionSearchTerm"
+          type="button"
+          class="btn btn-outline-secondary btn-sm"
+          (click)="clearPermissionSearch()">
+          Limpar busca
+        </button>
+      </div>
+
       <div *ngIf="!selectedCollaborator" class="empty-state">
         Escolha um colaborador na lista para visualizar permissoes efetivas e configurar excecoes.
       </div>
@@ -509,23 +526,6 @@
       <div *ngIf="selectedCollaborator && !loadingUserPermissions" class="permission-groups">
         <div class="access-empty-note">
           PADRAO usa as permissoes do perfil/cargo. PERMITIR adiciona acesso individual. NEGAR remove acesso individual.
-        </div>
-
-        <div class="permission-search-box">
-          <input
-            type="text"
-            class="form-control form-control-sm"
-            name="userPermissionSearch"
-            [(ngModel)]="permissionSearchTerm"
-            placeholder="Buscar modulo, submodulo, permissao ou acao">
-
-          <button
-            *ngIf="permissionSearchTerm"
-            type="button"
-            class="btn btn-outline-secondary btn-sm"
-            (click)="clearPermissionSearch()">
-            Limpar busca
-          </button>
         </div>
 
         <div *ngIf="!filteredPermissionModuleGroups.length" class="empty-state">
