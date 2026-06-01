@@ -12,6 +12,7 @@ namespace JMImoveisAPI.Controllers
         private const string ViewAllSchedulesPermission = "sistema.admin.total";
         private const string ViewAllLeadsPermission = "atendimento.leads.visualizar.todos";
         private const string EditLeadPermission = "atendimento.leads.editar";
+        private const string EditLeadFonteDescricaoPermission = "atendimento.leads.fonte_descricao.editar";
         private const string ViewLeadTransferHistoryPermission = "atendimento.leads.transferencias.visualizar";
         private readonly ILeadService _leadService;
         private readonly IPermissionService _permissionService;
@@ -272,8 +273,22 @@ namespace JMImoveisAPI.Controllers
                 return authorizationResult;
             }
 
-            var id = await _leadService.CreateLeadAsync(lead, GetCurrentUserId());
-            return Ok(new { id });
+            authorizationResult = await AuthorizeCurrentUserForFonteDescricaoAsync(
+                !string.IsNullOrWhiteSpace(lead.FonteDescricao));
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            try
+            {
+                var id = await _leadService.CreateLeadAsync(lead, GetCurrentUserId());
+                return Ok(new { id });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPatch]
@@ -285,8 +300,27 @@ namespace JMImoveisAPI.Controllers
                 return authorizationResult;
             }
 
-            await _leadService.UpdateLeadAsync(lead, GetCurrentUserId());
-            return Ok();
+            var existingLead = await _leadService.GetByIdAsync(lead.Id);
+            var fonteDescricaoChanged = !string.Equals(
+                NormalizeOptionalText(existingLead?.FonteDescricao),
+                NormalizeOptionalText(lead.FonteDescricao),
+                StringComparison.Ordinal);
+
+            authorizationResult = await AuthorizeCurrentUserForFonteDescricaoAsync(fonteDescricaoChanged);
+            if (authorizationResult != null)
+            {
+                return authorizationResult;
+            }
+
+            try
+            {
+                await _leadService.UpdateLeadAsync(lead, GetCurrentUserId());
+                return Ok();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPatch("{id:int}/status")]
@@ -391,6 +425,44 @@ namespace JMImoveisAPI.Controllers
 
             return null;
         }
+
+        private async Task<IActionResult?> AuthorizeCurrentUserForFonteDescricaoAsync(bool requiresPermission)
+        {
+            if (!requiresPermission)
+            {
+                return null;
+            }
+
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao identificado." });
+            }
+
+            try
+            {
+                var canEditFonteDescricao = await _permissionService.UserHasPermissionAsync(
+                    currentUserId.Value,
+                    EditLeadFonteDescricaoPermission);
+                var isAdmin = await _permissionService.UserHasPermissionAsync(
+                    currentUserId.Value,
+                    ViewAllSchedulesPermission);
+
+                if (!canEditFonteDescricao && !isAdmin)
+                {
+                    return StatusCode(403, new { message = "Usuario sem permissao para editar descricao/campanha da fonte do lead." });
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                return Unauthorized(new { message = "Usuario autenticado nao encontrado." });
+            }
+
+            return null;
+        }
+
+        private static string? NormalizeOptionalText(string? value)
+            => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
         private async Task<IActionResult?> AuthorizeCurrentUserForLeadTransferHistoryAsync()
         {

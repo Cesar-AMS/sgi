@@ -12,6 +12,7 @@ namespace JMImoveisAPI.Entities
         public string? EtapaAtendimento { get; set; }
         public decimal? Valor { get; set; }
         public string? Fonte { get; set; }
+        public string? FonteDescricao { get; set; }
         public string? ImoveisInteresse { get; set; }
         public string? Vendedor { get; set; }
         public string? Coordenador { get; set; }

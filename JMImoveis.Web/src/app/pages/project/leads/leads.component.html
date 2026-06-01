@@ -311,7 +311,7 @@
               <td>{{ selectNameSale(lead.coordenador) }}</td>
               <td>{{ lead.gerente || '-' }}</td>
               <td>{{ lead.valor | currency: 'BRL' : 'symbol' : '1.0-0' }}</td>
-              <td>{{ lead.fonte || '-' }}</td>
+              <td [title]="lead.fonteDescricao || ''">{{ lead.fonte || '-' }}</td>
               <td>{{ lead.imoveisInteresse || '-' }}</td>
               <td>{{ lead.ultimoContato ? (lead.ultimoContato | date: 'dd/MM/yyyy HH:mm') : '-' }}</td>
               <td>{{ lead.dataCriacao | date: 'shortDate' }}</td>
@@ -752,6 +752,20 @@
               </option>
             </select>
           </div>
+        </div>
+
+        <div class="mb-3" *ngIf="canEditFonteDescricao">
+          <label class="form-label" for="leadFonteDescricao">
+            Descrição/Campanha da Fonte
+          </label>
+          <input
+            id="leadFonteDescricao"
+            type="text"
+            class="form-control"
+            formControlName="fonteDescricao"
+            maxlength="255"
+            placeholder="Ex: Campanha Natal, Feirão Junho, Ação Guaianases"
+          />
         </div>
 
         <div class="mb-3">

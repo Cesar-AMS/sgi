@@ -50,6 +50,7 @@ namespace JMImoveisAPI.Services
 
         public Task<int> CreateLeadAsync(Lead lead, long? currentUserId = null)
         {
+            lead.FonteDescricao = NormalizeFonteDescricao(lead.FonteDescricao);
             lead.Status = string.IsNullOrWhiteSpace(lead.Status) ? "Novo" : lead.Status;
             lead.EtapaAtendimento = string.IsNullOrWhiteSpace(lead.EtapaAtendimento)
                 ? "Sem atendimento"
@@ -107,6 +108,7 @@ namespace JMImoveisAPI.Services
 
         public async Task UpdateLeadAsync(Lead lead, long? changedByUserId = null)
         {
+            lead.FonteDescricao = NormalizeFonteDescricao(lead.FonteDescricao);
             var previousLead = await _leadRepository.GetLeadById(lead.Id);
 
             if (previousLead != null && string.IsNullOrWhiteSpace(lead.EtapaAtendimento))
@@ -554,6 +556,22 @@ namespace JMImoveisAPI.Services
             var trimmed = status.Trim();
             return ValidLeadStatuses.FirstOrDefault(s => string.Equals(s, trimmed, StringComparison.OrdinalIgnoreCase))
                 ?? trimmed;
+        }
+
+        private static string? NormalizeFonteDescricao(string? fonteDescricao)
+        {
+            if (string.IsNullOrWhiteSpace(fonteDescricao))
+            {
+                return null;
+            }
+
+            var normalized = fonteDescricao.Trim();
+            if (normalized.Length > 255)
+            {
+                throw new ArgumentException("Descricao/campanha da fonte deve ter no maximo 255 caracteres.");
+            }
+
+            return normalized;
         }
 
         private static string NormalizeLeadEtapaAtendimento(string? etapaAtendimento)

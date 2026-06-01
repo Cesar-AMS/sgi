@@ -56,6 +56,7 @@ export class LeadsComponent {
 
   canEditLeads = false;
   canTransferLeads = false;
+  canEditFonteDescricao = false;
 
   showCreateModal = false;
   showRegiaoInteresseDropdown = false;
@@ -156,10 +157,14 @@ export class LeadsComponent {
         this.canTransferLeads =
           permissions.includes('atendimento.leads.transferir') ||
           permissions.includes('sistema.admin.total');
+        this.canEditFonteDescricao =
+          permissions.includes('atendimento.leads.fonte_descricao.editar') ||
+          permissions.includes('sistema.admin.total');
       },
       error: () => {
         this.canEditLeads = false;
         this.canTransferLeads = false;
+        this.canEditFonteDescricao = false;
       },
     });
   }
@@ -227,6 +232,7 @@ export class LeadsComponent {
       etapaAtendimento: ['Sem atendimento'],
       valor: [null],
       fonte: [''],
+      fonteDescricao: [''],
       imoveisInteresse: [''],
       regioesInteresse: [[] as string[]],
       vendedor: [''],
@@ -884,6 +890,7 @@ export class LeadsComponent {
     this.createForm.reset({
       status: 'Novo',
       etapaAtendimento: 'Sem atendimento',
+      fonteDescricao: '',
       imoveisInteresse: '',
       regioesInteresse: [],
     });
@@ -900,12 +907,15 @@ export class LeadsComponent {
       return;
     }
 
-    const { regioesInteresse, ...formValue } = this.createForm.value;
+    const { regioesInteresse, fonteDescricao, ...formValue } = this.createForm.value;
     const payload = {
       ...formValue,
       status: formValue.status || 'Novo',
       etapaAtendimento: formValue.etapaAtendimento || 'Sem atendimento',
       imoveisInteresse: this.serializeRegioesInteresse(regioesInteresse),
+      ...(this.canEditFonteDescricao && String(fonteDescricao || '').trim()
+        ? { fonteDescricao: String(fonteDescricao).trim() }
+        : {}),
     };
 
     this.leadService.createLead(payload).subscribe({

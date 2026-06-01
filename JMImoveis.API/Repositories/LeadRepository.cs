@@ -210,14 +210,14 @@ namespace JMImoveisAPI.Repositories
         public async Task CreateLead(Lead lead)
         {
             var sql = @"INSERT INTO leads (Nome, Email, Telefone, Status, EtapaAtendimento,
-                                           Valor, Fonte, ImoveisInteresse,
+                                           Valor, Fonte, FonteDescricao, ImoveisInteresse,
                                            Vendedor, Coordenador, Gerente,
                                            owner_user_id, coordinator_user_id, manager_user_id,
                                            assigned_at, assigned_by_user_id, distribution_type, Observacao)
                                         VALUES
                                         (
                                             @Nome, @Email, @Telefone, @Status, @EtapaAtendimento,
-                                            @Valor, @Fonte, @ImoveisInteresse,
+                                            @Valor, @Fonte, @FonteDescricao, @ImoveisInteresse,
                                             @Vendedor, @Coordenador, @Gerente,
                                             @OwnerUserId, @CoordinatorUserId, @ManagerUserId,
                                             @AssignedAt, @AssignedByUserId, @DistributionType, @Observacao);";
@@ -636,6 +636,7 @@ namespace JMImoveisAPI.Repositories
                                                  EtapaAtendimento,
                                                  Valor,
                                                  Fonte,
+                                                 FonteDescricao,
                                                  ImoveisInteresse,
                                                  Vendedor,
                                                  Coordenador,
@@ -779,6 +780,7 @@ namespace JMImoveisAPI.Repositories
                                 EtapaAtendimento,
                                 Valor,
                                 Fonte,
+                                FonteDescricao,
                                 ImoveisInteresse,
                                 Vendedor,
                                 Coordenador,
@@ -819,6 +821,7 @@ namespace JMImoveisAPI.Repositories
                                         EtapaAtendimento = @EtapaAtendimento,
                                         Valor = @Valor,
                                         Fonte = @Fonte,
+                                        FonteDescricao = @FonteDescricao,
                                         ImoveisInteresse = @ImoveisInteresse,
                                         Vendedor = @Vendedor,
                                         Coordenador = @Coordenador,
@@ -833,14 +836,14 @@ namespace JMImoveisAPI.Repositories
         public async Task<int> CreateLeadAndReturnId(Lead lead)
         {
             var sql = @"INSERT INTO leads (Nome, Email, Telefone, Status, EtapaAtendimento,
-                                           Valor, Fonte, ImoveisInteresse,
+                                           Valor, Fonte, FonteDescricao, ImoveisInteresse,
                                            Vendedor, Coordenador, Gerente,
                                            owner_user_id, coordinator_user_id, manager_user_id,
                                            assigned_at, assigned_by_user_id, distribution_type, Observacao)
                                         VALUES
                                         (
                                             @Nome, @Email, @Telefone, @Status, @EtapaAtendimento,
-                                            @Valor, @Fonte, @ImoveisInteresse,
+                                            @Valor, @Fonte, @FonteDescricao, @ImoveisInteresse,
                                             @Vendedor, @Coordenador, @Gerente,
                                             @OwnerUserId, @CoordinatorUserId, @ManagerUserId,
                                             @AssignedAt, @AssignedByUserId, @DistributionType, @Observacao

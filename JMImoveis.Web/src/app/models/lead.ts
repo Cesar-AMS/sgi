@@ -21,6 +21,7 @@ export interface Lead {
   etapaAtendimento?: LeadEtapaAtendimento | null;
   valor?: number;
   fonte?: string;
+  fonteDescricao?: string | null;
   imoveisInteresse?: string;
   vendedor?: string;
   coordenador?: string;
@@ -41,6 +42,7 @@ export interface CreateLeadRequest {
   etapaAtendimento?: LeadEtapaAtendimento | null;
   valor?: number | null;
   fonte?: string;
+  fonteDescricao?: string | null;
   imoveisInteresse?: string;
   vendedor?: string;
   observacao?: string;

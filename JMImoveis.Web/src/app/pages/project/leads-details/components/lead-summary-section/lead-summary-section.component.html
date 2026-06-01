@@ -75,6 +75,7 @@
         <div class="col-md-6"><div class="label">Telefone</div><div class="value">{{ lead.telefone || '-' }}</div></div>
         <div class="col-md-6"><div class="label">Status</div><div class="value">{{ lead.status }}</div></div>
         <div class="col-md-6"><div class="label">Origem</div><div class="value">{{ lead.fonte || '-' }}</div></div>
+        <div class="col-md-6"><div class="label">Campanha da Fonte</div><div class="value">{{ lead.fonteDescricao || '-' }}</div></div>
         <div class="col-md-6">
           <div class="label">Valor</div>
           <div class="value">{{ lead.valor | currency: 'BRL':'symbol':'1.0-0' }}</div>
