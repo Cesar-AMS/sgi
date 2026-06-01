@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { AtendimentoRelatoriosComponent } from './atendimento-relatorios/atendimento-relatorios.component';
+import { AtendimentoGestaoComponent } from './atendimento-gestao/atendimento-gestao.component';
 import { ClientListComponent } from './clientes/client-list/client-list.component';
 import { ComparecimentosComponent } from './comparecimentos/comparecimentos.component';
 import { GeraisComponent } from './configuracoes/gerais/gerais.component';
@@ -302,6 +303,10 @@ const routes: Routes = [
     component: AtendimentoRelatoriosComponent,
     canActivate: [PermissionGuard],
     data: { permissionKey: 'atendimento.relatorios.visualizar' },
+  },
+  {
+    path: 'atendimento/gestao',
+    component: AtendimentoGestaoComponent,
   },
   {
     path: 'atendimento/distribuicao-leads',

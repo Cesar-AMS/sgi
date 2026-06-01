@@ -23,6 +23,7 @@ import { NgxCurrencyDirective } from 'ngx-currency';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { ProjectRoutingModule } from './project-routing.module';
 import { AtendimentoRelatoriosComponent } from './atendimento-relatorios/atendimento-relatorios.component';
+import { AtendimentoGestaoComponent } from './atendimento-gestao/atendimento-gestao.component';
 import { AccountsPayableComponent } from './financeiro/accounts-payable/accounts-payable.component';
 import { AccountsReceivableComponent } from './financeiro/accounts-receivable/accounts-receivable.component';
 import { ClientListComponent } from './clientes/client-list/client-list.component';
@@ -42,6 +43,7 @@ import { LeadVisitsSectionComponent } from './leads-details/components/lead-visi
 import { LeadDetailsComponent } from './leads-details/leads-details.component';
 import { LeadDistributionAgentsComponent } from './lead-distribution-agents/lead-distribution-agents.component';
 import { LeadInterestRegionsComponent } from './lead-interest-regions/lead-interest-regions.component';
+import { LeadSourcesComponent } from './lead-sources/lead-sources.component';
 import { LeadsComponent } from './leads/leads.component';
 import { ModalVendaComponent } from './modal-venda/modal-venda.component';
 import { PosVisitaComponent } from './pos-visita/pos-visita.component';
@@ -74,8 +76,10 @@ import { PerfisAcessosComponent } from './configuracoes/perfis-acessos/perfis-ac
     CreditAnalysisComponent,
     DashboardHomeComponent,
     AtendimentoRelatoriosComponent,
+    AtendimentoGestaoComponent,
     LeadDistributionAgentsComponent,
     LeadInterestRegionsComponent,
+    LeadSourcesComponent,
     VisitasComponent,
     LeadsComponent,
     PosVisitaComponent,

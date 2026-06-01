@@ -1,0 +1,42 @@
+.atendimento-gestao-wrapper {
+  min-height: 240px;
+}
+
+.gestao-header {
+  max-width: 760px;
+}
+
+.gestao-tabs {
+  border-bottom: 1px solid #d8dee9;
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+}
+
+.gestao-tab {
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: #536173;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.75rem 0.9rem;
+  white-space: nowrap;
+}
+
+.gestao-tab:hover,
+.gestao-tab:focus {
+  color: #ff7a1a;
+}
+
+.gestao-tab.active {
+  border-bottom-color: #ff7a1a;
+  color: #c95608;
+}
+
+.gestao-tab-content {
+  background: #ffffff;
+  border: 1px solid #e4e8ef;
+  border-radius: 0 0 8px 8px;
+  margin-top: -1px;
+}

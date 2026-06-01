@@ -1,0 +1,38 @@
+<div class="atendimento-gestao-wrapper container-fluid py-4">
+  <header class="gestao-header mb-4">
+    <h2 class="fw-bold mb-2">Gestão do Atendimento</h2>
+    <p class="text-muted mb-0">
+      Configure regras, regiões e fontes usadas no fluxo de atendimento.
+    </p>
+  </header>
+
+  <div *ngIf="isLoadingPermissions" class="text-muted py-3">
+    Carregando permissões...
+  </div>
+
+  <div *ngIf="!isLoadingPermissions && isAccessDenied" class="alert alert-warning" role="alert">
+    Você não possui permissão para acessar a gestão do atendimento.
+  </div>
+
+  <ng-container *ngIf="!isLoadingPermissions && !isAccessDenied">
+    <nav class="gestao-tabs" aria-label="Configurações da gestão do atendimento">
+      <button
+        *ngFor="let tab of visibleTabs"
+        type="button"
+        class="gestao-tab"
+        [class.active]="activeTabId === tab.id"
+        [attr.aria-selected]="activeTabId === tab.id"
+        (click)="selectTab(tab.id)"
+        role="tab"
+      >
+        {{ tab.label }}
+      </button>
+    </nav>
+
+    <section class="gestao-tab-content" role="tabpanel">
+      <app-lead-distribution-agents *ngIf="activeTabId === 'distribuicao'"></app-lead-distribution-agents>
+      <app-lead-interest-regions *ngIf="activeTabId === 'regioes'"></app-lead-interest-regions>
+      <app-lead-sources *ngIf="activeTabId === 'fontes'"></app-lead-sources>
+    </section>
+  </ng-container>
+</div>

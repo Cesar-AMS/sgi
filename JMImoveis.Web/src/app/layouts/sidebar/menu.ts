@@ -68,31 +68,14 @@ export const MENU: MenuItem[] = [
       },
       {
         id: 26,
-        label: 'Distribui\u00e7\u00e3o de Leads',
-        link: '/jm/atendimento/distribuicao-leads',
+        label: 'Gest\u00e3o',
+        link: '/jm/atendimento/gestao',
         parentId: 20,
         permissionKeys: [
           'atendimento.distribuicao_leads.visualizar',
           'atendimento.distribuicao_leads.editar',
-        ],
-      },
-      {
-        id: 27,
-        label: 'Regi\u00f5es de Interesse',
-        link: '/jm/atendimento/regioes-interesse',
-        parentId: 20,
-        permissionKeys: [
           'atendimento.regioes_interesse.visualizar',
           'atendimento.regioes_interesse.editar',
-          'sistema.admin.total',
-        ],
-      },
-      {
-        id: 28,
-        label: 'Fontes de Origem',
-        link: '/jm/atendimento/fontes-origem',
-        parentId: 20,
-        permissionKeys: [
           'atendimento.fontes_origem.visualizar',
           'atendimento.fontes_origem.editar',
           'sistema.admin.total',
